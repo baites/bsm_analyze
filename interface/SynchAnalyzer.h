@@ -23,18 +23,18 @@ class FactorizedJetCorrector;
 
 namespace bsm
 {
+    enum SynchMode
+    {
+        ELECTRON = 1,
+        MUON
+    };
+
     class SynchJuly2011Analyzer : public Analyzer
     {
         public:
             typedef boost::shared_ptr<LorentzVectorMonitor> P4MonitorPtr;
 
-            enum LeptonMode
-            {
-                ELECTRON = 1,
-                MUON = 2
-            };
-
-            SynchJuly2011Analyzer(const LeptonMode & = ELECTRON);
+            SynchJuly2011Analyzer(const SynchMode & = ELECTRON);
             SynchJuly2011Analyzer(const SynchJuly2011Analyzer &);
 
             const P4MonitorPtr leadingJet() const;
@@ -77,7 +77,7 @@ namespace bsm
             bool electron(const Event *);
             bool muon(const Event *);
 
-            LeptonMode _lepton_mode;
+            SynchMode _synch_mode;
 
             CutflowPtr _cutflow;
 
@@ -106,13 +106,7 @@ namespace bsm
         public:
             typedef std::vector<JetCorrectorParameters> Corrections;
 
-            enum LeptonMode
-            {
-                ELECTRON = 1,
-                MUON = 2
-            };
-
-            SynchJECJuly2011Analyzer(const LeptonMode & = ELECTRON);
+            SynchJECJuly2011Analyzer(const SynchMode & = ELECTRON);
             SynchJECJuly2011Analyzer(const SynchJECJuly2011Analyzer &);
 
             void setJetEnergyCorrections(const Corrections &corrections);
@@ -168,7 +162,7 @@ namespace bsm
 
             void printP4(std::ostream &, const LorentzVector &);
 
-            LeptonMode _lepton_mode;
+            SynchMode _synch_mode;
 
             CutflowPtr _cutflow;
 
@@ -185,8 +179,7 @@ namespace bsm
             std::ostringstream _out;
     };
 
-    std::ostream &operator <<(std::ostream &, const SynchJuly2011Analyzer::LeptonMode &);
-    std::ostream &operator <<(std::ostream &, const SynchJECJuly2011Analyzer::LeptonMode &);
+    std::ostream &operator <<(std::ostream &, const SynchMode &);
 }
 
 #endif

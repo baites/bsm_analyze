@@ -125,7 +125,7 @@ try
 {
     using namespace bsm;
 
-    SynchJuly2011Analyzer::LeptonMode mode = SynchJuly2011Analyzer::ELECTRON;
+    SynchMode mode = ELECTRON;
 
     if (arguments.count("mode"))
     {
@@ -133,7 +133,7 @@ try
         boost::to_lower(arg);
 
         if ("muon" == arg)
-            mode = SynchJuly2011Analyzer::MUON;
+            mode = MUON;
         else if ("electron" != arg)
             cerr << "Unsupported mode: use Electron channel" << endl;
     }
@@ -160,7 +160,7 @@ try
         shared_ptr<LorentzVectorCanvas> leading_jet(new LorentzVectorCanvas("Leading Jet P4"));
         leading_jet->draw(*analyzer->leadingJet());
 
-        if (SynchJuly2011Analyzer::ELECTRON == mode)
+        if (ELECTRON == mode)
         {
             shared_ptr<LorentzVectorCanvas> electron_before_veto(new LorentzVectorCanvas("Electron Before Veto P4"));
             electron_before_veto->draw(*analyzer->electronBeforeVeto());
@@ -198,7 +198,7 @@ try
         shared_ptr<LorentzVectorCanvas> leading_jet(new LorentzVectorCanvas("Leading Jet P4"));
         leading_jet->write(output.get(), *analyzer->leadingJet());
 
-        if (SynchJuly2011Analyzer::ELECTRON == mode)
+        if (ELECTRON == mode)
         {
             shared_ptr<LorentzVectorCanvas> electron_before_veto(new LorentzVectorCanvas("Electron Before Veto P4"));
             electron_before_veto->write(output.get(), *analyzer->electronBeforeVeto());

@@ -32,6 +32,7 @@ using bsm::Reader;
 using bsm::Event;
 using bsm::LorentzVectorCanvas;
 using bsm::ThreadController;
+using bsm::SynchMode;
 
 typedef shared_ptr<SynchJECJuly2011Analyzer> AnalyzerPtr;
 
@@ -50,9 +51,6 @@ int main(int argc, char *argv[])
         generic_options.add_options()
             ("help,h",
              "Help message")
-
-            ("interactive",
-             "Interactive session")
 
             ("l1",
              po::value<string>(),
@@ -119,7 +117,7 @@ void run(char *argv[],
         const po::variables_map &arguments)
 try
 {
-    SynchJECJuly2011Analyzer::LeptonMode mode = SynchJECJuly2011Analyzer::ELECTRON;
+    SynchMode mode = bsm::ELECTRON;
 
     if (arguments.count("mode"))
     {
@@ -127,7 +125,7 @@ try
         boost::to_lower(arg);
 
         if ("muon" == arg)
-            mode = SynchJECJuly2011Analyzer::MUON;
+            mode = bsm::MUON;
         else if ("electron" != arg)
             cerr << "Unsupported mode: use Electron channel" << endl;
     }
@@ -208,73 +206,6 @@ try
     controller->start();
 
     cout << *analyzer << endl;
-
-    if (arguments.count("interactive"))
-    {
-        // Start ROOT interactive session
-        //
-        int empty_argc = 1;
-        char *empty_argv[] = { argv[0] };
-        shared_ptr<TRint> app(new TRint("app", &empty_argc, empty_argv));
-
-        if (SynchJECJuly2011Analyzer::ELECTRON == mode)
-        {
-            shared_ptr<LorentzVectorCanvas> electron_before_veto(new LorentzVectorCanvas("Electron Before Veto P4"));
-            electron_before_veto->draw(*analyzer->electronBeforeVeto());
-
-            shared_ptr<LorentzVectorCanvas> muon_to_veto(new LorentzVectorCanvas("Muon To Veto P4"));
-            muon_to_veto->draw(*analyzer->electronToVeto());
-
-            shared_ptr<LorentzVectorCanvas> electron_after_veto(new LorentzVectorCanvas("Electron After Veto P4"));
-            electron_after_veto->draw(*analyzer->electronAfterVeto());
-        }
-        else
-        {
-            shared_ptr<LorentzVectorCanvas> muon_before_veto(new LorentzVectorCanvas("Muon Before Veto P4"));
-            muon_before_veto->draw(*analyzer->electronBeforeVeto());
-
-            shared_ptr<LorentzVectorCanvas> electron_to_veto(new LorentzVectorCanvas("Electron To Veto P4"));
-            electron_to_veto->draw(*analyzer->muonToVeto());
-
-            shared_ptr<LorentzVectorCanvas> muon_after_veto(new LorentzVectorCanvas("Muon After Veto P4"));
-            muon_after_veto->draw(*analyzer->electronAfterVeto());
-        }
-        
-        app->Run();
-    }
-    else
-    {
-        shared_ptr<TFile> output(new TFile("output.root", "RECREATE"));
-        if (!output->IsOpen())
-        {
-            cerr << "failed to open output file" << endl;
-
-            return;
-        }
-
-        if (SynchJECJuly2011Analyzer::ELECTRON == mode)
-        {
-            shared_ptr<LorentzVectorCanvas> electron_before_veto(new LorentzVectorCanvas("Electron Before Veto P4"));
-            electron_before_veto->write(output.get(), *analyzer->electronBeforeVeto());
-
-            shared_ptr<LorentzVectorCanvas> muon_to_veto(new LorentzVectorCanvas("Muon To Veto P4"));
-            muon_to_veto->write(output.get(), *analyzer->muonToVeto());
-
-            shared_ptr<LorentzVectorCanvas> electron_after_veto(new LorentzVectorCanvas("Electron After Veto P4"));
-            electron_after_veto->write(output.get(), *analyzer->electronAfterVeto());
-        }
-        else
-        {
-            shared_ptr<LorentzVectorCanvas> muon_before_veto(new LorentzVectorCanvas("Muon Before Veto P4"));
-            muon_before_veto->write(output.get(), *analyzer->muonBeforeVeto());
-
-            shared_ptr<LorentzVectorCanvas> electron_to_veto(new LorentzVectorCanvas("Electron To Veto P4"));
-            electron_to_veto->write(output.get(), *analyzer->electronToVeto());
-
-            shared_ptr<LorentzVectorCanvas> muon_after_veto(new LorentzVectorCanvas("Muon After Veto P4"));
-            muon_after_veto->write(output.get(), *analyzer->muonAfterVeto());
-        }
-    }
 }
 catch(...)
 {

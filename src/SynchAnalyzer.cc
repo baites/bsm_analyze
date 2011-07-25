@@ -27,17 +27,17 @@ using boost::dynamic_pointer_cast;
 using bsm::SynchJuly2011Analyzer;
 using bsm::SynchJECJuly2011Analyzer;
 
-SynchJuly2011Analyzer::SynchJuly2011Analyzer(const LeptonMode &mode):
-    _lepton_mode(mode)
+SynchJuly2011Analyzer::SynchJuly2011Analyzer(const SynchMode &mode):
+    _synch_mode(mode)
 {
     _cutflow.reset(new MultiplicityCutflow(4));
     _cutflow->cut(PRESELECTION)->setName("pre-selection");
     _cutflow->cut(PRIMARY_VERTEX)->setName("Good Primary Vertex");
     _cutflow->cut(JET)->setName("2 Good Jets");
     _cutflow->cut(LEPTON)->setName(string("Good ")
-            + (ELECTRON == _lepton_mode ? "Electron" : "Muon"));
+            + (ELECTRON == _synch_mode ? "Electron" : "Muon"));
     _cutflow->cut(VETO_SECOND_LEPTON)->setName(string("Veto Good ")
-            + (ELECTRON == _lepton_mode ? "Muon" : "Electron"));
+            + (ELECTRON == _synch_mode ? "Muon" : "Electron"));
     monitor(_cutflow);
 
     // Selectrors
@@ -89,7 +89,7 @@ SynchJuly2011Analyzer::SynchJuly2011Analyzer(const LeptonMode &mode):
 }
 
 SynchJuly2011Analyzer::SynchJuly2011Analyzer(const SynchJuly2011Analyzer &object):
-    _lepton_mode(object._lepton_mode)
+    _synch_mode(object._synch_mode)
 {
     _cutflow = 
         dynamic_pointer_cast<MultiplicityCutflow>(object._cutflow->clone());
@@ -215,7 +215,7 @@ void SynchJuly2011Analyzer::process(const Event *event)
     _cutflow->apply(JET);
 
     bool lepton_cut = false;
-    switch(_lepton_mode)
+    switch(_synch_mode)
     {
         case ELECTRON:  lepton_cut = electron(event);
                         break;
@@ -277,7 +277,7 @@ void SynchJuly2011Analyzer::print(std::ostream &out) const
     }
     out << endl;
 
-    out << "Cutflow [" << _lepton_mode << " mode]" << endl;
+    out << "Cutflow [" << _synch_mode << " mode]" << endl;
     out << *_cutflow << endl;
     out << endl;
 
@@ -285,7 +285,7 @@ void SynchJuly2011Analyzer::print(std::ostream &out) const
     out << *_jet_selector << endl;
     out << endl;
 
-    switch(_lepton_mode)
+    switch(_synch_mode)
     {
         case ELECTRON: out << "Electron Selector" << endl;
                        out << *_electron_selector << endl;
@@ -486,8 +486,8 @@ bool SynchJuly2011Analyzer::muon(const Event *event)
 
 // Synch with Jet Energy corrections
 //
-SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const LeptonMode &mode):
-    _lepton_mode(mode)
+SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const SynchMode &mode):
+    _synch_mode(mode)
 {
     _cutflow.reset(new MultiplicityCutflow(6));
     _cutflow->cut(PRESELECTION)->setName("pre-selection");
@@ -496,9 +496,9 @@ SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const LeptonMode &mode):
     _cutflow->cut(PRIMARY_VERTEX)->setName("Good Primary Vertex");
     _cutflow->cut(JET)->setName("2 Good Jets");
     _cutflow->cut(LEPTON)->setName(string("Good ")
-            + (ELECTRON == _lepton_mode ? "Electron" : "Muon"));
+            + (ELECTRON == _synch_mode ? "Electron" : "Muon"));
     _cutflow->cut(VETO_SECOND_LEPTON)->setName(string("Veto Good ")
-            + (ELECTRON == _lepton_mode ? "Muon" : "Electron"));
+            + (ELECTRON == _synch_mode ? "Muon" : "Electron"));
     monitor(_cutflow);
 
     // Selectrors
@@ -521,7 +521,7 @@ SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const LeptonMode &mode):
 }
 
 SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const SynchJECJuly2011Analyzer &object):
-    _lepton_mode(object._lepton_mode)
+    _synch_mode(object._synch_mode)
 {
     setJetEnergyCorrections(object._corrections);
 
@@ -616,7 +616,7 @@ void SynchJECJuly2011Analyzer::process(const Event *event)
 
     _cutflow->apply(JET);
 
-    if (ELECTRON == _lepton_mode)
+    if (ELECTRON == _synch_mode)
     {
         if (1 != good_electrons.size())
             return;
@@ -626,7 +626,7 @@ void SynchJECJuly2011Analyzer::process(const Event *event)
         if (good_muons.size())
             return;
     }
-    else if (MUON == _lepton_mode)
+    else if (MUON == _synch_mode)
     {
         if (1 != good_muons.size())
             return;
@@ -692,7 +692,7 @@ void SynchJECJuly2011Analyzer::print(std::ostream &out) const
     out << endl;
     */
 
-    out << "Cutflow [" << _lepton_mode << " mode]" << endl;
+    out << "Cutflow [" << _synch_mode << " mode]" << endl;
     out << *_cutflow << endl;
     out << endl;
 
@@ -700,7 +700,7 @@ void SynchJECJuly2011Analyzer::print(std::ostream &out) const
     out << *_jet_selector << endl;
     out << endl;
 
-    switch(_lepton_mode)
+    switch(_synch_mode)
     {
         case ELECTRON: out << "Electron Selector" << endl;
                        out << *_electron_selector << endl;
@@ -900,35 +900,18 @@ void SynchJECJuly2011Analyzer::printP4(std::ostream &out, const LorentzVector &p
 
 // Helpers
 //
-std::ostream &bsm::operator <<(std::ostream &out, const SynchJuly2011Analyzer::LeptonMode &mode)
+std::ostream &bsm::operator <<(std::ostream &out, const SynchMode &mode)
 {
     switch(mode)
     {
-        case SynchJuly2011Analyzer::ELECTRON:   out << "electron";
-                                                break;
+        case ELECTRON:   out << "electron";
+                         break;
 
-        case SynchJuly2011Analyzer::MUON:       out << "muon";
-                                                break;
+        case MUON:       out << "muon";
+                         break;
 
-        default:                                out << "unknown";
-                                                break;
-    }
-
-    return out;
-}
-
-std::ostream &bsm::operator <<(std::ostream &out, const SynchJECJuly2011Analyzer::LeptonMode &mode)
-{
-    switch(mode)
-    {
-        case SynchJECJuly2011Analyzer::ELECTRON:   out << "electron";
-                                                break;
-
-        case SynchJECJuly2011Analyzer::MUON:       out << "muon";
-                                                break;
-
-        default:                                out << "unknown";
-                                                break;
+        default:         out << "unknown";
+                         break;
     }
 
     return out;
