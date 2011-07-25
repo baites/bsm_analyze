@@ -784,6 +784,7 @@ void SynchJECJuly2011Analyzer::merge(const ObjectPtr &pointer)
 
 void SynchJECJuly2011Analyzer::print(std::ostream &out) const
 {
+    /*
     out << "Survived Events" << endl;
     out << " " << setw(10) << left << "Run" << setw(10) << "Lumi" << "Event" << endl;
     for(std::vector<Event::Extra>::const_iterator extra = _passed_events.begin();
@@ -796,6 +797,7 @@ void SynchJECJuly2011Analyzer::print(std::ostream &out) const
             << extra->id() << endl;
     }
     out << endl;
+    */
 
     out << "Cutflow [" << _lepton_mode << " mode]" << endl;
     out << *_cutflow << endl;
@@ -842,8 +844,10 @@ void SynchJECJuly2011Analyzer::print(std::ostream &out) const
         default: break;
     }
 
+    /*
     out << endl;
     out << _out.str();
+    */
 }
 
 // Private
