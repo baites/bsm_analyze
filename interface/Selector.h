@@ -51,7 +51,7 @@ namespace bsm
 
             // Cuts accessors
             //
-            CutPtr et() const;
+            CutPtr pt() const;
             CutPtr eta() const;
             CutPtr primary_vertex() const;
 
@@ -74,7 +74,7 @@ namespace bsm
             //
             ElectronSelector &operator =(const ElectronSelector &);
 
-            CutPtr _et;
+            CutPtr _pt;
             CutPtr _eta;
             CutPtr _primary_vertex;
     };

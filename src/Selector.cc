@@ -45,37 +45,37 @@ using bsm::LockSelectorEventCounterOnUpdate;
 //
 ElectronSelector::ElectronSelector()
 {
-    _et.reset(new Comparator<>(30, "Et"));
+    _pt.reset(new Comparator<>(30, "Pt"));
     _eta.reset(new Comparator<std::less<float> >(2.5, "|eta|"));
     _primary_vertex.reset(new Comparator<std::less<float> >(1, "|el.z() - pv.z()|"));
 
-    monitor(_et);
+    monitor(_pt);
     monitor(_eta);
     monitor(_primary_vertex);
 }
 
 ElectronSelector::ElectronSelector(const ElectronSelector &object)
 {
-    _et = dynamic_pointer_cast<Cut>(object._et->clone());
+    _pt = dynamic_pointer_cast<Cut>(object._pt->clone());
     _eta = dynamic_pointer_cast<Cut>(object._eta->clone());
     _primary_vertex = dynamic_pointer_cast<Cut>(object._primary_vertex->clone());
 
-    monitor(_et);
+    monitor(_pt);
     monitor(_eta);
     monitor(_primary_vertex);
 }
 
 bool ElectronSelector::apply(const Electron &electron, const PrimaryVertex &pv)
 {
-    return _et->apply(bsm::et(electron.physics_object().p4()))
+    return _pt->apply(bsm::pt(electron.physics_object().p4()))
         && _eta->apply(fabs(bsm::eta(electron.physics_object().p4())))
         && _primary_vertex->apply(fabs(electron.physics_object().vertex().z()
                     - pv.vertex().z()));
 }
 
-CutPtr ElectronSelector::et() const
+CutPtr ElectronSelector::pt() const
 {
-    return _et;
+    return _pt;
 }
 
 CutPtr ElectronSelector::eta() const
@@ -90,14 +90,14 @@ CutPtr ElectronSelector::primary_vertex() const
 
 void ElectronSelector::enable()
 {
-    et()->enable();
+    pt()->enable();
     eta()->enable();
     primary_vertex()->enable();
 }
 
 void ElectronSelector::disable()
 {
-    et()->disable();
+    pt()->disable();
     eta()->disable();
     primary_vertex()->disable();
 }
@@ -117,7 +117,7 @@ void ElectronSelector::print(std::ostream &out) const
     out << "     CUT                 " << setw(5) << " "
         << " Objects Events" << endl;
     out << setw(45) << setfill('-') << left << " " << setfill(' ') << endl;
-    out << *_et << endl;
+    out << *_pt << endl;
     out << *_eta << endl;
     out << *_primary_vertex;
 }
@@ -679,7 +679,7 @@ LockSelectorEventCounterOnUpdate::LockSelectorEventCounterOnUpdate(
         ElectronSelector &selector)
 {
     _lockers.push_back(Locker(
-                new LockCounterOnUpdate(selector.et()->events())));
+                new LockCounterOnUpdate(selector.pt()->events())));
     _lockers.push_back(Locker(
                 new LockCounterOnUpdate(selector.eta()->events())));
     _lockers.push_back(Locker(
