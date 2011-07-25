@@ -84,9 +84,7 @@ namespace bsm
             boost::shared_ptr<PrimaryVertexSelector> _primary_vertex_selector;
             boost::shared_ptr<JetSelector> _jet_selector;
             boost::shared_ptr<ElectronSelector> _electron_selector;
-            boost::shared_ptr<ElectronSelector> _electron_veto_selector;
             boost::shared_ptr<MuonSelector> _muon_selector;
-            boost::shared_ptr<MuonSelector> _muon_veto_selector;
 
             std::vector<Event::Extra> _passed_events;
 
