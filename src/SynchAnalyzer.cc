@@ -506,47 +506,18 @@ SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const LeptonMode &mode):
     _primary_vertex_selector.reset(new PrimaryVertexSelector());
     _jet_selector.reset(new JetSelector());
     _electron_selector.reset(new ElectronSelector());
-    _electron_veto_selector.reset(new ElectronSelector());
     _muon_selector.reset(new MuonSelector());
-    _muon_veto_selector.reset(new MuonSelector());
 
     _electron_selector->primary_vertex()->disable();
-    _electron_veto_selector->primary_vertex()->disable();
 
     _muon_selector->primary_vertex()->disable();
-    _muon_veto_selector->primary_vertex()->disable();
 
     _muon_selector->pt()->setValue(35);
-    _muon_veto_selector->pt()->setValue(35);
 
     monitor(_primary_vertex_selector);
     monitor(_jet_selector);
     monitor(_electron_selector);
-    monitor(_electron_veto_selector);
     monitor(_muon_selector);
-    monitor(_muon_veto_selector);
-
-    // Monitors
-    //
-    _leading_jet.reset(new LorentzVectorMonitor());
-
-    _electron_before_veto.reset(new LorentzVectorMonitor());
-    _muon_to_veto.reset(new LorentzVectorMonitor());
-    _electron_after_veto.reset(new LorentzVectorMonitor());
-
-    _muon_before_veto.reset(new LorentzVectorMonitor());
-    _electron_to_veto.reset(new LorentzVectorMonitor());
-    _muon_after_veto.reset(new LorentzVectorMonitor());
-
-    monitor(_leading_jet);
-
-    monitor(_electron_before_veto);
-    monitor(_muon_to_veto);
-    monitor(_electron_after_veto);
-
-    monitor(_muon_before_veto);
-    monitor(_electron_to_veto);
-    monitor(_muon_after_veto);
 }
 
 SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const SynchJECJuly2011Analyzer &object):
@@ -570,56 +541,13 @@ SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const SynchJECJuly2011Analyze
     _electron_selector = 
         dynamic_pointer_cast<ElectronSelector>(object._electron_selector->clone());
 
-    _electron_veto_selector = 
-        dynamic_pointer_cast<ElectronSelector>(object._electron_veto_selector->clone());
-
     _muon_selector = 
         dynamic_pointer_cast<MuonSelector>(object._muon_selector->clone());
-
-    _muon_veto_selector = 
-        dynamic_pointer_cast<MuonSelector>(object._muon_veto_selector->clone());
 
     monitor(_primary_vertex_selector);
     monitor(_jet_selector);
     monitor(_electron_selector);
-    monitor(_electron_veto_selector);
     monitor(_muon_selector);
-    monitor(_muon_veto_selector);
-
-    // Monitors
-    //
-    // Monitors
-    //
-    _leading_jet = 
-        dynamic_pointer_cast<LorentzVectorMonitor>(object._leading_jet->clone());
-
-    _electron_before_veto = 
-        dynamic_pointer_cast<LorentzVectorMonitor>(object._electron_before_veto->clone());
-
-    _muon_to_veto = 
-        dynamic_pointer_cast<LorentzVectorMonitor>(object._muon_to_veto->clone());
-
-    _electron_after_veto = 
-        dynamic_pointer_cast<LorentzVectorMonitor>(object._electron_after_veto->clone());
-
-    _muon_before_veto = 
-        dynamic_pointer_cast<LorentzVectorMonitor>(object._muon_before_veto->clone());
-
-    _electron_to_veto = 
-        dynamic_pointer_cast<LorentzVectorMonitor>(object._electron_to_veto->clone());
-
-    _muon_after_veto = 
-        dynamic_pointer_cast<LorentzVectorMonitor>(object._muon_after_veto->clone());
-
-    monitor(_leading_jet);
-
-    monitor(_electron_before_veto);
-    monitor(_muon_to_veto);
-    monitor(_electron_after_veto);
-
-    monitor(_muon_before_veto);
-    monitor(_electron_to_veto);
-    monitor(_muon_after_veto);
 }
 
 void SynchJECJuly2011Analyzer::setJetEnergyCorrections(const Corrections &corrections)
@@ -627,41 +555,6 @@ void SynchJECJuly2011Analyzer::setJetEnergyCorrections(const Corrections &correc
     copyCorrections(corrections);
 
     _jec.reset(new FactorizedJetCorrector(_corrections));
-}
-
-const SynchJECJuly2011Analyzer::P4MonitorPtr SynchJECJuly2011Analyzer::leadingJet() const
-{
-    return _leading_jet;
-}
-
-const SynchJECJuly2011Analyzer::P4MonitorPtr SynchJECJuly2011Analyzer::electronBeforeVeto() const
-{
-    return _electron_before_veto;
-}
-
-const SynchJECJuly2011Analyzer::P4MonitorPtr SynchJECJuly2011Analyzer::muonToVeto() const
-{
-    return _muon_to_veto;
-}
-
-const SynchJECJuly2011Analyzer::P4MonitorPtr SynchJECJuly2011Analyzer::electronAfterVeto() const
-{
-    return _electron_after_veto;
-}
-
-const SynchJECJuly2011Analyzer::P4MonitorPtr SynchJECJuly2011Analyzer::muonBeforeVeto() const
-{
-    return _muon_before_veto;
-}
-
-const SynchJECJuly2011Analyzer::P4MonitorPtr SynchJECJuly2011Analyzer::electronToVeto() const
-{
-    return _electron_to_veto;
-}
-
-const SynchJECJuly2011Analyzer::P4MonitorPtr SynchJECJuly2011Analyzer::muonAfterVeto() const
-{
-    return _muon_after_veto;
 }
 
 void SynchJECJuly2011Analyzer::onFileOpen(const std::string &filename, const Input *)
@@ -813,32 +706,16 @@ void SynchJECJuly2011Analyzer::print(std::ostream &out) const
                        out << *_electron_selector << endl;
                        out << endl;
                        out << "Muon Veto" << endl;
-                       out << *_muon_veto_selector << endl;
+                       out << *_muon_selector << endl;
                        out << endl;
-                       out << "Electron before Veto" << endl;
-                       out << *electronBeforeVeto() << endl;
-                       out << endl;
-                       out << "Muon to Veto" << endl;
-                       out << *muonToVeto() << endl;
-                       out << endl;
-                       out << "Electron after Veto" << endl;
-                       out << *electronAfterVeto();
                        break;
 
         case MUON:     out << "Muon Selector" << endl;
                        out << *_muon_selector << endl;
                        out << endl;
                        out << "Electron Veto" << endl;
-                       out << *_electron_veto_selector << endl;
+                       out << *_electron_selector << endl;
                        out << endl;
-                       out << "Muon before Veto" << endl;
-                       out << *muonBeforeVeto() << endl;
-                       out << endl;
-                       out << "Electron to Veto" << endl;
-                       out << *electronToVeto() << endl;
-                       out << endl;
-                       out << "Muon after Veto" << endl;
-                       out << *muonAfterVeto();
                        break;
 
         default: break;

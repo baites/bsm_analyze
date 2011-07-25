@@ -104,7 +104,6 @@ namespace bsm
     class SynchJECJuly2011Analyzer : public Analyzer
     {
         public:
-            typedef boost::shared_ptr<LorentzVectorMonitor> P4MonitorPtr;
             typedef std::vector<JetCorrectorParameters> Corrections;
 
             enum LeptonMode
@@ -117,16 +116,6 @@ namespace bsm
             SynchJECJuly2011Analyzer(const SynchJECJuly2011Analyzer &);
 
             void setJetEnergyCorrections(const Corrections &corrections);
-
-            const P4MonitorPtr leadingJet() const;
-
-            const P4MonitorPtr electronBeforeVeto() const;
-            const P4MonitorPtr muonToVeto() const;
-            const P4MonitorPtr electronAfterVeto() const;
-
-            const P4MonitorPtr muonBeforeVeto() const;
-            const P4MonitorPtr electronToVeto() const;
-            const P4MonitorPtr muonAfterVeto() const;
 
             // Anlayzer interface
             //
@@ -186,21 +175,9 @@ namespace bsm
             boost::shared_ptr<PrimaryVertexSelector> _primary_vertex_selector;
             boost::shared_ptr<JetSelector> _jet_selector;
             boost::shared_ptr<ElectronSelector> _electron_selector;
-            boost::shared_ptr<ElectronSelector> _electron_veto_selector;
             boost::shared_ptr<MuonSelector> _muon_selector;
-            boost::shared_ptr<MuonSelector> _muon_veto_selector;
 
             std::vector<Event::Extra> _passed_events;
-
-            P4MonitorPtr _leading_jet;
-
-            P4MonitorPtr _electron_before_veto;
-            P4MonitorPtr _muon_to_veto;
-            P4MonitorPtr _electron_after_veto;
-
-            P4MonitorPtr _muon_before_veto;
-            P4MonitorPtr _electron_to_veto;
-            P4MonitorPtr _muon_after_veto;
 
             Corrections _corrections;
             boost::shared_ptr<FactorizedJetCorrector> _jec;
