@@ -379,7 +379,7 @@ bool SynchJuly2011Analyzer::electron(const Event *event)
         }
     }
 
-    if (1 != selected_electrons)
+    if (!selected_electrons)
         return false;
 
     _cutflow->apply(LEPTON);
@@ -409,7 +409,8 @@ bool SynchJuly2011Analyzer::electron(const Event *event)
     else if (selected_electron)
         _electron_after_veto->fill(selected_electron->physics_object().p4());
 
-    return !selected_muons;
+    return !selected_muons
+        || 1 < selected_electrons;
 }
 
 bool SynchJuly2011Analyzer::muon(const Event *event)
@@ -439,7 +440,7 @@ bool SynchJuly2011Analyzer::muon(const Event *event)
         }
     }
 
-    if (1 != selected_muons)
+    if (!selected_muons)
         return false;
 
     _cutflow->apply(LEPTON);
@@ -469,7 +470,8 @@ bool SynchJuly2011Analyzer::muon(const Event *event)
     else if (selected_muon)
         _muon_after_veto->fill(selected_muon->physics_object().p4());
 
-    return !selected_electrons;
+    return !selected_electrons
+        || 1 < selected_muons;
 }
 
 
@@ -610,22 +612,24 @@ void SynchJECJuly2011Analyzer::process(const Event *event)
 
     if (ELECTRON == _synch_mode)
     {
-        if (1 != good_electrons.size())
+        if (!good_electrons.size())
             return;
 
         _cutflow->apply(LEPTON);
 
-        if (good_muons.size())
+        if (good_muons.size()
+            || 1 < good_electrons.size())
             return;
     }
     else if (MUON == _synch_mode)
     {
-        if (1 != good_muons.size())
+        if (!good_muons.size())
             return;
 
         _cutflow->apply(LEPTON);
 
-        if (good_electrons.size())
+        if (good_electrons.size()
+            || 1 < good_muons.size())
             return;
     }
     else
