@@ -478,19 +478,25 @@ bool SynchJuly2011Analyzer::muon(const Event *event)
 
 // Synch with Jet Energy corrections
 //
-SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const SynchMode &mode):
-    _synch_mode(mode)
+SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const SynchMode &synch_mode):
+    _synch_mode(synch_mode)
 {
-    _cutflow.reset(new MultiplicityCutflow(6));
+    _cutflow.reset(new MultiplicityCutflow(SELECTIONS - 1));
     _cutflow->cut(PRESELECTION)->setName("pre-selection");
     _cutflow->cut(SCRAPING)->setName("Scraping Veto");
     _cutflow->cut(HBHENOISE)->setName("HBHE Noise");
     _cutflow->cut(PRIMARY_VERTEX)->setName("Good Primary Vertex");
     _cutflow->cut(JET)->setName("2 Good Jets");
-    _cutflow->cut(LEPTON)->setName(string("Good ")
-            + (ELECTRON == _synch_mode ? "Electron" : "Muon"));
-    _cutflow->cut(VETO_SECOND_LEPTON)->setName(string("Veto Good ")
-            + (ELECTRON == _synch_mode ? "Muon" : "Electron"));
+
+    string lepton = ELECTRON == _synch_mode
+        ? "Electron"
+        : "Muon";
+
+    _cutflow->cut(LEPTON)->setName(string("Good ") + lepton);
+    _cutflow->cut(VETO_SECOND_LEPTON)->setName("Veto 2nd lepton");
+    _cutflow->cut(CUT_2D_LEPTON)->setName(lepton + " 2D-cut");
+    _cutflow->cut(LEADING_JET)->setName("Leading Jet");
+    _cutflow->cut(HTLEP)->setName("hTlep");
     monitor(_cutflow);
 
     // Selectrors
@@ -610,6 +616,8 @@ void SynchJECJuly2011Analyzer::process(const Event *event)
 
     _cutflow->apply(JET);
 
+    const LorentzVector *lepton_p4 = 0;
+
     if (ELECTRON == _synch_mode)
     {
         if (!good_electrons.size())
@@ -620,6 +628,8 @@ void SynchJECJuly2011Analyzer::process(const Event *event)
         if (good_muons.size()
             || 1 < good_electrons.size())
             return;
+
+        lepton_p4 = &((*good_electrons.begin())->physics_object().p4());
     }
     else if (MUON == _synch_mode)
     {
@@ -631,11 +641,51 @@ void SynchJECJuly2011Analyzer::process(const Event *event)
         if (good_electrons.size()
             || 1 < good_muons.size())
             return;
+
+        lepton_p4 = &((*good_muons.begin())->physics_object().p4());
     }
     else
         return;
 
     _cutflow->apply(VETO_SECOND_LEPTON);
+
+    GoodJets::const_iterator closest_jet = good_jets.end();
+    float deltar_min = 999999;
+    float max_pt = 0;
+
+    for(GoodJets::const_iterator jet = good_jets.begin();
+            good_jets.end() != jet;
+            ++jet)
+    {
+        const float deltar = dr(*lepton_p4, jet->corrected_p4);
+        if (deltar < deltar_min)
+        {
+            deltar_min = deltar;
+            closest_jet = jet;
+        }
+
+        const float jet_pt = pt(jet->corrected_p4);
+        if (max_pt < jet_pt)
+            max_pt = jet_pt;
+    }
+
+    const float ptrel_value = ptrel(*lepton_p4, closest_jet->corrected_p4);
+
+    if (0.5 >= deltar_min
+            && 25 >= ptrel_value)
+        return;
+
+    _cutflow->apply(CUT_2D_LEPTON);
+
+    if (250 >= max_pt)
+        return;
+
+    _cutflow->apply(LEADING_JET);
+
+    if (150 >= (et(event->missing_energy().p4()) + pt(*lepton_p4)))
+        return;
+
+    _cutflow->apply(HTLEP);
 
     _passed_events.push_back(event->extra());
 }

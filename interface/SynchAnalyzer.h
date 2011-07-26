@@ -149,7 +149,12 @@ namespace bsm
                 PRIMARY_VERTEX,
                 JET,
                 LEPTON,
-                VETO_SECOND_LEPTON
+                VETO_SECOND_LEPTON,
+                CUT_2D_LEPTON,
+                LEADING_JET,
+                HTLEP,
+
+                SELECTIONS // this item should always be the last one
             };
 
             void copyCorrections(const Corrections &);
