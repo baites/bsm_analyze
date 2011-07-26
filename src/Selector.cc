@@ -478,7 +478,7 @@ PrimaryVertexSelector::PrimaryVertexSelector()
 {
     _ndof.reset(new Comparator<std::greater_equal<float> >(4, "ndof"));
     _vertex_z.reset(new Comparator<std::less_equal<float> >(24, "|pv.z()|"));
-    _rho.reset(new Comparator<std::less_equal<float> >(4.0, "|pv.rho()|"));
+    _rho.reset(new Comparator<std::less_equal<float> >(4.0, "pv.rho()"));
 
     monitor(_ndof);
     monitor(_vertex_z);
