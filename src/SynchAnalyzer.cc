@@ -478,8 +478,10 @@ bool SynchJuly2011Analyzer::muon(const Event *event)
 
 // Synch with Jet Energy corrections
 //
-SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const SynchMode &synch_mode):
-    _synch_mode(synch_mode)
+SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const SynchMode &synch_mode,
+        const SynchCut &synch_cut):
+    _synch_mode(synch_mode),
+    _synch_cut(synch_cut)
 {
     _cutflow.reset(new MultiplicityCutflow(SELECTIONS - 1));
     _cutflow->cut(PRESELECTION)->setName("pre-selection");
@@ -494,7 +496,12 @@ SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const SynchMode &synch_mode):
 
     _cutflow->cut(LEPTON)->setName(string("Good ") + lepton);
     _cutflow->cut(VETO_SECOND_LEPTON)->setName("Veto 2nd lepton");
-    _cutflow->cut(CUT_2D_LEPTON)->setName(lepton + " 2D-cut");
+    _cutflow->cut(CUT_LEPTON)->setName(lepton + " " +
+            (CUT_2D == _synch_cut
+             ? "2D-cut"
+             : (ISOLATION == _synch_cut
+                    ? "Isolation"
+                    : "unknown")));
     _cutflow->cut(LEADING_JET)->setName("Leading Jet");
     _cutflow->cut(HTLEP)->setName("hTlep");
     monitor(_cutflow);
@@ -521,7 +528,8 @@ SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const SynchMode &synch_mode):
 }
 
 SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const SynchJECJuly2011Analyzer &object):
-    _synch_mode(object._synch_mode)
+    _synch_mode(object._synch_mode),
+    _synch_cut(object._synch_cut)
 {
     setJetEnergyCorrections(object._corrections);
 
@@ -617,6 +625,7 @@ void SynchJECJuly2011Analyzer::process(const Event *event)
     _cutflow->apply(JET);
 
     const LorentzVector *lepton_p4 = 0;
+    const Isolation *lepton_isolation = 0;
 
     if (ELECTRON == _synch_mode)
     {
@@ -629,7 +638,12 @@ void SynchJECJuly2011Analyzer::process(const Event *event)
             || 1 < good_electrons.size())
             return;
 
-        lepton_p4 = &((*good_electrons.begin())->physics_object().p4());
+        const Electron *electron = *good_electrons.begin();
+
+        lepton_p4 = &(electron->physics_object().p4());
+
+        if (electron->has_isolation())
+            lepton_isolation = &(electron->isolation());
     }
     else if (MUON == _synch_mode)
     {
@@ -642,40 +656,44 @@ void SynchJECJuly2011Analyzer::process(const Event *event)
             || 1 < good_muons.size())
             return;
 
-        lepton_p4 = &((*good_muons.begin())->physics_object().p4());
+        const Muon *muon = *good_muons.begin();
+
+        lepton_p4 = &(muon->physics_object().p4());
+
+        if (muon->has_isolation())
+            lepton_isolation = &(muon->isolation());
     }
     else
         return;
 
     _cutflow->apply(VETO_SECOND_LEPTON);
 
-    GoodJets::const_iterator closest_jet = good_jets.end();
-    float deltar_min = 999999;
-    float max_pt = 0;
+    if (CUT_2D == _synch_cut)
+    {
+        if (!cut2D(*lepton_p4, good_jets))
+            return;
+    }
+    else if (ISOLATION == _synch_cut)
+    {
+        if (lepton_isolation
+            && !isolation(*lepton_p4, *lepton_isolation))
 
+            return;
+    }
+    else // Unknown cut type
+        return;
+
+    _cutflow->apply(CUT_LEPTON);
+
+    float max_pt = 0;
     for(GoodJets::const_iterator jet = good_jets.begin();
             good_jets.end() != jet;
             ++jet)
     {
-        const float deltar = dr(*lepton_p4, jet->corrected_p4);
-        if (deltar < deltar_min)
-        {
-            deltar_min = deltar;
-            closest_jet = jet;
-        }
-
         const float jet_pt = pt(jet->corrected_p4);
-        if (max_pt < jet_pt)
+        if (jet_pt > max_pt)
             max_pt = jet_pt;
     }
-
-    const float ptrel_value = ptrel(*lepton_p4, closest_jet->corrected_p4);
-
-    if (0.5 >= deltar_min
-            && 25 >= ptrel_value)
-        return;
-
-    _cutflow->apply(CUT_2D_LEPTON);
 
     if (250 >= max_pt)
         return;
@@ -716,28 +734,10 @@ void SynchJECJuly2011Analyzer::merge(const ObjectPtr &pointer)
     _passed_events.insert(_passed_events.end(),
             object->_passed_events.begin(),
             object->_passed_events.end());
-
-    _out << endl;
-    _out << object->_out.str();
 }
 
 void SynchJECJuly2011Analyzer::print(std::ostream &out) const
 {
-    /*
-    out << "Survived Events" << endl;
-    out << " " << setw(10) << left << "Run" << setw(10) << "Lumi" << "Event" << endl;
-    for(std::vector<Event::Extra>::const_iterator extra = _passed_events.begin();
-            _passed_events.end() != extra;
-            ++extra)
-    {
-        out << " "
-            << setw(10) << left << extra->run()
-            << setw(10) << left << extra->lumi()
-            << extra->id() << endl;
-    }
-    out << endl;
-    */
-
     out << "Cutflow [" << _synch_mode << " mode]" << endl;
     out << *_cutflow << endl;
     out << endl;
@@ -771,10 +771,8 @@ void SynchJECJuly2011Analyzer::print(std::ostream &out) const
         default: break;
     }
 
-    /*
     out << endl;
     out << _out.str();
-    */
 }
 
 // Private
@@ -805,26 +803,6 @@ SynchJECJuly2011Analyzer::GoodJets
     std::ostringstream jets_out;
 
     std::ostringstream out;
-
-    /*
-    for(GoodElectrons::const_iterator electron = electrons.begin();
-            electrons.end() != electron;
-            ++electron)
-    {
-        jets_out << "el: ";
-        printP4(jets_out, (*electron)->physics_object().p4());
-        jets_out << endl;
-    }
-
-    for(GoodMuons::const_iterator muon = muons.begin();
-            muons.end() != muon;
-            ++muon)
-    {
-        jets_out << "mu: ";
-        printP4(jets_out, (*muon)->physics_object().p4());
-        jets_out << endl;
-    }
-    */
 
     LockSelectorEventCounterOnUpdate lock(*_jet_selector);
     for(Jets::const_iterator jet = event->jets().begin();
@@ -938,6 +916,34 @@ SynchJECJuly2011Analyzer::GoodJets
     }
 
     return good_jets;
+}
+
+bool SynchJECJuly2011Analyzer::cut2D(const LorentzVector &p4, const GoodJets &jets)
+{
+    GoodJets::const_iterator closest_jet = jets.end();
+    float deltar_min = 999999;
+
+    for(GoodJets::const_iterator jet = jets.begin();
+            jets.end() != jet;
+            ++jet)
+    {
+        const float deltar = dr(p4, jet->corrected_p4);
+        if (deltar < deltar_min)
+        {
+            deltar_min = deltar;
+            closest_jet = jet;
+        }
+    }
+
+    return 0.5 < deltar_min
+        || 25 < ptrel(p4, closest_jet->corrected_p4);
+}
+
+bool SynchJECJuly2011Analyzer::isolation(const LorentzVector &p4,
+        const Isolation &isolation)
+{
+    return (isolation.hcal() + isolation.ecal() + isolation.track())
+        / pt(p4);
 }
 
 void SynchJECJuly2011Analyzer::printP4(std::ostream &out, const LorentzVector &p4)

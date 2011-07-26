@@ -33,6 +33,7 @@ using bsm::Event;
 using bsm::LorentzVectorCanvas;
 using bsm::ThreadController;
 using bsm::SynchMode;
+using bsm::SynchCut;
 
 typedef shared_ptr<SynchJECJuly2011Analyzer> AnalyzerPtr;
 
@@ -67,6 +68,10 @@ int main(int argc, char *argv[])
             ("mode,m",
              po::value<string>(),
              "Synchronizatin mode: muon, electron")
+
+            ("cut,c",
+             po::value<string>(),
+             "Synchronization cut: 2d, iso")
         ;
 
         po::options_description hidden_options("Hidden Options");
@@ -130,9 +135,22 @@ try
             cerr << "Unsupported mode: use Electron channel" << endl;
     }
 
+    SynchCut cut = bsm::CUT_2D;
+    
+    if (arguments.count("cut"))
+    {
+        string arg = arguments["cut"].as<string>();
+        boost::to_lower(arg);
+
+        if ("iso" == arg)
+            cut = bsm::ISOLATION;
+        else if ("2d" != arg)
+            cerr << "Unsupported cut: use 2D cut" << endl;
+    }
+
     // Prepare Analysis
     //
-    AnalyzerPtr analyzer(new SynchJECJuly2011Analyzer(mode));
+    AnalyzerPtr analyzer(new SynchJECJuly2011Analyzer(mode, cut));
 
     // Load corrections
     //

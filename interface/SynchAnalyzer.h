@@ -25,8 +25,14 @@ namespace bsm
 {
     enum SynchMode
     {
-        ELECTRON = 1,
+        ELECTRON = 0,
         MUON
+    };
+
+    enum SynchCut
+    {
+        ISOLATION = 0,
+        CUT_2D
     };
 
     class SynchJuly2011Analyzer : public Analyzer
@@ -104,7 +110,8 @@ namespace bsm
         public:
             typedef std::vector<JetCorrectorParameters> Corrections;
 
-            SynchJECJuly2011Analyzer(const SynchMode & = ELECTRON);
+            SynchJECJuly2011Analyzer(const SynchMode & = ELECTRON,
+                    const SynchCut & = CUT_2D);
             SynchJECJuly2011Analyzer(const SynchJECJuly2011Analyzer &);
 
             void setJetEnergyCorrections(const Corrections &corrections);
@@ -150,7 +157,7 @@ namespace bsm
                 JET,
                 LEPTON,
                 VETO_SECOND_LEPTON,
-                CUT_2D_LEPTON,
+                CUT_LEPTON,
                 LEADING_JET,
                 HTLEP,
 
@@ -163,9 +170,13 @@ namespace bsm
                     const GoodElectrons &,
                     const GoodMuons &);
 
+            bool cut2D(const LorentzVector &, const GoodJets &);
+            bool isolation(const LorentzVector &, const Isolation &);
+
             void printP4(std::ostream &, const LorentzVector &);
 
             SynchMode _synch_mode;
+            SynchCut _synch_cut;
 
             CutflowPtr _cutflow;
 
