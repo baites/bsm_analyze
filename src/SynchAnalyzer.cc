@@ -43,6 +43,8 @@ SynchJuly2011Analyzer::SynchJuly2011Analyzer(const SynchMode &mode):
     // Selectrors
     //
     _primary_vertex_selector.reset(new PrimaryVertexSelector());
+    _primary_vertex_selector->rho()->setValue(2.0);
+
     _jet_selector.reset(new JetSelector());
     _electron_selector.reset(new ElectronSelector());
     _muon_selector.reset(new MuonSelector());
@@ -263,6 +265,10 @@ void SynchJuly2011Analyzer::print(std::ostream &out) const
 
     out << "Cutflow [" << _synch_mode << " mode]" << endl;
     out << *_cutflow << endl;
+    out << endl;
+
+    out << "Primary Vertex Selector" << endl;
+    out << *_primary_vertex_selector << endl;
     out << endl;
 
     out << "Jet Selector" << endl;
@@ -488,6 +494,8 @@ SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const SynchMode &mode):
     // Selectrors
     //
     _primary_vertex_selector.reset(new PrimaryVertexSelector());
+    _primary_vertex_selector->rho()->setValue(2.0);
+
     _jet_selector.reset(new JetSelector());
     _electron_selector.reset(new ElectronSelector());
     _muon_selector.reset(new MuonSelector());
@@ -678,6 +686,10 @@ void SynchJECJuly2011Analyzer::print(std::ostream &out) const
 
     out << "Cutflow [" << _synch_mode << " mode]" << endl;
     out << *_cutflow << endl;
+    out << endl;
+
+    out << "Primary Vertex Selector" << endl;
+    out << *_primary_vertex_selector << endl;
     out << endl;
 
     out << "Jet Selector" << endl;
