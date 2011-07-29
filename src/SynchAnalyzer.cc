@@ -512,6 +512,10 @@ SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const SynchMode &synch_mode,
     _primary_vertex_selector->rho()->setValue(2.0);
 
     _jet_selector.reset(new JetSelector());
+    _jet_selector->pt()->setValue(25);
+
+    _good_jet_selector.reset(new JetSelector());
+
     _electron_selector.reset(new ElectronSelector());
     _muon_selector.reset(new MuonSelector());
 
@@ -523,6 +527,7 @@ SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const SynchMode &synch_mode,
 
     monitor(_primary_vertex_selector);
     monitor(_jet_selector);
+    monitor(_good_jet_selector);
     monitor(_electron_selector);
     monitor(_muon_selector);
 }
@@ -546,6 +551,9 @@ SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const SynchJECJuly2011Analyze
     _jet_selector = 
         dynamic_pointer_cast<JetSelector>(object._jet_selector->clone());
 
+    _good_jet_selector = 
+        dynamic_pointer_cast<JetSelector>(object._good_jet_selector->clone());
+
     _electron_selector = 
         dynamic_pointer_cast<ElectronSelector>(object._electron_selector->clone());
 
@@ -554,6 +562,7 @@ SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const SynchJECJuly2011Analyze
 
     monitor(_primary_vertex_selector);
     monitor(_jet_selector);
+    monitor(_good_jet_selector);
     monitor(_electron_selector);
     monitor(_muon_selector);
 }
@@ -617,7 +626,9 @@ void SynchJECJuly2011Analyzer::process(const Event *event)
             good_muons.push_back(&*muon);
     }
 
-    GoodJets good_jets = jets(event, good_electrons, good_muons);
+    GoodJets nice_jets;
+    GoodJets good_jets;
+    jets(event, good_electrons, good_muons, nice_jets, good_jets);
 
     if (2 > good_jets.size())
         return;
@@ -625,7 +636,7 @@ void SynchJECJuly2011Analyzer::process(const Event *event)
     _cutflow->apply(JET);
 
     const LorentzVector *lepton_p4 = 0;
-    const Isolation *lepton_isolation = 0;
+    const PFIsolation *lepton_isolation = 0;
 
     if (ELECTRON == _synch_mode)
     {
@@ -642,8 +653,8 @@ void SynchJECJuly2011Analyzer::process(const Event *event)
 
         lepton_p4 = &(electron->physics_object().p4());
 
-        if (electron->has_isolation())
-            lepton_isolation = &(electron->isolation());
+        if (electron->has_pf_isolation())
+            lepton_isolation = &(electron->pf_isolation());
     }
     else if (MUON == _synch_mode)
     {
@@ -660,8 +671,8 @@ void SynchJECJuly2011Analyzer::process(const Event *event)
 
         lepton_p4 = &(muon->physics_object().p4());
 
-        if (muon->has_isolation())
-            lepton_isolation = &(muon->isolation());
+        if (muon->has_pf_isolation())
+            lepton_isolation = &(muon->pf_isolation());
     }
     else
         return;
@@ -670,7 +681,7 @@ void SynchJECJuly2011Analyzer::process(const Event *event)
 
     if (CUT_2D == _synch_cut)
     {
-        if (!cut2D(*lepton_p4, good_jets))
+        if (!cut2D(*lepton_p4, nice_jets))
             return;
     }
     else if (ISOLATION == _synch_cut)
@@ -700,7 +711,7 @@ void SynchJECJuly2011Analyzer::process(const Event *event)
 
     _cutflow->apply(LEADING_JET);
 
-    if (150 >= (et(event->missing_energy().p4()) + pt(*lepton_p4)))
+    if (150 >= (pt(event->missing_energy().p4()) + pt(*lepton_p4)))
         return;
 
     _cutflow->apply(HTLEP);
@@ -788,13 +799,12 @@ void SynchJECJuly2011Analyzer::copyCorrections(const Corrections &corrections)
     copy(corrections.begin(), corrections.end(), _corrections.begin());
 }
 
-SynchJECJuly2011Analyzer::GoodJets
-    SynchJECJuly2011Analyzer::jets(const Event *event,
+void SynchJECJuly2011Analyzer::jets(const Event *event,
             const GoodElectrons &electrons,
-            const GoodMuons &muons)
+            const GoodMuons &muons,
+            GoodJets &nice_jets,
+            GoodJets &good_jets)
 {
-    GoodJets good_jets;
-
     typedef ::google::protobuf::RepeatedPtrField<Jet> Jets;
     typedef ::google::protobuf::RepeatedPtrField<Jet::Child> Children;
 
@@ -902,6 +912,11 @@ SynchJECJuly2011Analyzer::GoodJets
         tmp.jet = &*jet;
         tmp.corrected_p4 = corrected_p4;
 
+        nice_jets.push_back(tmp);
+
+        if (!_good_jet_selector->apply(corrected_jet))
+            continue;
+
         good_jets.push_back(tmp);
     }
 
@@ -914,8 +929,6 @@ SynchJECJuly2011Analyzer::GoodJets
 
         _out << jets_out.str() << endl;
     }
-
-    return good_jets;
 }
 
 bool SynchJECJuly2011Analyzer::cut2D(const LorentzVector &p4, const GoodJets &jets)
@@ -940,9 +953,9 @@ bool SynchJECJuly2011Analyzer::cut2D(const LorentzVector &p4, const GoodJets &je
 }
 
 bool SynchJECJuly2011Analyzer::isolation(const LorentzVector &p4,
-        const Isolation &isolation)
+        const PFIsolation &isolation)
 {
-    return (isolation.hcal() + isolation.ecal() + isolation.track())
+    return (isolation.charged_hadron() + isolation.neutral_hadron() + isolation.photon())
         / pt(p4);
 }
 

@@ -166,12 +166,14 @@ namespace bsm
 
             void copyCorrections(const Corrections &);
 
-            GoodJets jets(const Event *,
+            void jets(const Event *,
                     const GoodElectrons &,
-                    const GoodMuons &);
+                    const GoodMuons &,
+                    GoodJets &nice_jets,
+                    GoodJets &good_jets);
 
             bool cut2D(const LorentzVector &, const GoodJets &);
-            bool isolation(const LorentzVector &, const Isolation &);
+            bool isolation(const LorentzVector &, const PFIsolation &);
 
             void printP4(std::ostream &, const LorentzVector &);
 
@@ -182,6 +184,8 @@ namespace bsm
 
             boost::shared_ptr<PrimaryVertexSelector> _primary_vertex_selector;
             boost::shared_ptr<JetSelector> _jet_selector;
+            boost::shared_ptr<JetSelector> _good_jet_selector;
+
             boost::shared_ptr<ElectronSelector> _electron_selector;
             boost::shared_ptr<MuonSelector> _muon_selector;
 
