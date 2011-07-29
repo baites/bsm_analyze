@@ -172,7 +172,7 @@ namespace bsm
                     GoodJets &nice_jets,
                     GoodJets &good_jets);
 
-            bool cut2D(const LorentzVector &, const GoodJets &);
+            bool cut2D(const LorentzVector &, const GoodJets &, const Event *event);
             bool isolation(const LorentzVector &, const PFIsolation &);
 
             void printP4(std::ostream &, const LorentzVector &);

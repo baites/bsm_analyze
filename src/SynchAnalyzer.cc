@@ -521,7 +521,7 @@ SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const SynchMode &synch_mode,
 
     _electron_selector->primary_vertex()->disable();
 
-    _muon_selector->primary_vertex()->disable();
+    // _muon_selector->primary_vertex()->disable();
 
     _muon_selector->pt()->setValue(35);
 
@@ -679,9 +679,62 @@ void SynchJECJuly2011Analyzer::process(const Event *event)
 
     _cutflow->apply(VETO_SECOND_LEPTON);
 
+    if (2943 == event->extra().id())
+    {
+        _out << "Nice jets" << endl;
+        for(GoodJets::const_iterator jet = nice_jets.begin();
+                nice_jets.end() != jet;
+                ++jet)
+        {
+            _out << "[" << setw(2) << left << (jet - nice_jets.begin()) << "] ";
+            printP4(_out, jet->corrected_p4);
+            _out << endl;
+            _out << setw(5) << " ";
+            printP4(_out, jet->jet->uncorrected_p4());
+            _out << endl;
+        }
+        _out << endl;
+
+        _out << "Good jets" << endl;
+        for(GoodJets::const_iterator jet = good_jets.begin();
+                good_jets.end() != jet;
+                ++jet)
+        {
+            _out << "[" << setw(2) << left << (jet - good_jets.begin()) << "] ";
+            printP4(_out, jet->corrected_p4);
+            _out << endl;
+            _out << setw(5) << " ";
+            printP4(_out, jet->jet->uncorrected_p4());
+            _out << endl;
+        }
+        _out << endl;
+
+        _out << "Good electrons" << endl;
+        for(GoodElectrons::const_iterator electron = good_electrons.begin();
+                good_electrons.end() != electron;
+                ++electron)
+        {
+            _out << "[" << (electron - good_electrons.begin()) << "] ";
+            printP4(_out, (*electron)->physics_object().p4());
+            _out << endl;
+        }
+        _out << endl;
+
+        _out << "Good muons" << endl;
+        for(GoodMuons::const_iterator muon = good_muons.begin();
+                good_muons.end() != muon;
+                ++muon)
+        {
+            _out << "[" << (muon - good_muons.begin()) << "] ";
+            printP4(_out, (*muon)->physics_object().p4());
+            _out << endl;
+        }
+        _out << endl;
+    }
+
     if (CUT_2D == _synch_cut)
     {
-        if (!cut2D(*lepton_p4, nice_jets))
+        if (!cut2D(*lepton_p4, nice_jets, event))
             return;
     }
     else if (ISOLATION == _synch_cut)
@@ -695,6 +748,8 @@ void SynchJECJuly2011Analyzer::process(const Event *event)
         return;
 
     _cutflow->apply(CUT_LEPTON);
+
+    _passed_events.push_back(event->extra());
 
     float max_pt = 0;
     for(GoodJets::const_iterator jet = good_jets.begin();
@@ -715,8 +770,6 @@ void SynchJECJuly2011Analyzer::process(const Event *event)
         return;
 
     _cutflow->apply(HTLEP);
-
-    _passed_events.push_back(event->extra());
 }
 
 uint32_t SynchJECJuly2011Analyzer::id() const
@@ -745,6 +798,8 @@ void SynchJECJuly2011Analyzer::merge(const ObjectPtr &pointer)
     _passed_events.insert(_passed_events.end(),
             object->_passed_events.begin(),
             object->_passed_events.end());
+
+    _out << object->_out.str() << endl;
 }
 
 void SynchJECJuly2011Analyzer::print(std::ostream &out) const
@@ -757,8 +812,12 @@ void SynchJECJuly2011Analyzer::print(std::ostream &out) const
     out << *_primary_vertex_selector << endl;
     out << endl;
 
-    out << "Jet Selector" << endl;
+    out << "Nice Jet(s) Selector" << endl;
     out << *_nice_jet_selector << endl;
+    out << endl;
+
+    out << "Good Jet(s) Selector" << endl;
+    out << *_good_jet_selector << endl;
     out << endl;
 
     switch(_synch_mode)
@@ -784,6 +843,21 @@ void SynchJECJuly2011Analyzer::print(std::ostream &out) const
 
     out << endl;
     out << _out.str();
+
+    /*
+    out << "Survived Events" << endl;
+    out << " " << setw(10) << left << "Run" << setw(10) << "Lumi" << "Event" << endl;
+    for(std::vector<Event::Extra>::const_iterator extra = _passed_events.begin();
+            _passed_events.end() != extra;
+            ++extra)
+    {
+        out << " "
+            << setw(10) << left << extra->run()
+            << setw(10) << left << extra->lumi()
+            << extra->id() << endl;
+    }
+    out << endl;
+    */
 }
 
 // Private
@@ -810,8 +884,8 @@ void SynchJECJuly2011Analyzer::jets(const Event *event,
 
     const float rho = event->extra().rho();
 
-    LockSelectorEventCounterOnUpdate lock(*_nice_jet_selector);
-    LockSelectorEventCounterOnUpdate lock(*_good_jet_selector);
+    LockSelectorEventCounterOnUpdate lock_nice_jets(*_nice_jet_selector);
+    LockSelectorEventCounterOnUpdate lock_good_jets(*_good_jet_selector);
     for(Jets::const_iterator jet = event->jets().begin();
             event->jets().end() != jet;
             ++jet)
@@ -890,18 +964,23 @@ void SynchJECJuly2011Analyzer::jets(const Event *event,
     }
 }
 
-bool SynchJECJuly2011Analyzer::cut2D(const LorentzVector &p4, const GoodJets &jets)
+bool SynchJECJuly2011Analyzer::cut2D(const LorentzVector &p4, const GoodJets &jets, const Event *event)
 {
     if (jets.empty())
-        return false;
+        return true;
 
     GoodJets::const_iterator closest_jet = jets.end();
     float deltar_min = 999999;
 
+    if (2943 == event->extra().id())
+        _out << "Delta Phi" << endl;
     for(GoodJets::const_iterator jet = jets.begin();
             jets.end() != jet;
             ++jet)
     {
+        if (2943 == event->extra().id())
+            _out << "[" << (jet - jets.begin()) << "] "
+                << dphi(p4, jet->corrected_p4) << endl;
         const float deltar = dr(p4, jet->corrected_p4);
         if (deltar < deltar_min)
         {
@@ -911,7 +990,12 @@ bool SynchJECJuly2011Analyzer::cut2D(const LorentzVector &p4, const GoodJets &je
     }
 
     if (jets.end() == closest_jet)
-        return false;
+        return true;
+
+    if (2943 == event->extra().id())
+    {
+        _out << "ptrel: " << ptrel(p4, closest_jet->corrected_p4) << " dr: " << deltar_min << " jet: " << (closest_jet - jets.begin()) << endl;
+    }
 
     return 0.5 < deltar_min
         || 25 < ptrel(p4, closest_jet->corrected_p4);
