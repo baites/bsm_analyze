@@ -511,8 +511,8 @@ SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const SynchMode &synch_mode,
     _primary_vertex_selector.reset(new PrimaryVertexSelector());
     _primary_vertex_selector->rho()->setValue(2.0);
 
-    _jet_selector.reset(new JetSelector());
-    _jet_selector->pt()->setValue(25);
+    _nice_jet_selector.reset(new JetSelector());
+    _nice_jet_selector->pt()->setValue(25);
 
     _good_jet_selector.reset(new JetSelector());
 
@@ -526,7 +526,7 @@ SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const SynchMode &synch_mode,
     _muon_selector->pt()->setValue(35);
 
     monitor(_primary_vertex_selector);
-    monitor(_jet_selector);
+    monitor(_nice_jet_selector);
     monitor(_good_jet_selector);
     monitor(_electron_selector);
     monitor(_muon_selector);
@@ -548,8 +548,8 @@ SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const SynchJECJuly2011Analyze
     _primary_vertex_selector = 
         dynamic_pointer_cast<PrimaryVertexSelector>(object._primary_vertex_selector->clone());
 
-    _jet_selector = 
-        dynamic_pointer_cast<JetSelector>(object._jet_selector->clone());
+    _nice_jet_selector = 
+        dynamic_pointer_cast<JetSelector>(object._nice_jet_selector->clone());
 
     _good_jet_selector = 
         dynamic_pointer_cast<JetSelector>(object._good_jet_selector->clone());
@@ -561,7 +561,7 @@ SynchJECJuly2011Analyzer::SynchJECJuly2011Analyzer(const SynchJECJuly2011Analyze
         dynamic_pointer_cast<MuonSelector>(object._muon_selector->clone());
 
     monitor(_primary_vertex_selector);
-    monitor(_jet_selector);
+    monitor(_nice_jet_selector);
     monitor(_good_jet_selector);
     monitor(_electron_selector);
     monitor(_muon_selector);
@@ -758,7 +758,7 @@ void SynchJECJuly2011Analyzer::print(std::ostream &out) const
     out << endl;
 
     out << "Jet Selector" << endl;
-    out << *_jet_selector << endl;
+    out << *_nice_jet_selector << endl;
     out << endl;
 
     switch(_synch_mode)
@@ -810,11 +810,8 @@ void SynchJECJuly2011Analyzer::jets(const Event *event,
 
     const float rho = event->extra().rho();
 
-    std::ostringstream jets_out;
-
-    std::ostringstream out;
-
-    LockSelectorEventCounterOnUpdate lock(*_jet_selector);
+    LockSelectorEventCounterOnUpdate lock(*_nice_jet_selector);
+    LockSelectorEventCounterOnUpdate lock(*_good_jet_selector);
     for(Jets::const_iterator jet = event->jets().begin();
             event->jets().end() != jet;
             ++jet)
@@ -823,8 +820,6 @@ void SynchJECJuly2011Analyzer::jets(const Event *event,
         //
         if (!jet->has_uncorrected_p4())
             continue;
-
-        out.str("");
 
         // Remove Leptons
         //
@@ -843,13 +838,7 @@ void SynchJECJuly2011Analyzer::jets(const Event *event,
             {
                 const LorentzVector &electron_p4 = (*electron)->physics_object().p4();
                 if (electron_p4 == child_p4)
-                {
                     corrected_p4 -= electron_p4;
-
-                    out << setw(20) << "Electron ";
-                    printP4(out, electron_p4);
-                    out << endl;
-                }
             }
 
             // Muons
@@ -860,13 +849,7 @@ void SynchJECJuly2011Analyzer::jets(const Event *event,
             {
                 const LorentzVector &muon_p4 = (*muon)->physics_object().p4();
                 if (muon_p4 == child_p4)
-                {
                     corrected_p4 -= muon_p4;
-
-                    out << setw(20) << "Muon ";
-                    printP4(out, muon_p4);
-                    out << endl;
-                }
             }
         }
 
@@ -882,28 +865,14 @@ void SynchJECJuly2011Analyzer::jets(const Event *event,
         float correction = _jec->getCorrection();
         corrected_p4 *= correction;
 
-        if (!out.str().empty())
-        {
-            jets_out << setw(20) << "Uncorrected Jet ";
-            printP4(jets_out,  jet->uncorrected_p4());
-            jets_out << endl << out.str();
-            jets_out << setw(20) << "Corrected Jet ";
-            printP4(jets_out, corrected_p4);
-            jets_out << endl;
-            jets_out << setw(20) << "PAT Jet ";
-            printP4(jets_out, jet->physics_object().p4());
-            jets_out << endl;
-        }
-
         // Original jet in the event can not be modified and Jet Selector can
         // only be applied to jet: therefore copy jet, set corrected p4 and
         // apply selector
         //
         Jet corrected_jet = *jet;
-
         *corrected_jet.mutable_physics_object()->mutable_p4() = corrected_p4;
 
-        if (!_jet_selector->apply(corrected_jet))
+        if (!_nice_jet_selector->apply(corrected_jet))
             continue;
 
         // Store original jet and corrected p4
@@ -919,20 +888,13 @@ void SynchJECJuly2011Analyzer::jets(const Event *event,
 
         good_jets.push_back(tmp);
     }
-
-    if (!jets_out.str().empty())
-    {
-        _out << "Event: " << event->extra().id()
-            << " Lumi: " << event->extra().lumi()
-            << " Run: " << event->extra().run() << endl;
-        _out << "good el: " << electrons.size() << " mu: " << muons.size() << endl;
-
-        _out << jets_out.str() << endl;
-    }
 }
 
 bool SynchJECJuly2011Analyzer::cut2D(const LorentzVector &p4, const GoodJets &jets)
 {
+    if (jets.empty())
+        return false;
+
     GoodJets::const_iterator closest_jet = jets.end();
     float deltar_min = 999999;
 
@@ -947,6 +909,9 @@ bool SynchJECJuly2011Analyzer::cut2D(const LorentzVector &p4, const GoodJets &je
             closest_jet = jet;
         }
     }
+
+    if (jets.end() == closest_jet)
+        return false;
 
     return 0.5 < deltar_min
         || 25 < ptrel(p4, closest_jet->corrected_p4);

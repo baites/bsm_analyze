@@ -183,7 +183,7 @@ namespace bsm
             CutflowPtr _cutflow;
 
             boost::shared_ptr<PrimaryVertexSelector> _primary_vertex_selector;
-            boost::shared_ptr<JetSelector> _jet_selector;
+            boost::shared_ptr<JetSelector> _nice_jet_selector;
             boost::shared_ptr<JetSelector> _good_jet_selector;
 
             boost::shared_ptr<ElectronSelector> _electron_selector;
