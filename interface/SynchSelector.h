@@ -116,6 +116,8 @@ namespace bsm
             virtual void print(std::ostream &) const;
 
         private:
+            typedef boost::shared_ptr<LorentzVector> LorentzVectorPtr;
+
             struct CorrectedJet
             {
                 CorrectedJet()
@@ -124,7 +126,7 @@ namespace bsm
                 }
 
                 const Jet *jet;
-                LorentzVector corrected_p4;
+                LorentzVectorPtr corrected_p4;
             };
 
             typedef std::vector<const Electron *> GoodElectrons;
@@ -133,11 +135,17 @@ namespace bsm
 
             bool primaryVertices(const Event *);
             bool jets(const Event *);
-            bool lepton(const Event *);
-            bool secondaryLeptonVeto(const Event *);
+            bool lepton();
+            bool secondaryLeptonVeto();
+            bool cut();
+            bool leadingJet();
+            bool htlep(const Event *);
 
             void selectGoodElectrons(const Event *);
             void selectGoodMuons(const Event *);
+
+            bool cut2D(const LorentzVector *);
+            bool isolation(const LorentzVector *, const PFIsolation *);
 
             LeptonMode _lepton_mode;
             CutMode _cut_mode;

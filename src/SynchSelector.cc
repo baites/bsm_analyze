@@ -7,10 +7,13 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/pointer_cast.hpp>
 
+#include "bsm_input/interface/Algebra.h"
 #include "bsm_input/interface/Electron.pb.h"
 #include "bsm_input/interface/Event.pb.h"
+#include "bsm_input/interface/Isolation.pb.h"
 #include "bsm_input/interface/Muon.pb.h"
 #include "bsm_input/interface/PrimaryVertex.pb.h"
+#include "bsm_input/interface/Physics.pb.h"
 #include "interface/JetEnergyCorrections.h"
 #include "interface/SynchSelector.h"
 
@@ -193,8 +196,11 @@ bool SynchSelector::apply(const Event *event)
 
     return primaryVertices(event)
         && jets(event)
-        && lepton(event)
-        && secondaryLeptonVeto(event);
+        && lepton()
+        && secondaryLeptonVeto()
+        && cut()
+        && leadingJet()
+        && htlep(event);
 }
 
 bsm::JetEnergyCorrectionDelegate *SynchSelector::getJetEnergyCorrectionDelegate() const
@@ -284,17 +290,20 @@ bool SynchSelector::jets(const Event *event)
             event->jets().end() != jet;
             ++jet)
     {
-        LorentzVector corrected_p4 = _jec->correctJet(&*jet,
+        LorentzVectorPtr corrected_p4 = _jec->correctJet(&*jet,
                 event,
                 _good_electrons,
                 _good_muons);
+
+        if (!corrected_p4)
+            continue;
 
         // Original jet in the event can not be modified and Jet Selector can
         // only be applied to jet: therefore copy jet, set corrected p4 and
         // apply selector
         //
         Jet corrected_jet = *jet;
-        *corrected_jet.mutable_physics_object()->mutable_p4() = corrected_p4;
+        *corrected_jet.mutable_physics_object()->mutable_p4() = *corrected_p4;
 
         if (!_nice_jet_selector->apply(corrected_jet))
             continue;
@@ -317,7 +326,7 @@ bool SynchSelector::jets(const Event *event)
         && (_cutflow->apply(JET), true);
 }
 
-bool SynchSelector::lepton(const Event *event)
+bool SynchSelector::lepton()
 {
     return (ELECTRON == _lepton_mode
         ? !_good_electrons.empty()
@@ -326,7 +335,7 @@ bool SynchSelector::lepton(const Event *event)
         && (_cutflow->apply(LEPTON), true);
 }
 
-bool SynchSelector::secondaryLeptonVeto(const Event *event)
+bool SynchSelector::secondaryLeptonVeto()
 {
     return (ELECTRON == _lepton_mode
         ? (1 == _good_electrons.size()
@@ -336,6 +345,104 @@ bool SynchSelector::secondaryLeptonVeto(const Event *event)
             && _good_electrons.empty()))
 
         && (_cutflow->apply(VETO_SECOND_LEPTON), true);
+}
+
+bool SynchSelector::cut()
+{
+    const LorentzVector *lepton_p4 = 0;
+    const PFIsolation *lepton_isolation = 0;
+
+    if (ELECTRON == _lepton_mode)
+    {
+        const Electron *electron = *_good_electrons.begin();
+
+        lepton_p4 = &(electron->physics_object().p4());
+
+        if (electron->has_pf_isolation())
+            lepton_isolation = &(electron->pf_isolation());
+    }
+    else
+    {
+        const Muon *muon = *_good_muons.begin();
+
+        lepton_p4 = &(muon->physics_object().p4());
+
+        if (muon->has_pf_isolation())
+            lepton_isolation = &(muon->pf_isolation());
+    }
+
+    bool result = false;
+    if (CUT_2D == _cut_mode)
+        result = cut2D(lepton_p4);
+    else
+    {
+        if (lepton_isolation)
+            result = isolation(lepton_p4, lepton_isolation);
+    }
+
+    return result
+        && (_cutflow->apply(CUT_LEPTON), true);
+}
+
+bool SynchSelector::leadingJet()
+{
+    float max_pt = 0;
+    for(GoodJets::const_iterator jet = _good_jets.begin();
+            _good_jets.end() != jet;
+            ++jet)
+    {
+        const float jet_pt = pt(*jet->corrected_p4);
+        if (jet_pt > max_pt)
+            max_pt = jet_pt;
+    }
+
+    return 250 < max_pt
+        && (_cutflow->apply(LEADING_JET), true);
+}
+
+bool SynchSelector::htlep(const Event *event)
+{
+    const LorentzVector &lepton_p4 = ELECTRON == _lepton_mode 
+        ? (*_good_electrons.begin())->physics_object().p4()
+        : (*_good_muons.begin())->physics_object().p4();
+
+    return 150 < (pt(event->missing_energy().p4()) + pt(lepton_p4))
+        && (_cutflow->apply(HTLEP), true);
+}
+
+bool SynchSelector::cut2D(const LorentzVector *lepton_p4)
+{
+    if (_nice_jets.empty())
+        return true;
+
+    GoodJets::const_iterator closest_jet = _nice_jets.end();
+    float deltar_min = 999999;
+
+    for(GoodJets::const_iterator jet = _nice_jets.begin();
+            _nice_jets.end() != jet;
+            ++jet)
+    {
+        const float deltar = dr(*lepton_p4, *jet->corrected_p4);
+        if (deltar < deltar_min)
+        {
+            deltar_min = deltar;
+            closest_jet = jet;
+        }
+    }
+
+    if (_nice_jets.end() == closest_jet)
+        return true;
+
+    return 0.5 < deltar_min
+        || 25 < ptrel(*lepton_p4, *closest_jet->corrected_p4);
+}
+
+bool SynchSelector::isolation(const LorentzVector *p4, const PFIsolation *isolation)
+{
+    return 0.5 < (isolation->charged_hadron()
+            + isolation->neutral_hadron()
+            + isolation->photon())
+        / pt(*p4);
 }
 
 void SynchSelector::selectGoodElectrons(const Event *event)

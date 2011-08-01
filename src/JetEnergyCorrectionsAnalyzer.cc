@@ -197,9 +197,11 @@ void JetEnergyCorrectionsAnalyzer::jets(const Event *event)
             const LorentzVector &uncorrected_p4 = jet->uncorrected_p4();
             _jet_uncorrected_p4->fill(uncorrected_p4);
 
-            const LorentzVector corrected_p4 = _jec->correctJet(&*jet, event, electrons, muons);
+            LorentzVectorPtr corrected_p4 = _jec->correctJet(&*jet, event, electrons, muons);
+            if (!corrected_p4)
+                continue;
 
-            _jet_offline_corrected_p4->fill(corrected_p4);
+            _jet_offline_corrected_p4->fill(*corrected_p4);
 
             _out << "[" << setw(2) << right << id << "]"
                 << endl;
@@ -218,8 +220,8 @@ void JetEnergyCorrectionsAnalyzer::jets(const Event *event)
 
             _out << setw(5) << " "
                 << "Offline JEC "
-                << "pT: " << pt(corrected_p4)
-                << " eta: " << eta(corrected_p4)
+                << "pT: " << pt(*corrected_p4)
+                << " eta: " << eta(*corrected_p4)
                 << endl;
         }
     }

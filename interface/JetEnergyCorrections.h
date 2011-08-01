@@ -71,6 +71,7 @@ namespace bsm
         public:
             typedef std::vector<const Electron *> Electrons;
             typedef std::vector<const Muon *> Muons;
+            typedef boost::shared_ptr<LorentzVector> LorentzVectorPtr;
 
             JetEnergyCorrections();
             JetEnergyCorrections(const JetEnergyCorrections &);
@@ -78,7 +79,7 @@ namespace bsm
             virtual void setCorrection(const JetEnergyCorrectionLevel &,
                     const std::string &file_name);
 
-            LorentzVector correctJet(const Jet *,
+            LorentzVectorPtr correctJet(const Jet *,
                     const Event *,
                     const Electrons &,
                     const Muons &);

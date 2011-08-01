@@ -28,6 +28,7 @@ namespace bsm
     {
         public:
             typedef boost::shared_ptr<LorentzVectorMonitor> P4MonitorPtr;
+            typedef boost::shared_ptr<LorentzVector> LorentzVectorPtr;
 
             JetEnergyCorrectionsAnalyzer();
             JetEnergyCorrectionsAnalyzer(const JetEnergyCorrectionsAnalyzer &);
