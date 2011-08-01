@@ -32,8 +32,7 @@ namespace bsm
             JetEnergyCorrectionsAnalyzer();
             JetEnergyCorrectionsAnalyzer(const JetEnergyCorrectionsAnalyzer &);
 
-            void loadCorrections(const std::string &);
-            bool didCorrectionsLoad() const;
+            JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
 
             const P4MonitorPtr jetCmsswCorrectedP4() const;
             const P4MonitorPtr jetUncorrectedP4() const;
@@ -56,14 +55,13 @@ namespace bsm
         private:
             void jets(const Event *);
 
+            boost::shared_ptr<JetEnergyCorrections> _jec;
+
             boost::shared_ptr<JetSelector> _jet_selector;
 
             P4MonitorPtr _jet_cmssw_corrected_p4;
             P4MonitorPtr _jet_uncorrected_p4;
             P4MonitorPtr _jet_offline_corrected_p4;
-
-            std::vector<JetCorrectorParameters> _parameters;
-            boost::shared_ptr<FactorizedJetCorrector> _jec;
 
             std::ostringstream _out;
     };
