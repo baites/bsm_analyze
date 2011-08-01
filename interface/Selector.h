@@ -16,6 +16,7 @@
 
 #include "bsm_core/interface/Object.h"
 #include "bsm_input/interface/bsm_input_fwd.h"
+#include "JetMETObjects/interface/JetCorrectorParameters.h"
 #include "interface/Cut.h"
 
 namespace bsm
@@ -245,6 +246,86 @@ namespace bsm
             CutPtr _rho;
     };
 
+    // Synchronization Exercise Selector
+    //
+    class SynchSelector : public Selector
+    {
+        public:
+            typedef boost::shared_ptr<MultiplicityCutflow> CutflowPtr;
+            typedef std::vector<JetCorrectorParameters> Corrections;
+
+            enum Selection
+            {
+                PRESELECTION = 0,
+                SCRAPING,
+                HBHENOISE,
+                PRIMARY_VERTEX,
+                JET,
+                LEPTON,
+                VETO_SECOND_LEPTON,
+                CUT_LEPTON,
+                LEADING_JET,
+                HTLEP,
+
+                SELECTIONS // this item should always be the last one
+            };
+
+            enum LeptonMode
+            {
+                ELECTRON = 0,
+                MUON
+            };
+
+            enum CutMode
+            {
+                CUT_2D = 0,
+                ISOLATION
+            };
+
+            SynchSelector(const LeptonMode & = ELECTRON,
+                    const CutMode & = CUT_2D);
+            SynchSelector(const SynchSelector &);
+
+            // Test if muon passes the selector
+            //
+            virtual bool apply(const Event *);
+
+            // Selector interface
+            //
+            virtual void enable();
+            virtual void disable();
+
+            // Object interface
+            //
+            virtual uint32_t id() const;
+
+            virtual ObjectPtr clone() const;
+            using Object::merge;
+
+            virtual void print(std::ostream &) const;
+
+            // Selection Cutflow steps
+            //
+            void setJetEnergyCorrections(const Corrections &corrections);
+            CutflowPtr cutflow() const;
+
+        private:
+            // Prevent copying
+            //
+            SynchSelector &operator =(const SynchSelector &);
+
+            bool primaryVertices(const Event *);
+
+            LeptonMode _lepton_mode;
+            CutMode _cut_mode;
+
+            // Selectors
+            //
+            boost::shared_ptr<PrimaryVertexSelector> _primary_vertex_selector;
+
+            CutflowPtr _cutflow;
+    };
+
     class WJetSelector : public Selector
     {
         public:
@@ -302,6 +383,13 @@ namespace bsm
 
             std::vector<Locker> _lockers;
     };
+
+    // Helpers
+    //
+    std::ostream &operator <<(std::ostream &,
+            const SynchSelector::LeptonMode &);
+    std::ostream &operator <<(std::ostream &,
+            const SynchSelector::CutMode &);
 }
 
 #endif

@@ -9,12 +9,14 @@
 #include <functional>
 #include <iomanip>
 #include <ostream>
+#include <sstream>
 
 #include <boost/pointer_cast.hpp>
 
 #include "bsm_core/interface/ID.h"
 #include "bsm_input/interface/Algebra.h"
 #include "bsm_input/interface/Electron.pb.h"
+#include "bsm_input/interface/Event.pb.h"
 #include "bsm_input/interface/Jet.pb.h"
 #include "bsm_input/interface/Muon.pb.h"
 #include "bsm_input/interface/Physics.pb.h"
@@ -23,12 +25,7 @@
 #include "interface/Selector.h"
 #include "interface/Utility.h"
 
-using std::endl;
-using std::left;
-using std::right;
-using std::ostream;
-using std::setw;
-using std::setfill;
+using namespace std;
 
 using boost::dynamic_pointer_cast;
 
@@ -38,6 +35,7 @@ using bsm::JetSelector;
 using bsm::MultiplicityCutflow;
 using bsm::MuonSelector;
 using bsm::PrimaryVertexSelector;
+using bsm::SynchSelector;
 using bsm::WJetSelector;
 using bsm::LockSelectorEventCounterOnUpdate;
 
@@ -555,6 +553,106 @@ void PrimaryVertexSelector::print(std::ostream &out) const
 
 
 
+// Synchronization Exercise Selector
+//
+SynchSelector::SynchSelector(const LeptonMode &lepton_mode,
+        const CutMode &cut_mode):
+    _lepton_mode(lepton_mode),
+    _cut_mode(cut_mode)
+{
+    // Cutflow table
+    //
+    _cutflow.reset(new MultiplicityCutflow(SELECTIONS - 1));
+    _cutflow->cut(PRESELECTION)->setName("pre-selection");
+    _cutflow->cut(SCRAPING)->setName("Scraping Veto");
+    _cutflow->cut(HBHENOISE)->setName("HBHE Noise");
+    _cutflow->cut(PRIMARY_VERTEX)->setName("Good Primary Vertex");
+    _cutflow->cut(JET)->setName("2 Good Jets");
+
+    ostringstream lepton;
+    lepton << _lepton_mode;
+
+    _cutflow->cut(LEPTON)->setName(string("Good ") + lepton.str());
+    _cutflow->cut(VETO_SECOND_LEPTON)->setName("Veto 2nd lepton");
+
+    lepton << " " << _cut_mode;
+    _cutflow->cut(CUT_LEPTON)->setName(lepton.str());
+
+    _cutflow->cut(LEADING_JET)->setName("Leading Jet");
+    _cutflow->cut(HTLEP)->setName("hTlep");
+    monitor(_cutflow);
+
+    // Selectors
+    //
+    _primary_vertex_selector.reset(new PrimaryVertexSelector());
+    _primary_vertex_selector->rho()->setValue(2.0);
+    monitor(_primary_vertex_selector);
+}
+
+SynchSelector::SynchSelector(const SynchSelector &object):
+    _lepton_mode(object._lepton_mode),
+    _cut_mode(object._cut_mode)
+{
+    // Cutflow Table
+    //
+    _cutflow = 
+        dynamic_pointer_cast<MultiplicityCutflow>(object._cutflow->clone());
+
+    monitor(_cutflow);
+
+    // Selectors
+    //
+    _primary_vertex_selector = 
+        dynamic_pointer_cast<PrimaryVertexSelector>(object._primary_vertex_selector->clone());
+
+    monitor(_primary_vertex_selector);
+}
+
+bool SynchSelector::apply(const Event *event)
+{
+    _cutflow->apply(PRESELECTION);
+
+    return primaryVertices(event);
+}
+
+void SynchSelector::enable()
+{
+    _primary_vertex_selector->enable();
+}
+
+void SynchSelector::disable()
+{
+    _primary_vertex_selector->disable();
+}
+
+uint32_t SynchSelector::id() const
+{
+    return core::ID<SynchSelector>::get();
+}
+
+SynchSelector::ObjectPtr SynchSelector::clone() const
+{
+    return ObjectPtr(new SynchSelector(*this));
+}
+
+void SynchSelector::print(std::ostream &out) const
+{
+    out << "Cutflow [" << _lepton_mode << ": " << _cut_mode << "]" << endl;
+    out << *_cutflow << endl;
+    out << endl;
+}
+
+// Private
+//
+bool SynchSelector::primaryVertices(const Event *event)
+{
+    return event->primary_vertices().size()
+        && _primary_vertex_selector->apply(*event->primary_vertices().begin())
+        && (_cutflow->apply(PRIMARY_VERTEX), true);
+}
+
+
+
 // WJetSelector
 //
 WJetSelector::WJetSelector()
@@ -735,4 +833,44 @@ LockSelectorEventCounterOnUpdate::LockSelectorEventCounterOnUpdate(
                 new LockCounterOnUpdate(selector.mass_lower_bound()->events())));
     _lockers.push_back(Locker(
                 new LockCounterOnUpdate(selector.mass_upper_bound()->events())));
+}
+
+
+
+// Helpers
+//
+std::ostream &bsm::operator <<(std::ostream &out,
+        const SynchSelector::LeptonMode &lepton_mode)
+{
+    switch(lepton_mode)
+    {
+        case SynchSelector::ELECTRON:   out << "electron";
+                                        break;
+
+        case SynchSelector::MUON:       out << "muon";
+                                        break;
+
+        default:                        out << "unknown";
+                                        break;
+    }
+
+    return out;
+}
+
+std::ostream &bsm::operator <<(std::ostream &out,
+        const SynchSelector::CutMode &cut_mode)
+{
+    switch(cut_mode)
+    {
+        case SynchSelector::CUT_2D:     out << "2D Cut";
+                                        break;
+
+        case SynchSelector::ISOLATION:  out << "Isolation";
+                                        break;
+
+        default:                        out << "unknown";
+                                        break;
+    }
+
+    return out;
 }
