@@ -46,6 +46,7 @@ namespace bsm
 
     class JetEnergyCorrectionOptions;
     class JetEnergyCorrections;
+    class JetEnergyCorrectionDelegate;
 
     class H1Proxy;
     class H2Proxy;
