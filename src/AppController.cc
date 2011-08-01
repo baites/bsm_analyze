@@ -47,12 +47,12 @@ AppController::AppController():
     ;
 }
 
-void AppController::addOptions(const OptionsPtr &options)
+void AppController::addOptions(const Options &options)
 {
     // Add options only in case the pointer is valid
     //
-    if (options)
-        _custom_options.push_back(options);
+    if (options.options())
+        _custom_options.push_back(options.options());
 }
 
 void AppController::addInputs(const Inputs &inputs)
@@ -85,31 +85,33 @@ void AppController::setRunMode(const RunMode &run_mode)
 
 bool AppController::run(int &argc, char *argv[])
 {
-    po::options_description cmdline_options;
-    cmdline_options.add(*_generic_options);
+    OptionsPtr visible_options(new po::options_description());
+    visible_options->add(*_generic_options);
     
     for(vector<OptionsPtr>::const_iterator options = _custom_options.begin();
             _custom_options.end() != options;
             ++options)
     {
-        cmdline_options.add(options->operator *());
+        visible_options->add(options->operator *());
     }
 
-    cmdline_options.add(*_hidden_options);
+    OptionsPtr cmdline_options(new po::options_description());
+    cmdline_options->add(*visible_options).add(*_hidden_options);
 
-    po::positional_options_description positional_options;
-    positional_options.add("input", -1);
+    boost::shared_ptr<po::positional_options_description>
+        positional_options(new po::positional_options_description());
+    positional_options->add("input", -1);
 
-    po::variables_map arguments;
+    boost::shared_ptr<po::variables_map> arguments(new po::variables_map());
     po::store(po::command_line_parser(argc, argv).
-            options(cmdline_options).
-            positional(positional_options).
+            options(*cmdline_options).
+            positional(*positional_options).
             run(),
-            arguments);
-    po::notify(arguments);
+            *arguments);
+    po::notify(*arguments);
 
-    if (arguments.count("help"))
-        cout << *_generic_options << endl;
+    if (arguments->count("help"))
+        cout << *visible_options << endl;
     else if (_input_files.empty())
         cout << "input is empty: nothing to do" << endl;
     else

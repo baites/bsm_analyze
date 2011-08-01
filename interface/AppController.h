@@ -19,10 +19,19 @@ namespace po = boost::program_options;
 
 namespace bsm
 {
-    class AppController
+    class Options
     {
         public:
             typedef boost::shared_ptr<po::options_description> OptionsPtr;
+
+            virtual ~Options() {}
+
+            virtual OptionsPtr options() const = 0;
+    };
+
+    class AppController
+    {
+        public:
             typedef std::vector<std::string> Inputs;
 
             enum RunMode
@@ -33,7 +42,7 @@ namespace bsm
 
             AppController();
 
-            void addOptions(const OptionsPtr &);
+            void addOptions(const Options &);
 
             void addInputs(const Inputs &);
 
@@ -42,6 +51,8 @@ namespace bsm
             bool run(int &argc, char *argv[]);
 
         private:
+            typedef Options::OptionsPtr OptionsPtr;
+
             // Prevent Copying
             //
             AppController(const AppController &);
