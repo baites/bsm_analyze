@@ -9,12 +9,19 @@
 #define BSM_JET_ENERGY_CORRECTIONS
 
 #include <iosfwd>
+#include <map>
 #include <string>
+#include <vector>
 
 #include <boost/program_options.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include "bsm_core/interface/Object.h"
+#include "bsm_input/interface/bsm_input_fwd.h"
+#include "JetMETObjects/interface/JetCorrectorParameters.h"
 #include "interface/AppController.h"
+
+class FactorizedJetCorrector;
 
 namespace bsm
 {
@@ -25,7 +32,14 @@ namespace bsm
         L3
     };
 
-    class JetEnergyCorrectionDelegate;
+    class JetEnergyCorrectionDelegate
+    {
+        public:
+            virtual ~JetEnergyCorrectionDelegate() {}
+
+            virtual void setCorrection(const JetEnergyCorrectionLevel &,
+                    const std::string &file_name) {}
+    };
 
     class JetEnergyCorrectionOptions : public Options
     {
@@ -49,6 +63,48 @@ namespace bsm
             JetEnergyCorrectionDelegate *_delegate;
 
             OptionsPtr _options;
+    };
+
+    class JetEnergyCorrections : public JetEnergyCorrectionDelegate,
+        public core::Object
+    {
+        public:
+            typedef std::vector<const Electron *> Electrons;
+            typedef std::vector<const Muon *> Muons;
+
+            JetEnergyCorrections();
+            JetEnergyCorrections(const JetEnergyCorrections &);
+
+            virtual void setCorrection(const JetEnergyCorrectionLevel &,
+                    const std::string &file_name);
+
+            LorentzVector correctJet(const Jet *,
+                    const Event *,
+                    const Electrons &,
+                    const Muons &);
+
+            // Object interface
+            //
+            virtual uint32_t id() const;
+
+            virtual ObjectPtr clone() const;
+            using Object::merge;
+
+            virtual void print(std::ostream &) const;
+
+        private:
+            // Prevent copying: clone instead
+            //
+            JetEnergyCorrections &operator =(const JetEnergyCorrections &);
+
+            typedef std::map<JetEnergyCorrectionLevel, JetCorrectorParameters> Corrections;
+            typedef boost::shared_ptr<FactorizedJetCorrector> CorrectorPtr;
+
+            CorrectorPtr corrector();
+
+            CorrectorPtr _jec;
+
+            Corrections _corrections;
     };
 
     // Helpers
