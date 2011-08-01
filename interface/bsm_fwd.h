@@ -48,6 +48,10 @@ namespace bsm
     class JetEnergyCorrections;
     class JetEnergyCorrectionDelegate;
 
+    class SynchSelectorOptions;
+    class SynchSelector;
+    class SynchSelectorDelegate;
+
     class H1Proxy;
     class H2Proxy;
 }
