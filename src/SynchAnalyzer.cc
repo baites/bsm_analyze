@@ -18,6 +18,7 @@
 #include "JetMETObjects/interface/FactorizedJetCorrector.h"
 #include "interface/Monitor.h"
 #include "interface/Selector.h"
+#include "interface/SynchSelector.h"
 #include "interface/SynchAnalyzer.h"
 
 using namespace std;

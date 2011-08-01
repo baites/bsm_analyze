@@ -10,7 +10,7 @@
 
 #include "interface/JetEnergyCorrections.h"
 #include "interface/SynchAnalyzer.h"
-#include "interface/Selector.h"
+#include "interface/SynchSelector.h"
 #include "interface/AppController.h"
 
 using namespace std;
