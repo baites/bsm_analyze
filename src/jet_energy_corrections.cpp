@@ -1,5 +1,4 @@
 // Apply jet energy corrections to good jets
-// (multi-threads)
 //
 // Created by Samvel Khalatyan, Jul 14, 2011
 // Copyright 2011, All rights reserved
@@ -17,25 +16,23 @@
 #include "bsm_input/interface/Event.pb.h"
 #include "bsm_input/interface/Reader.h"
 #include "interface/MonitorCanvas.h"
+#include "interface/JetEnergyCorrections.h"
 #include "interface/JetEnergyCorrectionsAnalyzer.h"
-#include "interface/Thread.h"
+//#include "interface/Thread.h"
+#include "interface/AppController.h"
 
 using namespace std;
 
 using boost::shared_ptr;
 
-namespace po = boost::program_options;
-namespace fs = boost::filesystem;
-
 using bsm::JetEnergyCorrectionsAnalyzer;
-using bsm::Reader;
-using bsm::Event;
+using bsm::JetEnergyCorrectionOptions;
 using bsm::LorentzVectorCanvas;
-using bsm::ThreadController;
+using bsm::AppController;
 
 typedef shared_ptr<JetEnergyCorrectionsAnalyzer> AnalyzerPtr;
 
-void run(char *[], const po::variables_map &);
+//void run(char *[], const po::variables_map &);
 
 int main(int argc, char *argv[])
 {
@@ -44,58 +41,16 @@ int main(int argc, char *argv[])
     int result = 0;
     try
     {
-        // Prepare options
-        //
-        po::options_description generic_options("Allowed Options");
-        generic_options.add_options()
-            ("help,h",
-             "Help message")
+        boost::shared_ptr<AppController> app(new AppController());
+        boost::shared_ptr<JetEnergyCorrectionsAnalyzer> analyzer(new JetEnergyCorrectionsAnalyzer());
+        boost::shared_ptr<JetEnergyCorrectionOptions> jec_options(new JetEnergyCorrectionOptions());
 
-            ("interactive",
-             "Interactive session")
+        jec_options->setDelegate(analyzer->getJetEnergyCorrectionDelegate());
 
-            ("l1",
-             po::value<string>(),
-             "Level 1 corrections")
+        app->addOptions(*jec_options);
 
-            ("l2",
-             po::value<string>(),
-             "Level 2 corrections")
-
-            ("l3",
-             po::value<string>(),
-             "Level 3 corrections")
-        ;
-
-        po::options_description hidden_options("Hidden Options");
-        hidden_options.add_options()
-            ("input,i",
-             po::value<vector<string> >(),
-             "input file(s)")
-        ;
-
-        po::options_description cmdline_options;
-        cmdline_options.add(generic_options).add(hidden_options);
-
-        po::positional_options_description positional_options;
-        positional_options.add("input", -1);
-
-        po::variables_map arguments;
-        po::store(po::command_line_parser(argc, argv).
-                options(cmdline_options).
-                positional(positional_options).
-                run(),
-                arguments);
-        po::notify(arguments);
-
-        // Use options
-        //
-        if (arguments.count("help"))
-            cout << generic_options << endl;
-        else if (!arguments.count("input"))
-            cout << "Input file(s) are not specified" << endl;
-        else
-            run(argv, arguments);
+        app->setAnalyzer(analyzer);
+        app->run(argc, argv);
     }
     catch(...)
     {
@@ -111,6 +66,7 @@ int main(int argc, char *argv[])
     return result;
 }
 
+/*
 void run(char *argv[],
         const po::variables_map &arguments)
 try
@@ -226,3 +182,4 @@ catch(...)
 {
     cerr << "error" << endl;
 }
+*/
