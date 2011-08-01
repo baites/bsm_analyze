@@ -12,7 +12,11 @@
 #include "boost/bind.hpp"
 #include <boost/filesystem.hpp>
 
+#include "bsm_input/interface/Reader.h"
+#include "bsm_input/interface/Event.pb.h"
+#include "interface/Analyzer.h"
 #include "interface/AppController.h"
+#include "interface/Thread.h"
 
 using namespace std;
 
@@ -47,6 +51,11 @@ AppController::AppController():
     ;
 }
 
+void AppController::setAnalyzer(const AnalyzerPtr &analyzer)
+{
+    _analyzer = analyzer;
+}
+
 void AppController::addOptions(const Options &options)
 {
     // Add options only in case the pointer is valid
@@ -77,7 +86,7 @@ void AppController::addInputs(const Inputs &inputs)
 void AppController::setRunMode(const RunMode &run_mode)
 {
     if (SINGLE_THREAD != run_mode
-            || MULTI_THREAD != run_mode)
+            && MULTI_THREAD != run_mode)
         cerr << "unsupported run mode: " << run_mode << endl;
     else if (run_mode != _run_mode)
         _run_mode = run_mode;
@@ -85,6 +94,13 @@ void AppController::setRunMode(const RunMode &run_mode)
 
 bool AppController::run(int &argc, char *argv[])
 {
+    if (!_analyzer)
+    {
+        cerr << "analyzer is not set" << endl;
+
+        return false;
+    }
+
     OptionsPtr visible_options(new po::options_description());
     visible_options->add(*_generic_options);
     
@@ -113,19 +129,17 @@ bool AppController::run(int &argc, char *argv[])
     if (arguments->count("help"))
         cout << *visible_options << endl;
     else if (_input_files.empty())
-        cout << "input is empty: nothing to do" << endl;
+    {
+        cout << *visible_options << endl;
+    }
     else
     {
-        // Run application
-        //
-        cout << "Inputs" << endl;
-        uint32_t id = 1;
-        for(Inputs::const_iterator input = _input_files.begin();
-                _input_files.end() != input;
-                ++input, ++id)
-        {
-            cout << "[" << setw(3) << left << id << "] " << *input << endl;
-        }
+        if (SINGLE_THREAD == _run_mode)
+            processSingleThread();
+        else
+            processMultiThread();
+
+        cout << *_analyzer << endl;
     }
 
     return true;
@@ -136,4 +150,39 @@ bool AppController::run(int &argc, char *argv[])
 void AppController::setMultiThreadMode()
 {
     setRunMode(MULTI_THREAD);
+}
+
+void AppController::processSingleThread()
+{
+    for(Inputs::const_iterator input = _input_files.begin();
+            _input_files.end() != input;
+            ++input)
+    {
+        boost::shared_ptr<Reader> reader(new Reader(*input));
+        reader->open();
+        
+        if (!reader->isOpen())
+            continue;
+
+        for(boost::shared_ptr<Event> event(new Event());
+                reader->read(event);
+                event->Clear())
+        {
+            _analyzer->process(event.get());
+        }
+    }
+}
+
+void AppController::processMultiThread()
+{
+    boost::shared_ptr<ThreadController> controller(new ThreadController());
+    for(Inputs::const_iterator input = _input_files.begin();
+            _input_files.end() != input;
+            ++input)
+    {
+        controller->push(*input);
+    }
+
+    controller->use(_analyzer);
+    controller->start();
 }

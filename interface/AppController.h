@@ -15,6 +15,8 @@
 #include <boost/program_options.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include "interface/bsm_fwd.h"
+
 namespace po = boost::program_options;
 
 namespace bsm
@@ -33,6 +35,7 @@ namespace bsm
     {
         public:
             typedef std::vector<std::string> Inputs;
+            typedef boost::shared_ptr<Analyzer> AnalyzerPtr;
 
             enum RunMode
             {
@@ -41,6 +44,8 @@ namespace bsm
             };
 
             AppController();
+
+            void setAnalyzer(const AnalyzerPtr &);
 
             void addOptions(const Options &);
 
@@ -60,12 +65,17 @@ namespace bsm
 
             void setMultiThreadMode();
 
+            void processSingleThread();
+            void processMultiThread();
+
             RunMode _run_mode;
 
             OptionsPtr _generic_options;
             OptionsPtr _hidden_options;
 
             std::vector<OptionsPtr> _custom_options;
+
+            AnalyzerPtr _analyzer;
 
             Inputs _input_files;
     };
