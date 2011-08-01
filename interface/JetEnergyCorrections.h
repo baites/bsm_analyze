@@ -93,10 +93,6 @@ namespace bsm
             virtual void print(std::ostream &) const;
 
         private:
-            // Prevent copying: clone instead
-            //
-            JetEnergyCorrections &operator =(const JetEnergyCorrections &);
-
             typedef std::map<JetEnergyCorrectionLevel, JetCorrectorParameters> Corrections;
             typedef boost::shared_ptr<FactorizedJetCorrector> CorrectorPtr;
 

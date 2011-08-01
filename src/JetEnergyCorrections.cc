@@ -5,6 +5,7 @@
 // Created by Samvel Khalatyan, Jul 31, 2011
 // Copyright 2011, All rights reserved
 
+#include <algorithm>
 #include <iostream>
 #include <ostream>
 
@@ -109,7 +110,7 @@ JetEnergyCorrections::JetEnergyCorrections()
 }
 
 JetEnergyCorrections::JetEnergyCorrections(const JetEnergyCorrections &object):
-    _corrections(object._corrections)
+    _corrections(object._corrections.begin(), object._corrections.end())
 {
 }
 
@@ -130,7 +131,7 @@ bsm::LorentzVector JetEnergyCorrections::correctJet(const Jet *jet,
     // Check if jet uncorrected energy is available
     //
     if (!jet->has_uncorrected_p4())
-        return jet->physics_object().p4();
+        return jet->uncorrected_p4();
 
     // Test if corrections are loaded otherwier return uncorrected energy
     //
