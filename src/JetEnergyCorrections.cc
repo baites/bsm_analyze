@@ -82,6 +82,8 @@ void JetEnergyCorrectionOptions::setCorrections(const JetEnergyCorrectionLevel &
                     if (delegate())
                         delegate()->setCorrection(jec_level, file_name);
                 }
+
+                break;
             }
         default: cerr << "unsupported Jet Energy Corrections level" << endl;
     }
