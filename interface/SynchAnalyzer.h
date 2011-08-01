@@ -197,6 +197,33 @@ namespace bsm
             std::ostringstream _out;
     };
 
+    class SynchAnalyzer : public Analyzer
+    {
+        public:
+            SynchAnalyzer();
+            SynchAnalyzer(const SynchAnalyzer &);
+
+            JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
+            SynchSelectorDelegate *getSynchSelectorDelegate() const;
+
+            // Anlayzer interface
+            //
+            virtual void onFileOpen(const std::string &filename, const Input *);
+            virtual void process(const Event *);
+
+            // Object interface
+            //
+            virtual uint32_t id() const;
+
+            virtual ObjectPtr clone() const;
+            using Object::merge;
+
+            virtual void print(std::ostream &) const;
+
+        private:
+            boost::shared_ptr<SynchSelector> _synch_selector;
+    };
+
     std::ostream &operator <<(std::ostream &, const SynchMode &);
 }
 

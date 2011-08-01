@@ -26,6 +26,7 @@ using boost::dynamic_pointer_cast;
 
 using bsm::SynchJuly2011Analyzer;
 using bsm::SynchJECJuly2011Analyzer;
+using bsm::SynchAnalyzer;
 
 SynchJuly2011Analyzer::SynchJuly2011Analyzer(const SynchMode &mode):
     _synch_mode(mode)
@@ -1014,6 +1015,60 @@ void SynchJECJuly2011Analyzer::printP4(std::ostream &out, const LorentzVector &p
     << " eta: " << eta(p4)
     << " phi: " << phi(p4);
 }
+
+
+
+// Synch Analyzer
+//
+SynchAnalyzer::SynchAnalyzer()
+{
+    _synch_selector.reset(new SynchSelector());
+
+    monitor(_synch_selector);
+}
+
+SynchAnalyzer::SynchAnalyzer(const SynchAnalyzer &object)
+{
+    _synch_selector = 
+        dynamic_pointer_cast<SynchSelector>(object._synch_selector->clone());
+
+    monitor(_synch_selector);
+}
+
+bsm::JetEnergyCorrectionDelegate *SynchAnalyzer::getJetEnergyCorrectionDelegate() const
+{
+    return _synch_selector->getJetEnergyCorrectionDelegate();
+}
+
+bsm::SynchSelectorDelegate *SynchAnalyzer::getSynchSelectorDelegate() const
+{
+    return _synch_selector.get();
+}
+
+void SynchAnalyzer::onFileOpen(const std::string &filename, const Input *)
+{
+}
+
+void SynchAnalyzer::process(const Event *event)
+{
+    _synch_selector->apply(event);
+}
+
+uint32_t SynchAnalyzer::id() const
+{
+    return core::ID<SynchAnalyzer>::get();
+}
+
+SynchAnalyzer::ObjectPtr SynchAnalyzer::clone() const
+{
+    return ObjectPtr(new SynchAnalyzer(*this));
+}
+
+void SynchAnalyzer::print(std::ostream &out) const
+{
+    out << *_synch_selector;
+}
+
 
 
 // Helpers
