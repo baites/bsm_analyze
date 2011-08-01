@@ -51,8 +51,6 @@ namespace bsm
 
             void addInputs(const Inputs &);
 
-            void setRunMode(const RunMode &);
-
             bool run(int &argc, char *argv[]);
 
         private:
@@ -63,7 +61,7 @@ namespace bsm
             AppController(const AppController &);
             AppController &operator =(const AppController &);
 
-            void setMultiThreadMode();
+            void setRunMode(const bool &);
 
             void processSingleThread();
             void processMultiThread();

@@ -36,7 +36,7 @@ AppController::AppController():
 
         ("multi-thread",
          po::value<bool>()->implicit_value(true)->notifier(
-             boost::bind(&AppController::setMultiThreadMode, this)),
+             boost::bind(&AppController::setRunMode, this, _1)),
          "Run Analysis with multi-threads")
     ;
 
@@ -81,15 +81,6 @@ void AppController::addInputs(const Inputs &inputs)
 
         _input_files.push_back(*input);
     }
-}
-
-void AppController::setRunMode(const RunMode &run_mode)
-{
-    if (SINGLE_THREAD != run_mode
-            && MULTI_THREAD != run_mode)
-        cerr << "unsupported run mode: " << run_mode << endl;
-    else if (run_mode != _run_mode)
-        _run_mode = run_mode;
 }
 
 bool AppController::run(int &argc, char *argv[])
@@ -147,9 +138,11 @@ bool AppController::run(int &argc, char *argv[])
 
 // Privates
 //
-void AppController::setMultiThreadMode()
+void AppController::setRunMode(const bool &is_multi_thread)
 {
-    setRunMode(MULTI_THREAD);
+    _run_mode = is_multi_thread
+            ? MULTI_THREAD
+            : SINGLE_THREAD;
 }
 
 void AppController::processSingleThread()
