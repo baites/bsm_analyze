@@ -86,7 +86,7 @@ namespace bsm
                 SELECTIONS // this item should always be the last one
             };
 
-            SynchSelector()
+            SynchSelector();
             SynchSelector(const SynchSelector &);
 
             // Test if muon passes the selector

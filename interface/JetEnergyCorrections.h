@@ -106,7 +106,7 @@ namespace bsm
             virtual void print(std::ostream &) const;
 
         private:
-            typedef std::map<JetEnergyCorrectionLevel, JetCorrectorParameters> Corrections;
+            typedef std::map<Level, JetCorrectorParameters> Corrections;
             typedef boost::shared_ptr<FactorizedJetCorrector> CorrectorPtr;
 
             CorrectorPtr corrector();

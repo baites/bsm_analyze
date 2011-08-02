@@ -40,17 +40,20 @@ JetEnergyCorrectionOptions::JetEnergyCorrectionOptions()
     _description->add_options()
         ("l1",
          po::value<string>()->notifier(
-             boost::bind(&JetEnergyCorrectionOptions::setCorrection, this, L1, _1)),
+             boost::bind(&JetEnergyCorrectionOptions::setCorrection, this,
+                 JetEnergyCorrectionDelegate::L1, _1)),
          "Level 1 corrections")
 
         ("l2",
          po::value<string>()->notifier(
-             boost::bind(&JetEnergyCorrectionOptions::setCorrection, this, L2, _1)),
+             boost::bind(&JetEnergyCorrectionOptions::setCorrection, this,
+                 JetEnergyCorrectionDelegate::L2, _1)),
          "Level 2 corrections")
 
         ("l3",
          po::value<string>()->notifier(
-             boost::bind(&JetEnergyCorrectionOptions::setCorrection, this, L3, _1)),
+             boost::bind(&JetEnergyCorrectionOptions::setCorrection, this,
+                 JetEnergyCorrectionDelegate::L3, _1)),
          "Level 3 corrections")
     ;
 }
@@ -89,9 +92,9 @@ void JetEnergyCorrectionOptions::setCorrection(const JetEnergyCorrectionDelegate
     //
     switch(jec_level)
     {
-        case L1: // Fall through
-        case L2: // Fall through
-        case L3: 
+        case JetEnergyCorrectionDelegate::L1: // Fall through
+        case JetEnergyCorrectionDelegate::L2: // Fall through
+        case JetEnergyCorrectionDelegate::L3: 
             {
                 if (!fs::exists(file_name))
                     cerr << jec_level

@@ -68,8 +68,8 @@ namespace bsm
 
             RunMode _run_mode;
 
-            OptionsPtr _generic_options;
-            OptionsPtr _hidden_options;
+            DescriptionPtr _generic_options;
+            DescriptionPtr _hidden_options;
 
             std::vector<DescriptionPtr> _custom_options;
 

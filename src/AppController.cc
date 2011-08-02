@@ -94,7 +94,7 @@ bool AppController::run(int &argc, char *argv[])
 
     // Create group of visible options for help message
     //
-    OptionsPtr visible_options(new po::options_description());
+    DescriptionPtr visible_options(new po::options_description());
     visible_options->add(*_generic_options);
     
     for(vector<DescriptionPtr>::const_iterator options = _custom_options.begin();
@@ -104,7 +104,7 @@ bool AppController::run(int &argc, char *argv[])
         visible_options->add(options->operator *());
     }
 
-    OptionsPtr cmdline_options(new po::options_description());
+    DescriptionPtr cmdline_options(new po::options_description());
     cmdline_options->add(*visible_options).add(*_hidden_options);
 
     boost::shared_ptr<po::positional_options_description>
