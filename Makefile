@@ -1,8 +1,8 @@
 CCC      = g++
 
 # Subsystems that have compilable libraries
-SUBMOD   = bsm_core bsm_input bsm_stat JetMETObjects
-LIB		 = libbsm_analyze.so.1.2
+SUBMOD	= bsm_core bsm_input bsm_stat JetMETObjects
+LIB	= libbsm_analyze.so.1.2
 
 # Get list of all heads, sources and objects. Each source (%.cc) whould have
 # an object file
@@ -24,14 +24,14 @@ else
 	DEBUG = -O0 -g
 endif
 
-CXXFLAGS = ${DEBUG} -fPIC -pipe -Wall -DSTANDALONE -I./ -I/opt/local/include -I${ROOTSYS}/include -I${BOOST_ROOT}/include -I./bsm_input/message
+CXXFLAGS = ${DEBUG} -fPIC -pipe -Wall -DSTANDALONE -I./ -I/opt/local/include/ -I${ROOTSYS}/include -I${BOOST_ROOT}/include -I./bsm_input/message
 
 ifeq ($(shell uname),Linux)
-	LIBS     = -L/opt/local/lib -lprotobuf -L${BOOST_ROOT}/lib -L./lib $(foreach mod,$(SUBMOD),$(addprefix -l,$(mod))) -lboost_thread -lboost_filesystem -lboost_system -lboost_program_options -lboost_regex
-	LDFLAGS  = `root-config --libs` -L/opt/local/lib -lprotobuf -L${BOOST_ROOT}/lib -L./lib $(foreach mod,$(SUBMOD),$(addprefix -l,$(mod))) -lboost_thread -lboost_filesystem -lboost_system -lboost_program_options -lboost_regex
+	LIBS     = -L${PROTOBUF}/lib -lprotobuf -L${BOOST_ROOT}/lib -L./lib $(foreach mod,$(SUBMOD),$(addprefix -l,$(mod))) -lboost_thread -lboost_filesystem -lboost_system -lboost_program_options -lboost_regex
+	LDFLAGS  = `root-config --libs` -L${PROTOBUF}/lib -lprotobuf -L${BOOST_ROOT}/lib -L./lib $(foreach mod,$(SUBMOD),$(addprefix -l,$(mod))) -lboost_thread -lboost_filesystem -lboost_system -lboost_program_options -lboost_regex
 else
-	LIBS     = -L/opt/local/lib -lprotobuf -L${BOOST_ROOT}/lib -L./lib $(foreach mod,$(SUBMOD),$(addprefix -l,$(mod))) -lboost_thread-mt -lboost_filesystem -lboost_system -lboost_program_options -lboost_regex
-	LDFLAGS  = `root-config --libs` -L/opt/local/lib -lprotobuf -L${BOOST_ROOT}/lib -L./lib $(foreach mod,$(SUBMOD),$(addprefix -l,$(mod))) -lboost_thread-mt -lboost_filesystem -lboost_system -lboost_program_options -lboost_regex
+	LIBS     = -L${PROTOBUF}/lib -lprotobuf -L${BOOST_ROOT}/lib -L./lib $(foreach mod,$(SUBMOD),$(addprefix -l,$(mod))) -lboost_thread-mt -lboost_filesystem -lboost_system -lboost_program_options -lboost_regex
+	LDFLAGS  = `root-config --libs` -L${PROTOBUF}/lib -lprotobuf -L${BOOST_ROOT}/lib -L./lib $(foreach mod,$(SUBMOD),$(addprefix -l,$(mod))) -lboost_thread-mt -lboost_filesystem -lboost_system -lboost_program_options -lboost_regex
 endif
 
 # Rules to be always executed: empty ones
