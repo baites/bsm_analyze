@@ -29,8 +29,8 @@ int main(int argc, char *argv[])
     int result = 0;
     try
     {
-        boost::shared_ptr<AppController> app(new AppController());
         boost::shared_ptr<SynchAnalyzer> analyzer(new SynchAnalyzer());
+        boost::shared_ptr<AppController> app(new AppController());
         boost::shared_ptr<JetEnergyCorrectionOptions> jec_options(new JetEnergyCorrectionOptions());
         boost::shared_ptr<SynchSelectorOptions> synch_selector_options(new SynchSelectorOptions());
 
