@@ -38,6 +38,7 @@ namespace bsm
             typedef boost::shared_ptr<Analyzer> AnalyzerPtr;
 
             AppController();
+            ~AppController();
 
             void setAnalyzer(const AnalyzerPtr &);
 

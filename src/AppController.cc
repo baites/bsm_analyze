@@ -51,6 +51,10 @@ AppController::AppController():
     ;
 }
 
+AppController::~AppController()
+{
+}
+
 void AppController::setAnalyzer(const AnalyzerPtr &analyzer)
 {
     _analyzer = analyzer;
