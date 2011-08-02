@@ -7,6 +7,8 @@
 #ifndef BSM_SYNCHRONIZATION_SELECTOR
 #define BSM_SYNCHRONIZATION_SELECTOR
 
+#include <string>
+
 #include "bsm_core/interface/Object.h"
 #include "bsm_input/interface/bsm_input_fwd.h"
 #include "bsm_input/interface/Physics.pb.h"
@@ -45,20 +47,20 @@ namespace bsm
             SynchSelectorOptions();
             virtual ~SynchSelectorOptions();
 
-            // Options interface
-            //
-            virtual OptionsPtr options() const;
-
-            void setLeptonMode(std::string);
-            void setCutMode(std::string);
-
             void setDelegate(SynchSelectorDelegate *);
             SynchSelectorDelegate *delegate() const;
 
+            // Options interface
+            //
+            virtual DescriptionPtr description() const;
+
         private:
+            void setLeptonMode(std::string);
+            void setCutMode(std::string);
+
             SynchSelectorDelegate *_delegate;
 
-            OptionsPtr _options;
+            DescriptionPtr _description;
     };
 
     class SynchSelector : public Selector,
@@ -84,15 +86,12 @@ namespace bsm
                 SELECTIONS // this item should always be the last one
             };
 
-            SynchSelector(const LeptonMode & = ELECTRON,
-                    const CutMode & = CUT_2D);
+            SynchSelector()
             SynchSelector(const SynchSelector &);
 
             // Test if muon passes the selector
             //
             virtual bool apply(const Event *);
-
-            CutflowPtr cutflow() const;
 
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
 
@@ -102,6 +101,8 @@ namespace bsm
             virtual void setCutMode(const CutMode &);
 
             // Selector interface
+            //
+            // Note: empty at the moment
             //
             virtual void enable();
             virtual void disable();

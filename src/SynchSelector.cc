@@ -32,8 +32,8 @@ SynchSelectorOptions::SynchSelectorOptions()
 {
     _delegate = 0;
 
-    _options.reset(new po::options_description("Jet Energy Correction Options"));
-    _options->add_options()
+    _description.reset(new po::options_description("Synchronization Selector Options"));
+    _description->add_options()
         ("lepton-mode",
          po::value<string>()->notifier(
              boost::bind(&SynchSelectorOptions::setLeptonMode, this, _1)),
@@ -50,41 +50,6 @@ SynchSelectorOptions::~SynchSelectorOptions()
 {
 }
 
-SynchSelectorOptions::OptionsPtr SynchSelectorOptions::options() const
-{
-    return _options;
-}
-
-void SynchSelectorOptions::setLeptonMode(std::string mode)
-{
-    if (!_delegate)
-        return;
-
-    to_lower(mode);
-
-    if ("electron" == mode)
-        _delegate->setLeptonMode(SynchSelectorDelegate::ELECTRON);
-    else if ("muon" == mode)
-        _delegate->setLeptonMode(SynchSelectorDelegate::MUON);
-    else
-        cerr << "unsupported synchronization selector lepton mode" << endl;
-}
-
-void SynchSelectorOptions::setCutMode(std::string mode)
-{
-    if (!_delegate)
-        return;
-
-    to_lower(mode);
-
-    if ("2dcut" == mode)
-        _delegate->setCutMode(SynchSelectorDelegate::CUT_2D);
-    else if ("isolation" == mode)
-        _delegate->setCutMode(SynchSelectorDelegate::ISOLATION);
-    else
-        cerr << "unsupported synchronization selector cut mode" << endl;
-}
-
 void SynchSelectorOptions::setDelegate(SynchSelectorDelegate *delegate)
 {
     if (_delegate != delegate)
@@ -96,14 +61,52 @@ SynchSelectorDelegate *SynchSelectorOptions::delegate() const
     return _delegate;
 }
 
+// Options interface
+//
+SynchSelectorOptions::DescriptionPtr SynchSelectorOptions::description() const
+{
+    return _description;
+}
+
+// Privates
+//
+void SynchSelectorOptions::setLeptonMode(std::string mode)
+{
+    if (!delegate())
+        return;
+
+    to_lower(mode);
+
+    if ("electron" == mode)
+        delegate()->setLeptonMode(SynchSelectorDelegate::ELECTRON);
+    else if ("muon" == mode)
+        delegate()->setLeptonMode(SynchSelectorDelegate::MUON);
+    else
+        cerr << "unsupported synchronization selector lepton mode" << endl;
+}
+
+void SynchSelectorOptions::setCutMode(std::string mode)
+{
+    if (!delegate())
+        return;
+
+    to_lower(mode);
+
+    if ("2dcut" == mode)
+        delegate()->setCutMode(SynchSelectorDelegate::CUT_2D);
+    else if ("isolation" == mode)
+        delegate()->setCutMode(SynchSelectorDelegate::ISOLATION);
+    else
+        cerr << "unsupported synchronization selector cut mode" << endl;
+}
+
 
 
 // Synchronization Exercise Selector
 //
-SynchSelector::SynchSelector(const LeptonMode &lepton_mode,
-        const CutMode &cut_mode):
-    _lepton_mode(lepton_mode),
-    _cut_mode(cut_mode)
+SynchSelector::SynchSelector():
+    _lepton_mode(ELECTRON),
+    _cut_mode(CUT_2D)
 {
     // Cutflow table
     //
@@ -149,34 +152,28 @@ SynchSelector::SynchSelector(const SynchSelector &object):
     //
     _cutflow = 
         dynamic_pointer_cast<MultiplicityCutflow>(object._cutflow->clone());
-
     monitor(_cutflow);
 
     // Selectors
     //
     _primary_vertex_selector = 
         dynamic_pointer_cast<PrimaryVertexSelector>(object._primary_vertex_selector->clone());
-
     monitor(_primary_vertex_selector);
 
     _electron_selector = 
         dynamic_pointer_cast<ElectronSelector>(object._electron_selector->clone());
-
     monitor(_electron_selector);
 
     _muon_selector = 
         dynamic_pointer_cast<MuonSelector>(object._muon_selector->clone());
-
     monitor(_muon_selector);
 
     _nice_jet_selector = 
         dynamic_pointer_cast<JetSelector>(object._nice_jet_selector->clone());
-
     monitor(_nice_jet_selector);
 
     _good_jet_selector = 
         dynamic_pointer_cast<JetSelector>(object._good_jet_selector->clone());
-
     monitor(_good_jet_selector);
 
     // Jet Energy Corrections
@@ -208,6 +205,8 @@ bsm::JetEnergyCorrectionDelegate *SynchSelector::getJetEnergyCorrectionDelegate(
     return _jec.get();
 }
 
+// Synch Selector Delegate interface
+//
 void SynchSelector::setLeptonMode(const LeptonMode &lepton_mode)
 {
     _lepton_mode = lepton_mode;
@@ -218,21 +217,18 @@ void SynchSelector::setCutMode(const CutMode &cut_mode)
     _cut_mode = cut_mode;
 }
 
-SynchSelector::CutflowPtr SynchSelector::cutflow() const
-{
-    return _cutflow;
-}
-
+// Selector interface
+//
 void SynchSelector::enable()
 {
-    _primary_vertex_selector->enable();
 }
 
 void SynchSelector::disable()
 {
-    _primary_vertex_selector->disable();
 }
 
+// Object inteface
+//
 uint32_t SynchSelector::id() const
 {
     return core::ID<SynchSelector>::get();
@@ -295,6 +291,8 @@ bool SynchSelector::jets(const Event *event)
                 _good_electrons,
                 _good_muons);
 
+        // Skip jet if energy corrections failed
+        //
         if (!corrected_p4)
             continue;
 
@@ -402,11 +400,12 @@ bool SynchSelector::leadingJet()
 
 bool SynchSelector::htlep(const Event *event)
 {
-    const LorentzVector &lepton_p4 = ELECTRON == _lepton_mode 
+    const LorentzVector &lepton_p4 = (ELECTRON == _lepton_mode 
         ? (*_good_electrons.begin())->physics_object().p4()
-        : (*_good_muons.begin())->physics_object().p4();
+        : (*_good_muons.begin())->physics_object().p4());
 
-    return 150 < (pt(event->missing_energy().p4()) + pt(lepton_p4))
+    return event->has_missing_energy()
+        && 150 < (pt(event->missing_energy().p4()) + pt(lepton_p4))
         && (_cutflow->apply(HTLEP), true);
 }
 
@@ -453,7 +452,7 @@ void SynchSelector::selectGoodElectrons(const Event *event)
 
     const PrimaryVertex &pv = *event->primary_vertices().begin();
 
-    LockSelectorEventCounterOnUpdate electron_lock(*_electron_selector);
+    LockSelectorEventCounterOnUpdate lock(*_electron_selector);
     for(Electrons::const_iterator electron = event->pf_electrons().begin();
             event->pf_electrons().end() != electron;
             ++electron)
@@ -469,7 +468,7 @@ void SynchSelector::selectGoodMuons(const Event *event)
 
     const PrimaryVertex &pv = *event->primary_vertices().begin();
 
-    LockSelectorEventCounterOnUpdate muon_lock(*_muon_selector);
+    LockSelectorEventCounterOnUpdate lock(*_muon_selector);
     for(Muons::const_iterator muon = event->pf_muons().begin();
             event->pf_muons().end() != muon;
             ++muon)

@@ -29,7 +29,7 @@ AppController::AppController():
 {
     // Generic Options: common to all executables
     //
-    _generic_options.reset(new po::options_description("Allowed Options"));
+    _generic_options.reset(new po::options_description("Generic Options"));
     _generic_options->add_options()
         ("help,h",
          "Help message")
@@ -44,8 +44,8 @@ AppController::AppController():
     //
     _hidden_options.reset(new po::options_description("Hidden Options"));
     _hidden_options->add_options()
-        ("input,i",
-         po::value<vector<string> >()->notifier(
+        ("input",
+         po::value<Inputs>()->notifier(
              boost::bind(&AppController::addInputs, this, _1)),
          "input file(s)")
     ;
@@ -60,8 +60,8 @@ void AppController::addOptions(const Options &options)
 {
     // Add options only in case the pointer is valid
     //
-    if (options.options())
-        _custom_options.push_back(options.options());
+    if (options.description())
+        _custom_options.push_back(options.description());
 }
 
 void AppController::addInputs(const Inputs &inputs)
@@ -92,10 +92,12 @@ bool AppController::run(int &argc, char *argv[])
         return false;
     }
 
+    // Create group of visible options for help message
+    //
     OptionsPtr visible_options(new po::options_description());
     visible_options->add(*_generic_options);
     
-    for(vector<OptionsPtr>::const_iterator options = _custom_options.begin();
+    for(vector<DescriptionPtr>::const_iterator options = _custom_options.begin();
             _custom_options.end() != options;
             ++options)
     {
@@ -109,6 +111,8 @@ bool AppController::run(int &argc, char *argv[])
         positional_options(new po::positional_options_description());
     positional_options->add("input", -1);
 
+    // Parse arguments
+    //
     boost::shared_ptr<po::variables_map> arguments(new po::variables_map());
     po::store(po::command_line_parser(argc, argv).
             options(*cmdline_options).
@@ -117,12 +121,9 @@ bool AppController::run(int &argc, char *argv[])
             *arguments);
     po::notify(*arguments);
 
-    if (arguments->count("help"))
+    if (arguments->count("help")
+            || _input_files.empty())
         cout << *visible_options << endl;
-    else if (_input_files.empty())
-    {
-        cout << *visible_options << endl;
-    }
     else
     {
         if (SINGLE_THREAD == _run_mode)
@@ -140,9 +141,9 @@ bool AppController::run(int &argc, char *argv[])
 //
 void AppController::setRunMode(const bool &is_multi_thread)
 {
-    _run_mode = is_multi_thread
+    _run_mode = (is_multi_thread
             ? MULTI_THREAD
-            : SINGLE_THREAD;
+            : SINGLE_THREAD);
 }
 
 void AppController::processSingleThread()
@@ -155,7 +156,11 @@ void AppController::processSingleThread()
         reader->open();
         
         if (!reader->isOpen())
+        {
+            cerr << "failed to open: " << *input << endl;
+
             continue;
+        }
 
         for(boost::shared_ptr<Event> event(new Event());
                 reader->read(event);

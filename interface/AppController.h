@@ -24,11 +24,11 @@ namespace bsm
     class Options
     {
         public:
-            typedef boost::shared_ptr<po::options_description> OptionsPtr;
+            typedef boost::shared_ptr<po::options_description> DescriptionPtr;
 
             virtual ~Options() {}
 
-            virtual OptionsPtr options() const = 0;
+            virtual DescriptionPtr description() const = 0;
     };
 
     class AppController
@@ -36,12 +36,6 @@ namespace bsm
         public:
             typedef std::vector<std::string> Inputs;
             typedef boost::shared_ptr<Analyzer> AnalyzerPtr;
-
-            enum RunMode
-            {
-                SINGLE_THREAD = 0,
-                MULTI_THREAD
-            };
 
             AppController();
 
@@ -54,12 +48,18 @@ namespace bsm
             bool run(int &argc, char *argv[]);
 
         private:
-            typedef Options::OptionsPtr OptionsPtr;
-
             // Prevent Copying
             //
             AppController(const AppController &);
             AppController &operator =(const AppController &);
+
+            typedef Options::DescriptionPtr DescriptionPtr;
+
+            enum RunMode
+            {
+                SINGLE_THREAD = 0,
+                MULTI_THREAD
+            };
 
             void setRunMode(const bool &);
 
@@ -71,7 +71,7 @@ namespace bsm
             OptionsPtr _generic_options;
             OptionsPtr _hidden_options;
 
-            std::vector<OptionsPtr> _custom_options;
+            std::vector<DescriptionPtr> _custom_options;
 
             AnalyzerPtr _analyzer;
 

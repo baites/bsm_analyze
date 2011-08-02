@@ -1024,7 +1024,6 @@ void SynchJECJuly2011Analyzer::printP4(std::ostream &out, const LorentzVector &p
 SynchAnalyzer::SynchAnalyzer()
 {
     _synch_selector.reset(new SynchSelector());
-
     monitor(_synch_selector);
 }
 
@@ -1032,7 +1031,6 @@ SynchAnalyzer::SynchAnalyzer(const SynchAnalyzer &object)
 {
     _synch_selector = 
         dynamic_pointer_cast<SynchSelector>(object._synch_selector->clone());
-
     monitor(_synch_selector);
 }
 

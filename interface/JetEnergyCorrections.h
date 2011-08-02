@@ -25,48 +25,46 @@ class FactorizedJetCorrector;
 
 namespace bsm
 {
-    enum JetEnergyCorrectionLevel
-    {
-        L1 = 0,
-        L2,
-        L3
-    };
-
     class JetEnergyCorrectionDelegate
     {
         public:
+            enum Level
+            {
+                L1 = 0,
+                L2,
+                L3
+            };
+
             virtual ~JetEnergyCorrectionDelegate() {}
 
-            virtual void setCorrection(const JetEnergyCorrectionLevel &,
+            virtual void setCorrection(const Level &,
                     const std::string &file_name) {}
     };
 
     class JetEnergyCorrectionOptions : public Options
     {
         public:
-            typedef boost::shared_ptr<po::options_description> OptionsPtr;
-
             JetEnergyCorrectionOptions();
             virtual ~JetEnergyCorrectionOptions();
-
-            // Options interface
-            //
-            virtual OptionsPtr options() const;
-
-            void setCorrections(const JetEnergyCorrectionLevel &,
-                    const std::string &file_name); 
 
             void setDelegate(JetEnergyCorrectionDelegate *);
             JetEnergyCorrectionDelegate *delegate() const;
 
+            // Options interface
+            //
+            virtual DescriptionPtr description() const;
+
         private:
+            void setCorrection(const JetEnergyCorrectionDelegate::Level &,
+                    const std::string &file_name); 
+
             JetEnergyCorrectionDelegate *_delegate;
 
-            OptionsPtr _options;
+            DescriptionPtr _description;
     };
 
-    class JetEnergyCorrections : public JetEnergyCorrectionDelegate,
-        public core::Object
+    class JetEnergyCorrections : public core::Object,
+        public JetEnergyCorrectionDelegate
     {
         public:
             typedef std::vector<const Electron *> Electrons;
@@ -76,13 +74,27 @@ namespace bsm
             JetEnergyCorrections();
             JetEnergyCorrections(const JetEnergyCorrections &);
 
-            virtual void setCorrection(const JetEnergyCorrectionLevel &,
-                    const std::string &file_name);
-
+            // IMPORTANT: Invalid pointer will be returned if Jet Energy
+            //            Corrections are not loaded. As such, always check
+            //            returned value for validity, e.g.:
+            //
+            //            LorentzVectorPtr corrected_p4 = jec->correctJet(...);
+            //            if (!corrected_p4)
+            //              cerr << failed to correct jet" << endl;
+            //            else
+            //              cout << "work with jet" << endl;
+            //
             LorentzVectorPtr correctJet(const Jet *,
                     const Event *,
                     const Electrons &,
                     const Muons &);
+
+            // Jet Energy Correction Delegate interface
+            //
+            // Note: the same level correction will be loaded only once (!)
+            //
+            virtual void setCorrection(const Level &,
+                    const std::string &file_name);
 
             // Object interface
             //
@@ -106,7 +118,8 @@ namespace bsm
 
     // Helpers
     //
-    std::ostream &operator <<(std::ostream &, const JetEnergyCorrectionLevel &);
+    std::ostream &operator <<(std::ostream &,
+            const JetEnergyCorrectionDelegate::Level &);
 }
 
 #endif

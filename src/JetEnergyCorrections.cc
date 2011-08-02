@@ -36,58 +36,27 @@ JetEnergyCorrectionOptions::JetEnergyCorrectionOptions()
 {
     _delegate = 0;
 
-    _options.reset(new po::options_description("Jet Energy Correction Options"));
-    _options->add_options()
+    _description.reset(new po::options_description("Jet Energy Correction Options"));
+    _description->add_options()
         ("l1",
          po::value<string>()->notifier(
-             boost::bind(&JetEnergyCorrectionOptions::setCorrections, this, L1, _1)),
+             boost::bind(&JetEnergyCorrectionOptions::setCorrection, this, L1, _1)),
          "Level 1 corrections")
 
         ("l2",
          po::value<string>()->notifier(
-             boost::bind(&JetEnergyCorrectionOptions::setCorrections, this, L2, _1)),
+             boost::bind(&JetEnergyCorrectionOptions::setCorrection, this, L2, _1)),
          "Level 2 corrections")
 
         ("l3",
          po::value<string>()->notifier(
-             boost::bind(&JetEnergyCorrectionOptions::setCorrections, this, L3, _1)),
+             boost::bind(&JetEnergyCorrectionOptions::setCorrection, this, L3, _1)),
          "Level 3 corrections")
     ;
 }
 
 JetEnergyCorrectionOptions::~JetEnergyCorrectionOptions()
 {
-}
-
-JetEnergyCorrectionOptions::OptionsPtr JetEnergyCorrectionOptions::options() const
-{
-    return _options;
-}
-
-void JetEnergyCorrectionOptions::setCorrections(const JetEnergyCorrectionLevel &jec_level,
-        const std::string &file_name)
-{
-    // Check validity of flag
-    //
-    switch(jec_level)
-    {
-        case L1: // Fall through
-        case L2: // Fall through
-        case L3: 
-            {
-                if (!fs::exists(file_name))
-                    cerr << "Jet Energy Corrections " << jec_level
-                        << " file does not exist: " << file_name << endl;
-                else
-                {
-                    if (delegate())
-                        delegate()->setCorrection(jec_level, file_name);
-                }
-
-                break;
-            }
-        default: cerr << "unsupported Jet Energy Corrections level" << endl;
-    }
 }
 
 void JetEnergyCorrectionOptions::setDelegate(JetEnergyCorrectionDelegate *delegate)
@@ -99,6 +68,42 @@ void JetEnergyCorrectionOptions::setDelegate(JetEnergyCorrectionDelegate *delega
 JetEnergyCorrectionDelegate *JetEnergyCorrectionOptions::delegate() const
 {
     return _delegate;
+}
+
+// Options interface
+//
+JetEnergyCorrectionOptions::DescriptionPtr JetEnergyCorrectionOptions::description() const
+{
+    return _description;
+}
+
+// Private
+//
+void JetEnergyCorrectionOptions::setCorrection(const JetEnergyCorrectionDelegate::Level &jec_level,
+        const std::string &file_name)
+{
+    if (!delegate())
+        return;
+
+    // Check validity of flag
+    //
+    switch(jec_level)
+    {
+        case L1: // Fall through
+        case L2: // Fall through
+        case L3: 
+            {
+                if (!fs::exists(file_name))
+                    cerr << jec_level
+                        << " Jet Energy Correction file does not exist: "
+                        << file_name << endl;
+                else
+                    delegate()->setCorrection(jec_level, file_name);
+
+                break;
+            }
+        default: cerr << "unsupported Jet Energy Correction level" << endl;
+    }
 }
 
 
@@ -114,15 +119,6 @@ JetEnergyCorrections::JetEnergyCorrections(const JetEnergyCorrections &object):
 {
 }
 
-void JetEnergyCorrections::setCorrection(const JetEnergyCorrectionLevel &jec_level,
-        const std::string &file_name)
-{
-    if (_corrections.end() != _corrections.find(jec_level))
-        cerr << "jet energy correction " << jec_level << " is already loaded" << endl;
-    else
-        _corrections[jec_level] = JetCorrectorParameters(file_name);
-}
-
 JetEnergyCorrections::LorentzVectorPtr JetEnergyCorrections::correctJet(const Jet *jet,
         const Event *event,
         const Electrons &electrons,
@@ -130,52 +126,66 @@ JetEnergyCorrections::LorentzVectorPtr JetEnergyCorrections::correctJet(const Je
 {
     LorentzVectorPtr corrected_p4;
 
-    // Check if jet uncorrected energy is available
-    //
-    if (!jet->has_uncorrected_p4())
-        return corrected_p4;
-
-    // Test if corrections are loaded otherwier return uncorrected energy
+    // Test if corrections are loaded
     //
     CorrectorPtr jec = corrector();
     if (!jec)
         return corrected_p4;
 
-    // Remove leptons
+    // Check if jet uncorrected energy and area are available
     //
+    if (!jet->has_uncorrected_p4()
+            || !jet->has_extra()
+            || !jet->extra().has_area())
+        return corrected_p4;
+
+    // Check if event RHO information is available
+    //
+    if (!event->has_extra()
+            || !event->extra().has_rho())
+        return corrected_p4;
+
     corrected_p4.reset(new LorentzVector());
     *corrected_p4 = jet->uncorrected_p4();
 
-    typedef ::google::protobuf::RepeatedPtrField<Jet::Child> Children;
-    for(Children::const_iterator child = jet->children().begin();
-            jet->children().end() != child;
-            ++child)
+    // Remove leptons only if any were passed
+    //
+    if (!electrons.empty()
+            || !muons.empty())
     {
-        const LorentzVector &child_p4 = child->physics_object().p4();
-
-        // Electrons
-        //
-        for(Electrons::const_iterator electron = electrons.begin();
-                electrons.end() != electron;
-                ++electron)
+        typedef ::google::protobuf::RepeatedPtrField<Jet::Child> Children;
+        for(Children::const_iterator child = jet->children().begin();
+                jet->children().end() != child;
+                ++child)
         {
-            const LorentzVector &electron_p4 = (*electron)->physics_object().p4();
-            if (electron_p4 == child_p4)
-                *corrected_p4 -= electron_p4;
-        }
+            const LorentzVector &child_p4 = child->physics_object().p4();
 
-        // Muons
-        //
-        for(Muons::const_iterator muon = muons.begin();
-                muons.end() != muon;
-                ++muon)
-        {
-            const LorentzVector &muon_p4 = (*muon)->physics_object().p4();
-            if (muon_p4 == child_p4)
-                *corrected_p4 -= muon_p4;
+            // Electrons
+            //
+            for(Electrons::const_iterator electron = electrons.begin();
+                    electrons.end() != electron;
+                    ++electron)
+            {
+                const LorentzVector &electron_p4 = (*electron)->physics_object().p4();
+                if (electron_p4 == child_p4)
+                    *corrected_p4 -= electron_p4;
+            }
+
+            // Muons
+            //
+            for(Muons::const_iterator muon = muons.begin();
+                    muons.end() != muon;
+                    ++muon)
+            {
+                const LorentzVector &muon_p4 = (*muon)->physics_object().p4();
+                if (muon_p4 == child_p4)
+                    *corrected_p4 -= muon_p4;
+            }
         }
     }
 
+    // Correct jet Lorentz Vector
+    //
     jec->setJetEta(eta(*corrected_p4));
     jec->setJetPt(pt(*corrected_p4));
     jec->setJetE(corrected_p4->e());
@@ -189,6 +199,19 @@ JetEnergyCorrections::LorentzVectorPtr JetEnergyCorrections::correctJet(const Je
     return corrected_p4;
 }
 
+// Jet Energy Correction Delegate interface
+//
+void JetEnergyCorrections::setCorrection(const Level &jec_level,
+        const std::string &file_name)
+{
+    if (_corrections.end() != _corrections.find(jec_level))
+        cerr << jec_level << " jet energy correction is already loaded" << endl;
+    else
+        _corrections[jec_level] = JetCorrectorParameters(file_name);
+}
+
+// Object interface
+//
 uint32_t JetEnergyCorrections::id() const
 {
     return core::ID<JetEnergyCorrections>::get();
@@ -229,18 +252,18 @@ JetEnergyCorrections::CorrectorPtr JetEnergyCorrections::corrector()
 // Helpers
 //
 std::ostream &bsm::operator <<(std::ostream &out,
-        const JetEnergyCorrectionLevel &jec_level)
+        const JetEnergyCorrectionDelegate::Level &jec_level)
 {
     switch(jec_level)
     {
-        case L1: out << "L1";
-                 break;
+        case JetEnergyCorrectionDelegate::L1: out << "L1";
+                                              break;
 
-        case L2: out << "L2";
-                 break;
+        case JetEnergyCorrectionDelegate::L2: out << "L2";
+                                              break;
 
-        case L3: out << "L3";
-                 break;
+        case JetEnergyCorrectionDelegate::L3: out << "L3";
+                                              break;
 
         default: out << "unknown";
                  break;
