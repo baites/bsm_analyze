@@ -21,17 +21,17 @@ CLEAN_MOD = $(addprefix CLN_,$(SUBMOD))
 ifeq ($(strip $(DEBUG)),)
 	DEBUG = -O2
 else
-	DEBUG = -O0 -g
+	DEBUG = -ggdb3
 endif
 
-CXXFLAGS = ${DEBUG} -fPIC -pipe -Wall -DSTANDALONE -I./ -I/opt/local/include -I${ROOTSYS}/include -I${BOOST_ROOT}/include -I./bsm_input/message
+cxxflags = ${CXXFLAGS} ${DEBUG} -fPIC -pipe -Wall -DSTANDALONE -I./ -I/opt/local/include -I${ROOTSYS}/include -I./bsm_input/message
 
 ifeq ($(shell uname),Linux)
-	LIBS     = -L/opt/local/lib -lprotobuf -L${BOOST_ROOT}/lib -L./lib $(foreach mod,$(SUBMOD),$(addprefix -l,$(mod))) -lboost_thread -lboost_filesystem -lboost_system -lboost_program_options -lboost_regex
-	LDFLAGS  = `root-config --libs` -L/opt/local/lib -lprotobuf -L${BOOST_ROOT}/lib -L./lib $(foreach mod,$(SUBMOD),$(addprefix -l,$(mod))) -lboost_thread -lboost_filesystem -lboost_system -lboost_program_options -lboost_regex
+	LDFLAGS  = $(subst :, -L,$(LD_LIBRARY_PATH)) `root-config --libs` -L/opt/local/lib -lprotobuf -L${BOOST_ROOT}/lib -L./lib $(foreach mod,$(SUBMOD),$(addprefix -l,$(mod))) -lboost_thread -lboost_filesystem -lboost_system -lboost_program_options -lboost_regex
+	LIBS     = ${LDFLAGS}
 else
-	LIBS     = -L/opt/local/lib -lprotobuf -L${BOOST_ROOT}/lib -L./lib $(foreach mod,$(SUBMOD),$(addprefix -l,$(mod))) -lboost_thread-mt -lboost_filesystem -lboost_system -lboost_program_options -lboost_regex
-	LDFLAGS  = `root-config --libs` -L/opt/local/lib -lprotobuf -L${BOOST_ROOT}/lib -L./lib $(foreach mod,$(SUBMOD),$(addprefix -l,$(mod))) -lboost_thread-mt -lboost_filesystem -lboost_system -lboost_program_options -lboost_regex
+	LDFLAGS  = $(subst :, -L,${DYLD_LIBRARY_PATH}) `root-config --libs` -L/opt/local/lib -lprotobuf -L./lib $(foreach mod,$(SUBMOD),$(addprefix -l,$(mod))) -lboost_thread-mt -lboost_filesystem -lboost_system -lboost_program_options -lboost_regex
+	LIBS     = ${LDFLAGS}
 endif
 
 # Rules to be always executed: empty ones
@@ -62,7 +62,7 @@ prog: $(PROGS)
 
 # Compile modules
 $(SUBMOD):
-	@CXXFLAGS=-DSTANDALONE
+	@CXXFLAGS="-DSTANDALONE ${CXXFLAGS}"
 	@export CXXFLAGS
 	$(MAKE) -C $@
 	@for lib in `find ./$@/lib -name lib$@.so\*`; do ln -fs ../$@/lib/`basename $${lib}` ./lib/; done
@@ -71,7 +71,7 @@ $(SUBMOD):
 # compiled
 $(OBJS): $(addprefix ./src/,$(patsubst %.o,%.cc,$(notdir $@))) 
 	@echo "[+] Compiling objects ..."
-	$(CCC) $(CXXFLAGS) -c $(addprefix ./src/,$(patsubst %.o,%.cc,$(notdir $@))) -o $@
+	$(CCC) $(cxxflags) -c $(addprefix ./src/,$(patsubst %.o,%.cc,$(notdir $@))) -o $@
 	@echo
 
 $(LIB): $(OBJS)
@@ -86,7 +86,7 @@ $(LIB): $(OBJS)
 #
 $(PROGS): $(OBJS) 
 	@echo "[+] Compiling programs ..."
-	$(CCC) $(CXXFLAGS) `root-config --glibs` $(LIBS) $(OBJS) $(PROTOCOBJS) ./src/$@.cpp -o ./bin/bsm_$@
+	$(CCC) $(cxxflags) `root-config --glibs` $(LIBS) $(OBJS) $(PROTOCOBJS) ./src/$@.cpp -o ./bin/bsm_$@
 	@echo
 
 # This rule will clean libraries also code depend on. Run:
