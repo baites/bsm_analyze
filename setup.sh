@@ -10,8 +10,8 @@ then
 else
     echo "Setting environment."
 
-    export DYLD_LIBRARY_PATH=${CODE}/lib:${DYLD_LIBRARY_PATH}
-    export LD_LIBRARY_PATH=${CODE}/lib:${LD_LIBRARY_PATH}
+    export DYLD_LIBRARY_PATH="${DYLD_LIBRARY_PATH}:${CODE}/lib"
+    export LD_LIBRARY_PATH="${LD_LIBRARY_PATH}:${CODE}/lib"
 
     export PATH=${CODE}/bin:${PATH}
 fi
