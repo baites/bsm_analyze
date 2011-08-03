@@ -203,6 +203,8 @@ namespace bsm
             SynchAnalyzer();
             SynchAnalyzer(const SynchAnalyzer &);
 
+            virtual ~SynchAnalyzer();
+
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
             SynchSelectorDelegate *getSynchSelectorDelegate() const;
 
