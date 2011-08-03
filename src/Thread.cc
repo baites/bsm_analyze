@@ -402,7 +402,7 @@ void ThreadController::start()
 
     _summary.reset(new Summary());
 
-    startKeyboardThread();
+    //startKeyboardThread();
 
     for(uint32_t threads_to_create = countMaxThreads();
             threads_to_create;
@@ -413,7 +413,7 @@ void ThreadController::start()
 
     run();
 
-    stopKeyboardThread();
+    //stopKeyboardThread();
 
     cout << "Job Summary" << endl;
     cout << "  Processed Events: " << _summary->eventsProcessed() << endl;
