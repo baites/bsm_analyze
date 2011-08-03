@@ -120,6 +120,7 @@ JetEnergyCorrections::JetEnergyCorrections()
 JetEnergyCorrections::JetEnergyCorrections(const JetEnergyCorrections &object):
     _corrections(object._corrections.begin(), object._corrections.end())
 {
+    corrector();
 }
 
 JetEnergyCorrections::LorentzVectorPtr JetEnergyCorrections::correctJet(const Jet *jet,
@@ -211,6 +212,8 @@ void JetEnergyCorrections::setCorrection(const Level &jec_level,
         cerr << jec_level << " jet energy correction is already loaded" << endl;
     else
         _corrections[jec_level] = JetCorrectorParameters(file_name);
+
+    corrector();
 }
 
 // Object interface
