@@ -89,6 +89,8 @@ namespace bsm
             SynchSelector();
             SynchSelector(const SynchSelector &);
 
+            virtual ~SynchSelector();
+
             // Test if muon passes the selector
             //
             virtual bool apply(const Event *);
