@@ -10,7 +10,7 @@ CXX ?= g++
 # Subsystems that have compilable libraries
 #
 submod   = bsm_core bsm_input bsm_stat JetMETObjects
-lib		 = libbsm_analyze.so.1.2
+lib		 = libbsm_analyze.so.1.3
 
 # Get list of all heads, sources and objects. Each source (%.cc) whould have
 # an object file
