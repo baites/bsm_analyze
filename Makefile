@@ -44,9 +44,9 @@ endif
 #
 .PHONY: ${submod} lib
 
-lib: obj ${lib}
+lib: ${lib}
 
-all: obj lib prog
+all: submod obj lib prog
 
 help:
 	@echo "make <rule>"
@@ -63,7 +63,7 @@ submod: ${submod}
 
 obj: submod ${objs}
 
-prog: ${progs}
+prog: submod obj lib ${progs}
 
 cleanall: clean ${clean_mod}
 
@@ -80,7 +80,7 @@ ${submod}: $(addprefix ./lib/lib,$(addsuffix .so,$@))
 
 # Regular compilcation
 #
-${objs}: ${srcs} ${heads}
+${objs}: submod ${srcs} ${heads}
 	@echo "[+] Compiling objects ..."
 	${CXX} ${cppflags} -c $(addprefix ./src/,$(patsubst %.o,%.cc,$(notdir $@))) -o $@
 	@echo
