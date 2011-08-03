@@ -9,12 +9,14 @@
 #include <functional>
 #include <iomanip>
 #include <ostream>
+#include <sstream>
 
 #include <boost/pointer_cast.hpp>
 
 #include "bsm_core/interface/ID.h"
 #include "bsm_input/interface/Algebra.h"
 #include "bsm_input/interface/Electron.pb.h"
+#include "bsm_input/interface/Event.pb.h"
 #include "bsm_input/interface/Jet.pb.h"
 #include "bsm_input/interface/Muon.pb.h"
 #include "bsm_input/interface/Physics.pb.h"
@@ -23,17 +25,13 @@
 #include "interface/Selector.h"
 #include "interface/Utility.h"
 
-using std::endl;
-using std::left;
-using std::right;
-using std::ostream;
-using std::setw;
-using std::setfill;
+using namespace std;
 
 using boost::dynamic_pointer_cast;
 
 using bsm::CutPtr;
 using bsm::ElectronSelector;
+using bsm::JetEnergyCorrectionDelegate;
 using bsm::JetSelector;
 using bsm::MultiplicityCutflow;
 using bsm::MuonSelector;

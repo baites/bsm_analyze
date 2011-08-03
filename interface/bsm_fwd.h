@@ -13,6 +13,8 @@
 namespace bsm
 {
     class Analyzer;
+    class AppController;
+    class Options;
 
     namespace algorithm
     {
@@ -41,6 +43,14 @@ namespace bsm
     class MissingEnergyMonitor;
     class MuonsMonitor;
     class PrimaryVerticesMonitor;
+
+    class JetEnergyCorrectionOptions;
+    class JetEnergyCorrections;
+    class JetEnergyCorrectionDelegate;
+
+    class SynchSelectorOptions;
+    class SynchSelector;
+    class SynchSelectorDelegate;
 
     class H1Proxy;
     class H2Proxy;

@@ -16,22 +16,28 @@
 #include "bsm_core/interface/ID.h"
 #include "bsm_input/interface/Algebra.h"
 #include "bsm_input/interface/Event.pb.h"
+#include "interface/JetEnergyCorrections.h"
+#include "interface/JetEnergyCorrectionsAnalyzer.h"
 #include "interface/Monitor.h"
 #include "interface/Selector.h"
-#include "interface/JetEnergyCorrectionsAnalyzer.h"
 
 using namespace std;
 
 using boost::dynamic_pointer_cast;
 
 using bsm::JetEnergyCorrectionsAnalyzer;
+using bsm::JetEnergyCorrectionDelegate;
 
 JetEnergyCorrectionsAnalyzer::JetEnergyCorrectionsAnalyzer()
 {
+    // Jet Energy Corrections
+    //
+    _jec.reset(new JetEnergyCorrections());
+    monitor(_jec);
+
     // Selectrors
     //
     _jet_selector.reset(new JetSelector());
-
     monitor(_jet_selector);
 
     // Monitors
@@ -47,6 +53,11 @@ JetEnergyCorrectionsAnalyzer::JetEnergyCorrectionsAnalyzer()
 
 JetEnergyCorrectionsAnalyzer::JetEnergyCorrectionsAnalyzer(const JetEnergyCorrectionsAnalyzer &object)
 {
+    // Jet Energy Corrections
+    //
+    _jec = dynamic_pointer_cast<JetEnergyCorrections>(object._jec->clone());
+    monitor(_jec);
+
     // Selectors
     //
     _jet_selector = 
@@ -70,29 +81,11 @@ JetEnergyCorrectionsAnalyzer::JetEnergyCorrectionsAnalyzer(const JetEnergyCorrec
     monitor(_jet_cmssw_corrected_p4);
     monitor(_jet_uncorrected_p4);
     monitor(_jet_offline_corrected_p4);
-
-    // Jet Energy Corrections
-    //
-    if (object._parameters.size())
-    {
-        _parameters.clear();
-        _parameters.resize(object._parameters.size());
-        std::copy(object._parameters.begin(), object._parameters.end(), _parameters.begin());
-
-        _jec.reset(new FactorizedJetCorrector(_parameters));
-    }
 }
 
-void JetEnergyCorrectionsAnalyzer::loadCorrections(const std::string &filename)
+JetEnergyCorrectionDelegate *JetEnergyCorrectionsAnalyzer::getJetEnergyCorrectionDelegate() const
 {
-    _parameters.push_back(JetCorrectorParameters(filename));
-
-    _jec.reset(new FactorizedJetCorrector(_parameters));
-}
-
-bool JetEnergyCorrectionsAnalyzer::didCorrectionsLoad() const
-{
-    return _jec;
+    return _jec.get();
 }
 
 const JetEnergyCorrectionsAnalyzer::P4MonitorPtr
@@ -119,9 +112,6 @@ void JetEnergyCorrectionsAnalyzer::onFileOpen(const std::string &filename, const
 
 void JetEnergyCorrectionsAnalyzer::process(const Event *event)
 {
-    if (!_jec)
-        throw std::runtime_error("Jet Energy Corrections are not loaded");
-
     _out << "Event: " << event->extra().id()
         << " Lumi: " << event->extra().lumi()
         << " Run: " << event->extra().run() << endl;
@@ -172,8 +162,25 @@ void JetEnergyCorrectionsAnalyzer::jets(const Event *event)
 
     typedef ::google::protobuf::RepeatedPtrField<Jet> Jets;
 
+    JetEnergyCorrections::Electrons electrons;
+    typedef ::google::protobuf::RepeatedPtrField<Electron> Electrons;
+    for(Electrons::const_iterator electron = event->pf_electrons().begin();
+            event->pf_electrons().end() != electron;
+            ++electron)
+    {
+        electrons.push_back(&*electron);
+    }
+
+    JetEnergyCorrections::Muons muons;
+    typedef ::google::protobuf::RepeatedPtrField<Muon> Muons;
+    for(Muons::const_iterator muon = event->pf_muons().begin();
+            event->pf_muons().end() != muon;
+            ++muon)
+    {
+        muons.push_back(&*muon);
+    }
+
     LockSelectorEventCounterOnUpdate lock(*_jet_selector);
-    const float rho = event->extra().rho();
     uint32_t id = 1;
     for(Jets::const_iterator jet = event->jets().begin();
             event->jets().end() != jet;
@@ -190,21 +197,14 @@ void JetEnergyCorrectionsAnalyzer::jets(const Event *event)
             const LorentzVector &uncorrected_p4 = jet->uncorrected_p4();
             _jet_uncorrected_p4->fill(uncorrected_p4);
 
-            _jec->setJetEta(eta(uncorrected_p4));
-            _jec->setJetPt(pt(uncorrected_p4));
-            _jec->setJetE(uncorrected_p4.e());
-            _jec->setNPV(event->primary_vertices().size());
-            _jec->setJetA(jet->extra().area());
-            _jec->setRho(rho);
+            LorentzVectorPtr corrected_p4 = _jec->correctJet(&*jet, event, electrons, muons);
+            if (!corrected_p4)
+                continue;
 
-            float jec = _jec->getCorrection();
+            _jet_offline_corrected_p4->fill(*corrected_p4);
 
-            LorentzVector jec_p4 = uncorrected_p4;
-            jec_p4 *= jec;
-            _jet_offline_corrected_p4->fill(jec_p4);
-
-            _out << "[" << setw(2) << right << id << "] Jet Energy Correction: "
-                << jec << endl;
+            _out << "[" << setw(2) << right << id << "]"
+                << endl;
 
             _out << setw(5) << " "
                 << "  CMSSW JEC "
@@ -220,8 +220,8 @@ void JetEnergyCorrectionsAnalyzer::jets(const Event *event)
 
             _out << setw(5) << " "
                 << "Offline JEC "
-                << "pT: " << pt(jec_p4)
-                << " eta: " << eta(jec_p4)
+                << "pT: " << pt(*corrected_p4)
+                << " eta: " << eta(*corrected_p4)
                 << endl;
         }
     }

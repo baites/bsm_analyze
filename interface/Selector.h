@@ -8,7 +8,6 @@
 #ifndef BSM_SELECTOR
 #define BSM_SELECTOR
 
-#include <algorithm>
 #include <iosfwd>
 #include <vector>
 
