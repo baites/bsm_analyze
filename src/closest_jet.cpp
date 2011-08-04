@@ -31,14 +31,11 @@ using boost::shared_ptr;
 using bsm::AppController;
 using bsm::ClosestJetAnalyzer;
 using bsm::DeltaCanvas;
-using bsm::stat::convert;
-using bsm::stat::TH1Ptr;
-using bsm::stat::TH2Ptr;
 using bsm::LorentzVectorCanvas;
 
 typedef boost::shared_ptr<ClosestJetAnalyzer> ClosestJetAnalyzerPtr;
 
-void plot(const ClosestJetAnalyzerPtr &);
+void plot(const ClosestJetAnalyzerPtr &, char *);
 
 int main(int argc, char *argv[])
 {
@@ -58,7 +55,7 @@ int main(int argc, char *argv[])
         app->setAnalyzer(analyzer);
         result = app->run(argc, argv);
         if (result)
-            plot(analyzer);
+            plot(analyzer, argv[0]);
     }
     catch(const exception &error)
     {
@@ -82,7 +79,7 @@ int main(int argc, char *argv[])
         : 1;
 }
 
-void plot(const ClosestJetAnalyzerPtr &analyzer)
+void plot(const ClosestJetAnalyzerPtr &analyzer, char *application)
 {
     typedef LorentzVectorCanvas P4Canvas;
     typedef shared_ptr<P4Canvas> P4CanvasPtr;
@@ -90,7 +87,7 @@ void plot(const ClosestJetAnalyzerPtr &analyzer)
     // Cheat ROOT with empty args
     //
     int empty_argc = 1;
-    char *empty_argv[] = { "root" };
+    char *empty_argv[] = { application };
     shared_ptr<TRint> app(new TRint("app", &empty_argc, empty_argv));
 
     P4CanvasPtr el_canvas(new P4Canvas("Electrons"));
