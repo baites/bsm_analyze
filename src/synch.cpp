@@ -8,19 +8,19 @@
 
 #include <boost/shared_ptr.hpp>
 
+#include "interface/AppController.h"
 #include "interface/JetEnergyCorrections.h"
 #include "interface/SynchAnalyzer.h"
 #include "interface/SynchSelector.h"
-#include "interface/AppController.h"
 
 using namespace std;
 
 using boost::shared_ptr;
 
-using bsm::SynchAnalyzer;
-using bsm::SynchSelectorOptions;
 using bsm::JetEnergyCorrectionOptions;
 using bsm::AppController;
+using bsm::SynchAnalyzer;
+using bsm::SynchSelectorOptions;
 
 int main(int argc, char *argv[])
 {
