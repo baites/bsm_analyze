@@ -9,12 +9,8 @@
 #include <boost/shared_ptr.hpp>
 
 #include <TCanvas.h>
-#include <TH1.h>
-#include <TH2.h>
 #include <TRint.h>
 
-#include "bsm_stat/interface/Utility.h"
-#include "bsm_stat/interface/Axis.h"
 #include "bsm_stat/interface/H1.h"
 #include "bsm_stat/interface/H2.h"
 
@@ -35,7 +31,7 @@ using bsm::LorentzVectorCanvas;
 
 typedef boost::shared_ptr<ClosestJetAnalyzer> ClosestJetAnalyzerPtr;
 
-void plot(const ClosestJetAnalyzerPtr &, char *);
+void plot(const ClosestJetAnalyzerPtr &,  char *);
 
 int main(int argc, char *argv[])
 {
