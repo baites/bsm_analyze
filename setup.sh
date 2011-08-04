@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+#
+# Setup the environment for the code to compile. Setup should be run only
+# once per session.
+#
+# Created by Samvel Khalatyan, Aug 04, 2011
+# Copyright 2011, All rights reserved
 
 CODE=`pwd`
 
