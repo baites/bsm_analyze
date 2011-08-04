@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
 {
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-    int result = 0;
+    bool result = false;
     try
     {
         boost::shared_ptr<SynchAnalyzer> analyzer(new SynchAnalyzer());
@@ -42,24 +42,26 @@ int main(int argc, char *argv[])
 
         app->setAnalyzer(analyzer);
 
-        result = !app->run(argc, argv);
+        result = app->run(argc, argv);
     }
     catch(const exception &error)
     {
         cerr << error.what() << endl;
 
-        result = 1;
+        result = false;
     }
     catch(...)
     {
         cerr << "Unknown error" << endl;
 
-        result = 1;
+        result = false;
     }
 
     // Clean Up any memory allocated by libprotobuf
     //
     google::protobuf::ShutdownProtobufLibrary();
 
-    return result;
+    return result
+        ? 0
+        : 1;
 }
