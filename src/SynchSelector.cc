@@ -204,6 +204,21 @@ bool SynchSelector::apply(const Event *event)
         && htlep(event);
 }
 
+SynchSelector::CutflowPtr SynchSelector::cutflow() const
+{
+    return _cutflow;
+}
+
+SynchSelector::LeptonMode SynchSelector::leptonMode() const
+{
+    return _lepton_mode;
+}
+
+SynchSelector::CutMode SynchSelector::cutMode() const
+{
+    return _cut_mode;
+}
+
 bsm::JetEnergyCorrectionDelegate *SynchSelector::getJetEnergyCorrectionDelegate() const
 {
     return _jec.get();

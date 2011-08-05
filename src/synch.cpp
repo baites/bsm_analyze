@@ -17,8 +17,8 @@ using namespace std;
 
 using boost::shared_ptr;
 
-using bsm::JetEnergyCorrectionOptions;
 using bsm::AppController;
+using bsm::JetEnergyCorrectionOptions;
 using bsm::SynchAnalyzer;
 using bsm::SynchSelectorOptions;
 

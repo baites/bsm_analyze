@@ -12,7 +12,6 @@
 #include "bsm_core/interface/Object.h"
 #include "bsm_input/interface/bsm_input_fwd.h"
 #include "bsm_input/interface/Physics.pb.h"
-#include "JetMETObjects/interface/JetCorrectorParameters.h"
 #include "interface/AppController.h"
 #include "interface/Selector.h"
 
@@ -68,7 +67,6 @@ namespace bsm
     {
         public:
             typedef boost::shared_ptr<MultiplicityCutflow> CutflowPtr;
-            typedef std::vector<JetCorrectorParameters> Corrections;
 
             enum Selection
             {
@@ -94,6 +92,10 @@ namespace bsm
             // Test if muon passes the selector
             //
             virtual bool apply(const Event *);
+            CutflowPtr cutflow() const;
+
+            LeptonMode leptonMode() const;
+            CutMode cutMode() const;
 
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
 
