@@ -66,6 +66,7 @@ ${lib_submod}:
 	@echo "[+] Compiling sub-module ${submodule} ..."
 	${MAKE} -C ${submodule}
 	@if [[ "JetMETObjects" != ${submodule} ]]; then ln -fs ../${submodule}/lib/lib${submodule}.so $@; fi
+	@if [[ "JetMETObjects" != ${submodule} ]]; then for lib in `find ${submodule}/lib -name lib${submodule}.so\*`; do ln -fs ../${submodule}/lib/`basename $${lib}` ./lib/; done fi
 
 
 
