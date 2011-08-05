@@ -3,6 +3,9 @@
 //
 // Created by Samvel Khalatyan, Jul 05, 2011
 // Copyright 2011, All rights reserved
+//
+// CODE IS OBOSOLETE !!! DO NOT USE IT
+// IT IS GOING TO BE REMOVED FROM REPOSITORY ON SEPTEMBER 5
 
 #include <iostream>
 
