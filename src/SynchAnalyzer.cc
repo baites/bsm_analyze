@@ -868,7 +868,7 @@ void SynchJECJuly2011Analyzer::copyCorrections(const Corrections &corrections)
 {
     _corrections.clear();
 
-    if (!corrections.size())
+    if (corrections.empty())
         return;
 
     _corrections.resize(corrections.size());
@@ -1032,6 +1032,10 @@ SynchAnalyzer::SynchAnalyzer(const SynchAnalyzer &object)
     _synch_selector = 
         dynamic_pointer_cast<SynchSelector>(object._synch_selector->clone());
     monitor(_synch_selector);
+}
+
+SynchAnalyzer::~SynchAnalyzer()
+{
 }
 
 bsm::JetEnergyCorrectionDelegate *SynchAnalyzer::getJetEnergyCorrectionDelegate() const

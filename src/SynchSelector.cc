@@ -182,6 +182,10 @@ SynchSelector::SynchSelector(const SynchSelector &object):
     monitor(_jec);
 }
 
+SynchSelector::~SynchSelector()
+{
+}
+
 bool SynchSelector::apply(const Event *event)
 {
     _cutflow->apply(PRESELECTION);

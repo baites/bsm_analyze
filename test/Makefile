@@ -15,9 +15,9 @@ endif
 CXXFLAGS = ${DEBUG} -fPIC -pipe -Wall -DSTANDALONE -I../ -I/opt/local/include -I${ROOTSYS}/include -I${BOOST_ROOT}/include -I./bsm_input/message 
 
 ifeq ($(shell uname),Linux)
-	LIBS = -L/opt/local/lib -lprotobuf -L${BOOST_ROOT}/lib -L../lib $(foreach mod,$(SUBMOD),$(addprefix -l,$(mod))) -lboost_thread -lboost_regex -lboost_filesystem
+	LIBS = -L${PROTOBUF}/lib -lprotobuf -L${BOOST_ROOT}/lib -L../lib $(foreach mod,$(SUBMOD),$(addprefix -l,$(mod))) -lboost_thread -lboost_regex -lboost_filesystem
 else
-	LIBS = -L/opt/local/lib -lprotobuf -L${BOOST_ROOT}/lib -L../lib $(foreach mod,$(SUBMOD),$(addprefix -l,$(mod))) -lboost_thread-mt -lboost_regex -lboost_filesystem
+	LIBS = -L${PROTOBUF}/lib -lprotobuf -L${BOOST_ROOT}/lib -L../lib $(foreach mod,$(SUBMOD),$(addprefix -l,$(mod))) -lboost_thread-mt -lboost_regex -lboost_filesystem
 endif
 
 # Rules to be always executed: empty ones
