@@ -19,6 +19,14 @@ namespace bsm
 {
     typedef boost::shared_ptr<Counter> CounterPtr;
 
+    class CounterDelegate
+    {
+        public:
+            virtual ~CounterDelegate() {};
+
+            virtual void didCounterAdd() {};
+    };
+
     // Simple counter of anything. There are two states defined: locked and
     // unlocked. If counter is locked, then any attempt to modify it will
     // silently be skipped. Counter may also automatically lock itself on
@@ -28,6 +36,9 @@ namespace bsm
     {
         public:
             Counter();
+
+            void setDelegate(CounterDelegate *);
+            CounterDelegate *delegate() const;
 
             // Get number of counts
             //
@@ -67,6 +78,8 @@ namespace bsm
 
             bool _is_locked;
             bool _is_lock_on_update;
+
+            CounterDelegate *_delegate;
     };
 
     // Store cut value and count successfuly passed objects, events

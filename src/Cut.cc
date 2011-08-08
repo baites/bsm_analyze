@@ -21,6 +21,18 @@ Counter::Counter():
     _is_locked(false),
     _is_lock_on_update(false)
 {
+    _delegate = 0;
+}
+
+void Counter::setDelegate(CounterDelegate *delegate)
+{
+    if (_delegate != delegate)
+        _delegate = delegate;
+}
+
+bsm::CounterDelegate *Counter::delegate() const
+{
+    return _delegate;
 }
 
 Counter::operator uint32_t() const
@@ -62,6 +74,9 @@ void Counter::add()
     ++_count;
 
     update();
+
+    if (delegate())
+        delegate()->didCounterAdd();
 }
 
 uint32_t Counter::id() const
