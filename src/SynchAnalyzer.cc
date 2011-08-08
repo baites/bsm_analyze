@@ -10,24 +10,28 @@
 #include <string>
 #include <utility>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/pointer_cast.hpp>
 
 #include "bsm_core/interface/ID.h"
 #include "bsm_input/interface/Algebra.h"
 #include "bsm_input/interface/Event.pb.h"
+#include "bsm_input/interface/Utility.h"
 #include "JetMETObjects/interface/FactorizedJetCorrector.h"
 #include "interface/Monitor.h"
 #include "interface/Selector.h"
-#include "interface/SynchSelector.h"
 #include "interface/SynchAnalyzer.h"
 
 using namespace std;
 
 using boost::dynamic_pointer_cast;
+using boost::to_lower;
 
 using bsm::SynchJuly2011Analyzer;
 using bsm::SynchJECJuly2011Analyzer;
 using bsm::SynchAnalyzer;
+using bsm::SynchAnalyzerDelegate;
+using bsm::SynchAnalyzerOptions;
 
 SynchJuly2011Analyzer::SynchJuly2011Analyzer(const SynchMode &mode):
     _synch_mode(mode)
@@ -1019,19 +1023,81 @@ void SynchJECJuly2011Analyzer::printP4(std::ostream &out, const LorentzVector &p
 
 
 
+// Synch Analyzer Optiosn
+//
+SynchAnalyzerOptions::SynchAnalyzerOptions()
+{
+    _delegate = 0;
+
+    _description.reset(new po::options_description("Synchronization Analyzer Options"));
+    _description->add_options()
+        ("selection",
+         po::value<string>()->default_value("htlep")->notifier(
+             boost::bind(&SynchAnalyzerOptions::setSelection, this, _1)),
+         "print events passing selection: htlep, leading_jet, cut_lepton")
+    ;
+}
+
+SynchAnalyzerOptions::~SynchAnalyzerOptions()
+{
+}
+
+void SynchAnalyzerOptions::setDelegate(SynchAnalyzerDelegate *delegate)
+{
+    if (_delegate != delegate)
+        _delegate = delegate;
+}
+
+SynchAnalyzerDelegate *SynchAnalyzerOptions::delegate() const
+{
+    return _delegate;
+}
+
+SynchAnalyzerOptions::DescriptionPtr SynchAnalyzerOptions::description() const
+{
+    return _description;
+}
+
+// Private
+//
+void SynchAnalyzerOptions::setSelection(std::string selection)
+{
+    if (!_delegate)
+        return;
+
+    to_lower(selection);
+
+    if ("htlep" == selection)
+        _delegate->setSelection(SynchSelector::HTLEP);
+    else if ("leading_jet" == selection)
+        _delegate->setSelection(SynchSelector::LEADING_JET);
+    else if ("cut_lepton" == selection)
+        _delegate->setSelection(SynchSelector::CUT_LEPTON);
+    else
+        cerr << "didn't understand selection: " << selection << endl;
+}
+
+
+
 // Synch Analyzer
 //
-SynchAnalyzer::SynchAnalyzer()
+SynchAnalyzer::SynchAnalyzer():
+    _selection(SynchSelector::HTLEP)
 {
     _synch_selector.reset(new SynchSelector());
     monitor(_synch_selector);
+
+    _format.reset(new ShortFormat());
 }
 
-SynchAnalyzer::SynchAnalyzer(const SynchAnalyzer &object)
+SynchAnalyzer::SynchAnalyzer(const SynchAnalyzer &object):
+    _selection(object._selection)
 {
     _synch_selector = 
         dynamic_pointer_cast<SynchSelector>(object._synch_selector->clone());
     monitor(_synch_selector);
+
+    _format.reset(new ShortFormat());
 }
 
 SynchAnalyzer::~SynchAnalyzer()
@@ -1048,6 +1114,11 @@ bsm::SynchSelectorDelegate *SynchAnalyzer::getSynchSelectorDelegate() const
     return _synch_selector.get();
 }
 
+void SynchAnalyzer::setSelection(const SynchSelector::Selection &selection)
+{
+    _selection = selection;
+}
+
 void SynchAnalyzer::onFileOpen(const std::string &filename, const Input *)
 {
 }
@@ -1055,6 +1126,9 @@ void SynchAnalyzer::onFileOpen(const std::string &filename, const Input *)
 void SynchAnalyzer::process(const Event *event)
 {
     _synch_selector->apply(event);
+
+    if (_synch_selector->cutflow()->cut(_selection)->isPass())
+        _out << _format->operator()(*event) << endl;
 }
 
 uint32_t SynchAnalyzer::id() const
@@ -1067,9 +1141,27 @@ SynchAnalyzer::ObjectPtr SynchAnalyzer::clone() const
     return ObjectPtr(new SynchAnalyzer(*this));
 }
 
+void SynchAnalyzer::merge(const ObjectPtr &pointer)
+{
+    if (pointer->id() != id())
+        return;
+
+    boost::shared_ptr<SynchAnalyzer> object =
+        dynamic_pointer_cast<SynchAnalyzer>(pointer);
+
+    if (!object)
+        return;
+
+    Object::merge(pointer);
+
+    _out << object->_out.str() << endl;
+}
+
 void SynchAnalyzer::print(std::ostream &out) const
 {
-    out << *_synch_selector;
+    out << *_synch_selector << endl;
+
+    out << _out.str();
 }
 
 

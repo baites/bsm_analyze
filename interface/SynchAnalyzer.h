@@ -17,7 +17,9 @@
 #include "bsm_input/interface/Event.pb.h"
 #include "JetMETObjects/interface/JetCorrectorParameters.h"
 #include "interface/Analyzer.h"
+#include "interface/AppController.h"
 #include "interface/bsm_fwd.h"
+#include "interface/SynchSelector.h"
 
 class FactorizedJetCorrector;
 
@@ -197,7 +199,40 @@ namespace bsm
             std::ostringstream _out;
     };
 
-    class SynchAnalyzer : public Analyzer
+    class SynchAnalyzerDelegate
+    {
+        public:
+            virtual ~SynchAnalyzerDelegate()
+            {
+            }
+
+            virtual void setSelection(const SynchSelector::Selection &)
+            {
+            }
+    };
+
+    class SynchAnalyzerOptions : public Options
+    {
+        public:
+            SynchAnalyzerOptions();
+            virtual ~SynchAnalyzerOptions();
+
+            void setDelegate(SynchAnalyzerDelegate *);
+            SynchAnalyzerDelegate *delegate() const;
+
+            // Options interface
+            //
+            virtual DescriptionPtr description() const;
+
+        private:
+            void setSelection(std::string);
+
+            SynchAnalyzerDelegate *_delegate;
+            DescriptionPtr _description;
+    };
+
+    class SynchAnalyzer : public Analyzer,
+        public SynchAnalyzerDelegate
     {
         public:
             SynchAnalyzer();
@@ -207,6 +242,10 @@ namespace bsm
 
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
             SynchSelectorDelegate *getSynchSelectorDelegate() const;
+
+            // Synch Analyzer Delegate interface
+            //
+            virtual void setSelection(const SynchSelector::Selection &);
 
             // Anlayzer interface
             //
@@ -218,12 +257,17 @@ namespace bsm
             virtual uint32_t id() const;
 
             virtual ObjectPtr clone() const;
-            using Object::merge;
+            virtual void merge(const ObjectPtr &);
 
             virtual void print(std::ostream &) const;
 
         private:
             boost::shared_ptr<SynchSelector> _synch_selector;
+
+            SynchSelector::Selection _selection;
+
+            boost::shared_ptr<Format> _format;
+            std::ostringstream _out;
     };
 
     std::ostream &operator <<(std::ostream &, const SynchMode &);
