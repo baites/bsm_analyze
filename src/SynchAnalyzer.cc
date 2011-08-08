@@ -1032,7 +1032,7 @@ SynchAnalyzerOptions::SynchAnalyzerOptions()
     _description.reset(new po::options_description("Synchronization Analyzer Options"));
     _description->add_options()
         ("selection",
-         po::value<string>()->default_value("htlep")->notifier(
+         po::value<string>()->default_value("")->notifier(
              boost::bind(&SynchAnalyzerOptions::setSelection, this, _1)),
          "print events passing selection: htlep, leading_jet, cut_lepton, veto_second_lepton, lepton")
     ;
@@ -1062,7 +1062,8 @@ SynchAnalyzerOptions::DescriptionPtr SynchAnalyzerOptions::description() const
 //
 void SynchAnalyzerOptions::setSelection(std::string selection)
 {
-    if (!_delegate)
+    if (!_delegate
+            || selection.empty())
         return;
 
     to_lower(selection);
@@ -1086,7 +1087,7 @@ void SynchAnalyzerOptions::setSelection(std::string selection)
 // Synch Analyzer
 //
 SynchAnalyzer::SynchAnalyzer():
-    _selection(SynchSelector::HTLEP)
+    _selection(SynchSelector::SELECTIONS)
 {
     _synch_selector.reset(new SynchSelector());
     monitor(_synch_selector);
@@ -1096,17 +1097,17 @@ SynchAnalyzer::SynchAnalyzer():
 }
 
 SynchAnalyzer::SynchAnalyzer(const SynchAnalyzer &object):
-    _selection(object._selection),
+    _selection(SynchSelector::SELECTIONS),
     _events_to_dump(object._events_to_dump.begin(), object._events_to_dump.end())
 {
     _synch_selector = 
         dynamic_pointer_cast<SynchSelector>(object._synch_selector->clone());
     monitor(_synch_selector);
 
-    _synch_selector->cutflow()->cut(_selection)->objects()->setDelegate(this);
-
     _format.reset(new ShortFormat());
     _event = 0;
+
+    setSelection(object._selection);
 }
 
 SynchAnalyzer::~SynchAnalyzer()
@@ -1125,7 +1126,13 @@ bsm::SynchSelectorDelegate *SynchAnalyzer::getSynchSelectorDelegate() const
 
 void SynchAnalyzer::setSelection(const SynchSelector::Selection &selection)
 {
+    if (SynchSelector::SELECTIONS != _selection)
+        _synch_selector->cutflow()->cut(_selection)->objects()->setDelegate(0);
+
     _selection = selection;
+
+    if (SynchSelector::SELECTIONS != _selection)
+        _synch_selector->cutflow()->cut(_selection)->objects()->setDelegate(this);
 }
 
 void SynchAnalyzer::didCounterAdd()
@@ -1189,7 +1196,8 @@ void SynchAnalyzer::merge(const ObjectPtr &pointer)
 
     Object::merge(pointer);
 
-    _out << object->_out.str() << endl;
+    if (!object->_out.str().empty())
+        _out << object->_out.str() << endl;
 }
 
 void SynchAnalyzer::print(std::ostream &out) const
@@ -1215,9 +1223,31 @@ void SynchAnalyzer::dump(const Event *event)
             ++muon)
     {
         _out << format(*(*muon)) << endl;
+        _out << "---" << endl;
     }
 
     _out << endl;
+    _out << "Good Electrons" << endl;
+    for(SynchSelector::GoodElectrons::const_iterator electron =
+            _synch_selector->goodElectrons().begin();
+            _synch_selector->goodElectrons().end() != electron;
+            ++electron)
+    {
+        _out << format(*(*electron)) << endl;
+        _out << "---" << endl;
+    }
+
+    _out << endl;
+    _out << "Good Jets" << endl;
+    for(SynchSelector::GoodJets::const_iterator jet =
+            _synch_selector->goodJets().begin();
+            _synch_selector->goodJets().end() != jet;
+            ++jet)
+    {
+        _out << format(*jet->jet) << endl;
+        _out << "corrected p4: " << *jet->corrected_p4 << endl;
+        _out << "---" << endl;
+    }
 }
 
 
