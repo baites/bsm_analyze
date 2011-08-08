@@ -20,6 +20,7 @@
 #include "interface/Analyzer.h"
 #include "interface/AppController.h"
 #include "interface/Cut.h"
+#include "interface/EventDump.h"
 #include "interface/bsm_fwd.h"
 #include "interface/SynchSelector.h"
 
@@ -235,7 +236,8 @@ namespace bsm
 
     class SynchAnalyzer : public Analyzer,
         public SynchAnalyzerDelegate,
-        public CounterDelegate
+        public CounterDelegate,
+        public EventDumpDelegate
     {
         public:
             SynchAnalyzer();
@@ -259,6 +261,10 @@ namespace bsm
             //
             virtual void didCounterAdd();
 
+            // Event Dump Delegate interface
+            //
+            virtual void setEventNumber(const Event::Extra &);
+
             // Object interface
             //
             virtual uint32_t id() const;
@@ -269,6 +275,8 @@ namespace bsm
             virtual void print(std::ostream &) const;
 
         private:
+            void dump(const Event *);
+
             boost::shared_ptr<SynchSelector> _synch_selector;
 
             SynchSelector::Selection _selection;
@@ -277,6 +285,8 @@ namespace bsm
             std::ostringstream _out;
 
             const Event *_event;
+
+            std::vector<Event::Extra> _events_to_dump;
     };
 
     std::ostream &operator <<(std::ostream &, const SynchMode &);

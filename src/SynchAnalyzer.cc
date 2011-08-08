@@ -1096,7 +1096,8 @@ SynchAnalyzer::SynchAnalyzer():
 }
 
 SynchAnalyzer::SynchAnalyzer(const SynchAnalyzer &object):
-    _selection(object._selection)
+    _selection(object._selection),
+    _events_to_dump(object._events_to_dump.begin(), object._events_to_dump.end())
 {
     _synch_selector = 
         dynamic_pointer_cast<SynchSelector>(object._synch_selector->clone());
@@ -1133,6 +1134,16 @@ void SynchAnalyzer::didCounterAdd()
         _out << _format->operator()(*_event) << endl;
 }
 
+void SynchAnalyzer::setEventNumber(const Event::Extra &event)
+{
+    EventSearcher predicate(event);
+    if (_events_to_dump.end() == find_if(_events_to_dump.begin(),
+                _events_to_dump.end(),
+                predicate))
+
+        _events_to_dump.push_back(event);
+}
+
 void SynchAnalyzer::onFileOpen(const std::string &filename, const Input *)
 {
 }
@@ -1142,6 +1153,15 @@ void SynchAnalyzer::process(const Event *event)
     _event = event;
 
     _synch_selector->apply(event);
+
+    if (!_events_to_dump.empty())
+    {
+        EventSearcher predicate(event->extra());
+        if (_events_to_dump.end() != find_if(_events_to_dump.begin(),
+                    _events_to_dump.end(),
+                    predicate))    
+            dump(event);
+    }
 
     _event = 0;
 }
@@ -1177,6 +1197,27 @@ void SynchAnalyzer::print(std::ostream &out) const
     out << *_synch_selector << endl;
 
     out << _out.str();
+}
+
+// Private
+//
+void SynchAnalyzer::dump(const Event *event)
+{
+    const Format &format = *_format;
+
+    _out << endl;
+    _out << format(*event) << endl;
+
+    _out << "Good Muons" << endl;
+    for(SynchSelector::GoodMuons::const_iterator muon =
+            _synch_selector->goodMuons().begin();
+            _synch_selector->goodMuons().end() != muon;
+            ++muon)
+    {
+        _out << format(*(*muon)) << endl;
+    }
+
+    _out << endl;
 }
 
 
