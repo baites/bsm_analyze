@@ -209,6 +209,26 @@ SynchSelector::CutflowPtr SynchSelector::cutflow() const
     return _cutflow;
 }
 
+const SynchSelector::GoodElectrons &SynchSelector::goodElectrons() const
+{
+    return _good_electrons;
+}
+
+const SynchSelector::GoodMuons &SynchSelector::goodMuons() const
+{
+    return _good_muons;
+}
+
+const SynchSelector::GoodJets &SynchSelector::niceJets() const
+{
+    return _nice_jets;
+}
+
+const SynchSelector::GoodJets &SynchSelector::goodJets() const
+{
+    return _good_jets;
+}
+
 SynchSelector::LeptonMode SynchSelector::leptonMode() const
 {
     return _lepton_mode;
