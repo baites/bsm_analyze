@@ -15,6 +15,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "bsm_input/interface/Event.pb.h"
+#include "bsm_input/interface/bsm_input_fwd.h"
 #include "JetMETObjects/interface/JetCorrectorParameters.h"
 #include "interface/Analyzer.h"
 #include "interface/AppController.h"

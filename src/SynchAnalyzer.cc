@@ -1127,8 +1127,10 @@ void SynchAnalyzer::process(const Event *event)
 {
     _synch_selector->apply(event);
 
+    /*
     if (_synch_selector->cutflow()->cut(_selection)->isPass())
         _out << _format->operator()(*event) << endl;
+        */
 }
 
 uint32_t SynchAnalyzer::id() const
