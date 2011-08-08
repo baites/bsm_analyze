@@ -13,6 +13,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "bsm_input/interface/bsm_input_fwd.h"
+#include "bsm_input/interface/Event.pb.h"
 #include "interface/Analyzer.h"
 #include "interface/AppController.h"
 #include "interface/bsm_fwd.h"
@@ -81,8 +82,6 @@ namespace bsm
             virtual void print(std::ostream &) const;
 
         private:
-            class EventSearcher;
-
             void dump(const Event *);
 
             void dumpPrimaryVertices(const Event *);
