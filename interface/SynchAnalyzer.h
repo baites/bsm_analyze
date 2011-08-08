@@ -19,6 +19,7 @@
 #include "JetMETObjects/interface/JetCorrectorParameters.h"
 #include "interface/Analyzer.h"
 #include "interface/AppController.h"
+#include "interface/Cut.h"
 #include "interface/bsm_fwd.h"
 #include "interface/SynchSelector.h"
 
@@ -233,7 +234,8 @@ namespace bsm
     };
 
     class SynchAnalyzer : public Analyzer,
-        public SynchAnalyzerDelegate
+        public SynchAnalyzerDelegate,
+        public CounterDelegate
     {
         public:
             SynchAnalyzer();
@@ -244,14 +246,18 @@ namespace bsm
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
             SynchSelectorDelegate *getSynchSelectorDelegate() const;
 
-            // Synch Analyzer Delegate interface
-            //
-            virtual void setSelection(const SynchSelector::Selection &);
-
             // Anlayzer interface
             //
             virtual void onFileOpen(const std::string &filename, const Input *);
             virtual void process(const Event *);
+
+            // Synch Analyzer Delegate interface
+            //
+            virtual void setSelection(const SynchSelector::Selection &);
+
+            // Counter Delegate interface
+            //
+            virtual void didCounterAdd();
 
             // Object interface
             //
@@ -269,6 +275,8 @@ namespace bsm
 
             boost::shared_ptr<Format> _format;
             std::ostringstream _out;
+
+            const Event *_event;
     };
 
     std::ostream &operator <<(std::ostream &, const SynchMode &);

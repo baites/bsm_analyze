@@ -1034,7 +1034,7 @@ SynchAnalyzerOptions::SynchAnalyzerOptions()
         ("selection",
          po::value<string>()->default_value("htlep")->notifier(
              boost::bind(&SynchAnalyzerOptions::setSelection, this, _1)),
-         "print events passing selection: htlep, leading_jet, cut_lepton")
+         "print events passing selection: htlep, leading_jet, cut_lepton, veto_second_lepton, lepton")
     ;
 }
 
@@ -1073,6 +1073,10 @@ void SynchAnalyzerOptions::setSelection(std::string selection)
         _delegate->setSelection(SynchSelector::LEADING_JET);
     else if ("cut_lepton" == selection)
         _delegate->setSelection(SynchSelector::CUT_LEPTON);
+    else if ("veto_second_lepton" == selection)
+        _delegate->setSelection(SynchSelector::VETO_SECOND_LEPTON);
+    else if ("lepton" == selection)
+        _delegate->setSelection(SynchSelector::LEPTON);
     else
         cerr << "didn't understand selection: " << selection << endl;
 }
@@ -1088,6 +1092,7 @@ SynchAnalyzer::SynchAnalyzer():
     monitor(_synch_selector);
 
     _format.reset(new ShortFormat());
+    _event = 0;
 }
 
 SynchAnalyzer::SynchAnalyzer(const SynchAnalyzer &object):
@@ -1097,7 +1102,10 @@ SynchAnalyzer::SynchAnalyzer(const SynchAnalyzer &object):
         dynamic_pointer_cast<SynchSelector>(object._synch_selector->clone());
     monitor(_synch_selector);
 
+    _synch_selector->cutflow()->cut(_selection)->objects()->setDelegate(this);
+
     _format.reset(new ShortFormat());
+    _event = 0;
 }
 
 SynchAnalyzer::~SynchAnalyzer()
@@ -1119,18 +1127,23 @@ void SynchAnalyzer::setSelection(const SynchSelector::Selection &selection)
     _selection = selection;
 }
 
+void SynchAnalyzer::didCounterAdd()
+{
+    if (_event)
+        _out << _format->operator()(*_event) << endl;
+}
+
 void SynchAnalyzer::onFileOpen(const std::string &filename, const Input *)
 {
 }
 
 void SynchAnalyzer::process(const Event *event)
 {
+    _event = event;
+
     _synch_selector->apply(event);
 
-    /*
-    if (_synch_selector->cutflow()->cut(_selection)->isPass())
-        _out << _format->operator()(*event) << endl;
-        */
+    _event = 0;
 }
 
 uint32_t SynchAnalyzer::id() const
