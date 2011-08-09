@@ -6,6 +6,7 @@
 // Created by Samvel Khalatyan, Jul 05, 2011
 // Copyright 2011, All rights reserved
 
+#include <iomanip>
 #include <ostream>
 #include <string>
 #include <utility>
@@ -1093,6 +1094,8 @@ SynchAnalyzer::SynchAnalyzer():
     monitor(_synch_selector);
 
     _format.reset(new ShortFormat());
+    _dump_format.reset(new MediumFormat());
+
     _event = 0;
 }
 
@@ -1105,6 +1108,8 @@ SynchAnalyzer::SynchAnalyzer(const SynchAnalyzer &object):
     monitor(_synch_selector);
 
     _format.reset(new ShortFormat());
+    _dump_format.reset(new MediumFormat());
+
     _event = 0;
 
     setSelection(object._selection);
@@ -1211,12 +1216,15 @@ void SynchAnalyzer::print(std::ostream &out) const
 //
 void SynchAnalyzer::dump(const Event *event)
 {
-    const Format &format = *_format;
+    const Format &format = *_dump_format;
 
     _out << endl;
     _out << format(*event) << endl;
 
-    _out << "Good Muons" << endl;
+    _out << setw(20) << setfill('-') << " " << endl;
+    _out << "Selected Objects" << endl;
+    _out << setw(20) << setfill('-') << " " << endl;
+    _out << _synch_selector->goodMuons().size() << " good muons" << endl;
     for(SynchSelector::GoodMuons::const_iterator muon =
             _synch_selector->goodMuons().begin();
             _synch_selector->goodMuons().end() != muon;
@@ -1227,7 +1235,7 @@ void SynchAnalyzer::dump(const Event *event)
     }
 
     _out << endl;
-    _out << "Good Electrons" << endl;
+    _out << _synch_selector->goodElectrons().size() << " good electrons" << endl;
     for(SynchSelector::GoodElectrons::const_iterator electron =
             _synch_selector->goodElectrons().begin();
             _synch_selector->goodElectrons().end() != electron;
@@ -1238,15 +1246,35 @@ void SynchAnalyzer::dump(const Event *event)
     }
 
     _out << endl;
-    _out << "Good Jets" << endl;
+    _out << _synch_selector->niceJets().size() << " nice jets" << endl;
     for(SynchSelector::GoodJets::const_iterator jet =
-            _synch_selector->goodJets().begin();
-            _synch_selector->goodJets().end() != jet;
+            _synch_selector->niceJets().begin();
+            _synch_selector->niceJets().end() != jet;
             ++jet)
     {
+        _out << "corr p4: " << *jet->corrected_p4 << endl;
         _out << format(*jet->jet) << endl;
-        _out << "corrected p4: " << *jet->corrected_p4 << endl;
         _out << "---" << endl;
+    }
+
+    _out << endl;
+    SynchSelector::GoodJets::const_iterator closest_jet =
+        _synch_selector->closestJet();
+    if (_synch_selector->niceJets().end() == closest_jet)
+        _out << "closest jet not available" << endl;
+    else
+    {
+        _out << "closest jet" << endl;
+        _out << "corr p4: " << *closest_jet->corrected_p4 << endl;
+        _out << format(*closest_jet->jet) << endl;
+
+        const LorentzVector *lepton_p4 =
+            SynchSelector::ELECTRON == _synch_selector->leptonMode()
+            ? &(*_synch_selector->goodElectrons().begin())->physics_object().p4()
+            : &(*_synch_selector->goodMuons().begin())->physics_object().p4();
+
+        _out << "ptrel: " << ptrel(*lepton_p4, *closest_jet->corrected_p4)
+            << " dr: " << dr(*lepton_p4, *closest_jet->corrected_p4);
     }
 }
 

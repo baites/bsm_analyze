@@ -282,6 +282,7 @@ namespace bsm
             SynchSelector::Selection _selection;
 
             boost::shared_ptr<Format> _format;
+            boost::shared_ptr<Format> _dump_format;
             std::ostringstream _out;
 
             const Event *_event;
