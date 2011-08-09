@@ -117,6 +117,8 @@ namespace bsm
             const GoodJets &niceJets() const;
             const GoodJets &goodJets() const;
 
+            GoodJets::const_iterator closestJet() const;
+
             LeptonMode leptonMode() const;
             CutMode cutMode() const;
 
@@ -175,6 +177,7 @@ namespace bsm
             GoodMuons _good_muons;
             GoodJets _nice_jets; // pT > 25
             GoodJets _good_jets; // pT > 50
+            GoodJets::const_iterator _closest_jet;
     };
 
     // Helpers

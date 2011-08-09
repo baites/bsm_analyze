@@ -194,6 +194,7 @@ bool SynchSelector::apply(const Event *event)
     _good_muons.clear();
     _nice_jets.clear();
     _good_jets.clear();
+    _closest_jet = _nice_jets.end();
 
     return primaryVertices(event)
         && jets(event)
@@ -227,6 +228,11 @@ const SynchSelector::GoodJets &SynchSelector::niceJets() const
 const SynchSelector::GoodJets &SynchSelector::goodJets() const
 {
     return _good_jets;
+}
+
+SynchSelector::GoodJets::const_iterator SynchSelector::closestJet() const
+{
+    return _closest_jet;
 }
 
 SynchSelector::LeptonMode SynchSelector::leptonMode() const
@@ -468,6 +474,8 @@ bool SynchSelector::cut2D(const LorentzVector *lepton_p4)
         }
     }
 
+    _closest_jet = closest_jet;
+
     if (_nice_jets.end() == closest_jet)
         return true;
 
@@ -485,8 +493,6 @@ bool SynchSelector::isolation(const LorentzVector *p4, const PFIsolation *isolat
 
 void SynchSelector::selectGoodElectrons(const Event *event)
 {
-    _good_electrons.clear();
-
     typedef ::google::protobuf::RepeatedPtrField<Electron> Electrons;
 
     const PrimaryVertex &pv = *event->primary_vertices().begin();
