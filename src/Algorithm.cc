@@ -7,21 +7,15 @@
 
 #include <cfloat>
 
-#include <TLorentzVector.h>
-
 #include <boost/pointer_cast.hpp>
 
 #include "bsm_core/interface/ID.h"
 #include "bsm_input/interface/Algebra.h"
-#include "bsm_input/interface/Electron.pb.h"
-#include "bsm_input/interface/Muon.pb.h"
 #include "bsm_input/interface/Physics.pb.h"
-#include "bsm_input/interface/Utility.h"
 #include "interface/Algorithm.h"
-#include "interface/Utility.h"
 
-using boost::dynamic_pointer_cast;
-
+using bsm::NeutrinoReconstruct;
+/*
 using bsm::algorithm::ClosestJet;
 using bsm::algorithm::NeutrinoReconstruct;
 using bsm::algorithm::HadronicDecay;
@@ -29,7 +23,96 @@ using bsm::algorithm::LeptonicDecay;
 using bsm::algorithm::TTbarDeltaRReconstruct;
 
 using bsm::core::ID;
+*/
 
+// Neutrino Recontstruct: neglect products masses
+//
+NeutrinoReconstruct::NeutrinoReconstruct()
+{
+}
+
+NeutrinoReconstruct::NeutrinoReconstruct(const NeutrinoReconstruct &)
+{
+}
+
+NeutrinoReconstruct::Solutions
+    NeutrinoReconstruct::operator()(const LorentzVector &lepton,
+        const LorentzVector &neutrino)
+{
+    // The final equation is:
+    //
+    //  (-pTlep^2) * x^2 + 2 * (mu * pZlep) * x + (mu^2 - Elep^2 * pTnu^2) = 0
+    //
+    // where
+    //      x is pz_nu
+    //      mu = mW^2 / 2 + pTlep * pTnu * cos(phi)
+    //      phi is angle between p_lepton and p_neutrino in transverse plane
+    //
+    Vector lepton_pT = toVector(lepton);
+    lepton_pT.set_z(0);
+
+    Vector neutrino_pT = toVector(neutrino);
+    neutrino_pT.set_z(0);
+
+    const float mass_w = 80.399;
+    float mu = mass_w * mass_w / 2 + lepton_pT * neutrino_pT;
+
+    float A = - (lepton_pT * lepton_pT);
+    float B = mu * lepton.pz();
+    float C = mu * mu - lepton.e() * lepton.e() * (neutrino_pT * neutrino_pT);
+
+    float discriminant = B * B - A * C;
+
+    Solutions solutions;
+
+    if (0 >= discriminant)
+    {
+        // Take only real part of the solution
+        //
+        LorentzVectorPtr solution(new LorentzVector());
+        *solution = neutrino;
+        solution->set_pz(-B / A);
+
+        solutions.push_back(solution);
+    }
+    else
+    {
+        discriminant = sqrt(discriminant);
+
+        LorentzVectorPtr solution(new LorentzVector());
+        *solution = neutrino;
+        solution->set_pz((-B - discriminant) / A);
+
+        solutions.push_back(solution);
+
+        solution = LorentzVectorPtr(new LorentzVector());
+        *solution = neutrino;
+        solution->set_pz((-B + discriminant) / A);
+
+        solutions.push_back(solution);
+    }
+
+    return solutions;
+}
+
+uint32_t NeutrinoReconstruct::id() const
+{
+    return core::ID<NeutrinoReconstruct>::get();
+}
+
+NeutrinoReconstruct::ObjectPtr NeutrinoReconstruct::clone() const
+{
+    return ObjectPtr(new NeutrinoReconstruct(*this));
+}
+
+void NeutrinoReconstruct::print(std::ostream &out) const
+{
+}
+
+
+
+/*
+// Closest Jet Algorithm
 ClosestJet::ClosestJet()
 {
     _p4.reset(new TLorentzVector());
@@ -610,3 +693,4 @@ float TTbarDeltaRReconstruct::minimize(const Jets &jets,
 
     return _dr;
 }
+*/

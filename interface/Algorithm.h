@@ -14,13 +14,103 @@
 
 #include "bsm_core/interface/Object.h"
 #include "bsm_input/interface/bsm_input_fwd.h"
-#include "bsm_input/interface/Jet.pb.h"
-
-class TLorentzVector;
 
 namespace bsm
 {
-    namespace algorithm
+    // Given the Decay:
+    //
+    //      A -> B + Neutrino
+    //
+    // reconstruct the Neutrino pZ component of the Lorentz Vector given
+    // it's Energy, px, and py are known.
+    //
+    // Calculation is carried with formula:
+    //
+    //      P4A^2 = (P4B + P4Neutrino)^2
+    //
+    // assuming:
+    //
+    //      P4Neutrino^2 = 0
+    //      P4B^2 = 0
+    //
+    // within the SM: m_neutrino = 0, mass of the second decay product
+    // is neglected due to expected small mass, e.g. in case of the
+    // electron: m_B = 0.5 MeV, for the muon: m_mu = 105 MeV and mass
+    // of the W-boson: m_W = 80 GeV. m_B is used in formula in form:
+    //
+    //      m_A^2 - m_B^2
+    //
+    //  and therefore m_B can be neglected.
+    //
+    class NeutrinoReconstruct : public core::Object
+    {
+        public:
+            typedef boost::shared_ptr<LorentzVector> LorentzVectorPtr;
+            typedef std::vector<LorentzVectorPtr> Solutions;
+
+            NeutrinoReconstruct();
+            NeutrinoReconstruct(const NeutrinoReconstruct &);
+
+            // return found solutions. Real part of the solution is taken
+            // in case of the imaginary solution
+            //
+            Solutions operator()(const LorentzVector &lepton,
+                    const LorentzVector &neutrino);
+
+            // Object interface
+            //
+            virtual uint32_t id() const;
+
+            virtual ObjectPtr clone() const;
+
+            virtual void print(std::ostream &) const;
+    };
+
+    /*
+    class TTbarDeltaRReconstruct : public core::Object
+    {
+        public:
+            typedef boost::shared_ptr<LorentzVector> LorentzVectorPtr;
+
+            struct TTbar
+            {
+                const LorentzVectorPtr top;
+                const LorentzVectorPtr tbar;
+            };
+
+            TTbarDeltaRReconstruct();
+            TTbarDeltaRReconstruct(const TTbarDeltaRReconstruct &);
+
+            // Function will return combined DeltaR:
+            //
+            //  DR = DR_leptonic + DR_hadronic
+            //
+            TTbar apply(const Jets &,
+                    const LorentzVector &lepton,
+                    const LorentzVector &neutrino);
+
+            // Object interface
+            //
+            virtual uint32_t id() const;
+
+            virtual ObjectPtr clone() const;
+            virtual void merge(const ObjectPtr &);
+
+            virtual void print(std::ostream &) const;
+
+        private:
+            float minimize(const Jets &,
+                    const LorentzVector &lepton,
+                    const LorentzVector &neutrino,
+                    const Jets::const_iterator &jet_leptonic,
+                    const Jets::const_iterator &jet_hadronic_1,
+                    const Jets::const_iterator &jet_hadronic_2,
+                    const Jets::const_iterator &jet_hadronic_3);
+    };
+    */
+
+    /*
+    namespace dev 
     {
         // Search for closest jet to electron, muon
         //
@@ -288,12 +378,7 @@ namespace bsm
                 LeptonicPtr _leptonic;
         };
     }
-
-    using algorithm::ClosestJet;
-    using algorithm::NeutrinoReconstruct;
-    using algorithm::HadronicDecay;
-    using algorithm::LeptonicDecay;
-    using algorithm::TTbarDeltaRReconstruct;
+    */
 }
 
 #endif

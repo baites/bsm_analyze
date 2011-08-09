@@ -283,6 +283,7 @@ void MttbarAnalyzer::jets(const Event *event, const Electron *electron)
     if (3 > event->jets().size())
         return;
 
+    /*
     typedef TTbarDeltaRReconstruct::Jets JetPtrs;
 
     JetPtrs jets;
@@ -348,4 +349,5 @@ void MttbarAnalyzer::jets(const Event *event, const Electron *electron)
     p4 += *ttbar.leptonicDecay()->top();
 
     mttbar()->fill(bsm::mass(p4));
+    */
 }

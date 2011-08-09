@@ -16,11 +16,13 @@ namespace bsm
     class AppController;
     class Options;
 
+    /*
     namespace algorithm
     {
         class ClosestJet;
         class NeutrinoReconstruct;
     }
+    */
 
     class Counter;
     class CounterDelegate;
