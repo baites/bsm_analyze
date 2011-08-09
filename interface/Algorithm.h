@@ -66,16 +66,16 @@ namespace bsm
             virtual void print(std::ostream &) const;
     };
 
-    /*
     class TTbarDeltaRReconstruct : public core::Object
     {
         public:
+            typedef std::vector<LorentzVector *> Jets;
             typedef boost::shared_ptr<LorentzVector> LorentzVectorPtr;
 
             struct TTbar
             {
-                const LorentzVectorPtr top;
-                const LorentzVectorPtr tbar;
+                LorentzVectorPtr top;
+                LorentzVectorPtr tbar;
             };
 
             TTbarDeltaRReconstruct();
@@ -85,7 +85,7 @@ namespace bsm
             //
             //  DR = DR_leptonic + DR_hadronic
             //
-            TTbar apply(const Jets &,
+            TTbar operator()(const Jets &,
                     const LorentzVector &lepton,
                     const LorentzVector &neutrino);
 
@@ -94,20 +94,23 @@ namespace bsm
             virtual uint32_t id() const;
 
             virtual ObjectPtr clone() const;
-            virtual void merge(const ObjectPtr &);
 
             virtual void print(std::ostream &) const;
 
         private:
-            float minimize(const Jets &,
+            void minimize(const Jets &,
                     const LorentzVector &lepton,
                     const LorentzVector &neutrino,
                     const Jets::const_iterator &jet_leptonic,
                     const Jets::const_iterator &jet_hadronic_1,
                     const Jets::const_iterator &jet_hadronic_2,
                     const Jets::const_iterator &jet_hadronic_3);
+
+            float _dr_min;
+            float _dr_max;
+
+            TTbar _ttbar;
     };
-    */
 
     /*
     namespace dev 
