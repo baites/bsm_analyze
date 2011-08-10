@@ -66,7 +66,24 @@ namespace bsm
         public SynchSelectorDelegate
     {
         public:
+            typedef boost::shared_ptr<LorentzVector> LorentzVectorPtr;
+
+            struct CorrectedJet
+            {
+                CorrectedJet()
+                {
+                    jet = 0;
+                }
+
+                const Jet *jet;
+                LorentzVectorPtr corrected_p4;
+            };
+
             typedef boost::shared_ptr<MultiplicityCutflow> CutflowPtr;
+
+            typedef std::vector<const Electron *> GoodElectrons;
+            typedef std::vector<const Muon *> GoodMuons;
+            typedef std::vector<CorrectedJet> GoodJets;
 
             enum Selection
             {
@@ -92,7 +109,13 @@ namespace bsm
             // Test if muon passes the selector
             //
             virtual bool apply(const Event *);
+
             CutflowPtr cutflow() const;
+
+            const GoodElectrons &goodElectrons() const;
+            const GoodMuons &goodMuons() const;
+            const GoodJets &niceJets() const;
+            const GoodJets &goodJets() const;
 
             LeptonMode leptonMode() const;
             CutMode cutMode() const;
@@ -121,23 +144,6 @@ namespace bsm
             virtual void print(std::ostream &) const;
 
         private:
-            typedef boost::shared_ptr<LorentzVector> LorentzVectorPtr;
-
-            struct CorrectedJet
-            {
-                CorrectedJet()
-                {
-                    jet = 0;
-                }
-
-                const Jet *jet;
-                LorentzVectorPtr corrected_p4;
-            };
-
-            typedef std::vector<const Electron *> GoodElectrons;
-            typedef std::vector<const Muon *> GoodMuons;
-            typedef std::vector<CorrectedJet> GoodJets;
-
             bool primaryVertices(const Event *);
             bool jets(const Event *);
             bool lepton();

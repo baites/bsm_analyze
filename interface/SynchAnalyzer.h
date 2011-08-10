@@ -15,9 +15,14 @@
 #include <boost/shared_ptr.hpp>
 
 #include "bsm_input/interface/Event.pb.h"
+#include "bsm_input/interface/bsm_input_fwd.h"
 #include "JetMETObjects/interface/JetCorrectorParameters.h"
 #include "interface/Analyzer.h"
+#include "interface/AppController.h"
+#include "interface/Cut.h"
+#include "interface/EventDump.h"
 #include "interface/bsm_fwd.h"
+#include "interface/SynchSelector.h"
 
 class FactorizedJetCorrector;
 
@@ -197,7 +202,42 @@ namespace bsm
             std::ostringstream _out;
     };
 
-    class SynchAnalyzer : public Analyzer
+    class SynchAnalyzerDelegate
+    {
+        public:
+            virtual ~SynchAnalyzerDelegate()
+            {
+            }
+
+            virtual void setSelection(const SynchSelector::Selection &)
+            {
+            }
+    };
+
+    class SynchAnalyzerOptions : public Options
+    {
+        public:
+            SynchAnalyzerOptions();
+            virtual ~SynchAnalyzerOptions();
+
+            void setDelegate(SynchAnalyzerDelegate *);
+            SynchAnalyzerDelegate *delegate() const;
+
+            // Options interface
+            //
+            virtual DescriptionPtr description() const;
+
+        private:
+            void setSelection(std::string);
+
+            SynchAnalyzerDelegate *_delegate;
+            DescriptionPtr _description;
+    };
+
+    class SynchAnalyzer : public Analyzer,
+        public SynchAnalyzerDelegate,
+        public CounterDelegate,
+        public EventDumpDelegate
     {
         public:
             SynchAnalyzer();
@@ -213,17 +253,40 @@ namespace bsm
             virtual void onFileOpen(const std::string &filename, const Input *);
             virtual void process(const Event *);
 
+            // Synch Analyzer Delegate interface
+            //
+            virtual void setSelection(const SynchSelector::Selection &);
+
+            // Counter Delegate interface
+            //
+            virtual void didCounterAdd();
+
+            // Event Dump Delegate interface
+            //
+            virtual void setEventNumber(const Event::Extra &);
+
             // Object interface
             //
             virtual uint32_t id() const;
 
             virtual ObjectPtr clone() const;
-            using Object::merge;
+            virtual void merge(const ObjectPtr &);
 
             virtual void print(std::ostream &) const;
 
         private:
+            void dump(const Event *);
+
             boost::shared_ptr<SynchSelector> _synch_selector;
+
+            SynchSelector::Selection _selection;
+
+            boost::shared_ptr<Format> _format;
+            std::ostringstream _out;
+
+            const Event *_event;
+
+            std::vector<Event::Extra> _events_to_dump;
     };
 
     std::ostream &operator <<(std::ostream &, const SynchMode &);

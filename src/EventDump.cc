@@ -41,10 +41,10 @@ EventDumpOptions::EventDumpOptions()
 
     _description.reset(new po::options_description("Event Dump Options"));
     _description->add_options()
-        ("events",
+        ("event",
          po::value<Events>()->notifier(
              boost::bind(&EventDumpOptions::setEvents, this, _1)),
-         "Events to dump [repeatable]. Format: event[:lumi[:run]]")
+         "Event(s) to dump [repeatable]. Format: event[:lumi[:run]]")
     ;
 }
 
@@ -110,25 +110,6 @@ void EventDumpOptions::setEvents(const Events &events)
 
 // Event Dump Analyzer
 //
-class EventDumpAnalyzer::EventSearcher
-{
-    public:
-        EventSearcher(const Event::Extra &extra):
-            _extra(extra)
-        {
-        }
-
-        bool operator()(const Event::Extra &extra)
-        {
-            return (extra.run() ? extra.run() == _extra.run() : true)
-                && (extra.lumi() ? extra.lumi() == _extra.lumi() : true)
-                && extra.id() == _extra.id();
-        }
-
-    private:
-        const Event::Extra &_extra;
-};
-
 EventDumpAnalyzer::EventDumpAnalyzer()
 {
     _primary_vertex_selector.reset(new PrimaryVertexSelector());
@@ -146,7 +127,7 @@ EventDumpAnalyzer::EventDumpAnalyzer()
 }
 
 EventDumpAnalyzer::EventDumpAnalyzer(const EventDumpAnalyzer &object):
-    _events(object._events)
+    _events(object._events.begin(), object._events.end())
 {
     _primary_vertex_selector = 
         dynamic_pointer_cast<PrimaryVertexSelector>(object._primary_vertex_selector->clone());

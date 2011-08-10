@@ -23,6 +23,7 @@ namespace bsm
     }
 
     class Counter;
+    class CounterDelegate;
     class Cut;
     template<class Compare> class Comparator;
     class LockCounterOnUpdate;
