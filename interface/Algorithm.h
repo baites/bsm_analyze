@@ -112,6 +112,48 @@ namespace bsm
             TTbar _ttbar;
     };
 
+    class JetsSelector
+    {
+        public:
+            typedef TTbarDeltaRReconstruct::Jets Jets;
+            typedef std::vector<Jets::const_iterator> SelectedJets;
+
+            JetsSelector(const Jets &jets, const uint32_t &size);
+
+            bool next();
+
+        private:
+            bool isValid(SelectedJets::const_iterator &);
+            bool next(SelectedJets::const_iterator &iterator);
+            bool next(Jets::const_iterator &jet);
+
+            const Jets &_jets;
+
+            SelectedJets _selected_jets;
+    };
+
+    class JetIterator
+    {
+        public:
+            typedef TTbarDeltaRReconstruct::Jets Jets;
+
+            JetIterator(const Jets &jets, const bool &is_valid = true);
+
+            bool isValid() const;
+
+            const Jets::const_iterator iterator() const;
+
+            // Prefix increment
+            //
+            void operator++();
+
+        private:
+            bool _is_valid;
+
+            const Jets &_jets;
+            Jets::const_iterator _jet;
+    };
+
     /*
     namespace dev 
     {

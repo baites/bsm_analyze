@@ -16,6 +16,7 @@
 
 using bsm::NeutrinoReconstruct;
 using bsm::TTbarDeltaRReconstruct;
+using bsm::JetIterator;
 
 /*
 using bsm::algorithm::ClosestJet;
@@ -257,6 +258,130 @@ void TTbarDeltaRReconstruct::minimize(const Jets &jets,
             _ttbar.top = top;
             _ttbar.tbar = tbar;
         }
+    }
+}
+
+
+
+// Jets Selector
+//
+JetsSelector::JetsSelector(const Jets &jets, const uint32_t &size):
+    _jets(jets)
+{
+
+    for(Jets::const_iterator jet = jets.begin();
+            jets.end() != jet
+                && size > (jet - jets.begin());
+            ++jet)
+    {
+        _selected_jets.push_back(jet);
+    }
+}
+
+bool JetsSelector::next()
+{
+    for(SelectedJets::reverse_iterator iterator = _selected_jets.rbegin();
+            _selected_jets.rend() != iterator;
+            )
+    {
+        for(Jets::const_iterator jet = *iterator;
+                _jets.end() != ++jet;
+                )
+        {
+            if (isValid(jet))
+            {
+                *iterator = jet;
+
+                jet_is_found
+                break;
+            }
+        }
+    }
+}
+
+// Private
+//
+bool JetsSelector::next(SelectedJets::reverse_iterator &iterator)
+{
+    bool jet_is_found = false;
+
+    if (_selected_jets.rend() != iterator)
+    {
+        Jets::const_iterator &jet = ++(*iterator);
+
+        while(!jet_is_found)
+        {
+            jet_is_found = next(jet);
+
+            if (jet_is_found)
+                break;
+
+            if (!next(iterator + 1))
+                break;
+
+            jet = _jets.begin();
+        }
+    }
+
+    return jet_is_found;
+}
+
+bool JetsSelector::next(Jets::const_iterator &jet)
+{
+    bool jet_is_found = false;
+    while(_jets.end() != jet)
+    {
+        if (isValid(jet))
+        {
+            jet_is_found = true;
+
+            break;
+        }
+
+        ++jet;
+    }
+
+    return jet_is_found;
+}
+
+bool JetsSelector::isValid(Jets::const_iterator &jet)
+{
+    return _selected_jets.end() == find(_selected_jets.begin(),
+            _selected_jets.end(),
+            jet);
+}
+
+
+
+// Jet Iterator
+//
+JetIterator::JetIterator(const Jets &jets, const bool &is_valid):
+    _is_valid(is_valid),
+    _jets(jets)
+{
+    _jet = isValid()
+        ? _jets.begin()
+        : _jets.end();
+}
+
+bool JetIterator::isValid() const
+{
+    return _is_valid;
+}
+
+const JetIterator::Jets::const_iterator JetIterator::iterator() const
+{
+    return _jet;
+}
+
+void JetIterator::operator++()
+{
+    if (isValid())
+    {
+        ++_jet;
+
+        if (_jets.end() == _jet)
+            _is_valid = false;
     }
 }
 
