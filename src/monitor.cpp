@@ -6,6 +6,7 @@
 // Copyright 2011, All rights reserved
 
 #include <iostream>
+#include <stdexcept>
 
 #include <boost/shared_ptr.hpp>
 
@@ -14,85 +15,61 @@
 #include <TRint.h>
 
 #include "bsm_stat/interface/Utility.h"
-
+#include "interface/AppController.h"
 #include "interface/Monitor.h"
 #include "interface/MonitorCanvas.h"
 #include "interface/MonitorAnalyzer.h"
-#include "interface/Thread.h"
 
-using std::cerr;
-using std::cout;
-using std::endl;
+using namespace std;
 
 using boost::shared_ptr;
 
+using bsm::AppController;
 using bsm::MonitorAnalyzer;
-using bsm::ThreadController;
-using bsm::stat::convert;
-using bsm::stat::TH1Ptr;
 
 using namespace bsm;
 
 typedef shared_ptr<MonitorAnalyzer> MonitorAnalyzerPtr;
-typedef shared_ptr<ThreadController> ControllerPtr;
 
-void run(ControllerPtr &, char *[]);
 void plot(const MonitorAnalyzerPtr &, char *[]);
 
 int main(int argc, char *argv[])
 {
-    if (2 > argc)
-    {
-        cerr << "Usage: " << argv[0] << " input.pb" << endl;
-
-        return 0;
-    }
-
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-    int result = 0;
+    bool result = false;
     try
     {
-        ControllerPtr controller(new ThreadController());
-        for(int i = 1; argc > i; ++i)
-            controller->push(argv[i]);
+        MonitorAnalyzerPtr analyzer(new MonitorAnalyzer());
+        boost::shared_ptr<AppController> app(new AppController());
 
-        run(controller, argv);
+        app->setAnalyzer(analyzer);
+
+        result = app->run(argc, argv);
+
+        if (result)
+            plot(analyzer, argv);
+    }
+    catch(const exception &error)
+    {
+        cerr << error.what() << endl;
+
+        result = false;
     }
     catch(...)
     {
         cerr << "Unknown error" << endl;
 
-        result = 1;
+        result = false;
     }
 
     // Clean Up any memory allocated by libprotobuf
     //
     google::protobuf::ShutdownProtobufLibrary();
 
-    return result;
-}
-
-void run(ControllerPtr &controller, char *argv[])
-try
-{
-    // Prepare Analysis
-    //
-    MonitorAnalyzerPtr analyzer(new MonitorAnalyzer());
-
-    // Process inputs
-    //
-    controller->use(analyzer);
-    controller->start();
-
-    cout << *analyzer << endl;
-
-    // Plot results
-    //
-    plot(analyzer, argv);
-}
-catch(...)
-{
+    return result
+        ? 0
+        : 1;
 }
 
 void plot(const MonitorAnalyzerPtr &analyzer, char *argv[])

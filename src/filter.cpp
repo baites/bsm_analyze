@@ -6,75 +6,53 @@
 // Copyright 2011, All rights reserved
 
 #include <iostream>
+#include <stdexcept>
 
 #include <boost/shared_ptr.hpp>
 
+#include "interface/AppController.h"
 #include "bsm_input/interface/Event.pb.h"
 #include "interface/FilterAnalyzer.h"
-#include "interface/Thread.h"
 
-using std::cerr;
-using std::cout;
-using std::endl;
+using namespace std;
 
 using boost::shared_ptr;
 
+using bsm::AppController;
 using bsm::FilterAnalyzer;
-using bsm::ThreadController;
-
-typedef shared_ptr<FilterAnalyzer> FilterAnalyzerPtr;
-typedef shared_ptr<ThreadController> ControllerPtr;
-
-void run(ControllerPtr &);
 
 int main(int argc, char *argv[])
 {
-    if (2 > argc)
-    {
-        cerr << "Usage: " << argv[0] << " input.pb" << endl;
-
-        return 0;
-    }
-
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-    int result = 0;
+    bool result = false;
     try
     {
-        ControllerPtr controller(new ThreadController());
-        for(int i = 1; argc > i; ++i)
-            controller->push(argv[i]);
+        shared_ptr<FilterAnalyzer> analyzer(new FilterAnalyzer());
+        shared_ptr<AppController> app(new AppController());
 
-        run(controller);
+        app->setAnalyzer(analyzer);
+
+        result = app->run(argc, argv);
+    }
+    catch(const exception &error)
+    {
+        cerr << error.what() << endl;
+
+        result = false;
     }
     catch(...)
     {
         cerr << "Unknown error" << endl;
 
-        result = 1;
+        result = false;
     }
 
     // Clean Up any memory allocated by libprotobuf
     //
     google::protobuf::ShutdownProtobufLibrary();
 
-    return result;
-}
-
-void run(ControllerPtr &controller)
-try
-{
-    // Prepare Analysis
-    //
-    FilterAnalyzerPtr analyzer(new FilterAnalyzer());
-
-    // Process inputs
-    //
-    controller->use(analyzer);
-    controller->start();
-
-    cout << *analyzer << endl;
-}
-catch(...)
-{
+    return result
+        ? 0
+        : 1;
 }

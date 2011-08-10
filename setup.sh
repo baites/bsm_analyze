@@ -1,4 +1,10 @@
 #!/usr/bin/env bash
+#
+# Setup the environment for the code to compile. Setup should be run only
+# once per session.
+#
+# Created by Samvel Khalatyan, Aug 04, 2011
+# Copyright 2011, All rights reserved
 
 CODE=`pwd`
 
@@ -36,6 +42,16 @@ then
 
             export LDFLAGS="${LDFLAGS} -L${BOOST_PATH}/lib"
             export CPPFLAGS="${CPPFLAGS} -I${BOOST_PATH}/include"
+
+            # Setup Proto Buf 2.4.1 [to be enabled in future]
+            #
+            # PROTOBUF_PATH=`dirname ${BOOST_PATH}`
+            # PROTOBUF_PATH=`dirname ${PROTOBUF_PATH}`/protobuf/2.4.1
+            #
+            # export LDFLAGS="${LDFLAGS} -L${BOOST_PATH}/lib -L${PROTOBUF_PATH}/lib"
+            # export CPPFLAGS="${CPPFLAGS} -I${BOOST_PATH}/include -I${PROTOBUF_PATH}/include"
+            # export ${library_path}="${PROTOBUF_PATH}/lib:${!library_path}"
+            # export PATH="${PROTOBUF_PATH}/bin:$PATH"
         fi
     fi
 fi

@@ -9,7 +9,7 @@
 #define BSM_ELECTRONID_ANALYZER
 
 #include "interface/HistogramProducer.h"
-
+#include "bsm_input/interface/Event.pb.h"
 
 namespace bsm
 {
@@ -19,12 +19,12 @@ class ElectronIDAnalyzer : public HistogramProducer
 public:
 
     ElectronIDAnalyzer();
-    ElectronIDAnalyzer(const ElectronIDAnalyzer & object): HistogramProducer(object) {}
+    ElectronIDAnalyzer(const ElectronIDAnalyzer & object) : HistogramProducer(object) {}
 
     virtual void onFileOpen(const std::string &filename, const Input *) {}
     virtual void process(const Event *);
 
-    ObjectInterface(ElectronIDAnalyzer);
+    ObjectInterface(ElectronIDAnalyzer);    
 };
 
 }

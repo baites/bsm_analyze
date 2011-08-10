@@ -17,7 +17,6 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "JetMETObjects/interface/JetCorrectorParameters.h"
 #include "interface/Analyzer.h"
 #include "interface/bsm_fwd.h"
 
@@ -28,18 +27,11 @@ namespace bsm
     class EfficiencyAnalyzer : public Analyzer
     {
         public:
-            typedef std::vector<JetCorrectorParameters> Corrections;
-
-            enum LeptonMode
-            {
-                ELECTRON = 1,
-                MUON = 2
-            };
-
-            EfficiencyAnalyzer(const LeptonMode & = ELECTRON);
+            EfficiencyAnalyzer();
             EfficiencyAnalyzer(const EfficiencyAnalyzer &);
 
-            void setJetEnergyCorrections(const Corrections &corrections);
+            JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
+            SynchSelectorDelegate *getSynchSelectorDelegate() const;
 
             // Anlayzer interface
             //
@@ -51,63 +43,13 @@ namespace bsm
             virtual uint32_t id() const;
 
             virtual ObjectPtr clone() const;
-            virtual void merge(const ObjectPtr &);
+            using Object::merge;
 
             virtual void print(std::ostream &) const;
 
         private:
-            typedef boost::shared_ptr<MultiplicityCutflow> CutflowPtr;
-            typedef std::vector<const Electron *> GoodElectrons;
-
-            struct CorrectedJet
-            {
-                CorrectedJet()
-                {
-                    jet = 0;
-                }
-
-                const Jet *jet;
-                LorentzVector corrected_p4;
-            };
-
-            enum
-            {
-                PRESELECTION = 0,
-                SCRAPING,
-                HBHENOISE,
-                PRIMARY_VERTEX,
-                JET,
-                LEPTON,
-                VETO_SECOND_LEPTON,
-                HTLEP,
-                ISOLATED_LEPTON,
-                CUT_2D_LEPTON,
-                
-                SELECTIONS
-            };
-
-            typedef std::vector<CorrectedJet> GoodJets;
-            typedef std::vector<const Muon *> GoodMuons;
-
-            void copyCorrections(const Corrections &);
-
-            GoodJets jets(const Event *,
-                    const GoodElectrons &,
-                    const GoodMuons &);
-
-            LeptonMode _lepton_mode;
-            boost::shared_ptr<MultiplicityCutflow> _cutflow;
-
-            boost::shared_ptr<PrimaryVertexSelector> _primary_vertex_selector;
-            boost::shared_ptr<JetSelector> _jet_selector;
-            boost::shared_ptr<ElectronSelector> _electron_selector;
-            boost::shared_ptr<MuonSelector> _muon_selector;
-
-            Corrections _corrections;
-            boost::shared_ptr<FactorizedJetCorrector> _jec;
+            boost::shared_ptr<SynchSelector> _synch_selector;
     };
-
-    std::ostream &operator <<(std::ostream &, const EfficiencyAnalyzer::LeptonMode &);
 }
 
 #endif

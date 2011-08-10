@@ -1,6 +1,6 @@
-// Read inputs and generate cutflow tables
+// Apply the Synchronization Exercise Analyzer to the input
 //
-// Created by Samvel Khalatyan, May 18, 2011
+// Created by Samvel Khalatyan, Aug 01, 2011
 // Copyright 2011, All rights reserved
 
 #include <iostream>
@@ -8,29 +8,30 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include "bsm_input/interface/Event.pb.h"
 #include "interface/AppController.h"
-#include "interface/CutflowAnalyzer.h"
+#include "interface/ElectronIDAnalyzer.h"
 
 using namespace std;
 
 using boost::shared_ptr;
 
 using bsm::AppController;
-using bsm::CutflowAnalyzer;
+using bsm::ElectronIDAnalyzer;
 
 int main(int argc, char *argv[])
 {
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-    int result = 0;
+    bool result = false;
     try
     {
-        shared_ptr<CutflowAnalyzer> analyzer(new CutflowAnalyzer());
+        boost::shared_ptr<ElectronIDAnalyzer> analyzer(new ElectronIDAnalyzer());
         boost::shared_ptr<AppController> app(new AppController());
 
         app->setAnalyzer(analyzer);
         result = app->run(argc, argv);
+        
+        analyzer->write("histograms.root");
     }
     catch(const exception &error)
     {
@@ -42,12 +43,12 @@ int main(int argc, char *argv[])
     {
         cerr << "Unknown error" << endl;
 
-        result = 1;
+        result = false;
     }
 
     // Clean Up any memory allocated by libprotobuf
     //
     google::protobuf::ShutdownProtobufLibrary();
 
-    return result;
+    return result ? 0 : 1;
 }

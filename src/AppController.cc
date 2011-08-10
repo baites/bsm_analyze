@@ -127,7 +127,11 @@ bool AppController::run(int &argc, char *argv[])
 
     if (arguments->count("help")
             || _input_files.empty())
+    {
         cout << *visible_options << endl;
+
+        return false;
+    }
     else
     {
         if (SINGLE_THREAD == _run_mode)

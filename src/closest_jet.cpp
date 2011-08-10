@@ -1,113 +1,81 @@
-// Monitor Closest jet
-//
 // Read events and plot closest jet kinematics
 //
 // Created by Samvel Khalatyan, Apr 25, 2011
 // Copyright 2011, All rights reserved
 
 #include <iostream>
+#include <stdexcept>
 
 #include <boost/shared_ptr.hpp>
 
 #include <TCanvas.h>
-#include <TH1.h>
-#include <TH2.h>
 #include <TRint.h>
 
-#include "bsm_stat/interface/Utility.h"
-#include "bsm_stat/interface/Axis.h"
 #include "bsm_stat/interface/H1.h"
 #include "bsm_stat/interface/H2.h"
 
 #include "bsm_input/interface/Event.pb.h"
+#include "interface/AppController.h"
 #include "interface/ClosestJetAnalyzer.h"
 #include "interface/Monitor.h"
 #include "interface/MonitorCanvas.h"
-#include "interface/Thread.h"
 
-using std::cerr;
-using std::cout;
-using std::endl;
+using namespace std;
 
 using boost::shared_ptr;
 
+using bsm::AppController;
 using bsm::ClosestJetAnalyzer;
 using bsm::DeltaCanvas;
-using bsm::ThreadController;
-using bsm::stat::convert;
-using bsm::stat::TH1Ptr;
-using bsm::stat::TH2Ptr;
 using bsm::LorentzVectorCanvas;
 
-typedef shared_ptr<ClosestJetAnalyzer> ClosestJetAnalyzerPtr;
-typedef shared_ptr<ThreadController> ControllerPtr;
+typedef boost::shared_ptr<ClosestJetAnalyzer> ClosestJetAnalyzerPtr;
 
-void run(ControllerPtr &);
-void plot(const ClosestJetAnalyzerPtr &);
+void plot(const ClosestJetAnalyzerPtr &,  char *);
 
 int main(int argc, char *argv[])
 {
-    if (2 > argc)
-    {
-        cerr << "Usage: " << argv[0] << " input.pb" << endl;
-
-        return 0;
-    }
-
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-    int result = 0;
+    bool result = false;
     try
     {
-        ControllerPtr controller(new ThreadController());
-        for(int i = 1; argc > i; ++i)
-            controller->push(argv[i]);
+        ClosestJetAnalyzerPtr analyzer(new ClosestJetAnalyzer());
+        analyzer->monitorElectronDelta()->ptrel()->mutable_axis()->init(200, 0, 200);
+        analyzer->monitorElectronDelta()->ptrel_vs_r()->mutable_xAxis()->init(200, 0, 200);
+        analyzer->monitorMuonDelta()->ptrel()->mutable_axis()->init(200, 0, 200);
+        analyzer->monitorMuonDelta()->ptrel_vs_r()->mutable_xAxis()->init(200, 0, 200);
 
-        run(controller);
+        boost::shared_ptr<AppController> app(new AppController());
+
+        app->setAnalyzer(analyzer);
+        result = app->run(argc, argv);
+        if (result)
+            plot(analyzer, argv[0]);
+    }
+    catch(const exception &error)
+    {
+        cerr << error.what() << endl;
+
+        result = false;
     }
     catch(...)
     {
         cerr << "Unknown error" << endl;
 
-        result = 1;
+        result = false;
     }
 
     // Clean Up any memory allocated by libprotobuf
     //
     google::protobuf::ShutdownProtobufLibrary();
 
-    return result;
+    return result
+        ? 0
+        : 1;
 }
 
-void run(ControllerPtr &controller)
-try
-{
-    // Prepare Analysis
-    //
-    ClosestJetAnalyzerPtr analyzer(new ClosestJetAnalyzer());
-
-    analyzer->monitorElectronDelta()->ptrel()->mutable_axis()->init(200, 0, 200);
-    analyzer->monitorElectronDelta()->ptrel_vs_r()->mutable_xAxis()->init(200, 0, 200);
-
-    analyzer->monitorMuonDelta()->ptrel()->mutable_axis()->init(200, 0, 200);
-    analyzer->monitorMuonDelta()->ptrel_vs_r()->mutable_xAxis()->init(200, 0, 200);
-
-    // Process inputs
-    //
-    controller->use(analyzer);
-    controller->start();
-
-    cout << *analyzer << endl;
-
-    // Plot results
-    //
-    plot(analyzer);
-}
-catch(...)
-{
-}
-
-void plot(const ClosestJetAnalyzerPtr &analyzer)
+void plot(const ClosestJetAnalyzerPtr &analyzer, char *application)
 {
     typedef LorentzVectorCanvas P4Canvas;
     typedef shared_ptr<P4Canvas> P4CanvasPtr;
@@ -115,7 +83,7 @@ void plot(const ClosestJetAnalyzerPtr &analyzer)
     // Cheat ROOT with empty args
     //
     int empty_argc = 1;
-    char *empty_argv[] = { "root" };
+    char *empty_argv[] = { application };
     shared_ptr<TRint> app(new TRint("app", &empty_argc, empty_argv));
 
     P4CanvasPtr el_canvas(new P4Canvas("Electrons"));
