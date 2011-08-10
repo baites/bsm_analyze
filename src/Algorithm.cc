@@ -17,6 +17,7 @@
 using bsm::NeutrinoReconstruct;
 using bsm::TTbarDeltaRReconstruct;
 using bsm::JetIterator;
+using bsm::JetsSelector;
 
 /*
 using bsm::algorithm::ClosestJet;
@@ -280,6 +281,7 @@ JetsSelector::JetsSelector(const Jets &jets, const uint32_t &size):
 
 bool JetsSelector::next()
 {
+    /*
     for(SelectedJets::reverse_iterator iterator = _selected_jets.rbegin();
             _selected_jets.rend() != iterator;
             )
@@ -297,6 +299,9 @@ bool JetsSelector::next()
             }
         }
     }
+    */
+
+    return false;
 }
 
 // Private
@@ -316,7 +321,8 @@ bool JetsSelector::next(SelectedJets::reverse_iterator &iterator)
             if (jet_is_found)
                 break;
 
-            if (!next(iterator + 1))
+            SelectedJets::reverse_iterator next_item = iterator + 1;
+            if (!next(next_item))
                 break;
 
             jet = _jets.begin();

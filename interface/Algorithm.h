@@ -123,8 +123,8 @@ namespace bsm
             bool next();
 
         private:
-            bool isValid(SelectedJets::const_iterator &);
-            bool next(SelectedJets::const_iterator &iterator);
+            bool isValid(Jets::const_iterator &);
+            bool next(SelectedJets::reverse_iterator &iterator);
             bool next(Jets::const_iterator &jet);
 
             const Jets &_jets;
