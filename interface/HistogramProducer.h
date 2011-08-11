@@ -8,6 +8,9 @@
 #ifndef BSM_HISTOGRAM_PRODUCER
 #define BSM_HISTOGRAM_PRODUCER
 
+#include <string>
+#include <vector>
+
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_map.hpp>
 
@@ -21,6 +24,7 @@
 
 namespace bsm
 {
+
 typedef boost::shared_ptr<stat::H1> H1Ptr;
 typedef boost::shared_ptr<stat::H2> H2Ptr;
 typedef boost::shared_ptr<H1Proxy> H1ProxyPtr;
@@ -28,10 +32,11 @@ typedef boost::shared_ptr<H2Proxy> H2ProxyPtr;
 typedef boost::unordered_map<std::string, H1ProxyPtr> H1ProxyPtrContainer;
 typedef boost::unordered_map<std::string, H2ProxyPtr> H2ProxyPtrContainer;
 
-
 class HistogramProducer : public Analyzer
 {
 public:
+
+    typedef std::vector<std::string> KeyContainer;
 
     HistogramProducer() {};
     HistogramProducer(HistogramProducer const & object);
@@ -42,6 +47,7 @@ public:
     )
     {
         _cache1d[key].reset(new H1Proxy(bins, min, max));
+        _keys1d.push_back(key);
         monitor(_cache1d[key]);
     }
 
@@ -52,6 +58,7 @@ public:
     )
     {
         _cache2d[key].reset(new H2Proxy(xbins, xmin, xmax, ybins, ymin, ymax));
+        _keys2d.push_back(key);
         monitor(_cache2d[key]);
     }
 
@@ -73,6 +80,8 @@ public:
 
 private:
 
+    KeyContainer _keys1d;
+    KeyContainer _keys2d;
     H1ProxyPtrContainer _cache1d;
     H2ProxyPtrContainer _cache2d;
 };

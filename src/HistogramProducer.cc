@@ -1,7 +1,6 @@
 
 #include <algorithm>
 #include <string>
-#include <vector>
 
 #include <boost/format.hpp>
 
@@ -81,15 +80,15 @@ static TH2Ptr convert(string const & name, const H2 &h2)
 
 HistogramProducer::HistogramProducer(HistogramProducer const & object)
 {
-    for ( H1ProxyPtrContainer::const_iterator h1 = object._cache1d.begin(); h1 != object._cache1d.end(); ++h1 )
+    for ( KeyContainer::const_iterator key = object._keys1d.begin(); key != object._keys1d.end(); ++key )
     {
-        _cache1d[h1->first].reset(new H1Proxy(*h1->second));
-        monitor(_cache1d[h1->first]);
+        _cache1d[*key].reset(new H1Proxy(*object._cache1d.at(*key)));
+        monitor(_cache1d[*key]);
     }
-    for ( H2ProxyPtrContainer::const_iterator h2 = object._cache2d.begin(); h2 != object._cache2d.end(); ++h2 )
+    for ( KeyContainer::const_iterator key = object._keys2d.begin(); key != object._keys2d.end(); ++key )
     {
-        _cache2d[h2->first].reset(new H2Proxy(*h2->second));
-        monitor(_cache2d[h2->first]);
+        _cache2d[*key].reset(new H2Proxy(*object._cache2d.at(*key)));
+        monitor(_cache2d[*key]);
     }
 }
 
@@ -113,13 +112,8 @@ void HistogramProducer::write(std::string const & filename)
 
 void HistogramProducer::print(std::ostream & os) const
 {
-    vector<string> keys;
-    os << format("Number of 1d histograms: %d\n") % _cache1d.size();
-    os << "========================================\n";
 
-    for ( H1ProxyPtrContainer::const_iterator h1 = _cache1d.begin(); h1 != _cache1d.end(); ++h1 )
-        keys.push_back(h1->first);
-
+    KeyContainer keys(_keys1d);
     sort(keys.begin(), keys.end());
 
     for (vector<string>::const_iterator key = keys.begin(); key != keys.end(); ++key)
@@ -127,13 +121,10 @@ void HistogramProducer::print(std::ostream & os) const
 
     os << "\n";
 
-    keys.clear();
     os << format("Number of 2d histograms: %d\n") % _cache2d.size();
     os << "========================================\n";
 
-    for ( H2ProxyPtrContainer::const_iterator h2 = _cache2d.begin(); h2 != _cache2d.end(); ++h2 )
-        keys.push_back(h2->first);
-
+    keys = _keys2d;
     sort(keys.begin(), keys.end());
 
     for (vector<string>::const_iterator key = keys.begin(); key != keys.end(); ++key)
