@@ -1,10 +1,10 @@
 
-void ElectronIDEfficiencies(TString id, TString variable, TString xtitle)
+void ElectronIDEfficiencies(TString filename, TString id, TString variable, TString xtitle)
 {
    gROOT->SetStyle("Plain");   
    gStyle->SetOptStat(0);
 
-   TFile * file = new TFile("histograms.root");
+   TFile * file = new TFile(filename);
 
    TH1D * Loose = (TH1D*) file->Get(id+"Loose"+variable)->Clone();
    TH1D * Medium = (TH1D*) file->Get(id+"Medium"+variable)->Clone();

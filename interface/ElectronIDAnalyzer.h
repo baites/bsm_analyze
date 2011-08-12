@@ -8,23 +8,51 @@
 #ifndef BSM_ELECTRONID_ANALYZER
 #define BSM_ELECTRONID_ANALYZER
 
-#include "interface/HistogramProducer.h"
+#include <boost/shared_ptr.hpp>
+
+#include "interface/Analyzer.h"
+#include "interface/HistogramBookkeeper.h"
 #include "bsm_input/interface/Event.pb.h"
 
 namespace bsm
 {
 
-class ElectronIDAnalyzer : public HistogramProducer
+class ElectronIDAnalyzer : public Analyzer 
 {
 public:
 
     ElectronIDAnalyzer();
-    ElectronIDAnalyzer(const ElectronIDAnalyzer & object) : HistogramProducer(object) {}
+    ElectronIDAnalyzer(const ElectronIDAnalyzer &);
 
     virtual void onFileOpen(const std::string &filename, const Input *) {}
     virtual void process(const Event *);
 
-    ObjectInterface(ElectronIDAnalyzer);    
+    virtual void print(std::ostream & os) const
+    {
+        _bookkeeper->print(os);
+    }
+
+    void write(std::string const & filename)
+    {
+        _bookkeeper->write(filename);
+    }
+
+    virtual uint32_t id() const
+    {
+        return core::ID<ElectronIDAnalyzer>::get();
+    }
+
+    virtual ObjectPtr clone() const
+    {
+        return ObjectPtr(new ElectronIDAnalyzer(*this));
+    }
+
+    using Object::merge;
+
+private:
+
+    boost::shared_ptr<HistogramBookkeeper> _bookkeeper;
+
 };
 
 }
