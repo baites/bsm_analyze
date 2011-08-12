@@ -1,49 +1,52 @@
-CCC      = g++
+# Set CPPFLAGS environment variable for debugging:
+#
+# 	export CPPFLAGS=-gdwarf-2
+#
+# Created by Samvel Khalatyan, Aug 11, 2011
+# Copyright 2011, All rights reserved
 
-SUBMOD   = bsm_input bsm_analyze bsm_stat bsm_core JetMETObjects
+CXX ?= g++
+
+# Subsystems that have compilable libraries
+#
+submod = bsm_core bsm_input bsm_stat JetMETObjects bsm_analyze
+lib_submod = $(patsubst %,lib/lib%.so,${submod})
 
 # List of programs with main functions to be filtered out of objects
-PROGS    = $(patsubst ./src/%.cpp,%,$(wildcard ./src/*.cpp))
+#
+progs = $(foreach prog,$(wildcard ./src/*.cpp),$(addprefix ./bin/bsm_,$(patsubst ./src/%.cpp,%,${prog})))
 
-# Flags used in compilation
-ifeq ($(strip $(DEBUG)),)
-	DEBUG = -O2
-else
-	DEBUG = -O0 -g
-endif
-
-CXXFLAGS = ${DEBUG} -fPIC -pipe -Wall -DSTANDALONE -I../ -I/opt/local/include -I${ROOTSYS}/include -I${BOOST_ROOT}/include -I./bsm_input/message 
-
+# Need to operate with copies of the env variables b/c the latter ones are
+# passed to sumbodules and shoould remain the same
+#
+cppflags = ${CPPFLAGS} ${debug} -fPIC -pipe -Wall -I../ -I$(shell root-config --incdir) -DSTANDALONE -I./bsm_input/message
+ldflags = ${LDFLAGS} $(shell root-config --libs) -L../lib $(foreach mod,${submod},$(addprefix -l,${mod})) -lboost_filesystem -lboost_system -lboost_program_options -lboost_regex -lprotobuf
 ifeq ($(shell uname),Linux)
-	LIBS = -L/opt/local/lib -lprotobuf -L${BOOST_ROOT}/lib -L../lib $(foreach mod,$(SUBMOD),$(addprefix -l,$(mod))) -lboost_thread -lboost_regex -lboost_filesystem
+	ldflags  += -L/usr/lib64 -lboost_thread
 else
-	LIBS = -L/opt/local/lib -lprotobuf -L${BOOST_ROOT}/lib -L../lib $(foreach mod,$(SUBMOD),$(addprefix -l,$(mod))) -lboost_thread-mt -lboost_regex -lboost_filesystem
+	cppflags += -I/opt/local/include
+	ldflags  += -L/opt/local/lib -lboost_thread-mt
 endif
 
 # Rules to be always executed: empty ones
-.PHONY: all
+.PHONY: prog
 
 all: prog
 
-help:
-	@echo "make <rule>"
-	@echo
-	@echo "Rules"
-	@echo "-----"
-	@echo
-	@echo "  prog	compile executables"
-	@echo
-
-prog: $(PROGS)
+prog: ${progs}
 
 # Executables
 #
-$(PROGS): $(addprefix ./src/,$(addsuffix .cpp,$(notdir $@)))
-	@echo "[+] Compiling programs ..."
-	$(CCC) $(CXXFLAGS) `root-config --glibs` $(LIBS) ./src/$@.cpp -o ./bin/test_$@
+${progs}: bin/bsm_%: src/%.cpp ${lib}
+	@echo "[+] Compiling programs $@ ..."
+	$(eval prog_name=$(patsubst bin/bsm_%,%,$@))
+	${CXX} ${cppflags} -c src/${prog_name}.cpp -o ./obj/${prog_name}.o
+	${CXX} ${ldflags} ${lib} ./obj/${prog_name}.o -o $@
 	@echo
 
+# Cleaning
+#
 clean:
-ifneq ($(strip $(PROGS)),)
-	rm -f $(addprefix ./bin/test_,$(PROGS))
+ifneq ($(strip ${progs}),)
+	rm -f ./bin/bsm_*
 endif
