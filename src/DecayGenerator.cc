@@ -3,6 +3,7 @@
 // Created by Samvel Khalatyan, Aug 14, 2011
 // Copyright 2011, All rights reserved
 
+/*
 #include <cmath>
 
 #include "interface/DecayGenerator.h"
@@ -73,3 +74,4 @@ bool DecayGenerator::isValid() const
 {
     return _number_of_hypotheses > _current_hypothesis;
 }
+*/
