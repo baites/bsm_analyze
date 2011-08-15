@@ -138,7 +138,8 @@ bool AppController::run(int &argc, char *argv[])
     {
         if (SINGLE_THREAD == _run_mode
                 || (MULTI_THREAD == _run_mode
-                    && 1 == _number_of_threads))
+                    && (1 == _number_of_threads
+                        || 1 == _input_files.size())))
             processSingleThread();
         else
             processMultiThread();
