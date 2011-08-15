@@ -6,6 +6,8 @@
 #ifndef BSM_MTTBAR_ANALYZER
 #define BSM_MTTBAR_ANALYZER
 
+#include <sstream>
+
 #include <boost/shared_ptr.hpp>
 
 #include "bsm_stat/interface/bsm_stat_fwd.h"
@@ -45,6 +47,7 @@ namespace bsm
             virtual uint32_t id() const;
 
             virtual ObjectPtr clone() const;
+            virtual void merge(const ObjectPtr &);
 
             virtual void print(std::ostream &) const;
 
@@ -59,6 +62,8 @@ namespace bsm
             DeltaMonitorPtr _top_delta_monitor;
 
             H1ProxyPtr _mttbar;
+
+            std::ostringstream _out;
     };
 }
 
