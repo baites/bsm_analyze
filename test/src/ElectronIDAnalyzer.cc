@@ -15,8 +15,16 @@ namespace bsm
 
 
 ElectronIDAnalyzer::ElectronIDAnalyzer() 
-  : _bookkeeper(new HistogramBookkeeper())
 {
+    // Initializing selector
+
+    _synch_selector.reset(new SynchSelector());
+    monitor(_synch_selector);        
+
+    // Histogram booking 
+
+    _bookkeeper.reset(new HistogramBookkeeper());
+
     _bookkeeper->book1d("EIDLoosePt", 50, 0, 100);
     _bookkeeper->book1d("EIDLooseEta", 50, -2.5, 2.5);
     _bookkeeper->book1d("EIDLoosePhi", 50, 0, 3.15);    
@@ -89,6 +97,8 @@ ElectronIDAnalyzer::ElectronIDAnalyzer()
 
 ElectronIDAnalyzer::ElectronIDAnalyzer(const ElectronIDAnalyzer & object)
 {
+    _synch_selector.reset(new SynchSelector(*object._synch_selector));   
+    monitor(_synch_selector);
     _bookkeeper.reset(new HistogramBookkeeper(*object._bookkeeper));
     monitor(_bookkeeper);
 }
@@ -96,6 +106,8 @@ ElectronIDAnalyzer::ElectronIDAnalyzer(const ElectronIDAnalyzer & object)
 
 void ElectronIDAnalyzer::process(const Event *event)
 {
+    if (!_synch_selector->apply(event)) return;  
+
     for (int i = 0; i < event->pf_electrons_size(); ++i)
     {
         const bsm::Electron & electron = event->pf_electrons(i);

@@ -10,12 +10,14 @@
 
 #include "interface/AppController.h"
 #include "interface/ElectronIDAnalyzer.h"
+#include "interface/JetEnergyCorrections.h"
 
 using namespace std;
 
 using boost::shared_ptr;
 using bsm::AppController;
 using bsm::ElectronIDAnalyzer;
+using bsm::JetEnergyCorrectionOptions;
 
 int main(int argc, char *argv[])
 {
@@ -24,12 +26,22 @@ int main(int argc, char *argv[])
     bool result = false;
     try
     {
+        // Define all the needed objects 
+        boost::shared_ptr<JetEnergyCorrectionOptions> jec_options(new JetEnergyCorrectionOptions());
         boost::shared_ptr<ElectronIDAnalyzer> analyzer(new ElectronIDAnalyzer());
         boost::shared_ptr<AppController> app(new AppController());
 
+        // Collect interdependent options
+        jec_options->setDelegate(analyzer->getJetEnergyCorrectionDelegate());
+
+        // Set the options into the controller
+        app->addOptions(*jec_options);
+
+        // Set the analyzer into the controller
         app->setAnalyzer(analyzer);
         result = app->run(argc, argv);
         
+        // Save the histograms once the job is done
         analyzer->bookkeeper()->write("histograms.root");
     }
     catch(const exception &error)

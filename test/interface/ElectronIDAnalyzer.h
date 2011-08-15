@@ -12,7 +12,10 @@
 
 #include "interface/Analyzer.h"
 #include "interface/HistogramBookkeeper.h"
+#include "interface/SynchSelector.h"
+
 #include "bsm_input/interface/Event.pb.h"
+#include "JetMETObjects/interface/JetCorrectorParameters.h"
 
 namespace bsm
 {
@@ -21,6 +24,7 @@ class ElectronIDAnalyzer : public Analyzer
 {
 public:
 
+    typedef boost::shared_ptr<SynchSelector> SynchSelectorPtr;
     typedef boost::shared_ptr<HistogramBookkeeper> HistogramBookkeeperPtr;
 
     ElectronIDAnalyzer();
@@ -31,17 +35,18 @@ public:
 
     virtual void print(std::ostream & os) const
     {
+        _synch_selector->print(os);
         _bookkeeper->print(os);
-    }
-
-    void write(std::string const & filename)
-    {
-        _bookkeeper->write(filename);
     }
 
     const HistogramBookkeeperPtr bookkeeper()
     {
         return _bookkeeper;
+    }
+
+    bsm::JetEnergyCorrectionDelegate * getJetEnergyCorrectionDelegate() const
+    {
+        return _synch_selector->getJetEnergyCorrectionDelegate();
     }
 
     virtual uint32_t id() const
@@ -58,8 +63,8 @@ public:
 
 private:
 
+    SynchSelectorPtr _synch_selector;    
     HistogramBookkeeperPtr _bookkeeper;
-
 };
 
 }
