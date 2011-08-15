@@ -39,7 +39,7 @@ AppController::AppController():
         ("multi-thread",
          po::value<uint32_t>()->implicit_value(0)->notifier(
              boost::bind(&AppController::setNumberOfThreads, this, _1)),
-         "Run Analysis with multi-threads")
+         "Run Analysis with multi-threads: 0 - auto, otherwise max number of threads")
     ;
 
     // Hidden options: necessary for the positional arguments
