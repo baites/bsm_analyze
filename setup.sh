@@ -33,7 +33,9 @@ then
         echo "setting the environment"
 
         export ${library_path}="${!library_path}:${CODE}/lib"
+        export ${library_path}="${!library_path}:${CODE}/test/lib"
         export PATH=${CODE}/bin:${PATH}
+        export PATH=${CODE}/test/bin:${PATH}
 
         if [[ "Linux" == "`uname`" ]]
         then
