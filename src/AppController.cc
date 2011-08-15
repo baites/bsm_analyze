@@ -25,7 +25,8 @@ using bsm::AppController;
 namespace fs = boost::filesystem;
 
 AppController::AppController():
-    _run_mode(SINGLE_THREAD)
+    _run_mode(SINGLE_THREAD),
+    _disable_multithread(false)
 {
     // Generic Options: common to all executables
     //
@@ -145,10 +146,18 @@ bool AppController::run(int &argc, char *argv[])
     return true;
 }
 
+void AppController::disableMutlithread()
+{
+    _disable_multithread = true;
+}
+
 // Privates
 //
 void AppController::setRunMode(const bool &is_multi_thread)
 {
+    if (_disable_multithread)
+        return;
+
     _run_mode = (is_multi_thread
             ? MULTI_THREAD
             : SINGLE_THREAD);

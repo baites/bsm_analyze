@@ -48,6 +48,10 @@ namespace bsm
 
             bool run(int &argc, char *argv[]);
 
+            // disable multi-thread option
+            //
+            void disableMutlithread();
+
         private:
             // Prevent Copying
             //
@@ -77,6 +81,7 @@ namespace bsm
             AnalyzerPtr _analyzer;
 
             Inputs _input_files;
+            bool _disable_multithread;
     };
 }
 
