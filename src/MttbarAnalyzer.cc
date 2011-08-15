@@ -17,6 +17,7 @@
 #include "bsm_input/interface/Jet.pb.h"
 #include "bsm_input/interface/Muon.pb.h"
 #include "bsm_stat/interface/H1.h"
+#include "bsm_stat/interface/H2.h"
 #include "interface/Algorithm.h"
 #include "interface/DecayGenerator.h"
 #include "interface/Monitor.h"
@@ -33,6 +34,7 @@ using boost::dynamic_pointer_cast;
 using bsm::MttbarAnalyzer;
 
 using bsm::stat::H1;
+using bsm::stat::H2;
 
 MttbarAnalyzer::MttbarAnalyzer()
 {
@@ -46,6 +48,7 @@ MttbarAnalyzer::MttbarAnalyzer()
     _top_delta_monitor.reset(new DeltaMonitor());
 
     _mttbar.reset(new H1Proxy(400, 0, 4000));
+    _mltop_vs_mhtop.reset(new H2Proxy(400, 0, 4000, 400, 0, 4000));
 
     monitor(_missing_energy_monitor);
     monitor(_ltop_monitor);
@@ -54,6 +57,7 @@ MttbarAnalyzer::MttbarAnalyzer()
     monitor(_top_delta_monitor);
 
     monitor(_mttbar);
+    monitor(_mltop_vs_mhtop);
 }
 
 MttbarAnalyzer::MttbarAnalyzer(const MttbarAnalyzer &object)
@@ -75,6 +79,9 @@ MttbarAnalyzer::MttbarAnalyzer(const MttbarAnalyzer &object)
 
     _mttbar = dynamic_pointer_cast<H1Proxy>(object._mttbar->clone());
 
+    _mltop_vs_mhtop =
+        dynamic_pointer_cast<H2Proxy>(object._mltop_vs_mhtop->clone());
+
     monitor(_missing_energy_monitor);
     monitor(_ltop_monitor);
     monitor(_htop_monitor);
@@ -82,6 +89,7 @@ MttbarAnalyzer::MttbarAnalyzer(const MttbarAnalyzer &object)
     monitor(_top_delta_monitor);
 
     monitor(_mttbar);
+    monitor(_mltop_vs_mhtop);
 }
 
 bsm::JetEnergyCorrectionDelegate *MttbarAnalyzer::getJetEnergyCorrectionDelegate() const
@@ -97,6 +105,11 @@ bsm::SynchSelectorDelegate *MttbarAnalyzer::getSynchSelectorDelegate() const
 const MttbarAnalyzer::H1Ptr MttbarAnalyzer::mttbar() const
 {
     return _mttbar->histogram();
+}
+
+const MttbarAnalyzer::H2Ptr MttbarAnalyzer::mltopVsMhtop() const
+{
+    return _mltop_vs_mhtop->histogram();
 }
 
 const MttbarAnalyzer::P4MonitorPtr MttbarAnalyzer::missingEnergyMonitor() const
@@ -272,6 +285,8 @@ void MttbarAnalyzer::process(const Event *event)
         // Best Solution is found
         //
         mttbar()->fill(mass(best_solution.ltop + best_solution.htop));
+        mltopVsMhtop()->fill(mass(best_solution.ltop), mass(best_solution.htop));
+
         missingEnergyMonitor()->fill(best_solution.missing_energy);
         ltopMonitor()->fill(best_solution.ltop);
         htopMonitor()->fill(best_solution.htop);
@@ -328,6 +343,10 @@ void MttbarAnalyzer::print(std::ostream &out) const
 
     out << "Mttbar" << endl;
     out << *mttbar() << endl;
+    out << endl;
+
+    out << "Mltop vs Mhtop" << endl;
+    out << *mltopVsMhtop() << endl;
 
     out << _out.str();
 }

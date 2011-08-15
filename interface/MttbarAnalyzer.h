@@ -21,6 +21,8 @@ namespace bsm
     {
         public:
             typedef boost::shared_ptr<stat::H1> H1Ptr;
+            typedef boost::shared_ptr<stat::H2> H2Ptr;
+
             typedef boost::shared_ptr<LorentzVectorMonitor> P4MonitorPtr;
             typedef boost::shared_ptr<DeltaMonitor> DeltaMonitorPtr;
 
@@ -33,6 +35,8 @@ namespace bsm
             // Getters
             //
             const H1Ptr mttbar() const;
+            const H2Ptr mltopVsMhtop() const;
+
             const P4MonitorPtr missingEnergyMonitor() const;
             const P4MonitorPtr ltopMonitor() const;
             const P4MonitorPtr htopMonitor() const;
@@ -54,6 +58,7 @@ namespace bsm
 
         private:
             typedef boost::shared_ptr<H1Proxy> H1ProxyPtr;
+            typedef boost::shared_ptr<H2Proxy> H2ProxyPtr;
 
             boost::shared_ptr<SynchSelector> _synch_selector;
 
@@ -64,6 +69,7 @@ namespace bsm
             DeltaMonitorPtr _top_delta_monitor;
 
             H1ProxyPtr _mttbar;
+            H2ProxyPtr _mltop_vs_mhtop;
 
             std::ostringstream _out;
     };

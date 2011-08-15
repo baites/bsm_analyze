@@ -9,7 +9,9 @@
 #include <boost/shared_ptr.hpp>
 
 #include <TCanvas.h>
+#include <TGaxis.h>
 #include <TH1.h>
+#include <TH2.h>
 #include <TRint.h>
 
 #include "bsm_input/interface/Event.pb.h"
@@ -58,6 +60,7 @@ int main(int argc, char *argv[])
         if (result)
         {
             typedef bsm::stat::TH1Ptr TH1Ptr;
+            typedef bsm::stat::TH2Ptr TH2Ptr;
 
             int empty_argc = 1;
             char *empty_argv[] = { argv[0] };
@@ -65,12 +68,35 @@ int main(int argc, char *argv[])
             boost::shared_ptr<TRint>
                 root(new TRint("app", &empty_argc, empty_argv));
 
+            TGaxis::SetMaxDigits(3);
+
+            shared_ptr<TCanvas> canvas(new TCanvas());
+            canvas->SetTitle("Mass");
+            canvas->SetWindowSize(800, 480);
+            canvas->Divide(2);
+
+            canvas->cd(1);
             TH1Ptr mttbar = convert(*analyzer->mttbar());
             mttbar->SetName("mttbar");
             mttbar->GetXaxis()->SetTitle("m_{t#bar{t}} [GeV/c^{2}]");
+            mttbar->GetXaxis()->SetTitleSize(0.045);
             mttbar->Draw();
 
             mttbar->SaveAs("mttbar.root");
+
+            canvas->cd(2);
+            canvas->cd(2)->SetLeftMargin(10);
+            TH2Ptr mltop_vs_mhtop = convert(*analyzer->mltopVsMhtop());
+            mltop_vs_mhtop->SetName("mltop_vs_mhtop");
+            mltop_vs_mhtop->GetXaxis()->SetTitle("m_{t,lepton} [GeV/c^{2}]");
+            mltop_vs_mhtop->GetXaxis()->SetTitleSize(0.045);
+            mltop_vs_mhtop->GetYaxis()->SetTitle("m_{t,hadron} [GeV/c^{2}]");
+            mltop_vs_mhtop->GetYaxis()->SetTitleSize(0.045);
+            mltop_vs_mhtop->Draw("colz");
+
+            canvas->Update();
+
+            mltop_vs_mhtop->SaveAs("mltop_vs_mhtop.root");
 
             boost::shared_ptr<LorentzVectorCanvas> met(
                     new LorentzVectorCanvas("Reconstructed Missing Energy"));
