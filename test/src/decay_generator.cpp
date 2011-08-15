@@ -15,12 +15,6 @@
 using namespace std;
 using namespace boost;
 
-using bsm::DecayGenerator;
-
-typedef DecayGenerator::Jets Jets;
-
-Jets jets;
-
 namespace bsm
 {
     class Jet
@@ -45,6 +39,13 @@ namespace bsm
 }
 
 using bsm::Jet;
+using bsm::DecayGenerator;
+
+typedef DecayGenerator<Jet> DecayGeneratorJets;
+typedef DecayGeneratorJets::Objects Jets;
+
+Jets jets;
+
 
 ostream &operator<<(ostream &out, const Jet &jet)
 {
@@ -57,7 +58,7 @@ ostream &operator<<(ostream &out, const Jets &jets)
             jets.end() != jet;
             ++jet)
     {
-        out << *(*jet) << " ";
+        out << *jet << " ";
     }
 
     return out;
@@ -86,12 +87,12 @@ int main(int argc, char *argv[])
 
     for(uint32_t i = 0; number_of_jets > i; ++i)
     {
-        ::jets.push_back(new Jet(i + 1));
+        ::jets.push_back(Jet(i + 1));
     }
 
     printJets();
 
-    DecayGenerator generator;
+    DecayGeneratorJets generator;
 
     clock_t start, end;
     start = clock();
@@ -102,10 +103,8 @@ int main(int argc, char *argv[])
     do
     {
         ++total_hypotheses;
-        DecayGenerator::Hypothesis hypothesis = generator.hypothesis();
+        DecayGeneratorJets::Hypothesis hypothesis = generator.hypothesis();
 
-        Jets leptonic = hypothesis.leptonic;
-        Jets hadronic = hypothesis.hadronic;
         //cout << "Leptonic: " << leptonic << endl;
         //cout << "Hadronic: " << hadronic << endl;
         //cout << endl;
@@ -117,13 +116,6 @@ int main(int argc, char *argv[])
     cout << total_hypotheses << " total hypotheses were generated" << endl;
     cout << "it took " << double(end - start) / CLOCKS_PER_SEC << " seconds" << endl;
     cout << endl;
-
-    for(Jets::const_iterator jet = ::jets.begin();
-            ::jets.end() != jet;
-            ++jet)
-    {
-        delete *jet;
-    }
 
     return 1;
 }
