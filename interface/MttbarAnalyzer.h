@@ -33,6 +33,7 @@ namespace bsm
             // Getters
             //
             const H1Ptr mttbar() const;
+            const P4MonitorPtr missingEnergyMonitor() const;
             const P4MonitorPtr ltopMonitor() const;
             const P4MonitorPtr htopMonitor() const;
             const DeltaMonitorPtr topDeltaMonitor() const;
@@ -56,6 +57,7 @@ namespace bsm
 
             boost::shared_ptr<SynchSelector> _synch_selector;
 
+            P4MonitorPtr _missing_energy_monitor;
             P4MonitorPtr _ltop_monitor;
             P4MonitorPtr _htop_monitor;
 

@@ -25,7 +25,9 @@ using bsm::AppController;
 namespace fs = boost::filesystem;
 
 AppController::AppController():
-    _run_mode(SINGLE_THREAD)
+    _run_mode(SINGLE_THREAD),
+    _disable_multithread(false),
+    _number_of_threads(0)
 {
     // Generic Options: common to all executables
     //
@@ -35,9 +37,9 @@ AppController::AppController():
          "Help message")
 
         ("multi-thread",
-         po::value<bool>()->implicit_value(true)->notifier(
-             boost::bind(&AppController::setRunMode, this, _1)),
-         "Run Analysis with multi-threads")
+         po::value<uint32_t>()->implicit_value(0)->notifier(
+             boost::bind(&AppController::setNumberOfThreads, this, _1)),
+         "Run Analysis with multi-threads: 0 - auto, otherwise max number of threads")
     ;
 
     // Hidden options: necessary for the positional arguments
@@ -134,7 +136,10 @@ bool AppController::run(int &argc, char *argv[])
     }
     else
     {
-        if (SINGLE_THREAD == _run_mode)
+        if (SINGLE_THREAD == _run_mode
+                || (MULTI_THREAD == _run_mode
+                    && (1 == _number_of_threads
+                        || 1 == _input_files.size())))
             processSingleThread();
         else
             processMultiThread();
@@ -145,13 +150,21 @@ bool AppController::run(int &argc, char *argv[])
     return true;
 }
 
+void AppController::disableMutlithread()
+{
+    _disable_multithread = true;
+}
+
 // Privates
 //
-void AppController::setRunMode(const bool &is_multi_thread)
+void AppController::setNumberOfThreads(const uint32_t &number_of_threads)
 {
-    _run_mode = (is_multi_thread
-            ? MULTI_THREAD
-            : SINGLE_THREAD);
+    if (_disable_multithread)
+        return;
+
+    _number_of_threads = number_of_threads;
+
+    _run_mode = MULTI_THREAD;
 }
 
 void AppController::processSingleThread()
@@ -181,7 +194,9 @@ void AppController::processSingleThread()
 
 void AppController::processMultiThread()
 {
-    boost::shared_ptr<ThreadController> controller(new ThreadController());
+    boost::shared_ptr<ThreadController>
+        controller(new ThreadController(_number_of_threads));
+
     for(Inputs::const_iterator input = _input_files.begin();
             _input_files.end() != input;
             ++input)

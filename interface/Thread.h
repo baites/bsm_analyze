@@ -139,7 +139,7 @@ namespace bsm
     class ThreadController
     {
         public:
-            ThreadController();
+            ThreadController(const uint32_t &max_threads = 0);
             ~ThreadController();
 
             core::ConditionPtr condition() const;

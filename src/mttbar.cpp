@@ -72,6 +72,10 @@ int main(int argc, char *argv[])
 
             mttbar->SaveAs("mttbar.root");
 
+            boost::shared_ptr<LorentzVectorCanvas> met(
+                    new LorentzVectorCanvas("Reconstructed Missing Energy"));
+            met->draw(*analyzer->missingEnergyMonitor());
+
             boost::shared_ptr<LorentzVectorCanvas> ltop_p4(
                     new LorentzVectorCanvas("Leptonic Top"));
             ltop_p4->draw(*analyzer->ltopMonitor());
