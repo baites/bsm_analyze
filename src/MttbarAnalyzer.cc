@@ -39,13 +39,15 @@ MttbarAnalyzer::MttbarAnalyzer()
     _synch_selector.reset(new SynchSelector());
     monitor(_synch_selector);
 
+    _missing_energy_monitor.reset(new LorentzVectorMonitor());
     _ltop_monitor.reset(new LorentzVectorMonitor());
     _htop_monitor.reset(new LorentzVectorMonitor());
 
     _top_delta_monitor.reset(new DeltaMonitor());
 
-    _mttbar.reset(new H1Proxy(25, 500, 3000));
+    _mttbar.reset(new H1Proxy(400, 0, 4000));
 
+    monitor(_missing_energy_monitor);
     monitor(_ltop_monitor);
     monitor(_htop_monitor);
 
@@ -60,6 +62,9 @@ MttbarAnalyzer::MttbarAnalyzer(const MttbarAnalyzer &object)
         dynamic_pointer_cast<SynchSelector>(object._synch_selector->clone());
     monitor(_synch_selector);
 
+    _missing_energy_monitor =
+        dynamic_pointer_cast<LorentzVectorMonitor>(object._missing_energy_monitor->clone());
+
     _ltop_monitor =
         dynamic_pointer_cast<LorentzVectorMonitor>(object._ltop_monitor->clone());
     _htop_monitor =
@@ -70,6 +75,7 @@ MttbarAnalyzer::MttbarAnalyzer(const MttbarAnalyzer &object)
 
     _mttbar = dynamic_pointer_cast<H1Proxy>(object._mttbar->clone());
 
+    monitor(_missing_energy_monitor);
     monitor(_ltop_monitor);
     monitor(_htop_monitor);
 
@@ -91,6 +97,11 @@ bsm::SynchSelectorDelegate *MttbarAnalyzer::getSynchSelectorDelegate() const
 const MttbarAnalyzer::H1Ptr MttbarAnalyzer::mttbar() const
 {
     return _mttbar->histogram();
+}
+
+const MttbarAnalyzer::P4MonitorPtr MttbarAnalyzer::missingEnergyMonitor() const
+{
+    return _missing_energy_monitor;
 }
 
 const MttbarAnalyzer::P4MonitorPtr MttbarAnalyzer::ltopMonitor() const
@@ -167,6 +178,8 @@ void MttbarAnalyzer::process(const Event *event)
 
             LorentzVector ltop; // Reconstructed leptonic leg
             LorentzVector htop; // Reconstructed hadronic leg
+            LorentzVector missing_energy;
+
             float deltaRmin;
             float deltaRlh;
         } best_solution;
@@ -250,7 +263,7 @@ void MttbarAnalyzer::process(const Event *event)
                     best_solution.deltaRlh = deltaRlh;
                     best_solution.ltop = ltop_tmp;
                     best_solution.htop = htop;
-                    
+                    best_solution.missing_energy = neutrino_p4;
                 }
             }
         }
@@ -259,6 +272,7 @@ void MttbarAnalyzer::process(const Event *event)
         // Best Solution is found
         //
         mttbar()->fill(mass(best_solution.ltop + best_solution.htop));
+        missingEnergyMonitor()->fill(best_solution.missing_energy);
         ltopMonitor()->fill(best_solution.ltop);
         htopMonitor()->fill(best_solution.htop);
         topDeltaMonitor()->fill(best_solution.ltop, best_solution.htop);
@@ -295,6 +309,10 @@ void MttbarAnalyzer::merge(const ObjectPtr &pointer)
 void MttbarAnalyzer::print(std::ostream &out) const
 {
     out << *_synch_selector << endl;
+
+    out << "Missing Energy Monitor" << endl;
+    out << *_missing_energy_monitor << endl;
+    out << endl;
 
     out << "Leptonic Top monitor" << endl;
     out << *_ltop_monitor << endl;
