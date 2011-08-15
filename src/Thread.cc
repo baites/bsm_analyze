@@ -5,6 +5,8 @@
 // Created by Samvel Khalatyan, Apr 30, 2011
 // Copyright 2011, All rights reserved
 
+#include <algorithm>
+#include <climits>
 #include <iostream>
 
 #include <boost/pointer_cast.hpp>
@@ -362,8 +364,9 @@ class ThreadController::Summary
 
 // Thread controller
 //
-ThreadController::ThreadController():
-    _max_threads(boost::thread::hardware_concurrency())
+ThreadController::ThreadController(const uint32_t &max_threads):
+    _max_threads(min(max_threads ? max_threads : INT_MAX,
+                boost::thread::hardware_concurrency()))
 {
     _condition.reset(new core::Condition());
     _input_files.reset(new InputFiles());
@@ -479,10 +482,7 @@ uint32_t ThreadController::countMaxThreads()
 {
     Lock lock(condition());
 
-    if (_max_threads > _input_files->size())
-        return _input_files->size();
-
-    return _max_threads;
+    return min(_max_threads, static_cast<uint32_t>(_input_files->size()));
 }
 
 void ThreadController::addThread()

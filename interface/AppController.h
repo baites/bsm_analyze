@@ -66,7 +66,7 @@ namespace bsm
                 MULTI_THREAD
             };
 
-            void setRunMode(const bool &);
+            void setNumberOfThreads(const uint32_t &);
 
             void processSingleThread();
             void processMultiThread();
@@ -81,7 +81,9 @@ namespace bsm
             AnalyzerPtr _analyzer;
 
             Inputs _input_files;
+
             bool _disable_multithread;
+            uint32_t _number_of_threads;
     };
 }
 
