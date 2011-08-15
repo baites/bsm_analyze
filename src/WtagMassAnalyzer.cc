@@ -48,7 +48,7 @@ WtagMassAnalyzer::WtagMassAnalyzer()
     _wjet_selector.reset(new WJetSelector());
     _met_solutions.reset(new MultiplicityCutflow(2));
 
-    _met_reconstructor.reset(new NeutrinoReconstruct(80.399, 0.00051099891));
+    //_met_reconstructor.reset(new NeutrinoReconstruct(80.399, 0.00051099891));
 
     _mttbar.reset(new H1Proxy(25, 500, 3000));
 
@@ -64,7 +64,7 @@ WtagMassAnalyzer::WtagMassAnalyzer()
     monitor(_wjet_selector);
     monitor(_met_solutions);
 
-    monitor(_met_reconstructor);
+    //monitor(_met_reconstructor);
 
     monitor(_mttbar);
 
@@ -93,8 +93,10 @@ WtagMassAnalyzer::WtagMassAnalyzer(const WtagMassAnalyzer &object)
     _met_solutions =
         dynamic_pointer_cast<MultiplicityCutflow>(object._met_solutions->clone());
 
+    /*
     _met_reconstructor =
         dynamic_pointer_cast<NeutrinoReconstruct>(object._met_reconstructor->clone());
+        */
 
     _mttbar = dynamic_pointer_cast<H1Proxy>(object._mttbar->clone());
 
@@ -110,7 +112,7 @@ WtagMassAnalyzer::WtagMassAnalyzer(const WtagMassAnalyzer &object)
     monitor(_wjet_selector);
     monitor(_met_solutions);
 
-    monitor(_met_reconstructor);
+    //monitor(_met_reconstructor);
 
     monitor(_mttbar);
 
@@ -302,6 +304,7 @@ void WtagMassAnalyzer::jets(const Event *event, const Electron *el)
 
         return;
 
+    /*
     // Get LorentzVector of the leptonic/hadronic sides
     PBP4 leptonic_p4 = leptonicLeg(event, el, leptonic);
     PBP4 hadronic_p4 = hadronicLeg(event, wjet, hadronic);
@@ -313,6 +316,7 @@ void WtagMassAnalyzer::jets(const Event *event, const Electron *el)
     *leptonic_p4 += *hadronic_p4;
 
     mttbar()->fill(mass(*leptonic_p4));
+    */
 }
 
 WtagMassAnalyzer::PBP4 WtagMassAnalyzer::leptonicLeg(const Event *event,
@@ -325,6 +329,7 @@ WtagMassAnalyzer::PBP4 WtagMassAnalyzer::leptonicLeg(const Event *event,
     
     *p4 += el->physics_object().p4();
 
+    /*
     // Apply pZ correction to the Missing Energy
     //
     uint32_t solutions = _met_reconstructor->apply(el->physics_object().p4(),
@@ -353,6 +358,7 @@ WtagMassAnalyzer::PBP4 WtagMassAnalyzer::leptonicLeg(const Event *event,
     }
 
     *p4 += jet->physics_object().p4();
+    */
 
     return p4;
 }

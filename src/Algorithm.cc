@@ -7,21 +7,19 @@
 
 #include <cfloat>
 
-#include <TLorentzVector.h>
-
 #include <boost/pointer_cast.hpp>
 
 #include "bsm_core/interface/ID.h"
 #include "bsm_input/interface/Algebra.h"
-#include "bsm_input/interface/Electron.pb.h"
-#include "bsm_input/interface/Muon.pb.h"
 #include "bsm_input/interface/Physics.pb.h"
-#include "bsm_input/interface/Utility.h"
 #include "interface/Algorithm.h"
-#include "interface/Utility.h"
 
-using boost::dynamic_pointer_cast;
+using bsm::NeutrinoReconstruct;
+using bsm::TTbarDeltaRReconstruct;
+using bsm::JetIterator;
+using bsm::JetsSelector;
 
+/*
 using bsm::algorithm::ClosestJet;
 using bsm::algorithm::NeutrinoReconstruct;
 using bsm::algorithm::HadronicDecay;
@@ -29,7 +27,374 @@ using bsm::algorithm::LeptonicDecay;
 using bsm::algorithm::TTbarDeltaRReconstruct;
 
 using bsm::core::ID;
+*/
 
+// Neutrino Recontstruct: neglect products masses
+//
+NeutrinoReconstruct::NeutrinoReconstruct()
+{
+}
+
+NeutrinoReconstruct::NeutrinoReconstruct(const NeutrinoReconstruct &)
+{
+}
+
+NeutrinoReconstruct::Solutions
+    NeutrinoReconstruct::operator()(const LorentzVector &lepton,
+        const LorentzVector &neutrino)
+{
+    // The final equation is:
+    //
+    //  (-pTlep^2) * x^2 + 2 * (mu * pZlep) * x + (mu^2 - Elep^2 * pTnu^2) = 0
+    //
+    // where
+    //      x is pz_nu
+    //      mu = mW^2 / 2 + pTlep * pTnu * cos(phi)
+    //      phi is angle between p_lepton and p_neutrino in transverse plane
+    //
+    Vector lepton_pT = toVector(lepton);
+    lepton_pT.set_z(0);
+
+    Vector neutrino_pT = toVector(neutrino);
+    neutrino_pT.set_z(0);
+
+    const float mass_w = 80.399;
+    float mu = mass_w * mass_w / 2 + lepton_pT * neutrino_pT;
+
+    float A = - (lepton_pT * lepton_pT);
+    float B = mu * lepton.pz();
+    float C = mu * mu - lepton.e() * lepton.e() * (neutrino_pT * neutrino_pT);
+
+    float discriminant = B * B - A * C;
+
+    Solutions solutions;
+
+    if (0 >= discriminant)
+    {
+        // Take only real part of the solution
+        //
+        LorentzVectorPtr solution(new LorentzVector());
+        *solution = neutrino;
+        solution->set_pz(-B / A);
+
+        solutions.push_back(solution);
+    }
+    else
+    {
+        discriminant = sqrt(discriminant);
+
+        LorentzVectorPtr solution(new LorentzVector());
+        *solution = neutrino;
+        solution->set_pz((-B - discriminant) / A);
+
+        solutions.push_back(solution);
+
+        solution = LorentzVectorPtr(new LorentzVector());
+        *solution = neutrino;
+        solution->set_pz((-B + discriminant) / A);
+
+        solutions.push_back(solution);
+    }
+
+    return solutions;
+}
+
+uint32_t NeutrinoReconstruct::id() const
+{
+    return core::ID<NeutrinoReconstruct>::get();
+}
+
+NeutrinoReconstruct::ObjectPtr NeutrinoReconstruct::clone() const
+{
+    return ObjectPtr(new NeutrinoReconstruct(*this));
+}
+
+void NeutrinoReconstruct::print(std::ostream &out) const
+{
+}
+
+
+
+// TTbar DeltaR-based Reconstruction
+//
+TTbarDeltaRReconstruct::TTbarDeltaRReconstruct():
+    _dr_min(FLT_MAX),
+    _dr_max(0)
+{
+}
+
+TTbarDeltaRReconstruct::TTbarDeltaRReconstruct(const TTbarDeltaRReconstruct &object):
+    _dr_min(object._dr_min),
+    _dr_max(object._dr_max)
+{
+    if (object._ttbar.top)
+    {
+        _ttbar.top.reset(new LorentzVector());
+        *_ttbar.top = *object._ttbar.top;
+    }
+
+    if (object._ttbar.tbar)
+    {
+        _ttbar.tbar.reset(new LorentzVector());
+        *_ttbar.tbar = *object._ttbar.tbar;
+    }
+}
+
+TTbarDeltaRReconstruct::TTbar TTbarDeltaRReconstruct::operator()(const Jets &jets,
+        const LorentzVector &lepton,
+        const LorentzVector &neutrino)
+{
+    _dr_min = FLT_MAX;
+    _dr_max = 0;
+
+    _ttbar = TTbar();
+
+    if (1 < jets.size())
+        minimize(jets, lepton, neutrino, jets.end(),
+                jets.end(), jets.end(), jets.end());
+
+    return _ttbar;
+}
+
+uint32_t TTbarDeltaRReconstruct::id() const
+{
+    return core::ID<TTbarDeltaRReconstruct>::get();
+}
+
+TTbarDeltaRReconstruct::ObjectPtr TTbarDeltaRReconstruct::clone() const
+{
+    return ObjectPtr(new TTbarDeltaRReconstruct(*this));
+}
+
+void TTbarDeltaRReconstruct::print(std::ostream &out) const
+{
+}
+
+// Privates
+//
+void TTbarDeltaRReconstruct::minimize(const Jets &jets,
+        const LorentzVector &lepton,
+        const LorentzVector &neutrino,
+        const Jets::const_iterator &jet_leptonic,
+        const Jets::const_iterator &jet_hadronic_1,
+        const Jets::const_iterator &jet_hadronic_2,
+        const Jets::const_iterator &jet_hadronic_3)
+{
+    if (jets.end() == jet_leptonic)
+    {
+        for(Jets::const_iterator jet = jets.begin(); jets.end() != jet; ++jet)
+        {
+            minimize(jets, lepton, neutrino, jet,
+                    jets.end(), jets.end(), jets.end());
+        }
+    }
+    else if (jets.end() == jet_hadronic_1)
+    {
+        for(Jets::const_iterator jet = jets.begin(); jets.end() != jet; ++jet)
+        {
+            if (jet_leptonic == jet)
+                continue;
+
+            minimize(jets, lepton, neutrino, jet_leptonic,
+                    jet,  jets.end(), jets.end());
+        }
+    }
+    else if (2 < jets.size()
+            && jets.end() == jet_hadronic_2)
+    {
+        for(Jets::const_iterator jet = jets.begin();
+                jets.end() != jet;
+                ++jet)
+        {
+            if (jet_leptonic == jet
+                    || jet_hadronic_1 == jet)
+                continue;
+
+            minimize(jets, lepton, neutrino, jet_leptonic,
+                    jet_hadronic_1,  jet, jets.end());
+        }
+    }
+    else if (3 < jets.size()
+            && jets.end() == jet_hadronic_3)
+    {
+        for(Jets::const_iterator jet = jets.begin();
+                jets.end() != jet;
+                ++jet)
+        {
+            if (jet_leptonic == jet
+                    || jet_hadronic_1 == jet
+                    || jet_hadronic_2 == jet)
+                continue;
+
+            minimize(jets, lepton, neutrino, jet_leptonic,
+                    jet_hadronic_1,  jet_hadronic_2, jet);
+        }
+    }
+    else
+    {
+        LorentzVectorPtr top(new LorentzVector());
+        *top = lepton + neutrino + *(*jet_leptonic);
+
+        LorentzVectorPtr tbar(new LorentzVector());
+        *tbar = *(*jet_hadronic_1);
+
+        if (jets.end() != jet_hadronic_2)
+            *tbar += *(*jet_hadronic_2);
+
+        if (jets.end() != jet_hadronic_3)
+            *tbar += *(*jet_hadronic_3);
+
+        const float dr_min = dr(*top, lepton)
+            + dr(*top, neutrino)
+            + dr(*top, *(*jet_leptonic));
+
+        const float dr_max = dr(*top, *tbar);
+
+        if (dr_min < _dr_min
+                && dr_max > _dr_max)
+        {
+            _dr_min = dr_min;
+            _dr_max = dr_max;
+
+            _ttbar.top = top;
+            _ttbar.tbar = tbar;
+        }
+    }
+}
+
+
+
+// Jets Selector
+//
+JetsSelector::JetsSelector(const Jets &jets, const uint32_t &size):
+    _jets(jets)
+{
+
+    for(Jets::const_iterator jet = jets.begin();
+            jets.end() != jet
+                && size > (jet - jets.begin());
+            ++jet)
+    {
+        _selected_jets.push_back(jet);
+    }
+}
+
+bool JetsSelector::next()
+{
+    /*
+    for(SelectedJets::reverse_iterator iterator = _selected_jets.rbegin();
+            _selected_jets.rend() != iterator;
+            )
+    {
+        for(Jets::const_iterator jet = *iterator;
+                _jets.end() != ++jet;
+                )
+        {
+            if (isValid(jet))
+            {
+                *iterator = jet;
+
+                jet_is_found
+                break;
+            }
+        }
+    }
+    */
+
+    return false;
+}
+
+// Private
+//
+bool JetsSelector::next(SelectedJets::reverse_iterator &iterator)
+{
+    bool jet_is_found = false;
+
+    if (_selected_jets.rend() != iterator)
+    {
+        Jets::const_iterator &jet = ++(*iterator);
+
+        while(!jet_is_found)
+        {
+            jet_is_found = next(jet);
+
+            if (jet_is_found)
+                break;
+
+            SelectedJets::reverse_iterator next_item = iterator + 1;
+            if (!next(next_item))
+                break;
+
+            jet = _jets.begin();
+        }
+    }
+
+    return jet_is_found;
+}
+
+bool JetsSelector::next(Jets::const_iterator &jet)
+{
+    bool jet_is_found = false;
+    while(_jets.end() != jet)
+    {
+        if (isValid(jet))
+        {
+            jet_is_found = true;
+
+            break;
+        }
+
+        ++jet;
+    }
+
+    return jet_is_found;
+}
+
+bool JetsSelector::isValid(Jets::const_iterator &jet)
+{
+    return _selected_jets.end() == find(_selected_jets.begin(),
+            _selected_jets.end(),
+            jet);
+}
+
+
+
+// Jet Iterator
+//
+JetIterator::JetIterator(const Jets &jets, const bool &is_valid):
+    _is_valid(is_valid),
+    _jets(jets)
+{
+    _jet = isValid()
+        ? _jets.begin()
+        : _jets.end();
+}
+
+bool JetIterator::isValid() const
+{
+    return _is_valid;
+}
+
+const JetIterator::Jets::const_iterator JetIterator::iterator() const
+{
+    return _jet;
+}
+
+void JetIterator::operator++()
+{
+    if (isValid())
+    {
+        ++_jet;
+
+        if (_jets.end() == _jet)
+            _is_valid = false;
+    }
+}
+
+
+
+/*
+// Closest Jet Algorithm
 ClosestJet::ClosestJet()
 {
     _p4.reset(new TLorentzVector());
@@ -471,142 +836,4 @@ void LeptonicDecay::print(std::ostream &out) const
         << " dr(nu,t): " << dr_nu_top()
         << " dr(b,t): " << dr_b_top();
 }
-
-
-
-// TTbar DeltaR-based Reconstruction
-//
-TTbarDeltaRReconstruct::TTbarDeltaRReconstruct():
-    _dr(DBL_MAX)
-{
-    _hadronic.reset(new HadronicDecay());
-    _leptonic.reset(new LeptonicDecay());
-
-    monitor(_hadronic);
-    monitor(_leptonic);
-}
-
-TTbarDeltaRReconstruct::TTbarDeltaRReconstruct(const TTbarDeltaRReconstruct &object):
-    _dr(object.dr())
-{
-    _hadronic = 
-        dynamic_pointer_cast<HadronicDecay>(object.hadronicDecay()->clone());
-
-    _leptonic =
-        dynamic_pointer_cast<LeptonicDecay>(object.leptonicDecay()->clone());
-
-    monitor(_hadronic);
-    monitor(_leptonic);
-}
-
-float TTbarDeltaRReconstruct::dr() const
-{
-    return _dr;
-}
-
-TTbarDeltaRReconstruct::HadronicPtr TTbarDeltaRReconstruct::hadronicDecay() const
-{
-    return _hadronic;
-}
-
-TTbarDeltaRReconstruct::LeptonicPtr TTbarDeltaRReconstruct::leptonicDecay() const
-{
-    return _leptonic;
-}
-
-float TTbarDeltaRReconstruct::apply(const Jets &jets,
-        const LorentzVector &lepton,
-        const LorentzVector &missing_energy,
-        const LorentzVector &wjet)
-{
-    minimize(jets, jets.end(), jets.end(), lepton, missing_energy, wjet);
-
-    return dr();
-}
-
-void TTbarDeltaRReconstruct::reset()
-{
-    _dr = DBL_MAX;
-
-    _hadronic->reset();
-    _leptonic->reset();
-}
-
-uint32_t TTbarDeltaRReconstruct::id() const
-{
-    return core::ID<TTbarDeltaRReconstruct>::get();
-}
-
-TTbarDeltaRReconstruct::ObjectPtr TTbarDeltaRReconstruct::clone() const
-{
-    return ObjectPtr(new TTbarDeltaRReconstruct(*this));
-}
-
-void TTbarDeltaRReconstruct::merge(const ObjectPtr &object_pointer)
-{
-    if (id() != object_pointer->id())
-        return;
-
-    boost::shared_ptr<TTbarDeltaRReconstruct> object =
-        dynamic_pointer_cast<TTbarDeltaRReconstruct>(object_pointer);
-
-    if (!object)
-        return;
-
-    if (dr() <= object->dr())
-        return;
-
-    _dr = object->dr();
-
-    Object::merge(object_pointer);
-}
-
-void TTbarDeltaRReconstruct::print(std::ostream &out) const
-{
-}
-
-// Privates
-//
-float TTbarDeltaRReconstruct::minimize(const Jets &jets,
-        const Jets::const_iterator &jet1,
-        const Jets::const_iterator &jet2,
-        const LorentzVector &lepton,
-        const LorentzVector &missing_energy,
-        const LorentzVector &wjet)
-{
-    if (jets.end() == jet1)
-    {
-        for(Jets::const_iterator jet = jets.begin(); jets.end() != jet; ++jet)
-        {
-            minimize(jets, jet, jets.end(), lepton, missing_energy, wjet);
-        }
-    }
-    else if (jets.end() == jet2)
-    {
-        for(Jets::const_iterator jet = jets.begin(); jets.end() != jet; ++jet)
-        {
-            if (jet == jet1)
-                continue;
-
-            minimize(jets, jet1, jet, lepton, missing_energy, wjet);
-        }
-    }
-    else
-    {
-        LeptonicPtr ltop(new LeptonicDecay());
-        HadronicPtr htop(new HadronicDecay());
-
-        float dr = ltop->apply(lepton, missing_energy, (*jet1)->physics_object().p4())
-            + htop->apply(wjet, (*jet2)->physics_object().p4());
-
-        if (dr < _dr)
-        {
-            _dr = dr;
-
-            _hadronic->merge(htop);
-            _leptonic->merge(ltop);
-        }
-    }
-
-    return _dr;
-}
+*/

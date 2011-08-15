@@ -75,7 +75,7 @@ namespace bsm
             boost::shared_ptr<WJetSelector> _wjet_selector;
             boost::shared_ptr<MultiplicityCutflow> _met_solutions;
 
-            boost::shared_ptr<algorithm::NeutrinoReconstruct> _met_reconstructor;
+            // boost::shared_ptr<algorithm::NeutrinoReconstruct> _met_reconstructor;
 
             H1ProxyPtr _mttbar;
 

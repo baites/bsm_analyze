@@ -16,17 +16,21 @@
 #include "bsm_stat/interface/bsm_stat_fwd.h"
 #include "bsm_stat/interface/Utility.h"
 #include "interface/AppController.h"
+#include "interface/JetEnergyCorrections.h"
 #include "interface/MonitorCanvas.h"
 #include "interface/MttbarAnalyzer.h"
+#include "interface/SynchSelector.h"
 
 using namespace std;
 
 using boost::shared_ptr;
 
 using bsm::AppController;
-using bsm::LorentzVectorCanvas;
+using bsm::JetEnergyCorrectionOptions;
 using bsm::DeltaCanvas;
+using bsm::LorentzVectorCanvas;
 using bsm::MttbarAnalyzer;
+using bsm::SynchSelectorOptions;
 
 typedef shared_ptr<MttbarAnalyzer> AnalyzerPtr;
 
@@ -39,6 +43,14 @@ int main(int argc, char *argv[])
     {
         AnalyzerPtr analyzer(new MttbarAnalyzer());
         boost::shared_ptr<AppController> app(new AppController());
+        boost::shared_ptr<JetEnergyCorrectionOptions> jec_options(new JetEnergyCorrectionOptions());
+        boost::shared_ptr<SynchSelectorOptions> synch_selector_options(new SynchSelectorOptions());
+
+        jec_options->setDelegate(analyzer->getJetEnergyCorrectionDelegate());
+        synch_selector_options->setDelegate(analyzer->getSynchSelectorDelegate());
+
+        app->addOptions(*jec_options);
+        app->addOptions(*synch_selector_options);
 
         app->setAnalyzer(analyzer);
 
@@ -59,14 +71,6 @@ int main(int argc, char *argv[])
             mttbar->Draw();
 
             mttbar->SaveAs("mttbar.root");
-
-            boost::shared_ptr<LorentzVectorCanvas> el_p4(
-                    new LorentzVectorCanvas("Selected PF Electron"));
-            el_p4->draw(*analyzer->electronMonitor());
-
-            boost::shared_ptr<LorentzVectorCanvas> wjet_p4(
-                    new LorentzVectorCanvas("W-tagged Jet"));
-            wjet_p4->draw(*analyzer->wjetMonitor());
 
             boost::shared_ptr<LorentzVectorCanvas> ltop_p4(
                     new LorentzVectorCanvas("Leptonic Top"));

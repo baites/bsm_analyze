@@ -8,9 +8,6 @@
 #ifndef BSM_HISTOGRAM_BOOKKEEPER
 #define BSM_HISTOGRAM_BOOKKEEPER
 
-#include <string>
-#include <vector>
-
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_map.hpp>
 
@@ -28,7 +25,6 @@ class HistogramBookkeeper : public core::Object
 {
 public:
 
-    typedef std::vector<std::string> KeyContainer;
     typedef boost::shared_ptr<stat::H1> H1Ptr;
     typedef boost::shared_ptr<stat::H2> H2Ptr;
     typedef boost::shared_ptr<H1Proxy> H1ProxyPtr;

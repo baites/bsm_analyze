@@ -21,6 +21,8 @@ class ElectronIDAnalyzer : public Analyzer
 {
 public:
 
+    typedef boost::shared_ptr<HistogramBookkeeper> HistogramBookkeeperPtr;
+
     ElectronIDAnalyzer();
     ElectronIDAnalyzer(const ElectronIDAnalyzer &);
 
@@ -37,6 +39,11 @@ public:
         _bookkeeper->write(filename);
     }
 
+    const HistogramBookkeeperPtr bookkeeper()
+    {
+        return _bookkeeper;
+    }
+
     virtual uint32_t id() const
     {
         return core::ID<ElectronIDAnalyzer>::get();
@@ -51,7 +58,7 @@ public:
 
 private:
 
-    boost::shared_ptr<HistogramBookkeeper> _bookkeeper;
+    HistogramBookkeeperPtr _bookkeeper;
 
 };
 
