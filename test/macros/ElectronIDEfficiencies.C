@@ -19,7 +19,9 @@ void ElectronIDEfficiencies(TString filename, TString id, TString variable, TStr
 
    Loose->GetXaxis()->SetTitle(xtitle);
    Loose->GetYaxis()->SetTitle("Efficiency respect to Loose");
-   Loose->GetYaxis()->SetRangeUser(0.0,1.1);
+   Loose->GetXaxis()->SetRangeUser(30,100);
+   Loose->GetYaxis()->SetRangeUser(0.5,1.1);
+   
 
    Loose->Draw("axis");
 

@@ -14,7 +14,6 @@
 namespace bsm
 {
 
-
 BookkeeperAnalyzer::BookkeeperAnalyzer()
 {
     // Initializing selector by reseting the pointer
@@ -51,27 +50,22 @@ BookkeeperAnalyzer::BookkeeperAnalyzer(const BookkeeperAnalyzer & object)
 
 void BookkeeperAnalyzer::process(const Event *event)
 {
-	// Check for the event pass the selection
+    // Check for the event pass the selection
     if (!_synch_selector->apply(event)) return;
 
-    // Check if the number of electrons is one and print the event is otherwise.
-    if (event->pf_electrons_size() > 1) 
-    {
-        std::cout << "Run: " << event->extra().run() << " Event: " << event->extra().id();
-        std::cout << " number electrons: " << event->pf_electrons_size();
-        std::cout << " second electron pt: " << pt(event->pf_electrons(1).physics_object().p4()) << std::endl;
-    }
+    // Getting a constant reference to the collection of good electrons
+    SynchSelector::GoodElectrons const & electrons = _synch_selector->goodElectrons();
 
     // Loop over all the electrons in the event (should be only one)
-    for (int i = 0; i < event->pf_electrons_size(); ++i)
+    for (std::size_t i = 0; i < electrons.size(); ++i)
     {
-        const bsm::Electron & electron = event->pf_electrons(i);
-        
+        bsm::Electron const & electron = *electrons[i];
+
         // Loop over all the electron categories
         // An electron can comply with multiple categories
         for (int j = 0; j < electron.electronid_size(); ++j)
         {
-            const bsm::Electron::ElectronID & electronid = electron.electronid(j);
+            bsm::Electron::ElectronID const & electronid = electron.electronid(j);
 
             // Check if the electron has the identification bit for the category tight
             if (electronid.name() == bsm::Electron::Tight && electronid.identification())

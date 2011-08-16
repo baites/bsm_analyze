@@ -142,9 +142,12 @@ void ElectronIDAnalyzer::process(const Event *event)
 {
     if (!_synch_selector->apply(event)) return;
 
-    for (int i = 0; i < event->pf_electrons_size(); ++i)
+    SynchSelector::GoodElectrons const & electrons = _synch_selector->goodElectrons();
+
+    for (std::size_t i = 0; i < electrons.size(); ++i)
     {
-        const bsm::Electron & electron = event->pf_electrons(i);
+        bsm::Electron const & electron = *electrons[i];
+
         for (int j = 0; j < electron.electronid_size(); ++j)
         {
             const bsm::Electron::ElectronID & electronid = electron.electronid(j);
