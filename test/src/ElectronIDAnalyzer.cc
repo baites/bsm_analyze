@@ -14,20 +14,20 @@ namespace bsm
 {
 
 
-ElectronIDAnalyzer::ElectronIDAnalyzer() 
+ElectronIDAnalyzer::ElectronIDAnalyzer()
 {
     // Initializing selector
 
     _synch_selector.reset(new SynchSelector());
-    monitor(_synch_selector);        
+    monitor(_synch_selector);
 
-    // Histogram booking 
+    // Histogram booking
 
     _bookkeeper.reset(new HistogramBookkeeper());
 
     _bookkeeper->book1d("EIDLoosePt", 50, 0, 100);
     _bookkeeper->book1d("EIDLooseEta", 50, -2.5, 2.5);
-    _bookkeeper->book1d("EIDLoosePhi", 50, 0, 3.15);    
+    _bookkeeper->book1d("EIDLoosePhi", 50, 0, 3.15);
 
     _bookkeeper->book1d("EIDMediumPt", 50, 0, 100);
     _bookkeeper->book1d("EIDMediumEta", 50, -2.5, 2.5);
@@ -61,7 +61,7 @@ ElectronIDAnalyzer::ElectronIDAnalyzer()
 
     _bookkeeper->book1d("ECONVLoosePt", 50, 0, 100);
     _bookkeeper->book1d("ECONVLooseEta", 50, -2.5, 2.5);
-    _bookkeeper->book1d("ECONVLoosePhi", 50, 0, 3.15);  
+    _bookkeeper->book1d("ECONVLoosePhi", 50, 0, 3.15);
 
     _bookkeeper->book1d("ECONVMediumPt", 50, 0, 100);
     _bookkeeper->book1d("ECONVMediumEta", 50, -2.5, 2.5);
@@ -91,13 +91,47 @@ ElectronIDAnalyzer::ElectronIDAnalyzer()
     _bookkeeper->book1d("ECONVHyperTight4Eta", 50, -2.5, 2.5);
     _bookkeeper->book1d("ECONVHyperTight4Phi", 50, 0, 3.15);
 
+    // Full set of bits
+
+    _bookkeeper->book1d("EFULLLoosePt", 50, 0, 100);
+    _bookkeeper->book1d("EFULLLooseEta", 50, -2.5, 2.5);
+    _bookkeeper->book1d("EFULLLoosePhi", 50, 0, 3.15);
+
+    _bookkeeper->book1d("EFULLMediumPt", 50, 0, 100);
+    _bookkeeper->book1d("EFULLMediumEta", 50, -2.5, 2.5);
+    _bookkeeper->book1d("EFULLMediumPhi", 50, 0, 3.15);
+
+    _bookkeeper->book1d("EFULLTightPt", 50, 0, 100);
+    _bookkeeper->book1d("EFULLTightEta", 50, -2.5, 2.5);
+    _bookkeeper->book1d("EFULLTightPhi", 50, 0, 3.15);
+
+    _bookkeeper->book1d("EFULLSuperTightPt", 50, 0, 100);
+    _bookkeeper->book1d("EFULLSuperTightEta", 50, -2.5, 2.5);
+    _bookkeeper->book1d("EFULLSuperTightPhi", 50, 0, 3.15);
+
+    _bookkeeper->book1d("EFULLHyperTight1Pt", 50, 0, 100);
+    _bookkeeper->book1d("EFULLHyperTight1Eta", 50, -2.5, 2.5);
+    _bookkeeper->book1d("EFULLHyperTight1Phi", 50, 0, 3.15);
+
+    _bookkeeper->book1d("EFULLHyperTight2Pt", 50, 0, 100);
+    _bookkeeper->book1d("EFULLHyperTight2Eta", 50, -2.5, 2.5);
+    _bookkeeper->book1d("EFULLHyperTight2Phi", 50, 0, 3.15);
+
+    _bookkeeper->book1d("EFULLHyperTight3Pt", 50, 0, 100);
+    _bookkeeper->book1d("EFULLHyperTight3Eta", 50, -2.5, 2.5);
+    _bookkeeper->book1d("EFULLHyperTight3Phi", 50, 0, 3.15);
+
+    _bookkeeper->book1d("EFULLHyperTight4Pt", 50, 0, 100);
+    _bookkeeper->book1d("EFULLHyperTight4Eta", 50, -2.5, 2.5);
+    _bookkeeper->book1d("EFULLHyperTight4Phi", 50, 0, 3.15);
+
     monitor(_bookkeeper);
 }
 
 
 ElectronIDAnalyzer::ElectronIDAnalyzer(const ElectronIDAnalyzer & object)
 {
-    _synch_selector.reset(new SynchSelector(*object._synch_selector));   
+    _synch_selector.reset(new SynchSelector(*object._synch_selector));
     monitor(_synch_selector);
     _bookkeeper.reset(new HistogramBookkeeper(*object._bookkeeper));
     monitor(_bookkeeper);
@@ -106,7 +140,7 @@ ElectronIDAnalyzer::ElectronIDAnalyzer(const ElectronIDAnalyzer & object)
 
 void ElectronIDAnalyzer::process(const Event *event)
 {
-    if (!_synch_selector->apply(event)) return;  
+    if (!_synch_selector->apply(event)) return;
 
     for (int i = 0; i < event->pf_electrons_size(); ++i)
     {
@@ -114,101 +148,237 @@ void ElectronIDAnalyzer::process(const Event *event)
         for (int j = 0; j < electron.electronid_size(); ++j)
         {
             const bsm::Electron::ElectronID & electronid = electron.electronid(j);
+
             if (electronid.name() == bsm::Electron::Loose && electronid.identification())
             {
                 _bookkeeper->get1d("EIDLoosePt")->fill(pt(electron.physics_object().p4()));
                 _bookkeeper->get1d("EIDLooseEta")->fill(eta(electron.physics_object().p4()));
                 _bookkeeper->get1d("EIDLoosePhi")->fill(phi(electron.physics_object().p4()));
-                if (electronid.conversion_rejection())
-                {
-                    _bookkeeper->get1d("ECONVLoosePt")->fill(pt(electron.physics_object().p4()));
-                    _bookkeeper->get1d("ECONVLooseEta")->fill(eta(electron.physics_object().p4()));
-                    _bookkeeper->get1d("ECONVLoosePhi")->fill(phi(electron.physics_object().p4()));
-                }
             }
             if (electronid.name() == bsm::Electron::Medium && electronid.identification())
             {
                 _bookkeeper->get1d("EIDMediumPt")->fill(pt(electron.physics_object().p4()));
                 _bookkeeper->get1d("EIDMediumEta")->fill(eta(electron.physics_object().p4()));
                 _bookkeeper->get1d("EIDMediumPhi")->fill(phi(electron.physics_object().p4()));
-                if (electronid.conversion_rejection())
-                {
-                    _bookkeeper->get1d("ECONVMediumPt")->fill(pt(electron.physics_object().p4()));
-                    _bookkeeper->get1d("ECONVMediumEta")->fill(eta(electron.physics_object().p4()));
-                    _bookkeeper->get1d("ECONVMediumPhi")->fill(phi(electron.physics_object().p4()));
-                }
-            } 
+            }
             if (electronid.name() == bsm::Electron::Tight && electronid.identification())
             {
                 _bookkeeper->get1d("EIDTightPt")->fill(pt(electron.physics_object().p4()));
                 _bookkeeper->get1d("EIDTightEta")->fill(eta(electron.physics_object().p4()));
                 _bookkeeper->get1d("EIDTightPhi")->fill(phi(electron.physics_object().p4()));
-                if (electronid.conversion_rejection())
-                {
-                    _bookkeeper->get1d("ECONVTightPt")->fill(pt(electron.physics_object().p4()));
-                    _bookkeeper->get1d("ECONVTightEta")->fill(eta(electron.physics_object().p4()));
-                    _bookkeeper->get1d("ECONVTightPhi")->fill(phi(electron.physics_object().p4()));
-                }
             }
             if (electronid.name() == bsm::Electron::SuperTight && electronid.identification())
             {
                 _bookkeeper->get1d("EIDSuperTightPt")->fill(pt(electron.physics_object().p4()));
                 _bookkeeper->get1d("EIDSuperTightEta")->fill(eta(electron.physics_object().p4()));
                 _bookkeeper->get1d("EIDSuperTightPhi")->fill(phi(electron.physics_object().p4()));
-                if (electronid.conversion_rejection())
-                {
-                    _bookkeeper->get1d("ECONVSuperTightPt")->fill(pt(electron.physics_object().p4()));
-                    _bookkeeper->get1d("ECONVSuperTightEta")->fill(eta(electron.physics_object().p4()));
-                    _bookkeeper->get1d("ECONVSuperTightPhi")->fill(phi(electron.physics_object().p4()));
-                }
             }
             if (electronid.name() == bsm::Electron::HyperTight1 && electronid.identification())
             {
                 _bookkeeper->get1d("EIDHyperTight1Pt")->fill(pt(electron.physics_object().p4()));
                 _bookkeeper->get1d("EIDHyperTight1Eta")->fill(eta(electron.physics_object().p4()));
                 _bookkeeper->get1d("EIDHyperTight1Phi")->fill(phi(electron.physics_object().p4()));
-                if (electronid.conversion_rejection())
-                {
-                    _bookkeeper->get1d("ECONVHyperTight1Pt")->fill(pt(electron.physics_object().p4()));
-                    _bookkeeper->get1d("ECONVHyperTight1Eta")->fill(eta(electron.physics_object().p4()));
-                    _bookkeeper->get1d("ECONVHyperTight1Phi")->fill(phi(electron.physics_object().p4()));
-                }
             }
             if (electronid.name() == bsm::Electron::HyperTight2 && electronid.identification())
             {
                 _bookkeeper->get1d("EIDHyperTight2Pt")->fill(pt(electron.physics_object().p4()));
                 _bookkeeper->get1d("EIDHyperTight2Eta")->fill(eta(electron.physics_object().p4()));
                 _bookkeeper->get1d("EIDHyperTight2Phi")->fill(phi(electron.physics_object().p4()));
-                if (electronid.conversion_rejection())
-                {
-                    _bookkeeper->get1d("ECONVHyperTight2Pt")->fill(pt(electron.physics_object().p4()));
-                    _bookkeeper->get1d("ECONVHyperTight2Eta")->fill(eta(electron.physics_object().p4()));
-                    _bookkeeper->get1d("ECONVHyperTight2Phi")->fill(phi(electron.physics_object().p4()));
-                }
             }
             if (electronid.name() == bsm::Electron::HyperTight3 && electronid.identification())
             {
                 _bookkeeper->get1d("EIDHyperTight3Pt")->fill(pt(electron.physics_object().p4()));
                 _bookkeeper->get1d("EIDHyperTight3Eta")->fill(eta(electron.physics_object().p4()));
                 _bookkeeper->get1d("EIDHyperTight3Phi")->fill(phi(electron.physics_object().p4()));
-                if (electronid.conversion_rejection())
-                {
-                    _bookkeeper->get1d("ECONVHyperTight3Pt")->fill(pt(electron.physics_object().p4()));
-                    _bookkeeper->get1d("ECONVHyperTight3Eta")->fill(eta(electron.physics_object().p4()));
-                    _bookkeeper->get1d("ECONVHyperTight3Phi")->fill(phi(electron.physics_object().p4()));
-                }
             }
             if (electronid.name() == bsm::Electron::HyperTight4 && electronid.identification())
             {
                 _bookkeeper->get1d("EIDHyperTight4Pt")->fill(pt(electron.physics_object().p4()));
                 _bookkeeper->get1d("EIDHyperTight4Eta")->fill(eta(electron.physics_object().p4()));
                 _bookkeeper->get1d("EIDHyperTight4Phi")->fill(phi(electron.physics_object().p4()));
-                if (electronid.conversion_rejection())
-                {
-                    _bookkeeper->get1d("ECONVHyperTight4Pt")->fill(pt(electron.physics_object().p4()));
-                    _bookkeeper->get1d("ECONVHyperTight4Eta")->fill(eta(electron.physics_object().p4()));
-                    _bookkeeper->get1d("ECONVHyperTight4Phi")->fill(phi(electron.physics_object().p4()));
-                }
+            }
+
+            // EID + CONV
+
+            if (
+                electronid.name() == bsm::Electron::Loose &&
+                electronid.identification() &&
+                electronid.conversion_rejection()
+            )
+            {
+                _bookkeeper->get1d("ECONVLoosePt")->fill(pt(electron.physics_object().p4()));
+                _bookkeeper->get1d("ECONVLooseEta")->fill(eta(electron.physics_object().p4()));
+                _bookkeeper->get1d("ECONVLoosePhi")->fill(phi(electron.physics_object().p4()));
+            }
+            if (
+                electronid.name() == bsm::Electron::Medium &&
+                electronid.identification() &&
+                electronid.conversion_rejection()
+            )
+            {
+                _bookkeeper->get1d("ECONVMediumPt")->fill(pt(electron.physics_object().p4()));
+                _bookkeeper->get1d("ECONVMediumEta")->fill(eta(electron.physics_object().p4()));
+                _bookkeeper->get1d("ECONVMediumPhi")->fill(phi(electron.physics_object().p4()));
+            }
+            if (
+                electronid.name() == bsm::Electron::Tight &&
+                electronid.identification() &&
+                electronid.conversion_rejection()
+            )
+            {
+                _bookkeeper->get1d("ECONVTightPt")->fill(pt(electron.physics_object().p4()));
+                _bookkeeper->get1d("ECONVTightEta")->fill(eta(electron.physics_object().p4()));
+                _bookkeeper->get1d("ECONVTightPhi")->fill(phi(electron.physics_object().p4()));
+            }
+            if (
+                electronid.name() == bsm::Electron::SuperTight &&
+                electronid.identification() &&
+                electronid.conversion_rejection()
+            )
+            {
+                _bookkeeper->get1d("ECONVSuperTightPt")->fill(pt(electron.physics_object().p4()));
+                _bookkeeper->get1d("ECONVSuperTightEta")->fill(eta(electron.physics_object().p4()));
+                _bookkeeper->get1d("ECONVSuperTightPhi")->fill(phi(electron.physics_object().p4()));
+            }
+            if (
+                electronid.name() == bsm::Electron::HyperTight1 &&
+                electronid.identification() &&
+                electronid.conversion_rejection()
+            )
+            {
+                _bookkeeper->get1d("ECONVHyperTight1Pt")->fill(pt(electron.physics_object().p4()));
+                _bookkeeper->get1d("ECONVHyperTight1Eta")->fill(eta(electron.physics_object().p4()));
+                _bookkeeper->get1d("ECONVHyperTight1Phi")->fill(phi(electron.physics_object().p4()));
+            }
+            if (
+                electronid.name() == bsm::Electron::HyperTight2 &&
+                electronid.identification() &&
+                electronid.conversion_rejection()
+            )
+            {
+                _bookkeeper->get1d("ECONVHyperTight2Pt")->fill(pt(electron.physics_object().p4()));
+                _bookkeeper->get1d("ECONVHyperTight2Eta")->fill(eta(electron.physics_object().p4()));
+                _bookkeeper->get1d("ECONVHyperTight2Phi")->fill(phi(electron.physics_object().p4()));
+            }
+            if (
+                electronid.name() == bsm::Electron::HyperTight3 &&
+                electronid.identification() &&
+                electronid.conversion_rejection()
+            )
+            {
+                _bookkeeper->get1d("ECONVHyperTight3Pt")->fill(pt(electron.physics_object().p4()));
+                _bookkeeper->get1d("ECONVHyperTight3Eta")->fill(eta(electron.physics_object().p4()));
+                _bookkeeper->get1d("ECONVHyperTight3Phi")->fill(phi(electron.physics_object().p4()));
+            }
+            if (
+                electronid.name() == bsm::Electron::HyperTight4 &&
+                electronid.identification() &&
+                electronid.conversion_rejection()
+            )
+            {
+                _bookkeeper->get1d("ECONVHyperTight4Pt")->fill(pt(electron.physics_object().p4()));
+                _bookkeeper->get1d("ECONVHyperTight4Eta")->fill(eta(electron.physics_object().p4()));
+                _bookkeeper->get1d("ECONVHyperTight4Phi")->fill(phi(electron.physics_object().p4()));
+            }
+
+            // FULL
+
+            if (
+                electronid.name() == bsm::Electron::Loose &&
+                electronid.identification() &&
+                electronid.isolation() &&
+                electronid.conversion_rejection() &&
+                electronid.impact_parameter()
+
+            )
+            {
+                _bookkeeper->get1d("EFULLLoosePt")->fill(pt(electron.physics_object().p4()));
+                _bookkeeper->get1d("EFULLLooseEta")->fill(eta(electron.physics_object().p4()));
+                _bookkeeper->get1d("EFULLLoosePhi")->fill(phi(electron.physics_object().p4()));
+            }
+            if (
+                electronid.name() == bsm::Electron::Medium &&
+                electronid.identification() &&
+                electronid.isolation() &&
+                electronid.conversion_rejection() &&
+                electronid.impact_parameter()
+            )
+            {
+                _bookkeeper->get1d("EFULLMediumPt")->fill(pt(electron.physics_object().p4()));
+                _bookkeeper->get1d("EFULLMediumEta")->fill(eta(electron.physics_object().p4()));
+                _bookkeeper->get1d("EFULLMediumPhi")->fill(phi(electron.physics_object().p4()));
+            }
+            if (
+                electronid.name() == bsm::Electron::Tight &&
+                electronid.identification() &&
+                electronid.isolation() &&
+                electronid.conversion_rejection() &&
+                electronid.impact_parameter()
+            )
+            {
+                _bookkeeper->get1d("EFULLTightPt")->fill(pt(electron.physics_object().p4()));
+                _bookkeeper->get1d("EFULLTightEta")->fill(eta(electron.physics_object().p4()));
+                _bookkeeper->get1d("EFULLTightPhi")->fill(phi(electron.physics_object().p4()));
+            }
+            if (
+                electronid.name() == bsm::Electron::SuperTight &&
+                electronid.identification() &&
+                electronid.isolation() &&
+                electronid.conversion_rejection() &&
+                electronid.impact_parameter()
+            )
+            {
+                _bookkeeper->get1d("EFULLSuperTightPt")->fill(pt(electron.physics_object().p4()));
+                _bookkeeper->get1d("EFULLSuperTightEta")->fill(eta(electron.physics_object().p4()));
+                _bookkeeper->get1d("EFULLSuperTightPhi")->fill(phi(electron.physics_object().p4()));
+            }
+            if (
+                electronid.name() == bsm::Electron::HyperTight1 &&
+                electronid.identification() &&
+                electronid.isolation() &&
+                electronid.conversion_rejection() &&
+                electronid.impact_parameter()
+            )
+            {
+                _bookkeeper->get1d("EFULLHyperTight1Pt")->fill(pt(electron.physics_object().p4()));
+                _bookkeeper->get1d("EFULLHyperTight1Eta")->fill(eta(electron.physics_object().p4()));
+                _bookkeeper->get1d("EFULLHyperTight1Phi")->fill(phi(electron.physics_object().p4()));
+            }
+            if (
+                electronid.name() == bsm::Electron::HyperTight2 &&
+                electronid.identification() &&
+                electronid.isolation() &&
+                electronid.conversion_rejection() &&
+                electronid.impact_parameter()
+            )
+            {
+                _bookkeeper->get1d("EFULLHyperTight2Pt")->fill(pt(electron.physics_object().p4()));
+                _bookkeeper->get1d("EFULLHyperTight2Eta")->fill(eta(electron.physics_object().p4()));
+                _bookkeeper->get1d("EFULLHyperTight2Phi")->fill(phi(electron.physics_object().p4()));
+            }
+            if (
+                electronid.name() == bsm::Electron::HyperTight3 &&
+                electronid.identification() &&
+                electronid.isolation() &&
+                electronid.conversion_rejection() &&
+                electronid.impact_parameter()
+            )
+            {
+                _bookkeeper->get1d("EFULLHyperTight3Pt")->fill(pt(electron.physics_object().p4()));
+                _bookkeeper->get1d("EFULLHyperTight3Eta")->fill(eta(electron.physics_object().p4()));
+                _bookkeeper->get1d("EFULLHyperTight3Phi")->fill(phi(electron.physics_object().p4()));
+            }
+            if (
+                electronid.name() == bsm::Electron::HyperTight4 &&
+                electronid.identification() &&
+                electronid.isolation() &&
+                electronid.conversion_rejection() &&
+                electronid.impact_parameter()
+            )
+            {
+                _bookkeeper->get1d("EFULLHyperTight4Pt")->fill(pt(electron.physics_object().p4()));
+                _bookkeeper->get1d("EFULLHyperTight4Eta")->fill(eta(electron.physics_object().p4()));
+                _bookkeeper->get1d("EFULLHyperTight4Phi")->fill(phi(electron.physics_object().p4()));
             }
         }
     }

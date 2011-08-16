@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     bool result = false;
     try
     {
-        // Define all the needed objects 
+        // Define all the needed objects
         boost::shared_ptr<JetEnergyCorrectionOptions> jec_options(new JetEnergyCorrectionOptions());
         boost::shared_ptr<ElectronIDAnalyzer> analyzer(new ElectronIDAnalyzer());
         boost::shared_ptr<AppController> app(new AppController());
@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
         // Set the analyzer into the controller
         app->setAnalyzer(analyzer);
         result = app->run(argc, argv);
-        
+
         // Save the histograms once the job is done
         analyzer->bookkeeper()->write("histograms.root");
     }

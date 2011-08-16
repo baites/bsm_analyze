@@ -20,7 +20,7 @@
 namespace bsm
 {
 
-class ElectronIDAnalyzer : public Analyzer 
+class ElectronIDAnalyzer : public Analyzer
 {
 public:
 
@@ -63,7 +63,7 @@ public:
 
 private:
 
-    SynchSelectorPtr _synch_selector;    
+    SynchSelectorPtr _synch_selector;
     HistogramBookkeeperPtr _bookkeeper;
 };
 
