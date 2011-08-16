@@ -85,13 +85,13 @@ int main(int argc, char *argv[])
             mttbar->SaveAs("mttbar.root");
 
             canvas->cd(2);
-            canvas->cd(2)->SetLeftMargin(10);
+            canvas->cd(2)->SetLeftMargin(0.15);
             TH2Ptr mltop_vs_mhtop = convert(*analyzer->mltopVsMhtop());
             mltop_vs_mhtop->SetName("mltop_vs_mhtop");
             mltop_vs_mhtop->GetXaxis()->SetTitle("m_{t,lepton} [GeV/c^{2}]");
             mltop_vs_mhtop->GetXaxis()->SetTitleSize(0.045);
             mltop_vs_mhtop->GetYaxis()->SetTitle("m_{t,hadron} [GeV/c^{2}]");
-            mltop_vs_mhtop->GetYaxis()->SetTitleSize(0.045);
+            mltop_vs_mhtop->GetYaxis()->SetTitleSize(0.06);
             mltop_vs_mhtop->Draw("colz");
 
             canvas->Update();
