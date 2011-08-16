@@ -17,7 +17,39 @@
 
 namespace bsm
 {
-    class MttbarAnalyzer : public Analyzer
+    class MttbarDelegate
+    {
+        public:
+            virtual ~MttbarDelegate()
+            {
+            }
+
+            virtual void setUseGeneratorMass(const bool &)
+            {
+            }
+    };
+
+    class MttbarOptions : public Options
+    {
+        public:
+            MttbarOptions();
+            virtual ~MttbarOptions();
+
+            void setDelegate(MttbarDelegate *);
+            MttbarDelegate *delegate() const;
+
+            // Options interface
+            //
+            virtual DescriptionPtr description() const;
+
+        private:
+            void setUseGeneratorMass(const bool &) const;
+
+            MttbarDelegate *_delegate;
+            DescriptionPtr _description;
+    };
+
+    class MttbarAnalyzer : public Analyzer, public MttbarDelegate
     {
         public:
             typedef boost::shared_ptr<stat::H1> H1Ptr;
@@ -41,6 +73,10 @@ namespace bsm
             const P4MonitorPtr ltopMonitor() const;
             const P4MonitorPtr htopMonitor() const;
             const DeltaMonitorPtr topDeltaMonitor() const;
+
+            // Mttbar Delegate interface
+            // 
+            virtual void setUseGeneratorMass(const bool &);
 
             // Analyzer interface
             //
@@ -72,6 +108,8 @@ namespace bsm
             H2ProxyPtr _mltop_vs_mhtop;
 
             std::ostringstream _out;
+
+            bool _use_generator_mass;
     };
 }
 

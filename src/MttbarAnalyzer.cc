@@ -32,11 +32,60 @@ using namespace std;
 using boost::dynamic_pointer_cast;
 
 using bsm::MttbarAnalyzer;
+using bsm::MttbarOptions;
 
 using bsm::stat::H1;
 using bsm::stat::H2;
 
-MttbarAnalyzer::MttbarAnalyzer()
+// Synch Analyzer Options
+//
+MttbarOptions::MttbarOptions()
+{
+    _delegate = 0;
+
+    _description.reset(new po::options_description("Mttbar Options"));
+    _description->add_options()
+        ("use-gen-mass",
+         po::value<bool>()->implicit_value(false)->notifier(
+             boost::bind(&MttbarOptions::setUseGeneratorMass, this, _1)),
+         "Uge ttbar gnerator mass")
+    ;
+}
+
+MttbarOptions::~MttbarOptions()
+{
+}
+
+void MttbarOptions::setDelegate(MttbarDelegate *delegate)
+{
+    if (_delegate != delegate)
+        _delegate = delegate;
+}
+
+bsm::MttbarDelegate *MttbarOptions::delegate() const
+{
+    return _delegate;
+}
+
+MttbarOptions::DescriptionPtr MttbarOptions::description() const
+{
+    return _description;
+}
+
+// Private
+//
+void MttbarOptions::setUseGeneratorMass(const bool &flag) const
+{
+    if (_delegate)
+        _delegate->setUseGeneratorMass(flag);
+}
+
+
+
+// Mttbar Analyzer
+//
+MttbarAnalyzer::MttbarAnalyzer():
+    _use_generator_mass(false)
 {
     _synch_selector.reset(new SynchSelector());
     monitor(_synch_selector);
@@ -60,7 +109,8 @@ MttbarAnalyzer::MttbarAnalyzer()
     monitor(_mltop_vs_mhtop);
 }
 
-MttbarAnalyzer::MttbarAnalyzer(const MttbarAnalyzer &object)
+MttbarAnalyzer::MttbarAnalyzer(const MttbarAnalyzer &object):
+    _use_generator_mass(object._use_generator_mass)
 {
     _synch_selector = 
         dynamic_pointer_cast<SynchSelector>(object._synch_selector->clone());
@@ -130,6 +180,11 @@ const MttbarAnalyzer::P4MonitorPtr MttbarAnalyzer::htopMonitor() const
 const MttbarAnalyzer::DeltaMonitorPtr MttbarAnalyzer::topDeltaMonitor() const
 {
     return _top_delta_monitor;
+}
+
+void MttbarAnalyzer::setUseGeneratorMass(const bool &flag)
+{
+    _use_generator_mass = flag;
 }
 
 void MttbarAnalyzer::onFileOpen(const std::string &filename, const Input *input)
