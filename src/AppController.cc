@@ -61,6 +61,10 @@ AppController::AppController():
              boost::bind(&AppController::addInputs, this, _1)),
          "input file(s)")
     ;
+
+    // Suppress log
+    //
+    _debug.reset(new core::Debug());
 }
 
 AppController::~AppController()
@@ -205,11 +209,8 @@ void AppController::disableMutlithread()
 //
 void AppController::setDebugFile(const string &filename)
 {
-    if (!_debug)
-    {
-        _debug.reset(new core::Debug());
+    if (!_debug->isInitialized())
         _debug->init(filename);
-    }
 }
 
 void AppController::setNumberOfThreads(const uint32_t &number_of_threads)
