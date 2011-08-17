@@ -14,6 +14,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/regex.hpp>
 
+#include "bsm_core/interface/Debug.h"
 #include "bsm_input/interface/Reader.h"
 #include "bsm_input/interface/Event.pb.h"
 #include "interface/Analyzer.h"
@@ -44,6 +45,11 @@ AppController::AppController():
          po::value<uint32_t>()->implicit_value(0)->notifier(
              boost::bind(&AppController::setNumberOfThreads, this, _1)),
          "Run Analysis with multi-threads: 0 - auto, otherwise max number of threads")
+
+        ("debug",
+         po::value<string>()->implicit_value("debug.log")->notifier(
+             boost::bind(&AppController::setDebugFile, this, _1)),
+         "save debug info in file")
     ;
 
     // Hidden options: necessary for the positional arguments
@@ -148,6 +154,14 @@ bool AppController::run(int &argc, char *argv[])
             positional(*positional_options).
             run(),
             *arguments);
+
+    // Initialize debug before any other options are passed: this is done in
+    // order to ensure all later clog, cerr, cout prints to be logged in
+    // debug file
+    //
+    if (arguments->count("debug"))
+        setDebugFile((*arguments)["debug"].as<string>());
+
     po::notify(*arguments);
 
     if (arguments->count("help")
@@ -159,6 +173,15 @@ bool AppController::run(int &argc, char *argv[])
     }
     else
     {
+        clog << _input_files.size() << " input files" << endl;
+        for(Inputs::const_iterator input = _input_files.begin();
+                _input_files.end() != input;
+                ++input)
+        {
+            clog << " [+] " << *input << endl;
+        }
+        clog << endl;
+
         if (SINGLE_THREAD == _run_mode
                 || (MULTI_THREAD == _run_mode
                     && (1 == _number_of_threads
@@ -180,6 +203,15 @@ void AppController::disableMutlithread()
 
 // Privates
 //
+void AppController::setDebugFile(const string &filename)
+{
+    if (!_debug)
+    {
+        _debug.reset(new core::Debug());
+        _debug->init(filename);
+    }
+}
+
 void AppController::setNumberOfThreads(const uint32_t &number_of_threads)
 {
     if (_disable_multithread)

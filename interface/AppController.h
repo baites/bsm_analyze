@@ -15,6 +15,7 @@
 #include <boost/program_options.hpp>
 #include <boost/shared_ptr.hpp>
 
+#include "bsm_core/interface/bsm_core_fwd.h"
 #include "interface/bsm_fwd.h"
 
 namespace po = boost::program_options;
@@ -66,6 +67,8 @@ namespace bsm
                 MULTI_THREAD
             };
 
+            void setDebugFile(const std::string &);
+
             void setNumberOfThreads(const uint32_t &);
 
             void processSingleThread();
@@ -84,6 +87,8 @@ namespace bsm
 
             bool _disable_multithread;
             uint32_t _number_of_threads;
+
+            boost::shared_ptr<core::Debug> _debug;
     };
 }
 
