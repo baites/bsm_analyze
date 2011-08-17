@@ -12,6 +12,7 @@
 
 #include "bsm_stat/interface/bsm_stat_fwd.h"
 #include "bsm_input/interface/bsm_input_fwd.h"
+#include "bsm_input/interface/GenParticle.pb.h"
 #include "interface/Analyzer.h"
 #include "interface/bsm_fwd.h"
 
@@ -66,8 +67,12 @@ namespace bsm
 
             // Getters
             //
-            const H1Ptr mttbar() const;
+            const H1Ptr mreco() const;
             const H2Ptr mltopVsMhtop() const;
+
+            const H1Ptr mgen() const;
+            const H1Ptr mrecoMinusMgen() const;
+            const H2Ptr mrecoVsMgen() const;
 
             const P4MonitorPtr missingEnergyMonitor() const;
             const P4MonitorPtr ltopMonitor() const;
@@ -93,8 +98,28 @@ namespace bsm
             virtual void print(std::ostream &) const;
 
         private:
+            typedef ::google::protobuf::RepeatedPtrField<GenParticle> GenParticles;
             typedef boost::shared_ptr<H1Proxy> H1ProxyPtr;
             typedef boost::shared_ptr<H2Proxy> H2ProxyPtr;
+
+            enum
+            {
+                TOP = 6,
+                ELECTRON = 11,
+                MUON = 13,
+                WBOSON = 24
+            };
+
+            float getMttbarGen(const Event *);
+
+            GenParticles::const_iterator find(const GenParticles &,
+                    const uint32_t &id);
+
+            GenParticles::const_iterator find(const GenParticles &,
+                    const uint32_t &id, 
+                    const GenParticles::const_iterator &from);
+
+            bool isLeptonicDecay(const GenParticle &);
 
             boost::shared_ptr<SynchSelector> _synch_selector;
 
@@ -104,8 +129,12 @@ namespace bsm
 
             DeltaMonitorPtr _top_delta_monitor;
 
-            H1ProxyPtr _mttbar;
+            H1ProxyPtr _mreco;
             H2ProxyPtr _mltop_vs_mhtop;
+
+            H1ProxyPtr _mgen;
+            H1ProxyPtr _mreco_minus_mgen;
+            H2ProxyPtr _mreco_vs_mgen;
 
             std::ostringstream _out;
 

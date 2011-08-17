@@ -76,27 +76,51 @@ int main(int argc, char *argv[])
 
             shared_ptr<TCanvas> canvas(new TCanvas());
             canvas->SetTitle("Mass");
-            canvas->SetWindowSize(800, 480);
-            canvas->Divide(2);
+            canvas->SetWindowSize(1200, 800);
+            canvas->Divide(3, 2);
 
             canvas->cd(1);
-            TH1Ptr mttbar = convert(*analyzer->mttbar());
-            mttbar->SetName("mttbar");
-            mttbar->GetXaxis()->SetTitle("m_{t#bar{t}} [GeV/c^{2}]");
-            mttbar->GetXaxis()->SetTitleSize(0.045);
-            mttbar->Draw();
+            TH1Ptr mreco = convert(*analyzer->mreco());
+            mreco->SetName("mreco");
+            mreco->GetXaxis()->SetTitle("m_{t#bar{t}}^{reco} [GeV/c^{2}]");
+            mreco->GetXaxis()->SetTitleSize(0.045);
+            mreco->Draw();
 
-            mttbar->SaveAs("mttbar.root");
+            mreco->SaveAs("mreco.root");
 
             canvas->cd(2);
-            canvas->cd(2)->SetLeftMargin(10);
+            TH1Ptr mgen = convert(*analyzer->mgen());
+            mgen->SetName("mgen");
+            mgen->GetXaxis()->SetTitle("m_{t#bar{t}}^{gen} [GeV/c^{2}]");
+            mgen->GetXaxis()->SetTitleSize(0.045);
+            mgen->Draw();
+
+            canvas->cd(3);
+            TH1Ptr mreco_minus_mgen = convert(*analyzer->mrecoMinusMgen());
+            mreco_minus_mgen->SetName("mreco_minus_mgen");
+            mreco_minus_mgen->GetXaxis()->SetTitle("(m_{t#bar{t}}^{reco} - m_{t#bar{t}}^{gen}) / m_{t#bar{t}}^{gen}");
+            mreco_minus_mgen->GetXaxis()->SetTitleSize(0.045);
+            mreco_minus_mgen->Draw();
+
+            canvas->cd(4);
+            canvas->cd(4)->SetLeftMargin(10);
             TH2Ptr mltop_vs_mhtop = convert(*analyzer->mltopVsMhtop());
             mltop_vs_mhtop->SetName("mltop_vs_mhtop");
-            mltop_vs_mhtop->GetXaxis()->SetTitle("m_{t,lepton} [GeV/c^{2}]");
+            mltop_vs_mhtop->GetXaxis()->SetTitle("m_{t#bar{t}}^{reco} [GeV/c^{2}]");
             mltop_vs_mhtop->GetXaxis()->SetTitleSize(0.045);
-            mltop_vs_mhtop->GetYaxis()->SetTitle("m_{t,hadron} [GeV/c^{2}]");
+            mltop_vs_mhtop->GetYaxis()->SetTitle("m_{t#bar{t}}^{gen} [GeV/c^{2}]");
             mltop_vs_mhtop->GetYaxis()->SetTitleSize(0.045);
             mltop_vs_mhtop->Draw("colz");
+
+            canvas->cd(5);
+            canvas->cd(5)->SetLeftMargin(10);
+            TH2Ptr mreco_vs_mgen = convert(*analyzer->mrecoVsMgen());
+            mreco_vs_mgen->SetName("mreco_vs_mgen");
+            mreco_vs_mgen->GetXaxis()->SetTitle("m_{t,lepton} [GeV/c^{2}]");
+            mreco_vs_mgen->GetXaxis()->SetTitleSize(0.045);
+            mreco_vs_mgen->GetYaxis()->SetTitle("m_{t,hadron} [GeV/c^{2}]");
+            mreco_vs_mgen->GetYaxis()->SetTitleSize(0.045);
+            mreco_vs_mgen->Draw("colz");
 
             canvas->Update();
 
