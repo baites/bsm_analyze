@@ -6,11 +6,13 @@
 // Created by Samvel Khalatyan, Jul 31, 2011
 // Copyright 2011, All rights reserved
 
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 
-#include "boost/bind.hpp"
+#include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/regex.hpp>
 
 #include "bsm_input/interface/Reader.h"
 #include "bsm_input/interface/Event.pb.h"
@@ -23,6 +25,8 @@ using namespace std;
 using bsm::AppController;
 
 namespace fs = boost::filesystem;
+
+using boost::regex;
 
 AppController::AppController():
     _run_mode(SINGLE_THREAD),
@@ -81,6 +85,25 @@ void AppController::addInputs(const Inputs &inputs)
         if (!fs::exists(*input))
         {
             cerr << "input does not exist: " << *input << endl;
+
+            continue;
+        }
+
+        if (regex_search(*input, regex("\\.txt$")))
+        {
+            ifstream in(input->c_str());
+            if (!in)
+            {
+                cerr << "failed to read input TXT file: " << *input << endl;
+
+                continue;
+            }
+
+            Inputs files;
+            for(string file; in >> file; )
+                files.push_back(file);
+
+            addInputs(files);
 
             continue;
         }
