@@ -91,6 +91,7 @@ MttbarAnalyzer::MttbarAnalyzer():
     monitor(_synch_selector);
 
     _missing_energy_monitor.reset(new LorentzVectorMonitor());
+    _lwboson_monitor.reset(new LorentzVectorMonitor());
     _ltop_monitor.reset(new LorentzVectorMonitor());
     _htop_monitor.reset(new LorentzVectorMonitor());
 
@@ -104,6 +105,7 @@ MttbarAnalyzer::MttbarAnalyzer():
     _mreco_vs_mgen.reset(new H2Proxy(400, 0, 4000, 400, 0, 4000));
 
     monitor(_missing_energy_monitor);
+    monitor(_lwboson_monitor);
     monitor(_ltop_monitor);
     monitor(_htop_monitor);
 
@@ -127,6 +129,9 @@ MttbarAnalyzer::MttbarAnalyzer(const MttbarAnalyzer &object):
     _missing_energy_monitor =
         dynamic_pointer_cast<LorentzVectorMonitor>(object._missing_energy_monitor->clone());
 
+    _lwboson_monitor =
+        dynamic_pointer_cast<LorentzVectorMonitor>(object._lwboson_monitor->clone());
+
     _ltop_monitor =
         dynamic_pointer_cast<LorentzVectorMonitor>(object._ltop_monitor->clone());
     _htop_monitor =
@@ -148,6 +153,7 @@ MttbarAnalyzer::MttbarAnalyzer(const MttbarAnalyzer &object):
         dynamic_pointer_cast<H2Proxy>(object._mreco_vs_mgen->clone());
 
     monitor(_missing_energy_monitor);
+    monitor(_lwboson_monitor);
     monitor(_ltop_monitor);
     monitor(_htop_monitor);
 
@@ -199,6 +205,11 @@ const MttbarAnalyzer::H2Ptr MttbarAnalyzer::mrecoVsMgen() const
 const MttbarAnalyzer::P4MonitorPtr MttbarAnalyzer::missingEnergyMonitor() const
 {
     return _missing_energy_monitor;
+}
+
+const MttbarAnalyzer::P4MonitorPtr MttbarAnalyzer::lwbosonMonitor() const
+{
+    return _lwboson_monitor;
 }
 
 const MttbarAnalyzer::P4MonitorPtr MttbarAnalyzer::ltopMonitor() const
@@ -387,6 +398,7 @@ void MttbarAnalyzer::process(const Event *event)
         mltopVsMhtop()->fill(mass(best_solution.ltop), mass(best_solution.htop));
 
         missingEnergyMonitor()->fill(best_solution.missing_energy);
+        lwbosonMonitor()->fill(lepton_p4 + best_solution.missing_energy);
         ltopMonitor()->fill(best_solution.ltop);
         htopMonitor()->fill(best_solution.htop);
         topDeltaMonitor()->fill(best_solution.ltop, best_solution.htop);
@@ -433,6 +445,10 @@ void MttbarAnalyzer::print(std::ostream &out) const
 
     out << "Missing Energy Monitor" << endl;
     out << *_missing_energy_monitor << endl;
+    out << endl;
+
+    out << "Leptonic Wboson" << endl;
+    out << *_lwboson_monitor << endl;
     out << endl;
 
     out << "Leptonic Top monitor" << endl;
