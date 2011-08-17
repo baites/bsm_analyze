@@ -509,8 +509,6 @@ MttbarAnalyzer::GenParticles::const_iterator
         if (3 == particle->status()
                 && id == static_cast<uint32_t>(abs(particle->id())))
             return particle;
-
-        ++particle;
     }
 
     return particles.end();
@@ -526,5 +524,5 @@ bool MttbarAnalyzer::isLeptonicDecay(const GenParticle &particle)
         SynchSelector::ELECTRON == _synch_selector->leptonMode()
         ? ELECTRON
         : MUON);
-    return wboson->children().end() == lepton;
+    return wboson->children().end() != lepton;
 }
