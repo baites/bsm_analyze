@@ -17,6 +17,7 @@
 #include "bsm_input/interface/Jet.pb.h"
 #include "bsm_input/interface/Muon.pb.h"
 #include "bsm_stat/interface/H1.h"
+#include "bsm_stat/interface/H2.h"
 #include "interface/Algorithm.h"
 #include "interface/DecayGenerator.h"
 #include "interface/Monitor.h"
@@ -31,32 +32,95 @@ using namespace std;
 using boost::dynamic_pointer_cast;
 
 using bsm::MttbarAnalyzer;
+using bsm::MttbarOptions;
 
 using bsm::stat::H1;
+using bsm::stat::H2;
 
-MttbarAnalyzer::MttbarAnalyzer()
+// Synch Analyzer Options
+//
+MttbarOptions::MttbarOptions()
+{
+    _delegate = 0;
+
+    _description.reset(new po::options_description("Mttbar Options"));
+    _description->add_options()
+        ("use-gen-mass",
+         po::value<bool>()->implicit_value(false)->notifier(
+             boost::bind(&MttbarOptions::setUseGeneratorMass, this, _1)),
+         "Uge ttbar gnerator mass")
+    ;
+}
+
+MttbarOptions::~MttbarOptions()
+{
+}
+
+void MttbarOptions::setDelegate(MttbarDelegate *delegate)
+{
+    if (_delegate != delegate)
+        _delegate = delegate;
+}
+
+bsm::MttbarDelegate *MttbarOptions::delegate() const
+{
+    return _delegate;
+}
+
+MttbarOptions::DescriptionPtr MttbarOptions::description() const
+{
+    return _description;
+}
+
+// Private
+//
+void MttbarOptions::setUseGeneratorMass(const bool &flag) const
+{
+    if (_delegate)
+        _delegate->setUseGeneratorMass(flag);
+}
+
+
+
+// Mttbar Analyzer
+//
+MttbarAnalyzer::MttbarAnalyzer():
+    _use_generator_mass(false)
 {
     _synch_selector.reset(new SynchSelector());
     monitor(_synch_selector);
 
     _missing_energy_monitor.reset(new LorentzVectorMonitor());
+    _lwboson_monitor.reset(new LorentzVectorMonitor());
     _ltop_monitor.reset(new LorentzVectorMonitor());
     _htop_monitor.reset(new LorentzVectorMonitor());
 
     _top_delta_monitor.reset(new DeltaMonitor());
 
-    _mttbar.reset(new H1Proxy(400, 0, 4000));
+    _mreco.reset(new H1Proxy(400, 0, 4000));
+    _mltop_vs_mhtop.reset(new H2Proxy(400, 0, 4000, 400, 0, 4000));
+
+    _mgen.reset(new H1Proxy(400, 0, 4000));
+    _mreco_minus_mgen.reset(new H1Proxy(200, -100, 100));
+    _mreco_vs_mgen.reset(new H2Proxy(400, 0, 4000, 400, 0, 4000));
 
     monitor(_missing_energy_monitor);
+    monitor(_lwboson_monitor);
     monitor(_ltop_monitor);
     monitor(_htop_monitor);
 
     monitor(_top_delta_monitor);
 
-    monitor(_mttbar);
+    monitor(_mreco);
+    monitor(_mltop_vs_mhtop);
+
+    monitor(_mgen);
+    monitor(_mreco_minus_mgen);
+    monitor(_mreco_vs_mgen);
 }
 
-MttbarAnalyzer::MttbarAnalyzer(const MttbarAnalyzer &object)
+MttbarAnalyzer::MttbarAnalyzer(const MttbarAnalyzer &object):
+    _use_generator_mass(object._use_generator_mass)
 {
     _synch_selector = 
         dynamic_pointer_cast<SynchSelector>(object._synch_selector->clone());
@@ -64,6 +128,9 @@ MttbarAnalyzer::MttbarAnalyzer(const MttbarAnalyzer &object)
 
     _missing_energy_monitor =
         dynamic_pointer_cast<LorentzVectorMonitor>(object._missing_energy_monitor->clone());
+
+    _lwboson_monitor =
+        dynamic_pointer_cast<LorentzVectorMonitor>(object._lwboson_monitor->clone());
 
     _ltop_monitor =
         dynamic_pointer_cast<LorentzVectorMonitor>(object._ltop_monitor->clone());
@@ -73,15 +140,31 @@ MttbarAnalyzer::MttbarAnalyzer(const MttbarAnalyzer &object)
     _top_delta_monitor =
         dynamic_pointer_cast<DeltaMonitor>(object._top_delta_monitor->clone());
 
-    _mttbar = dynamic_pointer_cast<H1Proxy>(object._mttbar->clone());
+    _mreco = dynamic_pointer_cast<H1Proxy>(object._mreco->clone());
+
+    _mltop_vs_mhtop =
+        dynamic_pointer_cast<H2Proxy>(object._mltop_vs_mhtop->clone());
+
+    _mgen = dynamic_pointer_cast<H1Proxy>(object._mgen->clone());
+
+    _mreco_minus_mgen = dynamic_pointer_cast<H1Proxy>(object._mreco_minus_mgen->clone());
+
+    _mreco_vs_mgen =
+        dynamic_pointer_cast<H2Proxy>(object._mreco_vs_mgen->clone());
 
     monitor(_missing_energy_monitor);
+    monitor(_lwboson_monitor);
     monitor(_ltop_monitor);
     monitor(_htop_monitor);
 
     monitor(_top_delta_monitor);
 
-    monitor(_mttbar);
+    monitor(_mreco);
+    monitor(_mltop_vs_mhtop);
+
+    monitor(_mgen);
+    monitor(_mreco_minus_mgen);
+    monitor(_mreco_vs_mgen);
 }
 
 bsm::JetEnergyCorrectionDelegate *MttbarAnalyzer::getJetEnergyCorrectionDelegate() const
@@ -94,14 +177,39 @@ bsm::SynchSelectorDelegate *MttbarAnalyzer::getSynchSelectorDelegate() const
     return _synch_selector.get();
 }
 
-const MttbarAnalyzer::H1Ptr MttbarAnalyzer::mttbar() const
+const MttbarAnalyzer::H1Ptr MttbarAnalyzer::mreco() const
 {
-    return _mttbar->histogram();
+    return _mreco->histogram();
+}
+
+const MttbarAnalyzer::H2Ptr MttbarAnalyzer::mltopVsMhtop() const
+{
+    return _mltop_vs_mhtop->histogram();
+}
+
+const MttbarAnalyzer::H1Ptr MttbarAnalyzer::mgen() const
+{
+    return _mgen->histogram();
+}
+
+const MttbarAnalyzer::H1Ptr MttbarAnalyzer::mrecoMinusMgen() const
+{
+    return _mreco_minus_mgen->histogram();
+}
+
+const MttbarAnalyzer::H2Ptr MttbarAnalyzer::mrecoVsMgen() const
+{
+    return _mreco_vs_mgen->histogram();
 }
 
 const MttbarAnalyzer::P4MonitorPtr MttbarAnalyzer::missingEnergyMonitor() const
 {
     return _missing_energy_monitor;
+}
+
+const MttbarAnalyzer::P4MonitorPtr MttbarAnalyzer::lwbosonMonitor() const
+{
+    return _lwboson_monitor;
 }
 
 const MttbarAnalyzer::P4MonitorPtr MttbarAnalyzer::ltopMonitor() const
@@ -119,6 +227,11 @@ const MttbarAnalyzer::DeltaMonitorPtr MttbarAnalyzer::topDeltaMonitor() const
     return _top_delta_monitor;
 }
 
+void MttbarAnalyzer::setUseGeneratorMass(const bool &flag)
+{
+    _use_generator_mass = flag;
+}
+
 void MttbarAnalyzer::onFileOpen(const std::string &filename, const Input *input)
 {
 }
@@ -127,6 +240,15 @@ void MttbarAnalyzer::process(const Event *event)
 {
     if (!event->has_missing_energy())
         return;
+
+    float mass_gen = 0;
+    if (_use_generator_mass)
+    {
+        mass_gen = getMttbarGen(event);
+
+        if (!mass_gen)
+            return;
+    }
 
     // Process only events, that pass the synch selector
     //
@@ -271,11 +393,22 @@ void MttbarAnalyzer::process(const Event *event)
 
         // Best Solution is found
         //
-        mttbar()->fill(mass(best_solution.ltop + best_solution.htop));
+        const float mass_reco = mass(best_solution.ltop + best_solution.htop);
+        mreco()->fill(mass_reco);
+        mltopVsMhtop()->fill(mass(best_solution.ltop), mass(best_solution.htop));
+
         missingEnergyMonitor()->fill(best_solution.missing_energy);
+        lwbosonMonitor()->fill(lepton_p4 + best_solution.missing_energy);
         ltopMonitor()->fill(best_solution.ltop);
         htopMonitor()->fill(best_solution.htop);
         topDeltaMonitor()->fill(best_solution.ltop, best_solution.htop);
+
+        if (_use_generator_mass)
+        {
+            mgen()->fill(mass_gen);
+            mrecoMinusMgen()->fill((mass_reco - mass_gen) / mass_gen);
+            mrecoVsMgen()->fill(mass_reco, mass_gen);
+        }
     }
 }
 
@@ -314,6 +447,10 @@ void MttbarAnalyzer::print(std::ostream &out) const
     out << *_missing_energy_monitor << endl;
     out << endl;
 
+    out << "Leptonic Wboson" << endl;
+    out << *_lwboson_monitor << endl;
+    out << endl;
+
     out << "Leptonic Top monitor" << endl;
     out << *_ltop_monitor << endl;
     out << endl;
@@ -327,7 +464,81 @@ void MttbarAnalyzer::print(std::ostream &out) const
     out << endl;
 
     out << "Mttbar" << endl;
-    out << *mttbar() << endl;
+    out << *mreco() << endl;
+    out << endl;
+
+    out << "Mltop vs Mhtop" << endl;
+    out << *mltopVsMhtop() << endl;
 
     out << _out.str();
+}
+
+// Private
+//
+float MttbarAnalyzer::getMttbarGen(const Event *event)
+{
+    float mass_gen = 0;
+
+    const GenParticles &particles = event->gen_particles();
+    // Search for the first top
+    //
+    GenParticles::const_iterator top = find(particles, TOP);
+    if (particles.end() != top)
+    {
+        // Search for the second top
+        //
+        GenParticles::const_iterator second_top = top;
+        second_top = find(particles, TOP, ++second_top);
+        if (particles.end() != second_top)
+        {
+            const bool is_leptonic = isLeptonicDecay(*top);
+            const bool is_second_leptonic = isLeptonicDecay(*second_top);
+            if ((is_leptonic
+                    || is_second_leptonic)
+                    && !(is_leptonic
+                        && is_second_leptonic))
+            {
+                mass_gen = mass(top->physics_object().p4() + second_top->physics_object().p4());
+            }
+        }
+    }
+
+    return mass_gen;
+}
+
+MttbarAnalyzer::GenParticles::const_iterator
+    MttbarAnalyzer::find(const GenParticles &particles,
+            const uint32_t &id)
+{
+    return find(particles, id, particles.begin());
+}
+
+MttbarAnalyzer::GenParticles::const_iterator
+    MttbarAnalyzer::find(const GenParticles &particles,
+            const uint32_t &id,
+            const GenParticles::const_iterator &from)
+{
+    for(GenParticles::const_iterator particle = from;
+            particles.end() != particle;
+            ++particle)
+    {
+        if (3 == particle->status()
+                && id == static_cast<uint32_t>(abs(particle->id())))
+            return particle;
+    }
+
+    return particles.end();
+}
+
+bool MttbarAnalyzer::isLeptonicDecay(const GenParticle &particle)
+{
+    const GenParticles::const_iterator wboson = find(particle.children(), WBOSON);
+    if (particle.children().end() == wboson)
+        return false;
+
+    const GenParticles::const_iterator lepton = find(wboson->children(),
+        SynchSelector::ELECTRON == _synch_selector->leptonMode()
+        ? ELECTRON
+        : MUON);
+    return wboson->children().end() != lepton;
 }

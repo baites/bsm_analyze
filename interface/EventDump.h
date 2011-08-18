@@ -23,11 +23,26 @@ namespace bsm
     class EventDumpDelegate
     {
         public:
-            virtual ~EventDumpDelegate() {}
+            enum Level
+            {
+                SHORT,
+                MEDIUM,
+                FULL
+            };
+
+            virtual ~EventDumpDelegate()
+            {
+            }
 
             // Event_Extra is the same as Event::Extra
             //
-            virtual void setEventNumber(const Event_Extra &) {}
+            virtual void setEventNumber(const Event_Extra &)
+            {
+            }
+
+            virtual void setFormatLevel(const Level &)
+            {
+            }
     };
 
     class EventDumpOptions: public Options
@@ -47,6 +62,7 @@ namespace bsm
             typedef std::vector<std::string> Events;
 
             void setEvents(const Events &);
+            void setFormatLevel(std::string);
 
             EventDumpDelegate *_delegate;
             DescriptionPtr _description;
@@ -66,6 +82,7 @@ namespace bsm
             // Event Dump Delegate interface
             //
             virtual void setEventNumber(const Event_Extra &);
+            virtual void setFormatLevel(const Level &);
 
             // Analyzer interface
             //
@@ -82,21 +99,13 @@ namespace bsm
             virtual void print(std::ostream &) const;
 
         private:
-            void dump(const Event *);
+            Level _format_level;
 
-            void dumpPrimaryVertices(const Event *);
-            void dumpJets(const Event *);
-            void dumpElectrons(const Event *);
-            void dumpMuons(const Event *);
+            boost::shared_ptr<Format> _format;
 
             std::vector<Event::Extra> _events;
 
             std::ostringstream _out;
-
-            boost::shared_ptr<PrimaryVertexSelector> _primary_vertex_selector;
-            boost::shared_ptr<JetSelector> _jet_selector;
-            boost::shared_ptr<ElectronSelector> _electron_selector;
-            boost::shared_ptr<MuonSelector> _muon_selector;
     };
 }
 

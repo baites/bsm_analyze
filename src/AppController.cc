@@ -6,12 +6,15 @@
 // Created by Samvel Khalatyan, Jul 31, 2011
 // Copyright 2011, All rights reserved
 
+#include <fstream>
 #include <iomanip>
 #include <iostream>
 
 #include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
+#include <boost/regex.hpp>
 
+#include "bsm_core/interface/Debug.h"
 #include "bsm_input/interface/Reader.h"
 #include "bsm_input/interface/Event.pb.h"
 #include "interface/Analyzer.h"
@@ -23,6 +26,8 @@ using namespace std;
 using bsm::AppController;
 
 namespace fs = boost::filesystem;
+
+using boost::regex;
 
 AppController::AppController():
     _run_mode(SINGLE_THREAD),
@@ -40,6 +45,11 @@ AppController::AppController():
          po::value<uint32_t>()->implicit_value(0)->notifier(
              boost::bind(&AppController::setNumberOfThreads, this, _1)),
          "Run Analysis with multi-threads: 0 - auto, otherwise max number of threads")
+
+        ("debug",
+         po::value<string>()->implicit_value("debug.log")->notifier(
+             boost::bind(&AppController::setDebugFile, this, _1)),
+         "save debug info in file")
     ;
 
     // Hidden options: necessary for the positional arguments
@@ -51,6 +61,10 @@ AppController::AppController():
              boost::bind(&AppController::addInputs, this, _1)),
          "input file(s)")
     ;
+
+    // Suppress log
+    //
+    _debug.reset(new core::Debug());
 }
 
 AppController::~AppController()
@@ -81,6 +95,25 @@ void AppController::addInputs(const Inputs &inputs)
         if (!fs::exists(*input))
         {
             cerr << "input does not exist: " << *input << endl;
+
+            continue;
+        }
+
+        if (regex_search(*input, regex("\\.txt$")))
+        {
+            ifstream in(input->c_str());
+            if (!in)
+            {
+                cerr << "failed to read input TXT file: " << *input << endl;
+
+                continue;
+            }
+
+            Inputs files;
+            for(string file; in >> file; )
+                files.push_back(file);
+
+            addInputs(files);
 
             continue;
         }
@@ -125,6 +158,14 @@ bool AppController::run(int &argc, char *argv[])
             positional(*positional_options).
             run(),
             *arguments);
+
+    // Initialize debug before any other options are passed: this is done in
+    // order to ensure all later clog, cerr, cout prints to be logged in
+    // debug file
+    //
+    if (arguments->count("debug"))
+        setDebugFile((*arguments)["debug"].as<string>());
+
     po::notify(*arguments);
 
     if (arguments->count("help")
@@ -136,6 +177,15 @@ bool AppController::run(int &argc, char *argv[])
     }
     else
     {
+        clog << _input_files.size() << " input files" << endl;
+        for(Inputs::const_iterator input = _input_files.begin();
+                _input_files.end() != input;
+                ++input)
+        {
+            clog << " [+] " << *input << endl;
+        }
+        clog << endl;
+
         if (SINGLE_THREAD == _run_mode
                 || (MULTI_THREAD == _run_mode
                     && (1 == _number_of_threads
@@ -157,6 +207,12 @@ void AppController::disableMutlithread()
 
 // Privates
 //
+void AppController::setDebugFile(const string &filename)
+{
+    if (!_debug->isInitialized())
+        _debug->init(filename);
+}
+
 void AppController::setNumberOfThreads(const uint32_t &number_of_threads)
 {
     if (_disable_multithread)
