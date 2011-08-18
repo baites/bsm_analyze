@@ -6,6 +6,8 @@ void ElectronIDEfficiencies(TString filename, TString id, TString variable, TStr
 
    TFile * file = new TFile(filename);
 
+   TH1D * All = (TH1D*) file->Get(TString("EIDAll")+variable)->Clone();
+   TH1D * VeryLoose = (TH1D*) file->Get(id+"VeryLoose"+variable)->Clone();
    TH1D * Loose = (TH1D*) file->Get(id+"Loose"+variable)->Clone();
    TH1D * Medium = (TH1D*) file->Get(id+"Medium"+variable)->Clone();
    TH1D * Tight = (TH1D*) file->Get(id+"Tight"+variable)->Clone(); 
@@ -15,15 +17,39 @@ void ElectronIDEfficiencies(TString filename, TString id, TString variable, TStr
    TH1D * HyperTight3 = (TH1D*) file->Get(id+"HyperTight3"+variable)->Clone();
    TH1D * HyperTight4 = (TH1D*) file->Get(id+"HyperTight4"+variable)->Clone();
 
+   All->Rebin(2);
+   VeryLoose->Rebin(2);   
+   Loose->Rebin(2);
+   Medium->Rebin(2);
+   Tight->Rebin(2);
+   SuperTight->Rebin(2);
+   HyperTight1->Rebin(2);
+   HyperTight2->Rebin(2);
+   HyperTight3->Rebin(2);
+   HyperTight4->Rebin(2);
+
    TCanvas * canvas = new TCanvas();
 
-   Loose->GetXaxis()->SetTitle(xtitle);
-   Loose->GetYaxis()->SetTitle("Efficiency respect to Loose");
-   Loose->GetXaxis()->SetRangeUser(30,100);
-   Loose->GetYaxis()->SetRangeUser(0.5,1.1);
-   
+   All->GetXaxis()->SetTitle(xtitle);
+   All->GetYaxis()->SetTitle("Efficiency respect to synch selection");
+   All->GetYaxis()->SetRangeUser(0.5,1.1);
+   All->Draw("axis");
 
-   Loose->Draw("axis");
+   TEfficiency * VeryLooseEff =  new TEfficiency();
+   VeryLooseEff->SetTotalHistogram(*All, "f");
+   VeryLooseEff->SetPassedHistogram(*VeryLoose, "f");
+   VeryLooseEff->SetMarkerStyle(kFullCircle);
+   VeryLooseEff->SetMarkerColor(kRed);
+   VeryLooseEff->SetLineColor(kRed);
+   VeryLooseEff->Draw("samep");
+
+   TEfficiency * LooseEff =  new TEfficiency();
+   LooseEff->SetTotalHistogram(*All, "f");
+   LooseEff->SetPassedHistogram(*Loose, "f");
+   LooseEff->SetMarkerStyle(kFullSquare);
+   LooseEff->SetMarkerColor(kGreen);
+   LooseEff->SetLineColor(kGreen);
+   LooseEff->Draw("samep");
 
    TEfficiency * MediumEff =  new TEfficiency();
    MediumEff->SetTotalHistogram(*Loose, "f");
@@ -81,9 +107,11 @@ void ElectronIDEfficiencies(TString filename, TString id, TString variable, TStr
    HyperTight4Eff->SetLineColor(kGray);
    HyperTight4Eff->Draw("samep");
 
-   TLegend * leg = new TLegend(0.60,0.15,0.86,0.45);
+   TLegend * leg = new TLegend(0.60,0.15,0.86,0.50);
    leg->SetFillColor(kWhite);
    leg->SetLineColor(kWhite);
+   leg->AddEntry(VeryLooseEff, "VeryLoose", "p");
+   leg->AddEntry(LooseEff, "Loose", "p");
    leg->AddEntry(MediumEff, "Medium", "p");
    leg->AddEntry(TightEff, "Tight", "p");
    leg->AddEntry(SuperTightEff, "SuperTight", "p");

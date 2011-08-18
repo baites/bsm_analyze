@@ -24,8 +24,8 @@ BookkeeperAnalyzer::BookkeeperAnalyzer()
     // Initializing bookkeeper
     _bookkeeper.reset(new HistogramBookkeeper());
     // Booking histograms (each histograms has to have a unique name)
-    _bookkeeper->book1d("EIDTightPt", 50, 0, 100);
-    _bookkeeper->book1d("EIDTightEta", 50, -2.5, 2.5);
+    _bookkeeper->book1d("EIDLoosePt", 50, 0, 100);
+    _bookkeeper->book1d("EIDLooseEta", 50, -2.5, 2.5);
     // Monitor the bookkeeper
     monitor(_bookkeeper);
     
@@ -35,7 +35,7 @@ BookkeeperAnalyzer::BookkeeperAnalyzer()
 
 BookkeeperAnalyzer::BookkeeperAnalyzer(const BookkeeperAnalyzer & object)
 {
-	// Initialize the selector by copy the one in object
+    // Initialize the selector by copy the one in object
     _synch_selector.reset(new SynchSelector(*object._synch_selector));
     // Monitor the new selector
     monitor(_synch_selector);
@@ -68,12 +68,12 @@ void BookkeeperAnalyzer::process(const Event *event)
             bsm::Electron::ElectronID const & electronid = electron.electronid(j);
 
             // Check if the electron has the identification bit for the category tight
-            if (electronid.name() == bsm::Electron::Tight && electronid.identification())
+            if (electronid.name() == bsm::Electron::Loose && electronid.identification())
             {
             	// Fill the corresponding histograms
-                _bookkeeper->get1d("EIDTightPt")->fill(pt(electron.physics_object().p4()));
-                _bookkeeper->get1d("EIDTightEta")->fill(eta(electron.physics_object().p4()));
-            }
+                _bookkeeper->get1d("EIDLoosePt")->fill(pt(electron.physics_object().p4()));
+                _bookkeeper->get1d("EIDLooseEta")->fill(eta(electron.physics_object().p4()));
+           }
         }
     }
 }

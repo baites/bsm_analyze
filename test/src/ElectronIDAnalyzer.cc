@@ -25,6 +25,18 @@ ElectronIDAnalyzer::ElectronIDAnalyzer()
 
     _bookkeeper.reset(new HistogramBookkeeper());
 
+    // All good electrons
+
+    _bookkeeper->book1d("EIDAllPt", 50, 0, 100);
+    _bookkeeper->book1d("EIDAllEta", 50, -2.5, 2.5);
+    _bookkeeper->book1d("EIDAllPhi", 50, 0, 3.15);
+
+    // ID
+
+    _bookkeeper->book1d("EIDVeryLoosePt", 50, 0, 100);
+    _bookkeeper->book1d("EIDVeryLooseEta", 50, -2.5, 2.5);
+    _bookkeeper->book1d("EIDVeryLoosePhi", 50, 0, 3.15);
+
     _bookkeeper->book1d("EIDLoosePt", 50, 0, 100);
     _bookkeeper->book1d("EIDLooseEta", 50, -2.5, 2.5);
     _bookkeeper->book1d("EIDLoosePhi", 50, 0, 3.15);
@@ -59,6 +71,10 @@ ElectronIDAnalyzer::ElectronIDAnalyzer()
 
     // ID + CONV
 
+    _bookkeeper->book1d("ECONVVeryLoosePt", 50, 0, 100);
+    _bookkeeper->book1d("ECONVVeryLooseEta", 50, -2.5, 2.5);
+    _bookkeeper->book1d("ECONVVeryLoosePhi", 50, 0, 3.15);
+
     _bookkeeper->book1d("ECONVLoosePt", 50, 0, 100);
     _bookkeeper->book1d("ECONVLooseEta", 50, -2.5, 2.5);
     _bookkeeper->book1d("ECONVLoosePhi", 50, 0, 3.15);
@@ -92,6 +108,10 @@ ElectronIDAnalyzer::ElectronIDAnalyzer()
     _bookkeeper->book1d("ECONVHyperTight4Phi", 50, 0, 3.15);
 
     // Full set of bits
+
+    _bookkeeper->book1d("EFULLVeryLoosePt", 50, 0, 100);
+    _bookkeeper->book1d("EFULLVeryLooseEta", 50, -2.5, 2.5);
+    _bookkeeper->book1d("EFULLVeryLoosePhi", 50, 0, 3.15);
 
     _bookkeeper->book1d("EFULLLoosePt", 50, 0, 100);
     _bookkeeper->book1d("EFULLLooseEta", 50, -2.5, 2.5);
@@ -148,10 +168,20 @@ void ElectronIDAnalyzer::process(const Event *event)
     {
         bsm::Electron const & electron = *electrons[i];
 
+        _bookkeeper->get1d("EIDAllPt")->fill(pt(electron.physics_object().p4()));
+        _bookkeeper->get1d("EIDAllEta")->fill(eta(electron.physics_object().p4()));
+        _bookkeeper->get1d("EIDAllPhi")->fill(phi(electron.physics_object().p4()));
+
         for (int j = 0; j < electron.electronid_size(); ++j)
         {
             const bsm::Electron::ElectronID & electronid = electron.electronid(j);
 
+            if (electronid.name() == bsm::Electron::VeryLoose && electronid.identification())
+            {
+                _bookkeeper->get1d("EIDVeryLoosePt")->fill(pt(electron.physics_object().p4()));
+                _bookkeeper->get1d("EIDVeryLooseEta")->fill(eta(electron.physics_object().p4()));
+                _bookkeeper->get1d("EIDVeryLoosePhi")->fill(phi(electron.physics_object().p4()));
+            }
             if (electronid.name() == bsm::Electron::Loose && electronid.identification())
             {
                 _bookkeeper->get1d("EIDLoosePt")->fill(pt(electron.physics_object().p4()));
@@ -202,7 +232,16 @@ void ElectronIDAnalyzer::process(const Event *event)
             }
 
             // EID + CONV
-
+            if (
+                electronid.name() == bsm::Electron::VeryLoose &&
+                electronid.identification() &&
+                electronid.conversion_rejection()
+            )
+            {
+                _bookkeeper->get1d("ECONVVeryLoosePt")->fill(pt(electron.physics_object().p4()));
+                _bookkeeper->get1d("ECONVVeryLooseEta")->fill(eta(electron.physics_object().p4()));
+                _bookkeeper->get1d("ECONVVeryLoosePhi")->fill(phi(electron.physics_object().p4()));
+            }
             if (
                 electronid.name() == bsm::Electron::Loose &&
                 electronid.identification() &&
@@ -286,6 +325,19 @@ void ElectronIDAnalyzer::process(const Event *event)
 
             // FULL
 
+            if (
+                electronid.name() == bsm::Electron::VeryLoose &&
+                electronid.identification() &&
+                electronid.isolation() &&
+                electronid.conversion_rejection() &&
+                electronid.impact_parameter()
+
+            )
+            {
+                _bookkeeper->get1d("EFULLVeryLoosePt")->fill(pt(electron.physics_object().p4()));
+                _bookkeeper->get1d("EFULLVeryLooseEta")->fill(eta(electron.physics_object().p4()));
+                _bookkeeper->get1d("EFULLVeryLoosePhi")->fill(phi(electron.physics_object().p4()));
+            }
             if (
                 electronid.name() == bsm::Electron::Loose &&
                 electronid.identification() &&
