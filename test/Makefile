@@ -23,7 +23,7 @@ objs = $(foreach obj,${srcs},$(addprefix ./obj/,$(patsubst %.cc,%.o,$(notdir ${o
 
 # List of programs with main functions to be filtered out of objects
 #
-progs = $(foreach prog,$(wildcard ./src/*.cpp),$(addprefix ./bin/bsm_,$(patsubst ./src/%.cpp,%,${prog})))
+progs = $(foreach prog,$(wildcard ./src/*.cpp),$(addprefix ./bin/bsm_test_,$(patsubst ./src/%.cpp,%,${prog})))
 
 # Need to operate with copies of the env variables b/c the latter ones are
 # passed to sumbodules and shoould remain the same
@@ -72,9 +72,9 @@ ${lib}: ${objs}
 
 # Executables
 #
-${progs}: bin/bsm_%: src/%.cpp ${lib}
+${progs}: bin/bsm_test_%: src/%.cpp ${lib}
 	@echo "[+] Compiling programs $@ ..."
-	$(eval prog_name=$(patsubst bin/bsm_%,%,$@))
+	$(eval prog_name=$(patsubst bin/bsm_test_%,%,$@))
 	${CXX} ${cppflags} -c src/${prog_name}.cpp -o ./obj/${prog_name}.o
 	${CXX} ${ldflags} ${lib} ./obj/${prog_name}.o -o $@
 	@echo
@@ -83,7 +83,7 @@ ${progs}: bin/bsm_%: src/%.cpp ${lib}
 #
 cleanbin:
 ifneq ($(strip ${progs}),)
-	rm -f ./bin/bsm_*
+	rm -f ./bin/bsm_test_*
 endif
 
 clean: cleanbin
