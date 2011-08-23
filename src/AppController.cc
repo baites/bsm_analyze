@@ -238,6 +238,8 @@ void AppController::processSingleThread()
 
             continue;
         }
+        else
+            _analyzer->onFileOpen(reader->filename(), reader->input().get());
 
         for(boost::shared_ptr<Event> event(new Event());
                 reader->read(event);
