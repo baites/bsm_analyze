@@ -30,7 +30,18 @@ TriggerAnalyzer::TriggerAnalyzer()
 void TriggerAnalyzer::onFileOpen(const std::string &filename, const Input *input)
 {
     if (!input->has_info())
+    {
+        clog << "event info is not available" << endl;
+
         return;
+    }
+
+    if (!input->info().triggers().size())
+    {
+        clog << "Trigger menu is not available" << endl;
+
+        return;
+    }
 
     typedef ::google::protobuf::RepeatedPtrField<TriggerItem> TriggerItems;
     for(TriggerItems::const_iterator hlt = input->info().triggers().begin();
@@ -51,6 +62,7 @@ void TriggerAnalyzer::process(const Event *event)
     if (!event->hlts().size())
     {
         cout << "HLT is not available" << endl;
+
         return;
     }
 
