@@ -28,6 +28,8 @@ namespace bsm
     class CounterDelegate;
     class Cut;
     template<class Compare> class Comparator;
+    template<class LowerCompare, class UpperCompare, class Logic>
+        class RangeComparator;
     class LockCounterOnUpdate;
 
     class ElectronSelector;
