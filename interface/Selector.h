@@ -52,6 +52,7 @@ namespace bsm
             Cut2DSelector(const Region &region = SIGNAL);
             Cut2DSelector(const Cut2DSelector &);
 
+            void setRegion(const Region &);
             Region region() const;
 
             // Test if object passes the selector
@@ -78,10 +79,10 @@ namespace bsm
             virtual void print(std::ostream &) const;
 
         private:
-            void setRegion(const Region &);
-
             CutPtr _dr;
             CutPtr _ptrel;
+
+            Region _region;
     };
 
     class ElectronSelector : public Selector
