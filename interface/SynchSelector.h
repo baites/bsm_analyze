@@ -170,6 +170,7 @@ namespace bsm
             boost::shared_ptr<MuonSelector> _muon_selector;
             boost::shared_ptr<JetSelector> _nice_jet_selector;
             boost::shared_ptr<JetSelector> _good_jet_selector;
+            boost::shared_ptr<Cut2DSelector> _cut2d_selector;
 
             boost::shared_ptr<JetEnergyCorrections> _jec;
 
