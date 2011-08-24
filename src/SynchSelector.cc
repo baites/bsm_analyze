@@ -16,6 +16,7 @@
 #include "bsm_input/interface/Physics.pb.h"
 #include "interface/JetEnergyCorrections.h"
 #include "interface/SynchSelector.h"
+#include "interface/Cut2DSelector.h"
 
 using namespace std;
 
