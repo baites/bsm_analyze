@@ -87,30 +87,33 @@ namespace bsm
     class Cut : public core::Object
     {
         public:
+            Cut();
             Cut(const float &value, const std::string &name = "");
             Cut(const Cut &);
 
-            const CounterPtr objects() const;
-            const CounterPtr events() const;
+            virtual ~Cut();
+
+            virtual const CounterPtr objects() const;
+            virtual const CounterPtr events() const;
 
             // Get actual cut value
             //
-            float value() const;
-            void setValue(const float &);
+            virtual float value() const;
+            virtual void setValue(const float &);
 
             // Get name of the cut
             //
-            std::string name() const;
-            void setName(const std::string &);
+            virtual std::string name() const;
+            virtual void setName(const std::string &);
 
             // apply cut: implicitly count number of success
             //
-            bool apply(const float &);
+            virtual bool apply(const float &);
 
-            bool isDisabled() const;
+            virtual bool isDisabled() const;
 
-            void disable();
-            void enable();
+            virtual void disable();
+            virtual void enable();
 
             // Object interface
             //
@@ -123,10 +126,6 @@ namespace bsm
             virtual void print(std::ostream &) const;
 
         private:
-            // Prevent copying
-            //
-            Cut &operator =(const Cut &);
-
             // isPass is the actual application of the cut
             //
             virtual bool isPass(const float &) = 0;
@@ -134,6 +133,52 @@ namespace bsm
             float _value;
             std::string _name;
             bool _is_disabled;
+
+            CounterPtr _objects;
+            CounterPtr _events;
+    };
+
+    class RangeCut : public Cut
+    {
+        public:
+            typedef boost::shared_ptr<Cut> CutPtr;
+
+            RangeCut(const float &lower_cut,
+                    const float &upper_cut,
+                    const std::string &name = "");
+
+            RangeCut(const RangeCut &);
+
+            CutPtr lowerCut() const;
+            CutPtr upperCut() const;
+
+            // Cut interface
+            //
+            virtual const CounterPtr objects() const;
+            virtual const CounterPtr events() const;
+
+            virtual float value() const;            // Do nothing
+            virtual void setValue(const float &);   // Do nothing
+
+            virtual std::string name() const;
+            virtual void setName(const std::string &);
+
+            virtual bool apply(const float &);
+
+            virtual bool isDisabled() const;
+
+            virtual void disable();
+            virtual void enable();
+
+            // Object interface
+            //
+            virtual uint32_t id() const;
+
+            virtual void print(std::ostream &) const;
+
+        private:
+            CutPtr _lower_cut;
+            CutPtr _upper_cut;
 
             CounterPtr _objects;
             CounterPtr _events;

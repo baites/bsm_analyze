@@ -3,16 +3,22 @@
 // Created by Samvel Khalatyan, Jun 02, 2011
 // Copyright 2011, All rights reserved
 
+#include <functional>
+
 #include <boost/pointer_cast.hpp>
 
 #include "interface/Cut.h"
+#include "interface/Utility.h"
 
-using std::string;
+using namespace std;
+
+using boost::dynamic_pointer_cast;
 
 using bsm::Counter;
 using bsm::CounterPtr;
 using bsm::Cut;
 using bsm::LockCounterOnUpdate;
+using bsm::RangeCut;
 
 // Counter
 //
@@ -106,7 +112,7 @@ void Counter::merge(const ObjectPtr &object_pointer)
     update();
 }
 
-void Counter::print(std::ostream &out) const
+void Counter::print(ostream &out) const
 {
     out << _count;
 }
@@ -127,6 +133,17 @@ void Counter::update()
 
 // Cut
 //
+Cut::Cut():
+    _value(0),
+    _is_disabled(false)
+{
+    _objects.reset(new Counter());
+    _events.reset(new Counter());
+
+    monitor(_objects);
+    monitor(_events);
+}
+
 Cut::Cut(const float &value, const string &name):
     _value(value),
     _name(name),
@@ -149,6 +166,10 @@ Cut::Cut(const Cut &object):
 
     monitor(_objects);
     monitor(_events);
+}
+
+Cut::~Cut()
+{
 }
 
 const CounterPtr Cut::objects() const
@@ -233,16 +254,139 @@ void Cut::merge(const ObjectPtr &object_pointer)
     Object::merge(object_pointer);
 }
 
-void Cut::print(std::ostream &out) const
+void Cut::print(ostream &out) const
 {
-    using std::setw;
-    using std::left;
-
     out << setw(5) << left << value() << " ";
    
     if (!isDisabled())
         out << setw(7) << left << *objects()
             << " " << *events();
+}
+
+
+
+// RangeCut
+//
+RangeCut::RangeCut(const float &lower_cut_value,
+        const float &upper_cut_value,
+        const string &name)
+{
+    _lower_cut.reset(new Comparator<>(lower_cut_value, name));
+    _upper_cut.reset(new Comparator<less<float> >(upper_cut_value, name));
+
+    monitor(_lower_cut);
+    monitor(_upper_cut);
+
+    _objects.reset(new Counter());
+    _events.reset(new Counter());
+
+    monitor(_objects);
+    monitor(_events);
+}
+
+RangeCut::RangeCut(const RangeCut &object)
+{
+    _lower_cut = dynamic_pointer_cast<Cut>(object.lowerCut()->clone());
+    _upper_cut = dynamic_pointer_cast<Cut>(object.upperCut()->clone());
+
+    monitor(_lower_cut);
+    monitor(_upper_cut);
+
+    _objects = dynamic_pointer_cast<Counter>(object.objects()->clone());
+    _events = dynamic_pointer_cast<Counter>(object.events()->clone());
+
+    monitor(_objects);
+    monitor(_events);
+}
+
+RangeCut::CutPtr RangeCut::lowerCut() const
+{
+    return _lower_cut;
+}
+
+RangeCut::CutPtr RangeCut::upperCut() const
+{
+    return _upper_cut;
+}
+
+const CounterPtr RangeCut::objects() const
+{
+    return _objects;
+}
+
+const CounterPtr RangeCut::events() const
+{
+    return _events;
+}
+
+float RangeCut::value() const
+{
+    return 0;
+}
+
+void RangeCut::setValue(const float &value)
+{
+}
+
+string RangeCut::name() const
+{
+    return lowerCut()->name();
+}
+
+void RangeCut::setName(const string &name)
+{
+    lowerCut()->setName(name);
+    upperCut()->setName(name);
+}
+
+bool RangeCut::apply(const float &value)
+{
+    if (isDisabled())
+        return true;
+
+    // Both cuts should be applied independently of each other
+    //
+    bool lower_cut = lowerCut()->apply(value);
+    bool upper_cut = upperCut()->apply(value);
+
+    if (!lower_cut
+            || !upper_cut)
+        return false;
+
+    _objects->add();
+    _events->add();
+
+    return true;
+}
+
+bool RangeCut::isDisabled() const
+{
+    return lowerCut()->isDisabled()
+        && upperCut()->isDisabled();
+}
+
+void RangeCut::disable()
+{
+    lowerCut()->disable();
+    upperCut()->disable();
+}
+
+void RangeCut::enable()
+{
+    lowerCut()->enable();
+    upperCut()->enable();
+}
+
+uint32_t RangeCut::id() const
+{
+    return core::ID<RangeCut>::get();
+}
+
+void RangeCut::print(ostream &out) const
+{
+    lowerCut()->print(out);
+    out  << endl;
+    upperCut()->print(out);
 }
 
 
