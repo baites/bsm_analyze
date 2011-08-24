@@ -7,6 +7,7 @@
 #define BSM_CUT
 
 #include <iomanip>
+#include <stdexcept>
 #include <string>
 
 #include <boost/pointer_cast.hpp>
@@ -200,18 +201,9 @@ namespace bsm
 
                 // Cut interface
                 //
-                virtual const CounterPtr objects() const;
-                virtual const CounterPtr events() const;
+                virtual void setValue(const float &);   // throw exception
 
-                virtual float value() const;            // Do nothing
-                virtual void setValue(const float &);   // Do nothing
-
-                virtual std::string name() const;
                 virtual void setName(const std::string &);
-
-                virtual bool apply(const float &);
-
-                virtual bool isDisabled() const;
 
                 virtual void disable();
                 virtual void enable();
@@ -232,9 +224,6 @@ namespace bsm
 
                 CutPtr _lower_cut;
                 CutPtr _upper_cut;
-
-                CounterPtr _objects;
-                CounterPtr _events;
         };
 
     class LockCounterOnUpdate
@@ -304,19 +293,14 @@ template<class LowerCompare, class UpperCompare, class Logic>
         UpperCompare,
         Logic>::RangeComparator(const float &lower_cut,
             const float &upper_cut,
-            const std::string &name)
+            const std::string &name):
+    Cut(0, name)
 {
     _lower_cut.reset(new Comparator<LowerCompare>(lower_cut, name));
     _upper_cut.reset(new Comparator<UpperCompare>(upper_cut, name));
 
     monitor(_lower_cut);
     monitor(_upper_cut);
-
-    _objects.reset(new Counter());
-    _events.reset(new Counter());
-
-    monitor(_objects);
-    monitor(_events);
 }
 
 template<class LowerCompare, class UpperCompare, class Logic>
@@ -324,19 +308,14 @@ template<class LowerCompare, class UpperCompare, class Logic>
         UpperCompare,
         Logic>::RangeComparator(const RangeComparator<LowerCompare,
                 UpperCompare,
-                Logic> &object)
+                Logic> &object):
+    Cut(object)
 {
     _lower_cut = boost::dynamic_pointer_cast<Cut>(object.lowerCut()->clone());
     _upper_cut = boost::dynamic_pointer_cast<Cut>(object.upperCut()->clone());
 
     monitor(_lower_cut);
     monitor(_upper_cut);
-
-    _objects = boost::dynamic_pointer_cast<Counter>(object.objects()->clone());
-    _events = boost::dynamic_pointer_cast<Counter>(object.events()->clone());
-
-    monitor(_objects);
-    monitor(_events);
 }
 
 template<class LowerCompare, class UpperCompare, class Logic>
@@ -358,38 +337,11 @@ template<class LowerCompare, class UpperCompare, class Logic>
 }
 
 template<class LowerCompare, class UpperCompare, class Logic>
-    const bsm::CounterPtr
-        bsm::RangeComparator<LowerCompare, UpperCompare, Logic>::objects() const
-{
-    return _objects;
-}
-
-template<class LowerCompare, class UpperCompare, class Logic>
-    const bsm::CounterPtr
-        bsm::RangeComparator<LowerCompare, UpperCompare, Logic>::events() const
-{
-    return _events;
-}
-
-template<class LowerCompare, class UpperCompare, class Logic>
-    float bsm::RangeComparator<LowerCompare, UpperCompare, Logic>::value() const
-{
-    return 0;
-}
-
-template<class LowerCompare, class UpperCompare, class Logic>
     void bsm::RangeComparator<LowerCompare,
         UpperCompare,
         Logic>::setValue(const float &value)
 {
-}
-
-template<class LowerCompare, class UpperCompare, class Logic>
-    std::string bsm::RangeComparator<LowerCompare,
-        UpperCompare,
-        Logic>::name() const
-{
-    return lowerCut()->name();
+    throw std::runtime_error("can not set value to RangeComparator");
 }
 
 template<class LowerCompare, class UpperCompare, class Logic>
@@ -397,39 +349,10 @@ template<class LowerCompare, class UpperCompare, class Logic>
         UpperCompare,
         Logic>::setName(const std::string &name)
 {
+    Cut::setName(name);
+
     lowerCut()->setName(name);
     upperCut()->setName(name);
-}
-
-template<class LowerCompare, class UpperCompare, class Logic>
-    bool bsm::RangeComparator<LowerCompare,
-        UpperCompare,
-        Logic>::apply(const float &value)
-{
-    if (isDisabled())
-        return true;
-
-    // Both cuts should be applied independently of each other
-    //
-    bool lower_cut = lowerCut()->apply(value);
-    bool upper_cut = upperCut()->apply(value);
-
-    if (!_logic(lower_cut, upper_cut))
-        return false;
-
-    _objects->add();
-    _events->add();
-
-    return true;
-}
-
-template<class LowerCompare, class UpperCompare, class Logic>
-    bool bsm::RangeComparator<LowerCompare,
-        UpperCompare,
-        Logic>::isDisabled() const
-{
-    return lowerCut()->isDisabled()
-        && upperCut()->isDisabled();
 }
 
 template<class LowerCompare, class UpperCompare, class Logic>
@@ -437,6 +360,8 @@ template<class LowerCompare, class UpperCompare, class Logic>
         UpperCompare,
         Logic>::disable()
 {
+    Cut::disable();
+
     lowerCut()->disable();
     upperCut()->disable();
 }
@@ -446,6 +371,8 @@ template<class LowerCompare, class UpperCompare, class Logic>
         UpperCompare,
         Logic>::enable()
 {
+    Cut::enable();
+
     lowerCut()->enable();
     upperCut()->enable();
 }
@@ -470,11 +397,10 @@ template<class LowerCompare, class UpperCompare, class Logic>
         UpperCompare,
         Logic>::isPass(const float &number)
 {
-    bool lower_comparator = lowerCut()->apply(number);
-    bool upper_comparator = upperCut()->apply(number);
+    bool lower_cut = lowerCut()->apply(number);
+    bool upper_cut = upperCut()->apply(number);
 
-    return lower_comparator
-        && upper_comparator;
+    return _logic(lower_cut, upper_cut);
 }
 
 template<class LowerCompare, class UpperCompare, class Logic>
