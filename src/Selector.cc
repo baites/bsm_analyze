@@ -5,6 +5,7 @@
 // Created by Samvel Khalatyan, May 16, 2011
 // Copyright 2011, All rights reserved
 
+#include <cfloat>
 #include <cmath>
 #include <functional>
 #include <iomanip>
@@ -30,6 +31,7 @@ using namespace std;
 using boost::dynamic_pointer_cast;
 
 using bsm::CutPtr;
+using bsm::Cut2DSelector;
 using bsm::ElectronSelector;
 using bsm::JetEnergyCorrectionDelegate;
 using bsm::JetSelector;
@@ -38,6 +40,118 @@ using bsm::MuonSelector;
 using bsm::PrimaryVertexSelector;
 using bsm::WJetSelector;
 using bsm::LockSelectorEventCounterOnUpdate;
+
+// Cut2DSelector
+//
+Cut2DSelector::Cut2DSelector(const Region &region)
+{
+    setRegion(region);
+}
+
+Cut2DSelector::Cut2DSelector(const Cut2DSelector &object)
+{
+    _dr = dynamic_pointer_cast<Cut>(object._dr->clone());;
+    _ptrel = dynamic_pointer_cast<Cut>(object._ptrel->clone());;
+
+    monitor(_dr);
+    monitor(_ptrel);
+}
+
+bool Cut2DSelector::apply(const LorentzVector &lepton,
+        const LorentzVector &jet)
+{
+    return _dr->apply(bsm::ptrel(lepton, jet))
+        && _ptrel->apply(bsm::ptrel(lepton, jet));
+}
+
+CutPtr Cut2DSelector::dr() const
+{
+    return _dr;
+}
+
+CutPtr Cut2DSelector::ptrel() const
+{
+    return _ptrel;
+}
+
+void Cut2DSelector::enable()
+{
+    dr()->enable();
+    ptrel()->enable();
+}
+
+void Cut2DSelector::disable()
+{
+    dr()->disable();
+    ptrel()->disable();
+}
+
+uint32_t Cut2DSelector::id() const
+{
+    return core::ID<Cut2DSelector>::get();
+}
+
+Cut2DSelector::ObjectPtr Cut2DSelector::clone() const
+{
+    return ObjectPtr(new Cut2DSelector(*this));
+}
+
+void Cut2DSelector::print(std::ostream &out) const
+{
+    out << "     CUT                 " << setw(5) << " "
+        << " Objects Events" << endl;
+    out << setw(45) << setfill('-') << left << " " << setfill(' ') << endl;
+    out << *_dr << endl;
+    out << *_ptrel;
+}
+
+// Private
+//
+void Cut2DSelector::setRegion(const Region &region)
+{
+    switch(region)
+    {
+        case SIGNAL:
+            {
+                _dr.reset(new Comparator<>(.5));
+                _ptrel.reset(new Comparator<>(25));
+
+                break;
+            }
+
+        case S1:
+            {
+                _dr.reset(new RangeComparator<>(.1, .2));
+                _ptrel.reset(new Comparator<less<float> >(25));
+
+                break;
+            }
+
+        case S2:
+            {
+                _dr.reset(new RangeComparator<>(.2, .3));
+                _ptrel.reset(new Comparator<less<float> >(25));
+
+                break;
+            }
+
+        case S3:
+            {
+                _dr.reset(new RangeComparator<>(.3, .5));
+                _ptrel.reset(new Comparator<less<float> >(25));
+
+                break;
+            }
+    }
+
+    _dr->setName("DeltaR");
+    _ptrel->setName("pTrel");
+
+    monitor(_dr);
+    monitor(_ptrel);
+}
+
+
 
 // ElectronSelector
 //
