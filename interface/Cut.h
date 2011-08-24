@@ -290,7 +290,7 @@ template<class Compare>
 template<class Compare>
     void bsm::Comparator<Compare>::print(std::ostream &out) const
 {
-    out << " [+] " << std::setw(20) << std::right << name() << " " << _functor << " ";
+    out << " [+] " << std::setw(30) << std::right << name() << " " << _functor << " ";
 
     Cut::print(out);
 }
@@ -482,7 +482,7 @@ template<class LowerCompare, class UpperCompare, class Logic>
         UpperCompare,
         Logic>::print(std::ostream &out) const
 {
-    out << " [+] " << std::setw(20) << std::right << name() << " ";
+    out << " [+] " << std::setw(30) << std::right << name() << " ";
 
     boost::shared_ptr<Comparator<LowerCompare> > lower_cut =
         boost::dynamic_pointer_cast<Comparator<LowerCompare> >(lowerCut());
