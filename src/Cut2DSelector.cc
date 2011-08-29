@@ -3,8 +3,9 @@
 // Created by Samvel Khalatyan, Aug 24, 2011
 // Copyright 2011, All rights reserved
 
-#include <ostream>
+#include <iostream>
 #include <iomanip>
+#include <ostream>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/pointer_cast.hpp>
