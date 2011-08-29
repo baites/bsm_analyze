@@ -28,6 +28,8 @@ namespace bsm
     class CounterDelegate;
     class Cut;
     template<class Compare> class Comparator;
+    template<class LowerCompare, class UpperCompare, class Logic>
+        class RangeComparator;
     class LockCounterOnUpdate;
 
     class ElectronSelector;
@@ -54,6 +56,10 @@ namespace bsm
     class SynchSelectorOptions;
     class SynchSelector;
     class SynchSelectorDelegate;
+
+    class Cut2DSelectorOptions;
+    class Cut2DSelector;
+    class Cut2DSelectorDelegate;
 
     class H1Proxy;
     class H2Proxy;

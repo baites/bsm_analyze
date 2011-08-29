@@ -5,6 +5,7 @@
 // Created by Samvel Khalatyan, May 16, 2011
 // Copyright 2011, All rights reserved
 
+#include <cfloat>
 #include <cmath>
 #include <functional>
 #include <iomanip>

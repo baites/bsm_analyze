@@ -3,11 +3,16 @@
 // Created by Samvel Khalatyan, Jun 02, 2011
 // Copyright 2011, All rights reserved
 
+#include <functional>
+
 #include <boost/pointer_cast.hpp>
 
 #include "interface/Cut.h"
+#include "interface/Utility.h"
 
-using std::string;
+using namespace std;
+
+using boost::dynamic_pointer_cast;
 
 using bsm::Counter;
 using bsm::CounterPtr;
@@ -106,7 +111,7 @@ void Counter::merge(const ObjectPtr &object_pointer)
     update();
 }
 
-void Counter::print(std::ostream &out) const
+void Counter::print(ostream &out) const
 {
     out << _count;
 }
@@ -127,6 +132,17 @@ void Counter::update()
 
 // Cut
 //
+Cut::Cut():
+    _value(0),
+    _is_disabled(false)
+{
+    _objects.reset(new Counter());
+    _events.reset(new Counter());
+
+    monitor(_objects);
+    monitor(_events);
+}
+
 Cut::Cut(const float &value, const string &name):
     _value(value),
     _name(name),
@@ -149,6 +165,10 @@ Cut::Cut(const Cut &object):
 
     monitor(_objects);
     monitor(_events);
+}
+
+Cut::~Cut()
+{
 }
 
 const CounterPtr Cut::objects() const
@@ -233,11 +253,8 @@ void Cut::merge(const ObjectPtr &object_pointer)
     Object::merge(object_pointer);
 }
 
-void Cut::print(std::ostream &out) const
+void Cut::print(ostream &out) const
 {
-    using std::setw;
-    using std::left;
-
     out << setw(5) << left << value() << " ";
    
     if (!isDisabled())

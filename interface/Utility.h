@@ -49,6 +49,9 @@ namespace bsm
 
     template<typename T>
         std::ostream &operator <<(std::ostream &, const std::logical_and<T> &);
+
+    template<typename T>
+        std::ostream &operator <<(std::ostream &, const std::logical_or<T> &);
 }
 
 template<typename T>
@@ -85,6 +88,12 @@ template<typename T>
     std::ostream &bsm::operator <<(std::ostream &out, const std::logical_and<T> &)
 {
     return out << "&&";
+}
+
+template<typename T>
+    std::ostream &bsm::operator <<(std::ostream &out, const std::logical_or<T> &)
+{
+    return out << "||";
 }
 
 #endif

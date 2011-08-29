@@ -7,8 +7,10 @@
 #define BSM_CUT
 
 #include <iomanip>
+#include <stdexcept>
 #include <string>
 
+#include <boost/pointer_cast.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include "bsm_core/interface/ID.h"
@@ -18,6 +20,7 @@
 namespace bsm
 {
     typedef boost::shared_ptr<Counter> CounterPtr;
+    typedef boost::shared_ptr<Cut> CutPtr;
 
     class CounterDelegate
     {
@@ -87,30 +90,33 @@ namespace bsm
     class Cut : public core::Object
     {
         public:
+            Cut();
             Cut(const float &value, const std::string &name = "");
             Cut(const Cut &);
 
-            const CounterPtr objects() const;
-            const CounterPtr events() const;
+            virtual ~Cut();
+
+            virtual const CounterPtr objects() const;
+            virtual const CounterPtr events() const;
 
             // Get actual cut value
             //
-            float value() const;
-            void setValue(const float &);
+            virtual float value() const;
+            virtual void setValue(const float &);
 
             // Get name of the cut
             //
-            std::string name() const;
-            void setName(const std::string &);
+            virtual std::string name() const;
+            virtual void setName(const std::string &);
 
             // apply cut: implicitly count number of success
             //
-            bool apply(const float &);
+            virtual bool apply(const float &);
 
-            bool isDisabled() const;
+            virtual bool isDisabled() const;
 
-            void disable();
-            void enable();
+            virtual void disable();
+            virtual void enable();
 
             // Object interface
             //
@@ -123,10 +129,6 @@ namespace bsm
             virtual void print(std::ostream &) const;
 
         private:
-            // Prevent copying
-            //
-            Cut &operator =(const Cut &);
-
             // isPass is the actual application of the cut
             //
             virtual bool isPass(const float &) = 0;
@@ -165,6 +167,10 @@ namespace bsm
             public:
                 Comparator(const float &value, const std::string &name = "");
 
+                const Compare functor() const;
+
+                // Object interface
+                //
                 virtual uint32_t id() const;
 
                 virtual ObjectPtr clone() const;
@@ -176,6 +182,48 @@ namespace bsm
 
             private:
                 Compare _functor;
+        };
+
+    template<class LowerCompare = std::greater<float>,
+        class UpperCompare = std::less<float>,
+        class Logic = std::logical_and<bool> >
+            class RangeComparator : public Cut
+        {
+            public:
+                RangeComparator(const float &lower_cut,
+                        const float &upper_cut,
+                        const std::string &name = "");
+
+                RangeComparator(const RangeComparator &);
+
+                CutPtr lowerCut() const;
+                CutPtr upperCut() const;
+
+                // Cut interface
+                //
+                virtual void setValue(const float &);   // throw exception
+
+                virtual void setName(const std::string &);
+
+                virtual void disable();
+                virtual void enable();
+
+                // Object interface
+                //
+                virtual uint32_t id() const;
+
+                virtual ObjectPtr clone() const;
+
+                virtual void print(std::ostream &out) const;
+
+            protected:
+                virtual bool isPass(const float &value);
+
+            private:
+                Logic _logic;
+
+                CutPtr _lower_cut;
+                CutPtr _upper_cut;
         };
 
     class LockCounterOnUpdate
@@ -194,13 +242,19 @@ namespace bsm
     };
 }
 
-// Template(s) implementation
+// Comparator Template implementation
 //
 template<class Compare>
     bsm::Comparator<Compare>::Comparator(const float &value,
             const std::string &name):
         Cut(value, name)
 {
+}
+
+template<class Compare>
+    const Compare bsm::Comparator<Compare>::functor() const
+{
+    return _functor;
 }
 
 template<class Compare>
@@ -225,7 +279,148 @@ template<class Compare>
 template<class Compare>
     void bsm::Comparator<Compare>::print(std::ostream &out) const
 {
-    out << " [+] " << std::setw(20) << std::right << name() << " " << _functor << " ";
+    out << " [+] " << std::setw(30) << std::right << name() << " " << _functor << " ";
+
+    Cut::print(out);
+}
+
+
+
+// Range Comparator Template implementation
+//
+template<class LowerCompare, class UpperCompare, class Logic>
+    bsm::RangeComparator<LowerCompare,
+        UpperCompare,
+        Logic>::RangeComparator(const float &lower_cut,
+            const float &upper_cut,
+            const std::string &name):
+    Cut(0, name)
+{
+    _lower_cut.reset(new Comparator<LowerCompare>(lower_cut, name));
+    _upper_cut.reset(new Comparator<UpperCompare>(upper_cut, name));
+
+    monitor(_lower_cut);
+    monitor(_upper_cut);
+}
+
+template<class LowerCompare, class UpperCompare, class Logic>
+    bsm::RangeComparator<LowerCompare,
+        UpperCompare,
+        Logic>::RangeComparator(const RangeComparator<LowerCompare,
+                UpperCompare,
+                Logic> &object):
+    Cut(object)
+{
+    _lower_cut = boost::dynamic_pointer_cast<Cut>(object.lowerCut()->clone());
+    _upper_cut = boost::dynamic_pointer_cast<Cut>(object.upperCut()->clone());
+
+    monitor(_lower_cut);
+    monitor(_upper_cut);
+}
+
+template<class LowerCompare, class UpperCompare, class Logic>
+    bsm::CutPtr
+        bsm::RangeComparator<LowerCompare,
+            UpperCompare,
+            Logic>::lowerCut() const
+{
+    return _lower_cut;
+}
+
+template<class LowerCompare, class UpperCompare, class Logic>
+    bsm::CutPtr
+        bsm::RangeComparator<LowerCompare,
+            UpperCompare,
+            Logic>::upperCut() const
+{
+    return _upper_cut;
+}
+
+template<class LowerCompare, class UpperCompare, class Logic>
+    void bsm::RangeComparator<LowerCompare,
+        UpperCompare,
+        Logic>::setValue(const float &value)
+{
+    throw std::runtime_error("can not set value to RangeComparator");
+}
+
+template<class LowerCompare, class UpperCompare, class Logic>
+    void bsm::RangeComparator<LowerCompare,
+        UpperCompare,
+        Logic>::setName(const std::string &name)
+{
+    Cut::setName(name);
+
+    lowerCut()->setName(name);
+    upperCut()->setName(name);
+}
+
+template<class LowerCompare, class UpperCompare, class Logic>
+    void bsm::RangeComparator<LowerCompare,
+        UpperCompare,
+        Logic>::disable()
+{
+    Cut::disable();
+
+    lowerCut()->disable();
+    upperCut()->disable();
+}
+
+template<class LowerCompare, class UpperCompare, class Logic>
+    void bsm::RangeComparator<LowerCompare,
+        UpperCompare,
+        Logic>::enable()
+{
+    Cut::enable();
+
+    lowerCut()->enable();
+    upperCut()->enable();
+}
+
+template<class LowerCompare, class UpperCompare, class Logic>
+    uint32_t bsm::RangeComparator<LowerCompare, UpperCompare, Logic>::id() const
+{
+    return core::ID<RangeComparator<LowerCompare, UpperCompare, Logic> >::get();
+}
+
+template<class LowerCompare, class UpperCompare, class Logic>
+    typename bsm::RangeComparator<LowerCompare, UpperCompare, Logic>::ObjectPtr
+        bsm::RangeComparator<LowerCompare, UpperCompare, Logic>::clone() const
+{
+    return ObjectPtr(new RangeComparator<LowerCompare,
+            UpperCompare,
+            Logic>(*this));
+}
+
+template<class LowerCompare, class UpperCompare, class Logic>
+    bool bsm::RangeComparator<LowerCompare,
+        UpperCompare,
+        Logic>::isPass(const float &number)
+{
+    bool lower_cut = lowerCut()->apply(number);
+    bool upper_cut = upperCut()->apply(number);
+
+    return _logic(lower_cut, upper_cut);
+}
+
+template<class LowerCompare, class UpperCompare, class Logic>
+    void bsm::RangeComparator<LowerCompare,
+        UpperCompare,
+        Logic>::print(std::ostream &out) const
+{
+    out << " [+] " << std::setw(30) << std::right << name() << " ";
+
+    boost::shared_ptr<Comparator<LowerCompare> > lower_cut =
+        boost::dynamic_pointer_cast<Comparator<LowerCompare> >(lowerCut());
+
+    out << lower_cut->functor() << " " << lower_cut->value()
+        << " " << _logic << " ";
+
+    boost::shared_ptr<Comparator<UpperCompare> > upper_cut =
+        boost::dynamic_pointer_cast<Comparator<UpperCompare> >(upperCut());
+
+    out << upper_cut->functor() << " " << upper_cut->value()
+        << std::setw(5) << " ";
 
     Cut::print(out);
 }

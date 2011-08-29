@@ -85,6 +85,7 @@ namespace bsm
 
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
             SynchSelectorDelegate *getSynchSelectorDelegate() const;
+            Cut2DSelectorDelegate *getCut2DSelectorDelegate() const;
 
             // Anlayzer interface
             //

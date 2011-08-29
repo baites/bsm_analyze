@@ -16,6 +16,7 @@
 #include "bsm_input/interface/Physics.pb.h"
 #include "interface/JetEnergyCorrections.h"
 #include "interface/SynchSelector.h"
+#include "interface/Cut2DSelector.h"
 
 using namespace std;
 
@@ -138,6 +139,11 @@ SynchSelector::SynchSelector():
     _good_jet_selector.reset(new JetSelector());
     monitor(_good_jet_selector);
 
+    // 2D-Cut
+    //
+    _cut2d_selector.reset(new Cut2DSelector());
+    monitor(_cut2d_selector);
+
     // Jet Energy Corrections
     //
     _jec.reset(new JetEnergyCorrections());
@@ -175,6 +181,12 @@ SynchSelector::SynchSelector(const SynchSelector &object):
     _good_jet_selector = 
         dynamic_pointer_cast<JetSelector>(object._good_jet_selector->clone());
     monitor(_good_jet_selector);
+
+    // 2D-Cut
+    //
+    _cut2d_selector = 
+        dynamic_pointer_cast<Cut2DSelector>(object._cut2d_selector->clone());
+    monitor(_cut2d_selector);
 
     // Jet Energy Corrections
     //
@@ -248,6 +260,11 @@ SynchSelector::CutMode SynchSelector::cutMode() const
 bsm::JetEnergyCorrectionDelegate *SynchSelector::getJetEnergyCorrectionDelegate() const
 {
     return _jec.get();
+}
+
+bsm::Cut2DSelectorDelegate *SynchSelector::getCut2DSelectorDelegate() const
+{
+    return _cut2d_selector.get();
 }
 
 // Synch Selector Delegate interface
@@ -479,8 +496,12 @@ bool SynchSelector::cut2D(const LorentzVector *lepton_p4)
     if (_nice_jets.end() == closest_jet)
         return true;
 
+    return _cut2d_selector->apply(*lepton_p4, *closest_jet->corrected_p4);
+
+    /*
     return 0.5 < deltar_min
         || 25 < ptrel(*lepton_p4, *closest_jet->corrected_p4);
+        */
 }
 
 bool SynchSelector::isolation(const LorentzVector *p4, const PFIsolation *isolation)
