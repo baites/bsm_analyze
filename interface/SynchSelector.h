@@ -123,6 +123,7 @@ namespace bsm
             CutMode cutMode() const;
 
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
+            Cut2DSelectorDelegate *getCut2DSelectorDelegate() const;
 
             // SynchSelectorDelegate interface
             //

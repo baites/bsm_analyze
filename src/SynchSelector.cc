@@ -262,6 +262,11 @@ bsm::JetEnergyCorrectionDelegate *SynchSelector::getJetEnergyCorrectionDelegate(
     return _jec.get();
 }
 
+bsm::Cut2DSelectorDelegate *SynchSelector::getCut2DSelectorDelegate() const
+{
+    return _cut2d_selector.get();
+}
+
 // Synch Selector Delegate interface
 //
 void SynchSelector::setLeptonMode(const LeptonMode &lepton_mode)

@@ -137,6 +137,11 @@ bsm::SynchSelectorDelegate *SynchAnalyzer::getSynchSelectorDelegate() const
     return _synch_selector.get();
 }
 
+bsm::Cut2DSelectorDelegate *SynchAnalyzer::getCut2DSelectorDelegate() const
+{
+    return _synch_selector->getCut2DSelectorDelegate();
+}
+
 void SynchAnalyzer::setSelection(const SynchSelector::Selection &selection)
 {
     if (SynchSelector::SELECTIONS != _selection)

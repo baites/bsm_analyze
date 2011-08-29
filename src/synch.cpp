@@ -9,6 +9,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "interface/AppController.h"
+#include "interface/Cut2DSelector.h"
 #include "interface/EventDump.h"
 #include "interface/JetEnergyCorrections.h"
 #include "interface/SynchAnalyzer.h"
@@ -19,6 +20,7 @@ using namespace std;
 using boost::shared_ptr;
 
 using bsm::AppController;
+using bsm::Cut2DSelectorOptions;
 using bsm::EventDumpOptions;
 using bsm::JetEnergyCorrectionOptions;
 using bsm::SynchAnalyzer;
@@ -38,16 +40,19 @@ int main(int argc, char *argv[])
         boost::shared_ptr<SynchSelectorOptions> synch_selector_options(new SynchSelectorOptions());
         boost::shared_ptr<SynchAnalyzerOptions> synch_analyzer_options(new SynchAnalyzerOptions());
         boost::shared_ptr<EventDumpOptions> event_dump_options(new EventDumpOptions());
+        boost::shared_ptr<Cut2DSelectorOptions> cut_2d_selector_options(new Cut2DSelectorOptions());
 
         jec_options->setDelegate(analyzer->getJetEnergyCorrectionDelegate());
         synch_selector_options->setDelegate(analyzer->getSynchSelectorDelegate());
         synch_analyzer_options->setDelegate(analyzer.get());
         event_dump_options->setDelegate(analyzer.get());
+        cut_2d_selector_options->setDelegate(analyzer->getCut2DSelectorDelegate());
 
         app->addOptions(*jec_options);
         app->addOptions(*synch_selector_options);
         app->addOptions(*synch_analyzer_options);
         app->addOptions(*event_dump_options);
+        app->addOptions(*cut_2d_selector_options);
 
         app->setAnalyzer(analyzer);
 
