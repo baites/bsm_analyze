@@ -317,16 +317,23 @@ void AnalyzerOperation::waitForInstructions()
 class ThreadController::Summary
 {
     public:
-        Summary():
+        Summary(const uint32_t &files_total):
             _events_processed(0),
+            _files_total(files_total),
             _files_processed(0),
-            _total_events_size(0)
+            _total_events_size(0),
+            _percent_done(0)
         {
         }
 
         uint64_t eventsProcessed() const
         {
             return _events_processed;
+        }
+        
+        uint32_t filesTotal() const
+        {
+            return _files_total;
         }
 
         uint32_t filesProcessed() const
@@ -349,6 +356,14 @@ class ThreadController::Summary
         void addFilesProcessed()
         {
             ++_files_processed;
+
+            uint32_t quotent = 100 * filesProcessed() / filesTotal() / 10;
+            if (_percent_done < quotent)
+            {
+                _percent_done = quotent;
+
+                cout << "Processed " << setw(3) << quotent << "0 %" << endl;
+            }
         }
 
         void addEventsSize(const uint32_t &size)
@@ -358,8 +373,10 @@ class ThreadController::Summary
 
     private:
         uint64_t _events_processed;
+        const uint32_t _files_total;
         uint32_t _files_processed;
         uint64_t _total_events_size;
+        uint32_t _percent_done;
 };
 
 // Thread controller
@@ -403,7 +420,7 @@ void ThreadController::start()
             || !hasAnalyzer())
         return;
 
-    _summary.reset(new Summary());
+    _summary.reset(new Summary(_input_files->size()));
 
     //startKeyboardThread();
 
