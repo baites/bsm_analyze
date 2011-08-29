@@ -32,7 +32,6 @@ namespace bsm
         class RangeComparator;
     class LockCounterOnUpdate;
 
-    class Cut2DSelector;
     class ElectronSelector;
     class JetSelector;
     class MultiplicityCutflow;
@@ -57,6 +56,10 @@ namespace bsm
     class SynchSelectorOptions;
     class SynchSelector;
     class SynchSelectorDelegate;
+
+    class Cut2DSelectorOptions;
+    class Cut2DSelector;
+    class Cut2DSelectorDelegate;
 
     class H1Proxy;
     class H2Proxy;

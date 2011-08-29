@@ -9,15 +9,14 @@
 #include <boost/shared_ptr.hpp>
 
 #include "bsm_input/interface/bsm_input_fwd.h"
+#include "interface/AppController.h"
 #include "interface/Selector.h"
 
 namespace bsm
 {
-    class Cut2DSelector : public Selector
+    class Cut2DSelectorDelegate
     {
         public:
-            typedef boost::shared_ptr<Cut> CutPtr;
-
             enum Region
             {
                 SIGNAL = 0, // pTre: 25..   DeltaR: 0.5..
@@ -26,11 +25,39 @@ namespace bsm
                 S3          // pTrel ..25   DeltaR: 0.3..0.5
             };
 
+            virtual ~Cut2DSelectorDelegate() {}
+
+            virtual void setRegion(const Region &) {}
+    };
+
+    class Cut2DSelectorOptions : public Options
+    {
+        public:
+            Cut2DSelectorOptions();
+            virtual ~Cut2DSelectorOptions();
+
+            void setDelegate(Cut2DSelectorDelegate *);
+            Cut2DSelectorDelegate *delegate() const;
+
+            // Options interface
+            //
+            virtual DescriptionPtr description() const;
+
+        private:
+            void setRegion(std::string);
+
+            Cut2DSelectorDelegate *_delegate;
+
+            DescriptionPtr _description;
+    };
+
+    class Cut2DSelector : public Selector, public Cut2DSelectorDelegate
+    {
+        public:
+            typedef boost::shared_ptr<Cut> CutPtr;
+
             Cut2DSelector(const Region &region = SIGNAL);
             Cut2DSelector(const Cut2DSelector &);
-
-            void setRegion(const Region &);
-            Region region() const;
 
             // Test if object passes the selector
             //
@@ -41,6 +68,12 @@ namespace bsm
             //
             CutPtr dr() const;
             CutPtr ptrel() const;
+
+            Region region() const;
+
+            // Delegate Interface
+            //
+            virtual void setRegion(const Region &);
 
             // Selector interface
             //
