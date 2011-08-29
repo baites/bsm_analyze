@@ -14,9 +14,11 @@
 #include "bsm_input/interface/Muon.pb.h"
 #include "bsm_input/interface/PrimaryVertex.pb.h"
 #include "bsm_input/interface/Physics.pb.h"
+#include "interface/Cut.h"
 #include "interface/JetEnergyCorrections.h"
 #include "interface/SynchSelector.h"
 #include "interface/Cut2DSelector.h"
+#include "interface/Utility.h"
 
 using namespace std;
 
@@ -169,6 +171,11 @@ SynchSelector::SynchSelector():
     //
     _jec.reset(new JetEnergyCorrections());
     monitor(_jec);
+
+    // Cuts
+    //
+    _htlep.reset(new Comparator<>(150));
+    monitor(_htlep);
 }
 
 SynchSelector::SynchSelector(const SynchSelector &object):
@@ -214,10 +221,20 @@ SynchSelector::SynchSelector(const SynchSelector &object):
     //
     _jec = dynamic_pointer_cast<JetEnergyCorrections>(object._jec->clone());
     monitor(_jec);
+
+    // cuts
+    //
+    _htlep = dynamic_pointer_cast<Cut>(object.htlep()->clone());
+    monitor(_htlep);
 }
 
 SynchSelector::~SynchSelector()
 {
+}
+
+SynchSelector::CutPtr SynchSelector::htlep() const
+{
+    return _htlep;
 }
 
 bool SynchSelector::apply(const Event *event)
@@ -489,12 +506,15 @@ bool SynchSelector::leadingJet()
 
 bool SynchSelector::htlep(const Event *event)
 {
+    if (htlep()->isDisabled())
+        return true;
+
     const LorentzVector &lepton_p4 = (ELECTRON == _lepton_mode 
         ? (*_good_electrons.begin())->physics_object().p4()
         : (*_good_muons.begin())->physics_object().p4());
 
     return event->has_missing_energy()
-        && 150 < (pt(event->missing_energy().p4()) + pt(lepton_p4))
+        && htlep()->apply(pt(event->missing_energy().p4()) + pt(lepton_p4))
         && (_cutflow->apply(HTLEP), true);
 }
 
