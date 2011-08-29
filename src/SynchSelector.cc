@@ -544,11 +544,6 @@ bool SynchSelector::cut2D(const LorentzVector *lepton_p4)
         return true;
 
     return _cut2d_selector->apply(*lepton_p4, *closest_jet->corrected_p4);
-
-    /*
-    return 0.5 < deltar_min
-        || 25 < ptrel(*lepton_p4, *closest_jet->corrected_p4);
-        */
 }
 
 bool SynchSelector::isolation(const LorentzVector *p4, const PFIsolation *isolation)
