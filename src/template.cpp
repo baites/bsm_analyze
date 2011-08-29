@@ -10,6 +10,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <TCanvas.h>
+#include <TFile.h>
 #include <TGaxis.h>
 #include <TH1.h>
 #include <TH2.h>
@@ -89,7 +90,28 @@ int main(int argc, char *argv[])
             mttbar->GetXaxis()->SetTitleSize(0.045);
             mttbar->Draw("h");
 
+            canvas->cd(3);
+            TH2Ptr dr_vs_ptrel = convert(*analyzer->drVsPtrel());
+            dr_vs_ptrel->SetName("dr_vs_ptrel");
+            dr_vs_ptrel->GetXaxis()->SetTitle("p_{T}^{rel} [GeV/c^{2}]");
+            dr_vs_ptrel->GetXaxis()->SetTitleSize(0.045);
+            dr_vs_ptrel->GetYaxis()->SetTitle("#Delta R");
+            dr_vs_ptrel->GetYaxis()->SetTitleSize(0.045);
+            dr_vs_ptrel->Draw("colz");
+
             canvas->Update();
+
+            shared_ptr<TFile> out(new TFile("template.root", "recreate"));
+            if (!out->IsOpen())
+            {
+                cerr << "Failed to create output file" << endl;
+            }
+            else
+            {
+                htlep->Write();
+                mttbar->Write();
+                dr_vs_ptrel->Write();
+            }
 
             root->Run();
         }

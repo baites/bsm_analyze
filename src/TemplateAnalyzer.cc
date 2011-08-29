@@ -16,6 +16,7 @@
 #include "bsm_input/interface/Event.pb.h"
 #include "bsm_input/interface/Jet.pb.h"
 #include "bsm_input/interface/Muon.pb.h"
+#include "bsm_input/interface/Physics.pb.h"
 #include "bsm_stat/interface/H1.h"
 #include "bsm_stat/interface/H2.h"
 #include "interface/Algorithm.h"
@@ -33,6 +34,7 @@ TemplateAnalyzer::TemplateAnalyzer()
 {
     _synch_selector.reset(new SynchSelector());
     _synch_selector->htlep()->disable();
+    _synch_selector->cutflow()->cut(SynchSelector::VETO_SECOND_LEPTON)->objects()->setDelegate(this);
     monitor(_synch_selector);
 
     _htlep.reset(new H1Proxy(400, 0, 4000));
@@ -41,7 +43,7 @@ TemplateAnalyzer::TemplateAnalyzer()
     _mttbar.reset(new H1Proxy(400, 0, 4000));
     monitor(_mttbar);
 
-    _dr_vs_ptrel.reset(new H2Proxy(500, 0, 50, 15, 0, 1.5));
+    _dr_vs_ptrel.reset(new H2Proxy(50, 0, 50, 15, 0, 1.5));
     monitor(_dr_vs_ptrel);
 }
 
@@ -49,6 +51,7 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object)
 {
     _synch_selector = 
         dynamic_pointer_cast<SynchSelector>(object._synch_selector->clone());
+    _synch_selector->cutflow()->cut(SynchSelector::VETO_SECOND_LEPTON)->objects()->setDelegate(this);
     monitor(_synch_selector);
 
     _htlep = dynamic_pointer_cast<H1Proxy>(object._htlep->clone());
@@ -89,6 +92,19 @@ bsm::SynchSelectorDelegate *TemplateAnalyzer::getSynchSelectorDelegate() const
 bsm::Cut2DSelectorDelegate *TemplateAnalyzer::getCut2DSelectorDelegate() const
 {
     return _synch_selector->getCut2DSelectorDelegate();
+}
+
+void TemplateAnalyzer::didCounterAdd()
+{
+    // Secondary lepton veto cut passed
+    //
+    const LorentzVector &jet_p4 = *_synch_selector->closestJet()->corrected_p4;
+    const LorentzVector &lepton_p4 =
+        (SynchSelector::ELECTRON == _synch_selector->leptonMode()
+            ? (*_synch_selector->goodElectrons().begin())->physics_object().p4()
+            : (*_synch_selector->goodMuons().begin())->physics_object().p4());
+
+    drVsPtrel()->fill(ptrel(lepton_p4, jet_p4), dr(lepton_p4, jet_p4));
 }
 
 void TemplateAnalyzer::onFileOpen(const std::string &filename, const Input *input)

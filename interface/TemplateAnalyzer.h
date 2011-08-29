@@ -19,7 +19,7 @@
 
 namespace bsm
 {
-    class TemplateAnalyzer : public Analyzer
+    class TemplateAnalyzer : public Analyzer, public CounterDelegate
     {
         public:
             typedef boost::shared_ptr<stat::H1> H1Ptr;
@@ -35,6 +35,10 @@ namespace bsm
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
             SynchSelectorDelegate *getSynchSelectorDelegate() const;
             Cut2DSelectorDelegate *getCut2DSelectorDelegate() const;
+
+            // Counter Delegate interface
+            //
+            virtual void didCounterAdd();
 
             // Anlayzer interface
             //
