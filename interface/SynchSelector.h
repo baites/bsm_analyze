@@ -38,6 +38,7 @@ namespace bsm
 
             virtual void setLeptonMode(const LeptonMode &) {}
             virtual void setCutMode(const CutMode &) {}
+            virtual void setLeadingJetPt(const float &) {}
     };
 
     class SynchSelectorOptions : public Options
@@ -56,6 +57,7 @@ namespace bsm
         private:
             void setLeptonMode(std::string);
             void setCutMode(std::string);
+            void setLeadingJetPt(const float &);
 
             SynchSelectorDelegate *_delegate;
 
@@ -129,6 +131,7 @@ namespace bsm
             //
             virtual void setLeptonMode(const LeptonMode &);
             virtual void setCutMode(const CutMode &);
+            virtual void setLeadingJetPt(const float &);
 
             // Selector interface
             //
@@ -180,6 +183,8 @@ namespace bsm
             GoodJets _nice_jets; // pT > 25
             GoodJets _good_jets; // pT > 50
             GoodJets::const_iterator _closest_jet;
+
+            float _leading_jet_pt;
     };
 
     // Helpers

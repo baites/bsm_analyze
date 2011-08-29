@@ -44,6 +44,11 @@ SynchSelectorOptions::SynchSelectorOptions()
          po::value<string>()->notifier(
              boost::bind(&SynchSelectorOptions::setCutMode, this, _1)),
          "synchroniation selector cut mode: 2dcut, isolation")
+
+        ("leading-jet",
+         po::value<float>()->notifier(
+             boost::bind(&SynchSelectorOptions::setLeadingJetPt, this, _1)),
+         "leading jet pT cut")
     ;
 }
 
@@ -101,13 +106,29 @@ void SynchSelectorOptions::setCutMode(std::string mode)
         cerr << "unsupported synchronization selector cut mode" << endl;
 }
 
+void SynchSelectorOptions::setLeadingJetPt(const float &value)
+{
+    if (!delegate())
+        return;
+
+    if (0 > value)
+    {
+        cerr << "only positive values of leading jet pT are accepted" << endl;
+
+        return;
+    }
+
+    delegate()->setLeadingJetPt(value);
+}
+
 
 
 // Synchronization Exercise Selector
 //
 SynchSelector::SynchSelector():
     _lepton_mode(ELECTRON),
-    _cut_mode(CUT_2D)
+    _cut_mode(CUT_2D),
+    _leading_jet_pt(250)
 {
     // Cutflow table
     //
@@ -152,7 +173,8 @@ SynchSelector::SynchSelector():
 
 SynchSelector::SynchSelector(const SynchSelector &object):
     _lepton_mode(object._lepton_mode),
-    _cut_mode(object._cut_mode)
+    _cut_mode(object._cut_mode),
+    _leading_jet_pt(object._leading_jet_pt)
 {
     // Cutflow Table
     //
@@ -277,6 +299,11 @@ void SynchSelector::setLeptonMode(const LeptonMode &lepton_mode)
 void SynchSelector::setCutMode(const CutMode &cut_mode)
 {
     _cut_mode = cut_mode;
+}
+
+void SynchSelector::setLeadingJetPt(const float &value)
+{
+    _leading_jet_pt = value;
 }
 
 // Selector interface
@@ -456,7 +483,7 @@ bool SynchSelector::leadingJet()
             max_pt = jet_pt;
     }
 
-    return 250 < max_pt
+    return _leading_jet_pt < max_pt
         && (_cutflow->apply(LEADING_JET), true);
 }
 
