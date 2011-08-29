@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
             mreco->SetName("mreco");
             mreco->GetXaxis()->SetTitle("m_{t#bar{t}}^{reco} [GeV/c^{2}]");
             mreco->GetXaxis()->SetTitleSize(0.045);
-            mreco->Draw();
+            mreco->Draw("h");
 
             mreco->SaveAs("mreco.root");
 
@@ -93,14 +93,14 @@ int main(int argc, char *argv[])
             mgen->SetName("mgen");
             mgen->GetXaxis()->SetTitle("m_{t#bar{t}}^{gen} [GeV/c^{2}]");
             mgen->GetXaxis()->SetTitleSize(0.045);
-            mgen->Draw();
+            mgen->Draw("h");
 
             canvas->cd(3);
             TH1Ptr mreco_minus_mgen = convert(*analyzer->mrecoMinusMgen());
             mreco_minus_mgen->SetName("mreco_minus_mgen");
             mreco_minus_mgen->GetXaxis()->SetTitle("(m_{t#bar{t}}^{reco} - m_{t#bar{t}}^{gen}) / m_{t#bar{t}}^{gen}");
             mreco_minus_mgen->GetXaxis()->SetTitleSize(0.045);
-            mreco_minus_mgen->Draw();
+            mreco_minus_mgen->Draw("h");
 
             canvas->cd(4);
             canvas->cd(4)->SetLeftMargin(10);

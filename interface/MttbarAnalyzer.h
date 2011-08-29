@@ -141,6 +141,8 @@ namespace bsm
             std::ostringstream _out;
 
             bool _use_generator_mass;
+
+            boost::shared_ptr<Counter> _gen_events;
     };
 }
 

@@ -83,7 +83,7 @@ ${progs}: bin/bsm_test_%: src/%.cpp ${lib}
 #
 cleanbin:
 ifneq ($(strip ${progs}),)
-	rm -f ./bin/bsm_*
+	rm -f ./bin/bsm_test_*
 endif
 
 clean: cleanbin

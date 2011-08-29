@@ -117,6 +117,9 @@ MttbarAnalyzer::MttbarAnalyzer():
     monitor(_mgen);
     monitor(_mreco_minus_mgen);
     monitor(_mreco_vs_mgen);
+
+    _gen_events.reset(new Counter());
+    monitor(_gen_events);
 }
 
 MttbarAnalyzer::MttbarAnalyzer(const MttbarAnalyzer &object):
@@ -165,6 +168,10 @@ MttbarAnalyzer::MttbarAnalyzer(const MttbarAnalyzer &object):
     monitor(_mgen);
     monitor(_mreco_minus_mgen);
     monitor(_mreco_vs_mgen);
+
+    _gen_events =
+        dynamic_pointer_cast<Counter>(object._gen_events->clone());
+    monitor(_gen_events);
 }
 
 bsm::JetEnergyCorrectionDelegate *MttbarAnalyzer::getJetEnergyCorrectionDelegate() const
@@ -248,6 +255,8 @@ void MttbarAnalyzer::process(const Event *event)
 
         if (!mass_gen)
             return;
+
+        _gen_events->add();
     }
 
     // Process only events, that pass the synch selector
@@ -443,6 +452,11 @@ void MttbarAnalyzer::print(std::ostream &out) const
 {
     out << *_synch_selector << endl;
 
+    out << "Gen Events " << _synch_selector->leptonMode()
+        << "+jets before any cuts" << endl;
+    out << *_gen_events << endl;
+    out << endl;
+
     out << "Missing Energy Monitor" << endl;
     out << *_missing_energy_monitor << endl;
     out << endl;
@@ -482,7 +496,7 @@ float MttbarAnalyzer::getMttbarGen(const Event *event)
     const GenParticles &particles = event->gen_particles();
     // Search for the first top
     //
-    GenParticles::const_iterator top = find(particles, TOP);
+    const GenParticles::const_iterator top = find(particles, TOP);
     if (particles.end() != top)
     {
         // Search for the second top
@@ -498,7 +512,8 @@ float MttbarAnalyzer::getMttbarGen(const Event *event)
                     && !(is_leptonic
                         && is_second_leptonic))
             {
-                mass_gen = mass(top->physics_object().p4() + second_top->physics_object().p4());
+                mass_gen = mass(top->physics_object().p4()
+                        + second_top->physics_object().p4());
             }
         }
     }
