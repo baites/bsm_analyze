@@ -71,49 +71,47 @@ int main(int argc, char *argv[])
 
             TGaxis::SetMaxDigits(3);
 
-            shared_ptr<TCanvas> canvas(new TCanvas());
-            canvas->SetTitle("Mass/Htlep");
-            canvas->SetWindowSize(1200, 480);
-            canvas->Divide(3);
-
-            canvas->cd(1);
             TH1Ptr htlep = convert(*analyzer->htlep());
             htlep->SetName("htlep");
             htlep->GetXaxis()->SetTitle("H_{T}^{lep} [GeV/c]");
             htlep->GetXaxis()->SetTitleSize(0.045);
-            htlep->Draw("h");
 
-            canvas->cd(2);
             TH1Ptr mttbar = convert(*analyzer->mttbar());
             mttbar->SetName("mttbar");
             mttbar->GetXaxis()->SetTitle("m_{t#bar{t}}^{reco} [GeV/c^{2}]");
             mttbar->GetXaxis()->SetTitleSize(0.045);
-            mttbar->Draw("h");
-
-            canvas->cd(3);
             TH2Ptr dr_vs_ptrel = convert(*analyzer->drVsPtrel());
             dr_vs_ptrel->SetName("dr_vs_ptrel");
             dr_vs_ptrel->GetXaxis()->SetTitle("p_{T}^{rel} [GeV/c^{2}]");
             dr_vs_ptrel->GetXaxis()->SetTitleSize(0.045);
             dr_vs_ptrel->GetYaxis()->SetTitle("#Delta R");
             dr_vs_ptrel->GetYaxis()->SetTitleSize(0.045);
-            dr_vs_ptrel->Draw("colz");
 
-            canvas->Update();
-
-            shared_ptr<TFile> out(new TFile("template.root", "recreate"));
-            if (!out->IsOpen())
-            {
-                cerr << "Failed to create output file" << endl;
-            }
-            else
+            if (app->output())
             {
                 htlep->Write();
                 mttbar->Write();
                 dr_vs_ptrel->Write();
             }
 
-            root->Run();
+            if (app->isInteractive())
+            {
+                shared_ptr<TCanvas> canvas(new TCanvas());
+                canvas->SetTitle("Mass/Htlep");
+                canvas->SetWindowSize(1200, 480);
+                canvas->Divide(3);
+
+                canvas->cd(1);
+                htlep->Draw("h");
+
+                canvas->cd(2);
+                mttbar->Draw("h");
+
+                canvas->cd(3);
+                dr_vs_ptrel->Draw("colz");
+
+                root->Run();
+            }
         }
     }
     catch(const exception &error)
