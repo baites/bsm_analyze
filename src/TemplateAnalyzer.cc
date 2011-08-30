@@ -96,15 +96,37 @@ bsm::Cut2DSelectorDelegate *TemplateAnalyzer::getCut2DSelectorDelegate() const
 
 void TemplateAnalyzer::didCounterAdd()
 {
-    // Secondary lepton veto cut passed
+    // Secondary lepton veto cut passed: find closest jet to the lepton
     //
-    const LorentzVector &jet_p4 = *_synch_selector->closestJet()->corrected_p4;
     const LorentzVector &lepton_p4 =
         (SynchSelector::ELECTRON == _synch_selector->leptonMode()
             ? (*_synch_selector->goodElectrons().begin())->physics_object().p4()
             : (*_synch_selector->goodMuons().begin())->physics_object().p4());
 
-    drVsPtrel()->fill(ptrel(lepton_p4, jet_p4), dr(lepton_p4, jet_p4));
+    //const LorentzVector &jet_p4 = *_synch_selector->closestJet()->corrected_p4;
+    //
+    typedef SynchSelector::GoodJets GoodJets;
+
+    const GoodJets &nice_jets = _synch_selector->niceJets();
+    GoodJets::const_iterator closest_jet = nice_jets.end();
+    float deltar_min = 999999;
+
+    for(GoodJets::const_iterator jet = nice_jets.begin();
+            nice_jets.end() != jet;
+            ++jet)
+    {
+        const float deltar = dr(lepton_p4, *jet->corrected_p4);
+        if (deltar < deltar_min)
+        {
+            deltar_min = deltar;
+            closest_jet = jet;
+        }
+    }
+
+    if (nice_jets.end() == closest_jet)
+        return;
+
+    drVsPtrel()->fill(ptrel(lepton_p4, *closest_jet->corrected_p4), deltar_min);
 }
 
 void TemplateAnalyzer::onFileOpen(const std::string &filename, const Input *input)

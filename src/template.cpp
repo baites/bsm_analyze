@@ -110,6 +110,8 @@ int main(int argc, char *argv[])
                 canvas->cd(3);
                 dr_vs_ptrel->Draw("colz");
 
+                canvas->Update();
+
                 root->Run();
             }
         }
