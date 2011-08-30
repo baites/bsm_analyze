@@ -100,7 +100,6 @@ void FilterAnalyzer::process(const Event *event)
 
 void FilterAnalyzer::fileWillClose(const Reader *)
 {
-    cout << "close file" << endl;
     _writer->close();
 }
 
