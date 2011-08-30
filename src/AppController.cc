@@ -17,13 +17,13 @@
 #include <TFile.h>
 
 #include "bsm_core/interface/Debug.h"
-#include "bsm_input/interface/Reader.h"
 #include "bsm_input/interface/Event.pb.h"
 #include "interface/Analyzer.h"
 #include "interface/AppController.h"
 #include "interface/Thread.h"
 
 using namespace std;
+using namespace boost;
 
 using bsm::AppController;
 
@@ -78,15 +78,33 @@ AppController::AppController():
     // Suppress log
     //
     _debug.reset(new core::Debug());
+
+    _reader_delegate = 0;
 }
 
 AppController::~AppController()
 {
 }
 
-void AppController::setAnalyzer(const AnalyzerPtr &analyzer)
+void AppController::setAnalyzer(const AnalyzerPtr &analyzer,
+        const bool &is_reader_delegate)
 {
     _analyzer = analyzer;
+
+    if (is_reader_delegate)
+    {
+        shared_ptr<ReaderDelegate> delegate = 
+            dynamic_pointer_cast<ReaderDelegate>(analyzer);
+        if (delegate)
+            _reader_delegate = delegate.get();
+    }
+    else
+        _reader_delegate = 0;
+}
+
+bool AppController::isAnalyzerReaderDelegate() const
+{
+    return _reader_delegate;
 }
 
 void AppController::addOptions(const Options &options)
@@ -235,6 +253,34 @@ void AppController::disableMutlithread()
     _disable_multithread = true;
 }
 
+// Reader Delegate interface
+//
+void AppController::fileWillOpen(const Reader *reader)
+{
+    if (isAnalyzerReaderDelegate())
+        _reader_delegate->fileWillOpen(reader);
+}
+
+void AppController::fileDidOpen(const Reader *reader)
+{
+    if (isAnalyzerReaderDelegate())
+        _reader_delegate->fileDidOpen(reader);
+
+    _analyzer->onFileOpen(reader->filename(), reader->input().get());
+}
+
+void AppController::fileWillClose(const Reader *reader)
+{
+    if (isAnalyzerReaderDelegate())
+        _reader_delegate->fileWillClose(reader);
+}
+
+void AppController::fileDidClose(const Reader *reader)
+{
+    if (isAnalyzerReaderDelegate())
+        _reader_delegate->fileDidClose(reader);
+}
+
 // Privates
 //
 void AppController::setDebugFile(const string &filename)
@@ -270,16 +316,11 @@ void AppController::processSingleThread()
             ++input)
     {
         boost::shared_ptr<Reader> reader(new Reader(*input));
+        reader->setDelegate(this);
         reader->open();
-        
-        if (!reader->isOpen())
-        {
-            cerr << "failed to open: " << *input << endl;
 
+        if (!reader->isOpen())
             continue;
-        }
-        else
-            _analyzer->onFileOpen(reader->filename(), reader->input().get());
 
         for(boost::shared_ptr<Event> event(new Event());
                 reader->read(event);
@@ -302,6 +343,6 @@ void AppController::processMultiThread()
         controller->push(*input);
     }
 
-    controller->use(_analyzer);
+    controller->use(_analyzer, isAnalyzerReaderDelegate());
     controller->start();
 }
