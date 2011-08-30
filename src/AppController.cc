@@ -21,6 +21,7 @@
 #include "interface/Analyzer.h"
 #include "interface/AppController.h"
 #include "interface/Thread.h"
+#include "interface/Utility.h"
 
 using namespace std;
 using namespace boost;
@@ -311,10 +312,14 @@ void AppController::setOutput(const string &filename)
 
 void AppController::processSingleThread()
 {
+    shared_ptr<Summary> _summary(new Summary(_input_files.size()));
+
     for(Inputs::const_iterator input = _input_files.begin();
             _input_files.end() != input;
             ++input)
     {
+        _summary->addFilesProcessed();
+
         boost::shared_ptr<Reader> reader(new Reader(*input));
         reader->setDelegate(this);
         reader->open();
@@ -322,13 +327,21 @@ void AppController::processSingleThread()
         if (!reader->isOpen())
             continue;
 
+        uint32_t events_processed = 0;
         for(boost::shared_ptr<Event> event(new Event());
                 reader->read(event);
-                event->Clear())
+                event->Clear(), ++events_processed)
         {
             _analyzer->process(event.get());
         }
+
+        _summary->addEventsProcessed(events_processed);
+        _summary->addEventsSize(0);
     }
+
+    cout << *_summary << endl;
+
+    _summary.reset();
 }
 
 void AppController::processMultiThread()

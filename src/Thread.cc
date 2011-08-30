@@ -17,6 +17,7 @@
 
 #include "interface/Analyzer.h"
 #include "interface/Thread.h"
+#include "interface/Utility.h"
 
 using namespace std;
 
@@ -347,73 +348,6 @@ void AnalyzerOperation::waitForInstructions()
 
 
 
-// Thread Controller summary
-//
-class ThreadController::Summary
-{
-    public:
-        Summary(const uint32_t &files_total):
-            _events_processed(0),
-            _files_total(files_total),
-            _files_processed(0),
-            _total_events_size(0),
-            _percent_done(0)
-        {
-        }
-
-        uint64_t eventsProcessed() const
-        {
-            return _events_processed;
-        }
-        
-        uint32_t filesTotal() const
-        {
-            return _files_total;
-        }
-
-        uint32_t filesProcessed() const
-        {
-            return _files_processed;
-        }
-
-        uint32_t averageEventSize() const
-        {
-            return eventsProcessed()
-                ? (_total_events_size / eventsProcessed())
-                : 0;
-        }
-
-        void addEventsProcessed(const uint32_t &events)
-        {
-            _events_processed += events;
-        }
-
-        void addFilesProcessed()
-        {
-            ++_files_processed;
-
-            uint32_t quotent = 100 * filesProcessed() / filesTotal() / 10;
-            if (_percent_done < quotent)
-            {
-                _percent_done = quotent;
-
-                cout << "Processed " << setw(3) << quotent << "0 %" << endl;
-            }
-        }
-
-        void addEventsSize(const uint32_t &size)
-        {
-            _total_events_size += size;
-        }
-
-    private:
-        uint64_t _events_processed;
-        const uint32_t _files_total;
-        uint32_t _files_processed;
-        uint64_t _total_events_size;
-        uint32_t _percent_done;
-};
-
 // Thread controller
 //
 ThreadController::ThreadController(const uint32_t &max_threads):
@@ -477,12 +411,8 @@ void ThreadController::start()
     run();
 
     //stopKeyboardThread();
-
-    cout << "Job Summary" << endl;
-    cout << "  Processed Events: " << _summary->eventsProcessed() << endl;
-    cout << "  Processed  Files: " << _summary->filesProcessed() << endl;
-    cout << "Average Event Size: " << _summary->averageEventSize() << endl;
-    cout << endl;
+    
+    cout << *_summary << endl;
 
     _summary.reset();
 }

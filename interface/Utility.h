@@ -17,6 +17,55 @@ namespace bsm
 {
     class LorentzVector;
 
+    class Summary
+    {
+        public:
+            Summary(const uint32_t &files_total);
+
+            uint64_t eventsProcessed() const
+            {
+                return _events_processed;
+            }
+            
+            uint32_t filesTotal() const
+            {
+                return _files_total;
+            }
+
+            uint32_t filesProcessed() const
+            {
+                return _files_processed;
+            }
+
+            uint32_t averageEventSize() const
+            {
+                return eventsProcessed()
+                    ? (_total_events_size / eventsProcessed())
+                    : 0;
+            }
+
+            void addEventsProcessed(const uint32_t &events)
+            {
+                _events_processed += events;
+            }
+
+            void addFilesProcessed();
+
+            void addEventsSize(const uint32_t &size)
+            {
+                _total_events_size += size;
+            }
+
+        private:
+            uint64_t _events_processed;
+            const uint32_t _files_total;
+            uint32_t _files_processed;
+            uint64_t _total_events_size;
+            uint32_t _percent_done;
+    };
+
+    std::ostream &operator <<(std::ostream &, const Summary &);
+
     namespace utility
     {
         class SupressTHistAddDirectory

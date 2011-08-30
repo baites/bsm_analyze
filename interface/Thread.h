@@ -229,8 +229,6 @@ namespace bsm
 
             AnalyzerPtr _analyzer;
 
-            class Summary;
-
             boost::shared_ptr<Summary> _summary;
 
             bool _analyzer_is_reader_delegate;
