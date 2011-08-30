@@ -11,6 +11,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include "interface/Analyzer.h"
+#include "interface/Cut2DSelector.h"
 #include "interface/HistogramBookkeeper.h"
 #include "interface/SynchSelector.h"
 
@@ -44,9 +45,19 @@ public:
         return _bookkeeper;
     }
 
-    bsm::JetEnergyCorrectionDelegate * getJetEnergyCorrectionDelegate() const
+    JetEnergyCorrectionDelegate * getJetEnergyCorrectionDelegate() const
     {
         return _synch_selector->getJetEnergyCorrectionDelegate();
+    }
+
+    Cut2DSelectorDelegate * getCut2DSelectorDelegate() const
+    {
+        return _synch_selector->getCut2DSelectorDelegate();
+    }
+
+    SynchSelectorDelegate * getSynchSelectorDelegate() const
+    {
+        return _synch_selector.get();
     }
 
     virtual uint32_t id() const

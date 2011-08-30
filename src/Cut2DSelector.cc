@@ -170,7 +170,7 @@ bool Cut2DSelector::apply(const LorentzVector &lepton,
             || _ptrel->apply(bsm::ptrel(lepton, jet));
     }
     else
-        return _dr->apply(bsm::ptrel(lepton, jet))
+        return _dr->apply(bsm::dr(lepton, jet))
             && _ptrel->apply(bsm::ptrel(lepton, jet));
 }
 
