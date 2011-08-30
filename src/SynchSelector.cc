@@ -4,6 +4,8 @@
 // Created by Samvel Khalatyan, Aug 01, 2011
 // Copyright 2011, All rights reserved
 
+#include <functional>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/pointer_cast.hpp>
 
@@ -173,6 +175,9 @@ SynchSelector::SynchSelector():
 
     // Cuts
     //
+    _cut.reset(new Comparator<logical_and<bool> >(true));
+    monitor(_cut);
+
     _leading_jet.reset(new Comparator<>(250));
     monitor(_leading_jet);
 
@@ -225,6 +230,9 @@ SynchSelector::SynchSelector(const SynchSelector &object):
 
     // cuts
     //
+    _cut = dynamic_pointer_cast<Cut>(object.cut()->clone());
+    monitor(_cut);
+
     _leading_jet = dynamic_pointer_cast<Cut>(object.leadingJet()->clone());
     monitor(_leading_jet);
 
@@ -234,6 +242,11 @@ SynchSelector::SynchSelector(const SynchSelector &object):
 
 SynchSelector::~SynchSelector()
 {
+}
+
+SynchSelector::CutPtr SynchSelector::cut() const
+{
+    return _cut;
 }
 
 SynchSelector::CutPtr SynchSelector::leadingJet() const
@@ -260,7 +273,7 @@ bool SynchSelector::apply(const Event *event)
         && jets(event)
         && lepton()
         && secondaryLeptonVeto()
-        && cut()
+        && isolationAnd2DCut()
         && leadingJetCut()
         && htlepCut(event);
 }
@@ -460,8 +473,11 @@ bool SynchSelector::secondaryLeptonVeto()
         && (_cutflow->apply(VETO_SECOND_LEPTON), true);
 }
 
-bool SynchSelector::cut()
+bool SynchSelector::isolationAnd2DCut()
 {
+    if (_cut->isDisabled())
+        return true;
+
     const LorentzVector *lepton_p4 = 0;
     const PFIsolation *lepton_isolation = 0;
 
@@ -493,7 +509,7 @@ bool SynchSelector::cut()
             result = isolation(lepton_p4, lepton_isolation);
     }
 
-    return result
+    return _cut->apply(result)
         && (_cutflow->apply(CUT_LEPTON), true);
 }
 

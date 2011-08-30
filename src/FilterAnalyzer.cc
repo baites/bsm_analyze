@@ -31,6 +31,7 @@ FilterAnalyzer::FilterAnalyzer()
     _synch_selector.reset(new SynchSelector());
     _synch_selector->htlep()->disable();
     _synch_selector->leadingJet()->disable();
+    _synch_selector->cut()->disable();
     monitor(_synch_selector);
 }
 

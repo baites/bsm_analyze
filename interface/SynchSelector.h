@@ -112,6 +112,7 @@ namespace bsm
 
             // Access cuts
             //
+            CutPtr cut() const;
             CutPtr leadingJet() const;
             CutPtr htlep() const;
 
@@ -161,7 +162,7 @@ namespace bsm
             bool jets(const Event *);
             bool lepton();
             bool secondaryLeptonVeto();
-            bool cut();
+            bool isolationAnd2DCut();
             bool leadingJetCut();
             bool htlepCut(const Event *);
 
@@ -193,6 +194,7 @@ namespace bsm
 
             // cuts
             //
+            CutPtr _cut;
             CutPtr _leading_jet;
             CutPtr _htlep;
     };
