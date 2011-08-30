@@ -14,6 +14,8 @@
 #include <boost/filesystem.hpp>
 #include <boost/regex.hpp>
 
+#include <TFile.h>
+
 #include "bsm_core/interface/Debug.h"
 #include "bsm_input/interface/Reader.h"
 #include "bsm_input/interface/Event.pb.h"
@@ -32,7 +34,8 @@ using boost::regex;
 AppController::AppController():
     _run_mode(SINGLE_THREAD),
     _disable_multithread(false),
-    _number_of_threads(0)
+    _number_of_threads(0),
+    _interactive(false)
 {
     // Generic Options: common to all executables
     //
@@ -50,6 +53,16 @@ AppController::AppController():
          po::value<string>()->implicit_value("debug.log")->notifier(
              boost::bind(&AppController::setDebugFile, this, _1)),
          "save debug info in file")
+
+        ("interactive",
+         po::value<bool>()->implicit_value(false)->notifier(
+             boost::bind(&AppController::setInteractive, this, _1)),
+         "run in interactive mode")
+
+        ("output",
+         po::value<string>()->notifier(
+             boost::bind(&AppController::setOutput, this, _1)),
+         "save output plots in file")
     ;
 
     // Hidden options: necessary for the positional arguments
@@ -120,6 +133,16 @@ void AppController::addInputs(const Inputs &inputs)
 
         _input_files.push_back(*input);
     }
+}
+
+bool AppController::isInteractive() const
+{
+    return _interactive;
+}
+
+AppController::TFilePtr AppController::output() const
+{
+    return _output;
 }
 
 bool AppController::run(int &argc, char *argv[])
@@ -195,6 +218,13 @@ bool AppController::run(int &argc, char *argv[])
             processMultiThread();
 
         cout << *_analyzer << endl;
+
+        if (!_output_filename.empty())
+        {
+            _output.reset(new TFile(_output_filename.c_str(), "RECREATE"));
+            if (!_output->IsOpen())
+                _output.reset();
+        }
     }
 
     return true;
@@ -221,6 +251,16 @@ void AppController::setNumberOfThreads(const uint32_t &number_of_threads)
     _number_of_threads = number_of_threads;
 
     _run_mode = MULTI_THREAD;
+}
+
+void AppController::setInteractive(const bool &value)
+{
+    _interactive = value;
+}
+
+void AppController::setOutput(const string &filename)
+{
+    _output_filename = filename;
 }
 
 void AppController::processSingleThread()

@@ -14,9 +14,11 @@
 #include "bsm_input/interface/Muon.pb.h"
 #include "bsm_input/interface/PrimaryVertex.pb.h"
 #include "bsm_input/interface/Physics.pb.h"
+#include "interface/Cut.h"
 #include "interface/JetEnergyCorrections.h"
 #include "interface/SynchSelector.h"
 #include "interface/Cut2DSelector.h"
+#include "interface/Utility.h"
 
 using namespace std;
 
@@ -44,6 +46,11 @@ SynchSelectorOptions::SynchSelectorOptions()
          po::value<string>()->notifier(
              boost::bind(&SynchSelectorOptions::setCutMode, this, _1)),
          "synchroniation selector cut mode: 2dcut, isolation")
+
+        ("leading-jet",
+         po::value<float>()->notifier(
+             boost::bind(&SynchSelectorOptions::setLeadingJetPt, this, _1)),
+         "leading jet pT cut")
     ;
 }
 
@@ -101,13 +108,29 @@ void SynchSelectorOptions::setCutMode(std::string mode)
         cerr << "unsupported synchronization selector cut mode" << endl;
 }
 
+void SynchSelectorOptions::setLeadingJetPt(const float &value)
+{
+    if (!delegate())
+        return;
+
+    if (0 > value)
+    {
+        cerr << "only positive values of leading jet pT are accepted" << endl;
+
+        return;
+    }
+
+    delegate()->setLeadingJetPt(value);
+}
+
 
 
 // Synchronization Exercise Selector
 //
 SynchSelector::SynchSelector():
     _lepton_mode(ELECTRON),
-    _cut_mode(CUT_2D)
+    _cut_mode(CUT_2D),
+    _leading_jet_pt(250)
 {
     // Cutflow table
     //
@@ -148,11 +171,17 @@ SynchSelector::SynchSelector():
     //
     _jec.reset(new JetEnergyCorrections());
     monitor(_jec);
+
+    // Cuts
+    //
+    _htlep.reset(new Comparator<>(150));
+    monitor(_htlep);
 }
 
 SynchSelector::SynchSelector(const SynchSelector &object):
     _lepton_mode(object._lepton_mode),
-    _cut_mode(object._cut_mode)
+    _cut_mode(object._cut_mode),
+    _leading_jet_pt(object._leading_jet_pt)
 {
     // Cutflow Table
     //
@@ -192,10 +221,20 @@ SynchSelector::SynchSelector(const SynchSelector &object):
     //
     _jec = dynamic_pointer_cast<JetEnergyCorrections>(object._jec->clone());
     monitor(_jec);
+
+    // cuts
+    //
+    _htlep = dynamic_pointer_cast<Cut>(object.htlep()->clone());
+    monitor(_htlep);
 }
 
 SynchSelector::~SynchSelector()
 {
+}
+
+SynchSelector::CutPtr SynchSelector::htlep() const
+{
+    return _htlep;
 }
 
 bool SynchSelector::apply(const Event *event)
@@ -277,6 +316,11 @@ void SynchSelector::setLeptonMode(const LeptonMode &lepton_mode)
 void SynchSelector::setCutMode(const CutMode &cut_mode)
 {
     _cut_mode = cut_mode;
+}
+
+void SynchSelector::setLeadingJetPt(const float &value)
+{
+    _leading_jet_pt = value;
 }
 
 // Selector interface
@@ -456,18 +500,21 @@ bool SynchSelector::leadingJet()
             max_pt = jet_pt;
     }
 
-    return 250 < max_pt
+    return _leading_jet_pt < max_pt
         && (_cutflow->apply(LEADING_JET), true);
 }
 
 bool SynchSelector::htlep(const Event *event)
 {
+    if (htlep()->isDisabled())
+        return true;
+
     const LorentzVector &lepton_p4 = (ELECTRON == _lepton_mode 
         ? (*_good_electrons.begin())->physics_object().p4()
         : (*_good_muons.begin())->physics_object().p4());
 
     return event->has_missing_energy()
-        && 150 < (pt(event->missing_energy().p4()) + pt(lepton_p4))
+        && htlep()->apply(pt(event->missing_energy().p4()) + pt(lepton_p4))
         && (_cutflow->apply(HTLEP), true);
 }
 
@@ -497,11 +544,6 @@ bool SynchSelector::cut2D(const LorentzVector *lepton_p4)
         return true;
 
     return _cut2d_selector->apply(*lepton_p4, *closest_jet->corrected_p4);
-
-    /*
-    return 0.5 < deltar_min
-        || 25 < ptrel(*lepton_p4, *closest_jet->corrected_p4);
-        */
 }
 
 bool SynchSelector::isolation(const LorentzVector *p4, const PFIsolation *isolation)

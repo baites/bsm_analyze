@@ -205,8 +205,6 @@ namespace bsm
             core::ConditionPtr _condition;
             boost::shared_ptr<InputFiles> _input_files;
 
-            uint32_t _processed_files;
-
             Threads _threads;
             ThreadsFIFOPtr _threads_waiting;
             ThreadPtr _keyboard_thread;

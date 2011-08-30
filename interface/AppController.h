@@ -20,6 +20,8 @@
 
 namespace po = boost::program_options;
 
+class TFile;
+
 namespace bsm
 {
     class Options
@@ -37,6 +39,7 @@ namespace bsm
         public:
             typedef std::vector<std::string> Inputs;
             typedef boost::shared_ptr<Analyzer> AnalyzerPtr;
+            typedef boost::shared_ptr<TFile> TFilePtr;
 
             AppController();
             ~AppController();
@@ -46,6 +49,9 @@ namespace bsm
             void addOptions(const Options &);
 
             void addInputs(const Inputs &);
+
+            bool isInteractive() const;
+            TFilePtr output() const;
 
             bool run(int &argc, char *argv[]);
 
@@ -71,6 +77,9 @@ namespace bsm
 
             void setNumberOfThreads(const uint32_t &);
 
+            void setInteractive(const bool &);
+            void setOutput(const std::string &);
+
             void processSingleThread();
             void processMultiThread();
 
@@ -89,6 +98,11 @@ namespace bsm
             uint32_t _number_of_threads;
 
             boost::shared_ptr<core::Debug> _debug;
+
+            bool _interactive;
+
+            std::string _output_filename;
+            TFilePtr _output;
     };
 }
 

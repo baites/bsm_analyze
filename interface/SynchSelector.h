@@ -12,6 +12,7 @@
 #include "bsm_core/interface/Object.h"
 #include "bsm_input/interface/bsm_input_fwd.h"
 #include "bsm_input/interface/Physics.pb.h"
+#include "interface/bsm_fwd.h"
 #include "interface/AppController.h"
 #include "interface/Selector.h"
 
@@ -38,6 +39,7 @@ namespace bsm
 
             virtual void setLeptonMode(const LeptonMode &) {}
             virtual void setCutMode(const CutMode &) {}
+            virtual void setLeadingJetPt(const float &) {}
     };
 
     class SynchSelectorOptions : public Options
@@ -56,6 +58,7 @@ namespace bsm
         private:
             void setLeptonMode(std::string);
             void setCutMode(std::string);
+            void setLeadingJetPt(const float &);
 
             SynchSelectorDelegate *_delegate;
 
@@ -66,6 +69,7 @@ namespace bsm
         public SynchSelectorDelegate
     {
         public:
+            typedef boost::shared_ptr<Cut> CutPtr;
             typedef boost::shared_ptr<LorentzVector> LorentzVectorPtr;
 
             struct CorrectedJet
@@ -106,6 +110,10 @@ namespace bsm
 
             virtual ~SynchSelector();
 
+            // Access cuts
+            //
+            CutPtr htlep() const;
+
             // Test if muon passes the selector
             //
             virtual bool apply(const Event *);
@@ -129,6 +137,7 @@ namespace bsm
             //
             virtual void setLeptonMode(const LeptonMode &);
             virtual void setCutMode(const CutMode &);
+            virtual void setLeadingJetPt(const float &);
 
             // Selector interface
             //
@@ -180,6 +189,12 @@ namespace bsm
             GoodJets _nice_jets; // pT > 25
             GoodJets _good_jets; // pT > 50
             GoodJets::const_iterator _closest_jet;
+
+            float _leading_jet_pt;
+
+            // cuts
+            //
+            CutPtr _htlep;
     };
 
     // Helpers
