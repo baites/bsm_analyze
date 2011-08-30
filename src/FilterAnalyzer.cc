@@ -1,6 +1,4 @@
-// Filter Events
-//
-// Apply selectors and filter event objects
+// Apply selectors and filter events
 //
 // Created by Samvel Khalatyan, May 20, 2011
 // Copyright 2011, All rights reserved
@@ -14,14 +12,12 @@
 #include <boost/pointer_cast.hpp>
 #include <boost/version.hpp>
 
-#include "bsm_input/interface/Electron.pb.h"
 #include "bsm_input/interface/Event.pb.h"
 #include "bsm_input/interface/Input.pb.h"
-#include "bsm_input/interface/MissingEnergy.pb.h"
-#include "bsm_input/interface/Muon.pb.h"
+#include "bsm_input/interface/Trigger.pb.h"
 #include "bsm_input/interface/Writer.h"
 #include "interface/FilterAnalyzer.h"
-#include "interface/Selector.h"
+#include "interface/SynchSelector.h"
 
 using namespace std;
 
@@ -32,47 +28,41 @@ using bsm::FilterAnalyzer;
 
 FilterAnalyzer::FilterAnalyzer()
 {
-    _pf_el_selector.reset(new ElectronSelector());
-    _gsf_el_selector.reset(new ElectronSelector());
-
-    _pf_mu_selector.reset(new MuonSelector());
-    _reco_mu_selector.reset(new MuonSelector());
-
-    monitor(_pf_el_selector);
-    monitor(_gsf_el_selector);
-
-    monitor(_pf_mu_selector);
-    monitor(_reco_mu_selector);
+    _synch_selector.reset(new SynchSelector());
+    _synch_selector->htlep()->disable();
+    monitor(_synch_selector);
 }
 
 FilterAnalyzer::FilterAnalyzer(const FilterAnalyzer &object)
 {
-    _pf_el_selector = 
-        dynamic_pointer_cast<ElectronSelector>(object._pf_el_selector->clone());
-
-    _gsf_el_selector =
-        dynamic_pointer_cast<ElectronSelector>(object._gsf_el_selector->clone());
-
-    _pf_mu_selector =
-        dynamic_pointer_cast<MuonSelector>(object._pf_mu_selector->clone());
-
-    _reco_mu_selector =
-        dynamic_pointer_cast<MuonSelector>(object._reco_mu_selector->clone());
-
-    monitor(_pf_el_selector);
-    monitor(_gsf_el_selector);
-
-    monitor(_pf_mu_selector);
-    monitor(_reco_mu_selector);
+    _synch_selector = 
+        dynamic_pointer_cast<SynchSelector>(object._synch_selector->clone());
+    monitor(_synch_selector);
 }
 
-void FilterAnalyzer::onFileOpen(const std::string &filename, const Input *input)
+bsm::JetEnergyCorrectionDelegate *FilterAnalyzer::getJetEnergyCorrectionDelegate() const
 {
+    return _synch_selector->getJetEnergyCorrectionDelegate();
+}
+
+bsm::SynchSelectorDelegate *FilterAnalyzer::getSynchSelectorDelegate() const
+{
+    return _synch_selector.get();
+}
+
+void FilterAnalyzer::onFileOpen(const string &filename, const Input *input)
+{
+    if (_writer)
+    {
+        _writer->close();
+        _writer.reset();
+    }
+
     fs::path path(filename);
 
     ostringstream file_name;
 
-    boost::hash<std::string> make_hash;
+    boost::hash<string> make_hash;
 
     file_name << make_hash(filename);
 
@@ -91,27 +81,25 @@ void FilterAnalyzer::onFileOpen(const std::string &filename, const Input *input)
         return;
     }
 
-    *_writer->input() = *input;
-
-    _event.reset(new Event());
+    _writer->input()->CopyFrom(*input);
+    _writer->input()->set_events(0);
 }
 
 void FilterAnalyzer::process(const Event *event)
 {
-    if (!_writer
-            || !_event
-            || !event->primary_vertices().size())
+    if (!_writer)
         return;
 
-    primaryVertices(event);
-    electrons(event);
-    muons(event);
-    missing_energy(event);
-    jets(event);
+    if (!_synch_selector->apply(event))
+        return;
 
-    _writer->write(_event);
+    _writer->write(event);
+}
 
-    _event->Clear();
+void FilterAnalyzer::fileWillClose(const Reader *)
+{
+    cout << "close file" << endl;
+    _writer->close();
 }
 
 uint32_t FilterAnalyzer::id() const
@@ -124,138 +112,7 @@ FilterAnalyzer::ObjectPtr FilterAnalyzer::clone() const
     return ObjectPtr(new FilterAnalyzer(*this));
 }
 
-void FilterAnalyzer::print(std::ostream &out) const
+void FilterAnalyzer::print(ostream &out) const
 {
-    out << "Particle-Flow Electrons" << endl;
-    out << *_pf_el_selector << endl;
-    out << endl;
-
-    out << "Gsf Electrons" << endl;
-    out << *_gsf_el_selector << endl;
-    out << endl;
-
-    out << "Particle-Flow Muons" << endl;
-    out << *_pf_mu_selector << endl;
-    out << endl;
-
-    out << "Reco Muons" << endl;
-    out << *_reco_mu_selector;
-}
-
-// Private
-//
-void FilterAnalyzer::primaryVertices(const Event *event)
-{
-    typedef ::google::protobuf::RepeatedPtrField<PrimaryVertex> PrimaryVertices;
-
-    for(PrimaryVertices::const_iterator pv = event->primary_vertices().begin();
-            event->primary_vertices().end() != pv;
-            ++pv)
-    {
-        bsm::PrimaryVertex *vertex = _event->add_primary_vertices();
-
-        *vertex = *pv;
-    }
-}
-
-void FilterAnalyzer::electrons(const Event *event)
-{
-    typedef ::google::protobuf::RepeatedPtrField<Electron> Electrons;
-
-    const PrimaryVertex &pv = *event->primary_vertices().begin();
-
-    if (event->pf_electrons().size())
-    {
-        LockSelectorEventCounterOnUpdate lock(*_pf_el_selector);
-        for(Electrons::const_iterator el = event->pf_electrons().begin();
-                event->pf_electrons().end() != el;
-                ++el)
-        {
-            if (_pf_el_selector->apply(*el, pv))
-            {
-                bsm::Electron *electron = _event->add_pf_electrons();
-
-                *electron = *el;
-            }
-        }
-    }
-
-    if (event->gsf_electrons().size())
-    {
-        LockSelectorEventCounterOnUpdate lock(*_gsf_el_selector);
-        for(Electrons::const_iterator el = event->gsf_electrons().begin();
-                event->gsf_electrons().end() != el;
-                ++el)
-        {
-            if (_gsf_el_selector->apply(*el, pv))
-            {
-                bsm::Electron *electron = _event->add_gsf_electrons();
-
-                *electron = *el;
-            }
-        }
-    }
-}
-
-void FilterAnalyzer::muons(const Event *event)
-{
-    typedef ::google::protobuf::RepeatedPtrField<Muon> Muons;
-
-    const PrimaryVertex &pv = *event->primary_vertices().begin();
-
-    if (event->pf_muons().size())
-    {
-        LockSelectorEventCounterOnUpdate lock(*_pf_mu_selector);
-        for(Muons::const_iterator mu = event->pf_muons().begin();
-                event->pf_muons().end() != mu;
-                ++mu)
-        {
-            if (_pf_mu_selector->apply(*mu, pv))
-            {
-                bsm::Muon *muon = _event->add_pf_muons();
-
-                *muon = *mu;
-            }
-        }
-    }
-
-    if (event->reco_muons().size())
-    {
-        LockSelectorEventCounterOnUpdate lock(*_reco_mu_selector);
-        for(Muons::const_iterator mu = event->reco_muons().begin();
-                event->reco_muons().end() != mu;
-                ++mu)
-        {
-            if (_reco_mu_selector->apply(*mu, pv))
-            {
-                bsm::Muon *muon = _event->add_reco_muons();
-
-                *muon = *mu;
-            }
-        }
-    }
-}
-
-void FilterAnalyzer::missing_energy(const Event *event)
-{
-    if (!event->has_missing_energy())
-        return;
-
-    bsm::MissingEnergy *met = _event->mutable_missing_energy();
-
-    *met = event->missing_energy();
-}
-
-void FilterAnalyzer::jets(const Event *event)
-{
-    typedef ::google::protobuf::RepeatedPtrField<Jet> Jets;
-
-    for(Jets::const_iterator jet = event->jets().begin();
-            event->jets().end() != jet;
-            ++jet)
-    {
-        bsm::Jet *pb_jet = _event->add_jets();
-
-        *pb_jet = *jet;
-    }
+    out << *_synch_selector;
 }
