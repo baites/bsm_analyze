@@ -112,6 +112,7 @@ namespace bsm
 
             // Access cuts
             //
+            CutPtr leadingJet() const;
             CutPtr htlep() const;
 
             // Test if muon passes the selector
@@ -161,8 +162,8 @@ namespace bsm
             bool lepton();
             bool secondaryLeptonVeto();
             bool cut();
-            bool leadingJet();
-            bool htlep(const Event *);
+            bool leadingJetCut();
+            bool htlepCut(const Event *);
 
             void selectGoodElectrons(const Event *);
             void selectGoodMuons(const Event *);
@@ -190,10 +191,9 @@ namespace bsm
             GoodJets _good_jets; // pT > 50
             GoodJets::const_iterator _closest_jet;
 
-            float _leading_jet_pt;
-
             // cuts
             //
+            CutPtr _leading_jet;
             CutPtr _htlep;
     };
 

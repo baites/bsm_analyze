@@ -129,8 +129,7 @@ void SynchSelectorOptions::setLeadingJetPt(const float &value)
 //
 SynchSelector::SynchSelector():
     _lepton_mode(ELECTRON),
-    _cut_mode(CUT_2D),
-    _leading_jet_pt(250)
+    _cut_mode(CUT_2D)
 {
     // Cutflow table
     //
@@ -174,14 +173,16 @@ SynchSelector::SynchSelector():
 
     // Cuts
     //
+    _leading_jet.reset(new Comparator<>(250));
+    monitor(_leading_jet);
+
     _htlep.reset(new Comparator<>(150));
     monitor(_htlep);
 }
 
 SynchSelector::SynchSelector(const SynchSelector &object):
     _lepton_mode(object._lepton_mode),
-    _cut_mode(object._cut_mode),
-    _leading_jet_pt(object._leading_jet_pt)
+    _cut_mode(object._cut_mode)
 {
     // Cutflow Table
     //
@@ -224,12 +225,20 @@ SynchSelector::SynchSelector(const SynchSelector &object):
 
     // cuts
     //
+    _leading_jet = dynamic_pointer_cast<Cut>(object.leadingJet()->clone());
+    monitor(_leading_jet);
+
     _htlep = dynamic_pointer_cast<Cut>(object.htlep()->clone());
     monitor(_htlep);
 }
 
 SynchSelector::~SynchSelector()
 {
+}
+
+SynchSelector::CutPtr SynchSelector::leadingJet() const
+{
+    return _leading_jet;
 }
 
 SynchSelector::CutPtr SynchSelector::htlep() const
@@ -252,8 +261,8 @@ bool SynchSelector::apply(const Event *event)
         && lepton()
         && secondaryLeptonVeto()
         && cut()
-        && leadingJet()
-        && htlep(event);
+        && leadingJetCut()
+        && htlepCut(event);
 }
 
 SynchSelector::CutflowPtr SynchSelector::cutflow() const
@@ -320,7 +329,7 @@ void SynchSelector::setCutMode(const CutMode &cut_mode)
 
 void SynchSelector::setLeadingJetPt(const float &value)
 {
-    _leading_jet_pt = value;
+    _leading_jet->setValue(value);
 }
 
 // Selector interface
@@ -488,8 +497,11 @@ bool SynchSelector::cut()
         && (_cutflow->apply(CUT_LEPTON), true);
 }
 
-bool SynchSelector::leadingJet()
+bool SynchSelector::leadingJetCut()
 {
+    if (leadingJet()->isDisabled())
+        return true;
+
     float max_pt = 0;
     for(GoodJets::const_iterator jet = _good_jets.begin();
             _good_jets.end() != jet;
@@ -500,11 +512,11 @@ bool SynchSelector::leadingJet()
             max_pt = jet_pt;
     }
 
-    return _leading_jet_pt < max_pt
+    return leadingJet()->apply(max_pt)
         && (_cutflow->apply(LEADING_JET), true);
 }
 
-bool SynchSelector::htlep(const Event *event)
+bool SynchSelector::htlepCut(const Event *event)
 {
     if (htlep()->isDisabled())
         return true;
