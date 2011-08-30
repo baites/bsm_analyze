@@ -13,7 +13,6 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include "bsm_input/interface/Event.pb.h"
-#include "bsm_input/interface/Reader.h"
 #include "bsm_core/interface/Keyboard.h"
 
 #include "interface/Analyzer.h"
@@ -102,6 +101,7 @@ AnalyzerOperation::AnalyzerOperation():
 {
     _thread = 0;
     _controller = 0;
+    _reader_delegate = 0;
 }
 
 AnalyzerOperation::~AnalyzerOperation()
@@ -123,6 +123,16 @@ void AnalyzerOperation::use(const AnalyzerPtr &analyzer)
         return;
 
     _analyzer = analyzer;
+}
+
+void AnalyzerOperation::setReaderDelegate(ReaderDelegate *delegate)
+{
+    _reader_delegate = delegate;
+}
+
+bsm::ReaderDelegate *AnalyzerOperation::readerDelegate() const
+{
+    return _reader_delegate;
 }
 
 AnalyzerPtr AnalyzerOperation::analyzer() const
@@ -187,6 +197,32 @@ void AnalyzerOperation::stop()
 void AnalyzerOperation::onThreadInit(Thread *thread)
 {
     _thread = thread;
+}
+
+void AnalyzerOperation::fileWillOpen(const Reader *reader)
+{
+    if (readerDelegate())
+        readerDelegate()->fileWillOpen(reader);
+}
+
+void AnalyzerOperation::fileDidOpen(const Reader *reader)
+{
+    if (readerDelegate())
+        readerDelegate()->fileDidOpen(reader);
+
+    _analyzer->onFileOpen(reader->filename(), reader->input().get());
+}
+
+void AnalyzerOperation::fileWillClose(const Reader *reader)
+{
+    if (readerDelegate())
+        readerDelegate()->fileWillClose(reader);
+}
+
+void AnalyzerOperation::fileDidClose(const Reader *reader)
+{
+    if (readerDelegate())
+        readerDelegate()->fileDidOpen(reader);
 }
 
 Thread *AnalyzerOperation::thread() const
@@ -256,12 +292,11 @@ AnalyzerOperation::ReaderPtr AnalyzerOperation::createReader()
     Lock lock(thread()->condition());
 
     ReaderPtr reader(new Reader(_file_name));
+    reader->setDelegate(this);
     _file_name.clear();
 
     reader->open();
-    if (reader->isOpen())
-        _analyzer->onFileOpen(reader->filename(), reader->input().get());
-    else
+    if (!reader->isOpen())
         reader.reset();
 
     return reader;
@@ -383,7 +418,8 @@ class ThreadController::Summary
 //
 ThreadController::ThreadController(const uint32_t &max_threads):
     _max_threads(min(max_threads ? max_threads : INT_MAX,
-                boost::thread::hardware_concurrency()))
+                boost::thread::hardware_concurrency())),
+    _analyzer_is_reader_delegate(false)
 {
     _condition.reset(new core::Condition());
     _input_files.reset(new InputFiles());
@@ -402,9 +438,16 @@ bsm::core::ConditionPtr ThreadController::condition() const
     return _condition;
 }
 
-void ThreadController::use(const AnalyzerPtr &analyzer)
+void ThreadController::use(const AnalyzerPtr &analyzer,
+        const bool &is_reader_delegate)
 {
     _analyzer = analyzer;
+    _analyzer_is_reader_delegate = is_reader_delegate;
+}
+
+bool ThreadController::isAnalyzerReaderDelegate() const
+{
+    return _analyzer_is_reader_delegate;
 }
 
 void ThreadController::push(const std::string &file_name)
@@ -514,7 +557,20 @@ void ThreadController::addThread()
 
     {
         Lock lock(condition());
-        operation->use(boost::dynamic_pointer_cast<Analyzer>(_analyzer->clone()));
+
+        AnalyzerPtr analyzer_clone =
+            boost::dynamic_pointer_cast<Analyzer>(_analyzer->clone());
+        operation->use(analyzer_clone);
+
+        if (isAnalyzerReaderDelegate())
+        {
+            shared_ptr<ReaderDelegate> delegate =
+                boost::dynamic_pointer_cast<ReaderDelegate>(analyzer_clone);
+
+            if (delegate)
+                operation->setReaderDelegate(delegate.get());
+        }
+
         _threads[thread.get()] = thread;
     }
 
