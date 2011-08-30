@@ -211,7 +211,11 @@ void JetEnergyCorrections::setCorrection(const Level &jec_level,
     if (_corrections.end() != _corrections.find(jec_level))
         cerr << jec_level << " jet energy correction is already loaded" << endl;
     else
+    {
         _corrections[jec_level] = JetCorrectorParameters(file_name);
+
+        clog << jec_level << " loaded " << file_name << endl;
+    }
 
     corrector();
 }
