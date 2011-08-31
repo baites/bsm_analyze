@@ -22,7 +22,10 @@ namespace bsm
                 SIGNAL = 0, // pTre: 25..   DeltaR: 0.5..
                 S1,         // pTrel ..25   DeltaR: 0.1..0.2
                 S2,         // pTrel ..25   DeltaR: 0.2..0.3
-                S3          // pTrel ..25   DeltaR: 0.3..0.5
+                S3,         // pTrel ..25   DeltaR: 0.3..0.5
+                S1S2,
+                S2S3,
+                S1S2S3
             };
 
             virtual ~Cut2DSelectorDelegate() {}
