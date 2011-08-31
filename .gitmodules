@@ -7,6 +7,3 @@
 [submodule "JetMETObjects"]
 	path = JetMETObjects
 	url = git://github.com/ksamdev/JetMETObjects.git
-[submodule "bsm_input"]
-	path = bsm_input
-	url = git@github.com:baites/bsm_input.git

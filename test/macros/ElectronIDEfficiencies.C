@@ -17,22 +17,25 @@ void ElectronIDEfficiencies(TString filename, TString id, TString variable, TStr
    TH1D * HyperTight3 = (TH1D*) file->Get(id+"HyperTight3"+variable)->Clone();
    TH1D * HyperTight4 = (TH1D*) file->Get(id+"HyperTight4"+variable)->Clone();
 
-   All->Rebin(2);
-   VeryLoose->Rebin(2);   
-   Loose->Rebin(2);
-   Medium->Rebin(2);
-   Tight->Rebin(2);
-   SuperTight->Rebin(2);
-   HyperTight1->Rebin(2);
-   HyperTight2->Rebin(2);
-   HyperTight3->Rebin(2);
-   HyperTight4->Rebin(2);
+   Int_t ngroup = 50;
+
+   All->Rebin(ngroup);
+   VeryLoose->Rebin(ngroup);   
+   Loose->Rebin(ngroup);
+   Medium->Rebin(ngroup);
+   Tight->Rebin(ngroup);
+   SuperTight->Rebin(ngroup);
+   HyperTight1->Rebin(ngroup);
+   HyperTight2->Rebin(ngroup);
+   HyperTight3->Rebin(ngroup);
+   HyperTight4->Rebin(ngroup);
 
    TCanvas * canvas = new TCanvas();
+   canvas->SetLogy();
 
    All->GetXaxis()->SetTitle(xtitle);
    All->GetYaxis()->SetTitle("Efficiency respect to synch selection");
-   All->GetYaxis()->SetRangeUser(0.5,1.1);
+   All->GetYaxis()->SetRangeUser(0.01,1.0);
    All->Draw("axis");
 
    TEfficiency * VeryLooseEff =  new TEfficiency();
@@ -42,6 +45,7 @@ void ElectronIDEfficiencies(TString filename, TString id, TString variable, TStr
    VeryLooseEff->SetMarkerColor(kRed);
    VeryLooseEff->SetLineColor(kRed);
    VeryLooseEff->Draw("samep");
+   if (ngroup > 10) cout << "Efficiency for VeryLoose: " << VeryLooseEff->GetEfficiency(1) << std::endl;
 
    TEfficiency * LooseEff =  new TEfficiency();
    LooseEff->SetTotalHistogram(*All, "f");
@@ -50,6 +54,7 @@ void ElectronIDEfficiencies(TString filename, TString id, TString variable, TStr
    LooseEff->SetMarkerColor(kGreen);
    LooseEff->SetLineColor(kGreen);
    LooseEff->Draw("samep");
+   if (ngroup > 10) cout << "Efficiency for Loose: " << LooseEff->GetEfficiency(1) << std::endl;
 
    TEfficiency * MediumEff =  new TEfficiency();
    MediumEff->SetTotalHistogram(*Loose, "f");
@@ -58,6 +63,7 @@ void ElectronIDEfficiencies(TString filename, TString id, TString variable, TStr
    MediumEff->SetMarkerColor(kBlue);
    MediumEff->SetLineColor(kBlue);
    MediumEff->Draw("samep");
+   if (ngroup > 10) cout << "Efficiency for Medium: " << MediumEff->GetEfficiency(1) << std::endl;
 
    TEfficiency * TightEff =  new TEfficiency();
    TightEff->SetTotalHistogram(*Loose, "f");
@@ -66,6 +72,7 @@ void ElectronIDEfficiencies(TString filename, TString id, TString variable, TStr
    TightEff->SetMarkerColor(kYellow);
    TightEff->SetLineColor(kYellow);
    TightEff->Draw("samep");
+   if (ngroup > 10) cout << "Efficiency for Tight: " << TightEff->GetEfficiency(1) << std::endl;
 
    TEfficiency * SuperTightEff =  new TEfficiency();
    SuperTightEff->SetTotalHistogram(*Loose, "f");
@@ -74,6 +81,7 @@ void ElectronIDEfficiencies(TString filename, TString id, TString variable, TStr
    SuperTightEff->SetMarkerColor(kMagenta);
    SuperTightEff->SetLineColor(kMagenta);
    SuperTightEff->Draw("samep");
+   if (ngroup > 10) cout << "Efficiency for SuperTight1: " << SuperTightEff->GetEfficiency(1) << std::endl;
 
    TEfficiency * HyperTight1Eff =  new TEfficiency();
    HyperTight1Eff->SetTotalHistogram(*Loose, "f");
@@ -82,6 +90,7 @@ void ElectronIDEfficiencies(TString filename, TString id, TString variable, TStr
    HyperTight1Eff->SetMarkerColor(kCyan);
    HyperTight1Eff->SetLineColor(kCyan);
    HyperTight1Eff->Draw("samep");
+   if (ngroup > 10) cout << "Efficiency for HyperTight1: " << HyperTight1Eff->GetEfficiency(1) << std::endl;
 
    TEfficiency * HyperTight2Eff =  new TEfficiency();
    HyperTight2Eff->SetTotalHistogram(*Loose, "f");
@@ -90,6 +99,7 @@ void ElectronIDEfficiencies(TString filename, TString id, TString variable, TStr
    HyperTight2Eff->SetMarkerColor(kGreen);
    HyperTight2Eff->SetLineColor(kGreen);
    HyperTight2Eff->Draw("samep");
+   if (ngroup > 10) cout << "Efficiency for HyperTight2: " << HyperTight2Eff->GetEfficiency(1) << std::endl;
 
    TEfficiency * HyperTight3Eff =  new TEfficiency();
    HyperTight3Eff->SetTotalHistogram(*Loose, "f");
@@ -98,6 +108,7 @@ void ElectronIDEfficiencies(TString filename, TString id, TString variable, TStr
    HyperTight3Eff->SetMarkerColor(kBlue);
    HyperTight3Eff->SetLineColor(kCyan);
    HyperTight3Eff->Draw("samep");
+   if (ngroup > 10) cout << "Efficiency for HyperTight3: " << HyperTight3Eff->GetEfficiency(1) << std::endl;
 
    TEfficiency * HyperTight4Eff =  new TEfficiency();
    HyperTight4Eff->SetTotalHistogram(*Loose, "f");
@@ -106,6 +117,7 @@ void ElectronIDEfficiencies(TString filename, TString id, TString variable, TStr
    HyperTight4Eff->SetMarkerColor(kGray);
    HyperTight4Eff->SetLineColor(kGray);
    HyperTight4Eff->Draw("samep");
+   if (ngroup > 10) cout << "Efficiency for HyperTight4: " << HyperTight4Eff->GetEfficiency(1) << std::endl;
 
    TLegend * leg = new TLegend(0.60,0.15,0.86,0.50);
    leg->SetFillColor(kWhite);
