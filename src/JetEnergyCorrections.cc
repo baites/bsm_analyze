@@ -117,9 +117,15 @@ JetEnergyCorrections::JetEnergyCorrections()
 {
 }
 
-JetEnergyCorrections::JetEnergyCorrections(const JetEnergyCorrections &object):
-    _corrections(object._corrections.begin(), object._corrections.end())
+JetEnergyCorrections::JetEnergyCorrections(const JetEnergyCorrections &object)
 {
+    for(CorrectionFiles::const_iterator correction = object._correction_files.begin();
+            object._correction_files.end() != correction;
+            ++correction)
+    {
+        setCorrection(correction->first, correction->second);
+    }
+
     corrector();
 }
 
@@ -213,6 +219,7 @@ void JetEnergyCorrections::setCorrection(const Level &jec_level,
     else
     {
         _corrections[jec_level] = JetCorrectorParameters(file_name);
+        _correction_files[jec_level] = file_name;
 
         clog << jec_level << " loaded " << file_name << endl;
     }
