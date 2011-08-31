@@ -106,6 +106,7 @@ namespace bsm
             virtual void print(std::ostream &) const;
 
         private:
+            typedef std::map<Level, std::string> CorrectionFiles;
             typedef std::map<Level, JetCorrectorParameters> Corrections;
             typedef boost::shared_ptr<FactorizedJetCorrector> CorrectorPtr;
 
@@ -114,6 +115,7 @@ namespace bsm
             CorrectorPtr _jec;
 
             Corrections _corrections;
+            CorrectionFiles _correction_files;
     };
 
     // Helpers

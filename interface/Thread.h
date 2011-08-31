@@ -17,6 +17,7 @@
 #include "interface/bsm_fwd.h"
 #include "bsm_core/interface/bsm_core_fwd.h"
 #include "bsm_core/interface/Thread.h"
+#include "bsm_input/interface/Reader.h"
 
 namespace bsm
 {
@@ -62,7 +63,8 @@ namespace bsm
     // Analyzer Thread: perform the analysis
     //
     class AnalyzerOperation : public core::Operation,
-                                public core::RunLoopDelegate
+        public core::RunLoopDelegate,
+        public ReaderDelegate
     {
         public:
             AnalyzerOperation();
@@ -74,10 +76,14 @@ namespace bsm
             void use(ThreadController *controller);
             void use(const AnalyzerPtr &analyzer);
 
+            void setReaderDelegate(ReaderDelegate *);
+            ReaderDelegate *readerDelegate() const;
+
             AnalyzerPtr analyzer() const;
 
             // Scheule file for processing. Method does nothing is file
             // is already set but processing didn't start
+            //
             bool init(const std::string &file_name);
 
             // Operation interface
@@ -86,6 +92,13 @@ namespace bsm
             virtual void stop();
 
             virtual void onThreadInit(core::Thread *);
+
+            // Reader Delegate interface
+            //
+            virtual void fileWillOpen(const Reader *);
+            virtual void fileDidOpen(const Reader *);
+            virtual void fileWillClose(const Reader *);
+            virtual void fileDidClose(const Reader *);
 
             // RunLoop Delegate interface
             //
@@ -134,6 +147,8 @@ namespace bsm
 
             uint32_t _events_processed;
             uint32_t _total_events_size;
+
+            ReaderDelegate *_reader_delegate;
     };
 
     class ThreadController
@@ -144,7 +159,10 @@ namespace bsm
 
             core::ConditionPtr condition() const;
 
-            void use(const AnalyzerPtr &analyzer);
+            void use(const AnalyzerPtr &analyzer,
+                const bool &is_reader_delegate = false);
+
+            bool isAnalyzerReaderDelegate() const;
 
             // Schedule file for processing
             //
@@ -211,9 +229,9 @@ namespace bsm
 
             AnalyzerPtr _analyzer;
 
-            class Summary;
-
             boost::shared_ptr<Summary> _summary;
+
+            bool _analyzer_is_reader_delegate;
     };
 }
 

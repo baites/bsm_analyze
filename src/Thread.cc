@@ -13,11 +13,11 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 
 #include "bsm_input/interface/Event.pb.h"
-#include "bsm_input/interface/Reader.h"
 #include "bsm_core/interface/Keyboard.h"
 
 #include "interface/Analyzer.h"
 #include "interface/Thread.h"
+#include "interface/Utility.h"
 
 using namespace std;
 
@@ -102,6 +102,7 @@ AnalyzerOperation::AnalyzerOperation():
 {
     _thread = 0;
     _controller = 0;
+    _reader_delegate = 0;
 }
 
 AnalyzerOperation::~AnalyzerOperation()
@@ -123,6 +124,16 @@ void AnalyzerOperation::use(const AnalyzerPtr &analyzer)
         return;
 
     _analyzer = analyzer;
+}
+
+void AnalyzerOperation::setReaderDelegate(ReaderDelegate *delegate)
+{
+    _reader_delegate = delegate;
+}
+
+bsm::ReaderDelegate *AnalyzerOperation::readerDelegate() const
+{
+    return _reader_delegate;
 }
 
 AnalyzerPtr AnalyzerOperation::analyzer() const
@@ -187,6 +198,32 @@ void AnalyzerOperation::stop()
 void AnalyzerOperation::onThreadInit(Thread *thread)
 {
     _thread = thread;
+}
+
+void AnalyzerOperation::fileWillOpen(const Reader *reader)
+{
+    if (readerDelegate())
+        readerDelegate()->fileWillOpen(reader);
+}
+
+void AnalyzerOperation::fileDidOpen(const Reader *reader)
+{
+    if (readerDelegate())
+        readerDelegate()->fileDidOpen(reader);
+
+    _analyzer->onFileOpen(reader->filename(), reader->input().get());
+}
+
+void AnalyzerOperation::fileWillClose(const Reader *reader)
+{
+    if (readerDelegate())
+        readerDelegate()->fileWillClose(reader);
+}
+
+void AnalyzerOperation::fileDidClose(const Reader *reader)
+{
+    if (readerDelegate())
+        readerDelegate()->fileDidOpen(reader);
 }
 
 Thread *AnalyzerOperation::thread() const
@@ -256,12 +293,11 @@ AnalyzerOperation::ReaderPtr AnalyzerOperation::createReader()
     Lock lock(thread()->condition());
 
     ReaderPtr reader(new Reader(_file_name));
+    reader->setDelegate(this);
     _file_name.clear();
 
     reader->open();
-    if (reader->isOpen())
-        _analyzer->onFileOpen(reader->filename(), reader->input().get());
-    else
+    if (!reader->isOpen())
         reader.reset();
 
     return reader;
@@ -312,78 +348,12 @@ void AnalyzerOperation::waitForInstructions()
 
 
 
-// Thread Controller summary
-//
-class ThreadController::Summary
-{
-    public:
-        Summary(const uint32_t &files_total):
-            _events_processed(0),
-            _files_total(files_total),
-            _files_processed(0),
-            _total_events_size(0),
-            _percent_done(0)
-        {
-        }
-
-        uint64_t eventsProcessed() const
-        {
-            return _events_processed;
-        }
-        
-        uint32_t filesTotal() const
-        {
-            return _files_total;
-        }
-
-        uint32_t filesProcessed() const
-        {
-            return _files_processed;
-        }
-
-        uint32_t averageEventSize() const
-        {
-            return eventsProcessed()
-                ? (_total_events_size / eventsProcessed())
-                : 0;
-        }
-
-        void addEventsProcessed(const uint32_t &events)
-        {
-            _events_processed += events;
-        }
-
-        void addFilesProcessed()
-        {
-            ++_files_processed;
-
-            uint32_t quotent = 100 * filesProcessed() / filesTotal() / 10;
-            if (_percent_done < quotent)
-            {
-                _percent_done = quotent;
-
-                cout << "Processed " << setw(3) << quotent << "0 %" << endl;
-            }
-        }
-
-        void addEventsSize(const uint32_t &size)
-        {
-            _total_events_size += size;
-        }
-
-    private:
-        uint64_t _events_processed;
-        const uint32_t _files_total;
-        uint32_t _files_processed;
-        uint64_t _total_events_size;
-        uint32_t _percent_done;
-};
-
 // Thread controller
 //
 ThreadController::ThreadController(const uint32_t &max_threads):
     _max_threads(min(max_threads ? max_threads : INT_MAX,
-                boost::thread::hardware_concurrency()))
+                boost::thread::hardware_concurrency())),
+    _analyzer_is_reader_delegate(false)
 {
     _condition.reset(new core::Condition());
     _input_files.reset(new InputFiles());
@@ -402,9 +372,16 @@ bsm::core::ConditionPtr ThreadController::condition() const
     return _condition;
 }
 
-void ThreadController::use(const AnalyzerPtr &analyzer)
+void ThreadController::use(const AnalyzerPtr &analyzer,
+        const bool &is_reader_delegate)
 {
     _analyzer = analyzer;
+    _analyzer_is_reader_delegate = is_reader_delegate;
+}
+
+bool ThreadController::isAnalyzerReaderDelegate() const
+{
+    return _analyzer_is_reader_delegate;
 }
 
 void ThreadController::push(const std::string &file_name)
@@ -434,12 +411,8 @@ void ThreadController::start()
     run();
 
     //stopKeyboardThread();
-
-    cout << "Job Summary" << endl;
-    cout << "  Processed Events: " << _summary->eventsProcessed() << endl;
-    cout << "  Processed  Files: " << _summary->filesProcessed() << endl;
-    cout << "Average Event Size: " << _summary->averageEventSize() << endl;
-    cout << endl;
+    
+    cout << *_summary << endl;
 
     _summary.reset();
 }
@@ -514,7 +487,20 @@ void ThreadController::addThread()
 
     {
         Lock lock(condition());
-        operation->use(boost::dynamic_pointer_cast<Analyzer>(_analyzer->clone()));
+
+        AnalyzerPtr analyzer_clone =
+            boost::dynamic_pointer_cast<Analyzer>(_analyzer->clone());
+        operation->use(analyzer_clone);
+
+        if (isAnalyzerReaderDelegate())
+        {
+            shared_ptr<ReaderDelegate> delegate =
+                boost::dynamic_pointer_cast<ReaderDelegate>(analyzer_clone);
+
+            if (delegate)
+                operation->setReaderDelegate(delegate.get());
+        }
+
         _threads[thread.get()] = thread;
     }
 

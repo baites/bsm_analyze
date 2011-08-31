@@ -16,6 +16,8 @@
 #include <boost/shared_ptr.hpp>
 
 #include "bsm_core/interface/bsm_core_fwd.h"
+#include "bsm_input/interface/bsm_input_fwd.h"
+#include "bsm_input/interface/Reader.h"
 #include "interface/bsm_fwd.h"
 
 namespace po = boost::program_options;
@@ -34,7 +36,7 @@ namespace bsm
             virtual DescriptionPtr description() const = 0;
     };
 
-    class AppController
+    class AppController: public ReaderDelegate
     {
         public:
             typedef std::vector<std::string> Inputs;
@@ -44,7 +46,10 @@ namespace bsm
             AppController();
             ~AppController();
 
-            void setAnalyzer(const AnalyzerPtr &);
+            void setAnalyzer(const AnalyzerPtr &,
+                    const bool &is_reader_delegate = false);
+
+            bool isAnalyzerReaderDelegate() const;
 
             void addOptions(const Options &);
 
@@ -58,6 +63,14 @@ namespace bsm
             // disable multi-thread option
             //
             void disableMutlithread();
+
+            // Reader Delegate interface
+            //
+            virtual void fileWillOpen(const Reader *);
+            virtual void fileDidOpen(const Reader *);
+
+            virtual void fileWillClose(const Reader *);
+            virtual void fileDidClose(const Reader *);
 
         private:
             // Prevent Copying
@@ -103,6 +116,8 @@ namespace bsm
 
             std::string _output_filename;
             TFilePtr _output;
+
+            ReaderDelegate *_reader_delegate;
     };
 }
 

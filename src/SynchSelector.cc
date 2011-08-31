@@ -4,6 +4,8 @@
 // Created by Samvel Khalatyan, Aug 01, 2011
 // Copyright 2011, All rights reserved
 
+#include <functional>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/pointer_cast.hpp>
 
@@ -129,8 +131,7 @@ void SynchSelectorOptions::setLeadingJetPt(const float &value)
 //
 SynchSelector::SynchSelector():
     _lepton_mode(ELECTRON),
-    _cut_mode(CUT_2D),
-    _leading_jet_pt(250)
+    _cut_mode(CUT_2D)
 {
     // Cutflow table
     //
@@ -174,14 +175,19 @@ SynchSelector::SynchSelector():
 
     // Cuts
     //
+    _cut.reset(new Comparator<logical_and<bool> >(true));
+    monitor(_cut);
+
+    _leading_jet.reset(new Comparator<>(250));
+    monitor(_leading_jet);
+
     _htlep.reset(new Comparator<>(150));
     monitor(_htlep);
 }
 
 SynchSelector::SynchSelector(const SynchSelector &object):
     _lepton_mode(object._lepton_mode),
-    _cut_mode(object._cut_mode),
-    _leading_jet_pt(object._leading_jet_pt)
+    _cut_mode(object._cut_mode)
 {
     // Cutflow Table
     //
@@ -224,12 +230,28 @@ SynchSelector::SynchSelector(const SynchSelector &object):
 
     // cuts
     //
+    _cut = dynamic_pointer_cast<Cut>(object.cut()->clone());
+    monitor(_cut);
+
+    _leading_jet = dynamic_pointer_cast<Cut>(object.leadingJet()->clone());
+    monitor(_leading_jet);
+
     _htlep = dynamic_pointer_cast<Cut>(object.htlep()->clone());
     monitor(_htlep);
 }
 
 SynchSelector::~SynchSelector()
 {
+}
+
+SynchSelector::CutPtr SynchSelector::cut() const
+{
+    return _cut;
+}
+
+SynchSelector::CutPtr SynchSelector::leadingJet() const
+{
+    return _leading_jet;
 }
 
 SynchSelector::CutPtr SynchSelector::htlep() const
@@ -251,9 +273,9 @@ bool SynchSelector::apply(const Event *event)
         && jets(event)
         && lepton()
         && secondaryLeptonVeto()
-        && cut()
-        && leadingJet()
-        && htlep(event);
+        && isolationAnd2DCut()
+        && leadingJetCut()
+        && htlepCut(event);
 }
 
 SynchSelector::CutflowPtr SynchSelector::cutflow() const
@@ -320,7 +342,7 @@ void SynchSelector::setCutMode(const CutMode &cut_mode)
 
 void SynchSelector::setLeadingJetPt(const float &value)
 {
-    _leading_jet_pt = value;
+    _leading_jet->setValue(value);
 }
 
 // Selector interface
@@ -451,8 +473,11 @@ bool SynchSelector::secondaryLeptonVeto()
         && (_cutflow->apply(VETO_SECOND_LEPTON), true);
 }
 
-bool SynchSelector::cut()
+bool SynchSelector::isolationAnd2DCut()
 {
+    if (_cut->isDisabled())
+        return true;
+
     const LorentzVector *lepton_p4 = 0;
     const PFIsolation *lepton_isolation = 0;
 
@@ -484,12 +509,15 @@ bool SynchSelector::cut()
             result = isolation(lepton_p4, lepton_isolation);
     }
 
-    return result
+    return _cut->apply(result)
         && (_cutflow->apply(CUT_LEPTON), true);
 }
 
-bool SynchSelector::leadingJet()
+bool SynchSelector::leadingJetCut()
 {
+    if (leadingJet()->isDisabled())
+        return true;
+
     float max_pt = 0;
     for(GoodJets::const_iterator jet = _good_jets.begin();
             _good_jets.end() != jet;
@@ -500,11 +528,11 @@ bool SynchSelector::leadingJet()
             max_pt = jet_pt;
     }
 
-    return _leading_jet_pt < max_pt
+    return leadingJet()->apply(max_pt)
         && (_cutflow->apply(LEADING_JET), true);
 }
 
-bool SynchSelector::htlep(const Event *event)
+bool SynchSelector::htlepCut(const Event *event)
 {
     if (htlep()->isDisabled())
         return true;

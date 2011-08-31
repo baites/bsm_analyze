@@ -63,6 +63,8 @@ namespace bsm
 
     class H1Proxy;
     class H2Proxy;
+
+    class Summary;
 }
 
 #endif

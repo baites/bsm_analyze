@@ -1,8 +1,6 @@
-// Filter events
+// Apply selectors and filter events
 //
-// Apply pre-selection and filter events
-//
-// Created by Samvel Khalatyan, May 23, 2011
+// Created by Samvel Khalatyan, May 20, 2011
 // Copyright 2011, All rights reserved
 
 #include <iostream>
@@ -13,6 +11,8 @@
 #include "interface/AppController.h"
 #include "bsm_input/interface/Event.pb.h"
 #include "interface/FilterAnalyzer.h"
+#include "interface/JetEnergyCorrections.h"
+#include "interface/SynchSelector.h"
 
 using namespace std;
 
@@ -20,6 +20,8 @@ using boost::shared_ptr;
 
 using bsm::AppController;
 using bsm::FilterAnalyzer;
+using bsm::JetEnergyCorrectionOptions;
+using bsm::SynchSelectorOptions;
 
 int main(int argc, char *argv[])
 {
@@ -31,7 +33,16 @@ int main(int argc, char *argv[])
         shared_ptr<FilterAnalyzer> analyzer(new FilterAnalyzer());
         shared_ptr<AppController> app(new AppController());
 
-        app->setAnalyzer(analyzer);
+        boost::shared_ptr<JetEnergyCorrectionOptions> jec_options(new JetEnergyCorrectionOptions());
+        boost::shared_ptr<SynchSelectorOptions> synch_selector_options(new SynchSelectorOptions());
+
+        jec_options->setDelegate(analyzer->getJetEnergyCorrectionDelegate());
+        synch_selector_options->setDelegate(analyzer->getSynchSelectorDelegate());
+
+        app->addOptions(*jec_options);
+        app->addOptions(*synch_selector_options);
+
+        app->setAnalyzer(analyzer, true);
 
         result = app->run(argc, argv);
     }
