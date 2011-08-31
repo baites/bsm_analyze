@@ -7,7 +7,7 @@
 
 if [[ 2 -gt $# ]]
 then
-    echo Usage: `basename $0` input.txt FILES_PER_SER
+    echo Usage: `basename $0` input.txt FILES_PER_SET
 
     exit 1
 fi
