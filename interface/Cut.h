@@ -27,7 +27,7 @@ namespace bsm
         public:
             virtual ~CounterDelegate() {};
 
-            virtual void didCounterAdd() {};
+            virtual void didCounterAdd(const Counter *) {};
     };
 
     // Simple counter of anything. There are two states defined: locked and

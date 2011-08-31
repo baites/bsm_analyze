@@ -81,7 +81,7 @@ void Counter::add()
     update();
 
     if (delegate())
-        delegate()->didCounterAdd();
+        delegate()->didCounterAdd(this);
 }
 
 uint32_t Counter::id() const

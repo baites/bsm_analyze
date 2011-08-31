@@ -29,7 +29,8 @@ namespace bsm
             TemplateAnalyzer(const TemplateAnalyzer &);
 
             const H1Ptr htlep() const;
-            const H1Ptr mttbar() const;
+            const H1Ptr mttbarBeforeHtlep() const;
+            const H1Ptr mttbarAfterHtlep() const;
             const H2Ptr drVsPtrel() const;
 
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
@@ -38,7 +39,7 @@ namespace bsm
 
             // Counter Delegate interface
             //
-            virtual void didCounterAdd();
+            virtual void didCounterAdd(const Counter *);
 
             // Anlayzer interface
             //
@@ -55,11 +56,22 @@ namespace bsm
             typedef boost::shared_ptr<H1Proxy> H1ProxyPtr;
             typedef boost::shared_ptr<H2Proxy> H2ProxyPtr;
 
+            void fillDrVsPtrel();
+            void fillHtlep();
+
+            float mttbar() const;
+
             boost::shared_ptr<SynchSelector> _synch_selector;
 
             H1ProxyPtr _htlep;
-            H1ProxyPtr _mttbar;
+            H1ProxyPtr _mttbar_before_htlep;
+            H1ProxyPtr _mttbar_after_htlep;
             H2ProxyPtr _dr_vs_ptrel;
+
+            const Event *_event;
+
+            CounterPtr _secondary_lepton_counter;
+            CounterPtr _leading_jet_counter;
     };
 }
 
