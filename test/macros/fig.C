@@ -401,6 +401,7 @@ void plotCut2DBackground()
         canvas->cd(i + 1);
 
         style(hist, i);
+        hist->SetMarkerSize(0.1);
         hist->Draw("scat");
 
         TLegend *legend = createLegend(toString(i));
@@ -450,6 +451,7 @@ void plotCut2DSignal()
         canvas->cd(i + 1);
 
         style(hist, id);
+        hist->SetMarkerSize(0.1);
         hist->Draw("scat");
 
         TLegend *legend = createLegend(toString(id));
@@ -669,12 +671,12 @@ void fig()
 
     loadFiles();
 
-    //plotCut2DBackground();
-    //plotCut2DSignal();
+    plotCut2DBackground();
+    plotCut2DSignal();
 
     //plotQCDTemplates();
-    plotDataMCComparison();
+    //plotDataMCComparison();
 
-    plotHtlep50();
-    plotHtlep250();
+    //plotHtlep50();
+    //plotHtlep250();
 }
