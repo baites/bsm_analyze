@@ -33,7 +33,7 @@ Cut2DSelectorOptions::Cut2DSelectorOptions()
         ("region",
          po::value<string>()->notifier(
              boost::bind(&Cut2DSelectorOptions::setRegion, this, _1)),
-         "2D cut region: signal, s1, s2, s3")
+         "2D cut region: signal, s1, s2, s3, s1s2, s2s3, s1s2s3")
     ;
 }
 
@@ -76,6 +76,12 @@ void Cut2DSelectorOptions::setRegion(std::string region)
         delegate()->setRegion(Cut2DSelectorDelegate::S2);
     else if ("s3" == region)
         delegate()->setRegion(Cut2DSelectorDelegate::S3);
+    else if ("s1s2" == region)
+        delegate()->setRegion(Cut2DSelectorDelegate::S1S2);
+    else if ("s2s3" == region)
+        delegate()->setRegion(Cut2DSelectorDelegate::S2S3);
+    else if ("s1s2s3" == region)
+        delegate()->setRegion(Cut2DSelectorDelegate::S1S2S3);
     else
         cerr << "unsupported 2D cut selector region" << endl;
 }
@@ -144,6 +150,31 @@ void Cut2DSelector::setRegion(const Region &new_region)
 
                 break;
             }
+
+        case S1S2:
+            {
+                _dr.reset(new RangeComparator<>(.1, .3));
+                _ptrel.reset(new Comparator<less<float> >(25));
+
+                break;
+            }
+
+        case S2S3:
+            {
+                _dr.reset(new RangeComparator<>(.2, .5));
+                _ptrel.reset(new Comparator<less<float> >(25));
+
+                break;
+            }
+
+        case S1S2S3:
+            {
+                _dr.reset(new RangeComparator<>(.1, .5));
+                _ptrel.reset(new Comparator<less<float> >(25));
+
+                break;
+            }
+
 
         default:
             throw runtime_error("unsupported region");

@@ -76,10 +76,16 @@ int main(int argc, char *argv[])
             htlep->GetXaxis()->SetTitle("H_{T}^{lep} [GeV/c]");
             htlep->GetXaxis()->SetTitleSize(0.045);
 
-            TH1Ptr mttbar = convert(*analyzer->mttbar());
-            mttbar->SetName("mttbar");
-            mttbar->GetXaxis()->SetTitle("m_{t#bar{t}}^{reco} [GeV/c^{2}]");
-            mttbar->GetXaxis()->SetTitleSize(0.045);
+            TH1Ptr mttbar_before_htlep = convert(*analyzer->mttbarBeforeHtlep());
+            mttbar_before_htlep->SetName("mttbar_before_htlep");
+            mttbar_before_htlep->GetXaxis()->SetTitle("m_{t#bar{t}}^{reco} [GeV/c^{2}]");
+            mttbar_before_htlep->GetXaxis()->SetTitleSize(0.045);
+
+            TH1Ptr mttbar_after_htlep = convert(*analyzer->mttbarAfterHtlep());
+            mttbar_after_htlep->SetName("mttbar_after_htlep");
+            mttbar_after_htlep->GetXaxis()->SetTitle("m_{t#bar{t}}^{reco} [GeV/c^{2}]");
+            mttbar_after_htlep->GetXaxis()->SetTitleSize(0.045);
+
             TH2Ptr dr_vs_ptrel = convert(*analyzer->drVsPtrel());
             dr_vs_ptrel->SetName("dr_vs_ptrel");
             dr_vs_ptrel->GetXaxis()->SetTitle("p_{T}^{rel} [GeV/c^{2}]");
@@ -90,7 +96,8 @@ int main(int argc, char *argv[])
             if (app->output())
             {
                 htlep->Write();
-                mttbar->Write();
+                mttbar_before_htlep->Write();
+                mttbar_after_htlep->Write();
                 dr_vs_ptrel->Write();
             }
 
@@ -98,17 +105,20 @@ int main(int argc, char *argv[])
             {
                 shared_ptr<TCanvas> canvas(new TCanvas());
                 canvas->SetTitle("Mass/Htlep");
-                canvas->SetWindowSize(1200, 480);
-                canvas->Divide(3);
+                canvas->SetWindowSize(800, 600);
+                canvas->Divide(2, 2);
 
                 canvas->cd(1);
-                htlep->Draw("h");
+                dr_vs_ptrel->Draw("colz");
 
                 canvas->cd(2);
-                mttbar->Draw("h");
+                htlep->Draw("h");
 
                 canvas->cd(3);
-                dr_vs_ptrel->Draw("colz");
+                mttbar_before_htlep->Draw("h");
+
+                canvas->cd(4);
+                mttbar_after_htlep->Draw("h");
 
                 canvas->Update();
 
