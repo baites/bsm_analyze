@@ -1,45 +1,4 @@
-#include <iostream>
-#include <vector>
-
-#include <TCanvas.h>
-#include <TFile.h>
-#include <TGaxis.h>
-#include <TH1.h>
-#include <TH2.h>
-#include <THStack.h>
-#include <TLegend.h>
-#include <TRint.h>
-
-using namespace std;
-
 float luminosity = 1010.922;
-
-TFile *open(const string &filename)
-{
-    TFile *in = TFile::Open(filename.c_str(), "READ");
-    if (!in->IsOpen())
-    {
-        cerr << "failed to open input: " << filename << endl;
-
-        in = 0;
-    }
-
-    return in;
-}
-
-TLegend *createLegend(const string &text)
-{
-    TLegend *legend = new TLegend( .2, .7, .3, .8);
-    if (!text.empty())
-        legend->SetHeader(text.c_str());
-
-    legend->SetMargin(0.12);
-    legend->SetTextSize(0.06);
-    legend->SetFillColor(10);
-    legend->SetBorderSize(0);
-
-    return legend;
-}
 
 string folder[] =
 {
@@ -95,116 +54,17 @@ enum InputType
     UNKNOWN
 };
 
-string toString(const InputType &input_type)
+TFile *open(const string &filename)
 {
-    switch(input_type)
+    TFile *in = TFile::Open(filename.c_str(), "READ");
+    if (!in->IsOpen())
     {
-        case QCD_BC_PT20_30: return "QCD_BC_pt20to30";
-        case QCD_BC_PT30_80: return "QCD_BC_pt30to80";
-        case QCD_BC_PT80_170: return "QCD_BC_pt80to170";
-        case QCD_EM_PT20_30: return "QCD_EM_pt20to30";
-        case QCD_EM_PT30_80: return "QCD_EM_pt30to80";
-        case QCD_EM_PT80_170: return "QCD_EM_pt80to170";
-        case TTJETS: return "TTjets";
-        case ZJETS: return "Zjets";
-        case WJETS: return "Wjets";
-        case ZPRIME_1000: return "Z' 1 TeV";
-        case ZPRIME_1500: return "Z' 1.5 TeV";
-        case ZPRIME_2000: return "Z' 2 TeV";
-        case ZPRIME_3000: return "Z' 3 TeV";
-        case ZPRIME_4000: return "Z' 4 TeV";
-        default: return "Unknown";
-    }
-}
+        cerr << "failed to open input: " << filename << endl;
 
-TH1 *get(TFile *input, const string &path, const InputType &input_type = UNKNOWN)
-{   
-    TObject *object = input->Get(path.c_str());
-    if (!object)
-    {
-        cerr << "failed to get: " << path << endl;
-
-        return 0;
+        in = 0;
     }
 
-    TH1 *hist = dynamic_cast<TH1 *>(object->Clone());
-    if (!hist)
-    {
-        cerr << "object does not seem to be TH1" << endl;
-
-        return 0;
-    }
-
-    switch(input_type)
-    {
-        case QCD_BC_PT20_30:
-            {
-                hist->Scale(2.361e8 * luminosity * 5.9e-4 /  2071515);
-                break;
-            }
-
-        case QCD_BC_PT30_80:
-            {
-                hist->Scale(5.944e7 * luminosity * 2.42e-3 /  2009881);
-                break;
-            }
-
-        case QCD_BC_PT80_170:
-            {
-                hist->Scale(8.982e5 * luminosity * 1.05e-2 /  1071954);
-                break;
-            }
-
-        case QCD_EM_PT20_30:
-            {
-                hist->Scale(2.361e8 * luminosity * 1.06e-2 /  35577687);
-                break;
-            }
-
-        case QCD_EM_PT30_80:
-            {
-                hist->Scale(5.944e7 * luminosity * 6.1e-2 /  55173330);
-                break;
-            }
-
-        case QCD_EM_PT80_170:
-            {
-                hist->Scale(8.982e5 * luminosity * 1.59e-1 /  7852884);
-                break;
-            }
-
-        case TTJETS:
-            {
-                // Use NLO x-section: 157.5 instead of LO: 94.76
-                //
-                hist->Scale(157.5 * luminosity * 1.0 /  2748612);
-                break;
-            }
-
-        case ZJETS:
-            {
-                // Use NLO x-section: 3048 instead of LO: 2475
-                //
-                hist->Scale(3048 * luminosity * 1.0 /  29414670);
-                break;
-            }
-
-        case WJETS:
-            {
-                // Use NLO x-section: 31314 instead of LO: 27770
-                //
-                hist->Scale(31314 * luminosity * 1.0 /  39705660);
-                break;
-            }
-
-        default:
-            {
-                cerr << "unknown type: can not scale plot" << endl;
-                break;
-            }
-    }
-
-    return hist;
+    return in;
 }
 
 void loadFiles()
@@ -284,54 +144,215 @@ void loadFiles()
     }
 }
 
-void plotCut2DBackground()
+TLegend *createLegend(const string &text)
 {
-    TCanvas *canvas = new TCanvas("Cut 2D Background");
-    canvas->SetWindowSize(1200, 800);
-    canvas->Divide(3, 3);
-    for(int i = 0; BACKGROUND_CHANNELS > i; ++i)
+    TLegend *legend = new TLegend( .2, .7, .3, .8);
+    if (!text.empty())
+        legend->SetHeader(text.c_str());
+
+    legend->SetMargin(0.12);
+    legend->SetTextSize(0.06);
+    legend->SetFillColor(10);
+    legend->SetBorderSize(0);
+
+    return legend;
+}
+
+string toString(const InputType &input_type)
+{
+    switch(input_type)
     {
-        TH1 *hist = get(input_s1[i], "dr_vs_ptrel");
-        if (!hist)
-            continue;
-
-        canvas->cd(i + 1);
-
-        hist->Draw("colz");
-
-        TLegend *legend = createLegend(toString(i));
-        legend->Draw();
+        case QCD_BC_PT20_30: return "QCD_BC_pt20to30";
+        case QCD_BC_PT30_80: return "QCD_BC_pt30to80";
+        case QCD_BC_PT80_170: return "QCD_BC_pt80to170";
+        case QCD_EM_PT20_30: return "QCD_EM_pt20to30";
+        case QCD_EM_PT30_80: return "QCD_EM_pt30to80";
+        case QCD_EM_PT80_170: return "QCD_EM_pt80to170";
+        case TTJETS: return "TTjets";
+        case ZJETS: return "Zjets";
+        case WJETS: return "Wjets";
+        case ZPRIME_1000: return "Z' 1 TeV";
+        case ZPRIME_1500: return "Z' 1.5 TeV";
+        case ZPRIME_2000: return "Z' 2 TeV";
+        case ZPRIME_3000: return "Z' 3 TeV";
+        case ZPRIME_4000: return "Z' 4 TeV";
+        case RERECO: return "Rereco";
+        case PROMPT: return "Prompt";
+        default: return "Unknown";
     }
 }
 
-void plotCut2DSignal()
+void style(TH1 *hist, const InputType &input_type, const bool &set_fill = true)
 {
-    TCanvas *canvas = new TCanvas("Cut 2D Signal");
-    canvas->SetWindowSize(1200, 800);
-    canvas->Divide(3, 2);
-    for(int i = 0; SIGNAL_CHANNELS > i; ++i)
+    int color = 1;
+    switch(input_type)
     {
-        int id = BACKGROUND_CHANNELS + i;
-        TH1 *hist = get(input_s1[id], "dr_vs_ptrel");
-        if (!hist)
-            continue;
+        case QCD_BC_PT20_30: // Fall through
+        case QCD_BC_PT30_80: // Fall through
+        case QCD_BC_PT80_170: // Fall through
+        case QCD_EM_PT20_30: // Fall through
+        case QCD_EM_PT30_80: // Fall through
+        case QCD_EM_PT80_170:
+            {
+                color = kYellow + 1;
+                break;
+            }
 
-        canvas->cd(i + 1);
+        case TTJETS:
+            {
+                color = 2;
+                break;
+            }
 
-        hist->Draw("colz");
+        case ZJETS:
+            {
+                color = 4;
+                break;
+            }
 
-        TLegend *legend = createLegend(toString(id));
-        legend->Draw();
+        case WJETS:
+            {
+                color = 3;
+                break;
+            }
+
+        case ZPRIME_1000: // Fall through
+        case ZPRIME_1500: // Fall through 
+        case ZPRIME_2000: // Fall through 
+        case ZPRIME_3000: // Fall through 
+        case ZPRIME_4000: 
+            {
+                color = kAzure - 2 * (input_type - ZPRIME_1000);
+                break;
+            }
+
+        case RERECO: // Fall through
+        case PROMPT: // Do nothing
+            break;
+
+        default:
+            {
+                cerr << "unknown type: can not scale the plot" << endl;
+                break;
+            }
     }
+
+    hist->SetLineColor(color);
+    hist->SetMarkerColor(color);
+
+    if (set_fill)
+        hist->SetFillColor(color);
 }
 
+// Histograms will be scaled by x-section, Nevents, Luminosity,
+// filter-efficiency if InputType is supplied
+//
+TH1 *get(const string &path, TFile *input, const InputType &input_type = UNKNOWN)
+{   
+    TObject *object = input->Get(path.c_str());
+    if (!object)
+    {
+        cerr << "failed to get: " << path << endl;
+
+        return 0;
+    }
+
+    TH1 *hist = dynamic_cast<TH1 *>(object->Clone());
+    if (!hist)
+    {
+        cerr << "object does not seem to be TH1" << endl;
+
+        return 0;
+    }
+
+    switch(input_type)
+    {
+        case QCD_BC_PT20_30:
+            {
+                hist->Scale(2.361e8 * luminosity * 5.9e-4 /  2071515);
+                break;
+            }
+
+        case QCD_BC_PT30_80:
+            {
+                hist->Scale(5.944e7 * luminosity * 2.42e-3 /  2009881);
+                break;
+            }
+
+        case QCD_BC_PT80_170:
+            {
+                hist->Scale(8.982e5 * luminosity * 1.05e-2 /  1071954);
+                break;
+            }
+
+        case QCD_EM_PT20_30:
+            {
+                hist->Scale(2.361e8 * luminosity * 1.06e-2 /  35577687);
+                break;
+            }
+
+        case QCD_EM_PT30_80:
+            {
+                hist->Scale(5.944e7 * luminosity * 6.1e-2 /  55173330);
+                break;
+            }
+
+        case QCD_EM_PT80_170:
+            {
+                hist->Scale(8.982e5 * luminosity * 1.59e-1 /  7852884);
+                break;
+            }
+
+        case TTJETS:
+            {
+                // Use NLO x-section: 157.5 instead of LO: 94.76
+                //
+                hist->Scale(157.5 * luminosity * 1.0 /  2748612);
+                break;
+            }
+
+        case ZJETS:
+            {
+                // Use NLO x-section: 3048 instead of LO: 2475
+                //
+                hist->Scale(3048 * luminosity * 1.0 /  29414670);
+                break;
+            }
+
+        case WJETS:
+            {
+                // Use NLO x-section: 31314 instead of LO: 27770
+                //
+                hist->Scale(31314 * luminosity * 1.0 /  39705660);
+                break;
+            }
+
+        case RERECO: // Fall through
+        case PROMPT: // Do nothing
+            break;
+
+        default:
+            {
+                cerr << "unknown type: can not scale the plot" << endl;
+                break;
+            }
+    }
+
+    if (UNKNOWN != input_type)
+        style(hist, input_type);
+
+    return hist;
+}
+
+// Extract and merge histograms in range [from, to) (to is not included)
+//
 TH1 *merge(const string &path, TFile **input, const int &from, const int &to,
-        const bool &do_normalize = true)
+        const bool &do_normalize = false)
 {
     TH1 *result = 0;
     for(int i = from; to > i; ++i)
     {
-        TH1 *hist = get(input[i], path.c_str(), i);
+        TH1 *hist = get(path, input[i], i);
         if (!hist)
         {
             cerr << "failed to extract: " << path << endl;
@@ -355,27 +376,125 @@ TH1 *merge(const string &path, TFile **input, const int &from, const int &to,
     return result;
 }
 
+void plotCut2DBackground()
+{
+    string canvas_title = "Cut 2D Background";
+    TCanvas *canvas = new TCanvas(canvas_title.c_str(), canvas_title.c_str());
+    canvas->SetWindowSize(1200, 800);
+    canvas->Divide(3, 3);
+
+    canvas_title = "DeltaR Background";
+    TCanvas *canvas_dr = new TCanvas(canvas_title.c_str(), canvas_title.c_str());
+    canvas_dr->SetWindowSize(1200, 800);
+    canvas_dr->Divide(3, 3);
+
+    canvas_title = "pTrel Background";
+    TCanvas *canvas_ptrel = new TCanvas(canvas_title.c_str(), canvas_title.c_str());
+    canvas_ptrel->SetWindowSize(1200, 800);
+    canvas_ptrel->Divide(3, 3);
+    for(int i = 0; BACKGROUND_CHANNELS > i; ++i)
+    {
+        TH1 *hist = get("dr_vs_ptrel", input_s1[i]);
+        if (!hist)
+            continue;
+
+        canvas->cd(i + 1);
+
+        style(hist, i);
+        hist->Draw("scat");
+
+        TLegend *legend = createLegend(toString(i));
+        legend->Draw();
+
+        canvas_ptrel->cd(i + 1);
+        TH2 *hist2d = dynamic_cast<TH2 *>(hist);
+        TH1 *ptrel = dynamic_cast<TH1 *>(hist2d->ProjectionX()->Clone());
+        style(ptrel, i);
+
+        ptrel->Draw();
+        legend->Draw();
+
+        canvas_dr->cd(i + 1);
+        TH2 *hist2d = dynamic_cast<TH2 *>(hist);
+        TH1 *dr = dynamic_cast<TH1 *>(hist2d->ProjectionY()->Clone());
+        style(dr, i);
+
+        dr->Draw();
+        legend->Draw();
+    }
+}
+
+void plotCut2DSignal()
+{
+    string canvas_title = "Cut 2D Signal";
+    TCanvas *canvas = new TCanvas(canvas_title.c_str(), canvas_title.c_str());
+    canvas->SetWindowSize(1200, 640);
+    canvas->Divide(3, 2);
+
+    canvas_title = "DeltaR Signal";
+    TCanvas *canvas_dr = new TCanvas(canvas_title.c_str(), canvas_title.c_str());
+    canvas_dr->SetWindowSize(1200, 640);
+    canvas_dr->Divide(3, 2);
+
+    canvas_title = "pTrel Signal";
+    TCanvas *canvas_ptrel = new TCanvas(canvas_title.c_str(), canvas_title.c_str());
+    canvas_ptrel->SetWindowSize(1200, 640);
+    canvas_ptrel->Divide(3, 2);
+    for(int i = 0; SIGNAL_CHANNELS > i; ++i)
+    {
+        int id = BACKGROUND_CHANNELS + i;
+        TH1 *hist = get("dr_vs_ptrel", input_s1[id], id);
+        if (!hist)
+            continue;
+
+        canvas->cd(i + 1);
+
+        style(hist, id);
+        hist->Draw("scat");
+
+        TLegend *legend = createLegend(toString(id));
+        legend->Draw();
+
+        canvas_ptrel->cd(i + 1);
+        TH2 *hist2d = dynamic_cast<TH2 *>(hist);
+        TH1 *ptrel = dynamic_cast<TH1 *>(hist2d->ProjectionX()->Clone());
+        style(ptrel, id);
+
+        ptrel->Draw();
+        legend->Draw();
+
+        canvas_dr->cd(i + 1);
+        TH2 *hist2d = dynamic_cast<TH2 *>(hist);
+        TH1 *dr = dynamic_cast<TH1 *>(hist2d->ProjectionY()->Clone());
+        style(dr, id);
+
+        dr->Draw();
+        legend->Draw();
+    }
+}
+
 void plotQCDTemplates()
 {
-    TH1 *htlep_s1 = merge("htlep", input_s1, 0, QCD_CHANNELS);
-    TH1 *htlep_s2 = merge("htlep", input_s2, 0, QCD_CHANNELS);
-    TH1 *htlep_signal = merge("htlep", input_signal, 0, QCD_CHANNELS);
+    TH1 *htlep_s1 = merge("htlep", input_s1, 0, QCD_CHANNELS, true);
+    TH1 *htlep_s2 = merge("htlep", input_s2, 0, QCD_CHANNELS, true);
+    TH1 *htlep_signal = merge("htlep", input_signal, 0, QCD_CHANNELS, true);
 
     TH1 *mttbar_before_htlep_s1 =
-        merge("mttbar_before_htlep", input_s1, 0, QCD_CHANNELS);
+        merge("mttbar_before_htlep", input_s1, 0, QCD_CHANNELS, true);
     TH1 *mttbar_before_htlep_s2 =
-        merge("mttbar_before_htlep", input_s2, 0, QCD_CHANNELS);
+        merge("mttbar_before_htlep", input_s2, 0, QCD_CHANNELS, true);
     TH1 *mttbar_before_htlep_signal =
-        merge("mttbar_before_htlep", input_signal, 0, QCD_CHANNELS);
+        merge("mttbar_before_htlep", input_signal, 0, QCD_CHANNELS, true);
 
     TH1 *mttbar_after_htlep_s1 =
-        merge("mttbar_after_htlep", input_s1, 0, QCD_CHANNELS);
+        merge("mttbar_after_htlep", input_s1, 0, QCD_CHANNELS, true);
     TH1 *mttbar_after_htlep_s2 = 
-        merge("mttbar_after_htlep", input_s2, 0, QCD_CHANNELS);
+        merge("mttbar_after_htlep", input_s2, 0, QCD_CHANNELS, true);
     TH1 *mttbar_after_htlep_signal =
-        merge("mttbar_after_htlep", input_signal, 0, QCD_CHANNELS);
+        merge("mttbar_after_htlep", input_signal, 0, QCD_CHANNELS, true);
  
-    TCanvas *canvas = new TCanvas("QCD Templates");
+    string canvas_title = "QCD Templates";
+    TCanvas *canvas = new TCanvas(canvas_title.c_str(), canvas_title.c_str());
     canvas->SetWindowSize(1200, 480);
     canvas->Divide(3);
 
@@ -385,6 +504,9 @@ void plotQCDTemplates()
     
     htlep_s2->SetLineColor(2);
     htlep_s2->SetMarkerColor(2);
+
+    htlep_signal->SetLineColor(1);
+    htlep_signal->SetMarkerColor(1);
 
     THStack *stack = new THStack();
     stack->Add(htlep_s1);
@@ -403,6 +525,9 @@ void plotQCDTemplates()
     mttbar_before_htlep_s2->SetLineColor(2);
     mttbar_before_htlep_s2->SetMarkerColor(2);
 
+    mttbar_before_htlep_signal->SetLineColor(1);
+    mttbar_before_htlep_signal->SetMarkerColor(1);
+
     stack = new THStack();
     stack->Add(mttbar_before_htlep_s1);
     stack->Add(mttbar_before_htlep_s2);
@@ -420,6 +545,9 @@ void plotQCDTemplates()
     mttbar_after_htlep_s2->SetLineColor(2);
     mttbar_after_htlep_s2->SetMarkerColor(2);
 
+    mttbar_after_htlep_signal->SetLineColor(1);
+    mttbar_after_htlep_signal->SetMarkerColor(1);
+
     stack = new THStack();
     stack->Add(mttbar_after_htlep_s1);
     stack->Add(mttbar_after_htlep_s2);
@@ -433,34 +561,12 @@ void plotQCDTemplates()
 
 void plotComparison(TFile **input, const string &title, const bool &reverse_order = false)
 {
-    TH1 *qcd = merge("htlep", input, 0, QCD_CHANNELS, false);
-    qcd->SetLineColor(5);
-    qcd->SetMarkerColor(5);
-    qcd->SetFillColor(5);
-
-    TH1 *ttjets = get(input[TTJETS], "htlep", TTJETS);
-    ttjets->SetLineColor(2);
-    ttjets->SetMarkerColor(2);
-    ttjets->SetFillColor(2);
-
-    TH1 *zjets = get(input[ZJETS], "htlep", ZJETS);
-    zjets->SetLineColor(4);
-    zjets->SetMarkerColor(4);
-    zjets->SetFillColor(4);
-
-    TH1 *wjets = get(input[WJETS], "htlep", WJETS);
-    wjets->SetLineColor(3);
-    wjets->SetMarkerColor(3);
-    wjets->SetFillColor(3);
-
-    TH1 *data = merge("htlep", input, RERECO, RERECO + DATA_CHANNELS, false);
-    if (!data)
-    {
-        cerr << "failed to extract data htlep" << endl;
-
-        return;
-    }
-
+    TH1 *qcd = merge("htlep", input, 0, QCD_CHANNELS);
+    TH1 *ttjets = get("htlep", input[TTJETS], TTJETS);
+    TH1 *zjets = get("htlep", input[ZJETS], ZJETS);
+    TH1 *wjets = get("htlep", input[WJETS], WJETS);
+    TH1 *data = merge("htlep", input, RERECO, RERECO + DATA_CHANNELS);
+    data->SetFillColor(0);
     
     THStack *stack = new THStack();
     stack->Add(qcd);
@@ -485,7 +591,8 @@ void plotComparison(TFile **input, const string &title, const bool &reverse_orde
 
 void plotDataMCComparison()
 {
-    TCanvas *canvas = new TCanvas("Data/MC Comparison");
+    string canvas_title = "Data/MC Comparison";
+    TCanvas *canvas = new TCanvas(canvas_title.c_str(), canvas_title.c_str());
     canvas->SetWindowSize(800, 480);
     canvas->Divide(2);
 
@@ -506,7 +613,7 @@ void plotQCDHtlep(TFile **input, const string &title)
     for(int i = 0; QCD_CHANNELS > i; ++i)
     {
         canvas->cd(i + 1)->SetLeftMargin(10);
-        get(input[i], "htlep", i)->Draw();
+        get("htlep", input[i], i)->Draw();
         createLegend(toString(i))->Draw();
     }
 
@@ -520,7 +627,7 @@ void plotQCDHtlep(TFile **input, const string &title)
     for(int i = 0; 2 > i; ++i)
     {
         canvas->cd(i + 1)->SetLeftMargin(10);
-        merge("htlep", input, i * 3, i * 3 + 3, false)->Draw();
+        merge("htlep", input, i * 3, i * 3 + 3)->Draw();
         createLegend(i ? "QCD EMEnriched" : "QCD BCtoE")->Draw();
     }
 
@@ -539,7 +646,7 @@ void plotBGHtlep(TFile **input, const string &title)
     for(int i = QCD_CHANNELS, j = 1; BACKGROUND_CHANNELS > i; ++i, ++j)
     {
         canvas->cd(j)->SetLeftMargin(10);
-        get(input[i], "htlep", i)->Draw();
+        get("htlep", input[i], i)->Draw();
         createLegend(toString(i))->Draw();
     }
 
@@ -568,6 +675,6 @@ void fig()
     //plotQCDTemplates();
     plotDataMCComparison();
 
-    //plotHtlep50();
-    //plotHtlep250();
+    plotHtlep50();
+    plotHtlep250();
 }
