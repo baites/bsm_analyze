@@ -22,7 +22,7 @@ using bsm::LockCounterOnUpdate;
 // Counter
 //
 Counter::Counter():
-    _count(0),
+    _counts(0),
     _is_locked(false),
     _is_lock_on_update(false)
 {
@@ -40,9 +40,16 @@ bsm::CounterDelegate *Counter::delegate() const
     return _delegate;
 }
 
+// Obsolete method: use explicit counts instead
+//
 Counter::operator uint32_t() const
 {
-    return _count;
+    return _counts;
+}
+
+uint32_t Counter::counts() const
+{
+    return _counts;
 }
 
 bool Counter::isLocked() const
@@ -71,14 +78,19 @@ void Counter::unlock()
     _is_lock_on_update = false;
 }
 
-void Counter::add()
+void Counter::add(const uint32_t &counts)
 {
     if (isLocked())
         return;
 
-    ++_count;
+    _counts += counts;
 
-    update();
+    if (isLockOnUpdate())
+    {
+        lock();
+
+        _is_lock_on_update = false;
+    }
 
     if (delegate())
         delegate()->didCounterAdd(this);
@@ -94,38 +106,23 @@ Counter::ObjectPtr Counter::clone() const
     return ObjectPtr(new Counter(*this));
 }
 
-void Counter::merge(const ObjectPtr &object_pointer)
+void Counter::merge(const ObjectPtr &pointer)
 {
-    if (isLocked()
-            || id() != object_pointer->id())
+    if (id() != pointer->id())
         return;
 
     boost::shared_ptr<Counter> object =
-        boost::dynamic_pointer_cast<Counter>(object_pointer);
+        boost::dynamic_pointer_cast<Counter>(pointer);
 
     if (!object)
         return;
 
-    _count += object->_count;
-
-    update();
+    add(object->counts());
 }
 
 void Counter::print(ostream &out) const
 {
-    out << _count;
-}
-
-// Private
-//
-void Counter::update()
-{
-    if (isLockOnUpdate())
-    {
-        lock();
-
-        _is_lock_on_update = false;
-    }
+    out << _counts;
 }
 
 

@@ -45,39 +45,45 @@ namespace bsm
 
             // Get number of counts
             //
-            operator uint32_t() const;
+            operator uint32_t() const; // obsolete: do not use
+            uint32_t counts() const; // replacement for the convertion
 
+            // Status check
+            //
             bool isLocked() const;
             bool isLockOnUpdate() const;
 
+            // Lock counter: no further changes are allowed until unlocked
+            //
             void lock();
+
+            // Lock counter on update: if changed, no further updates are
+            // allowed until unlocked
+            //
             void lockOnUpdate();
 
-            // Unlock counter: lockOnUpdate will be reset
+            // Unlock the counter: allow further changes
             //
             void unlock();
 
             // Increase counter
             //
-            void add();
+            void add(const uint32_t &counts = 1);
 
             // Object interface
             //
             virtual uint32_t id() const;
 
             virtual ObjectPtr clone() const;
+
+            // Counters will be merged only if current one is unlocked
+            //
             virtual void merge(const ObjectPtr &);
 
             virtual void print(std::ostream &) const;
 
         private:
-            // Prevent copying
-            //
-            Counter &operator =(const Counter &object);
-
-            void update();
-
-            uint32_t _count;
+            uint32_t _counts;
 
             bool _is_locked;
             bool _is_lock_on_update;
