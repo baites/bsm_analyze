@@ -30,10 +30,11 @@ namespace bsm
             virtual void didCounterAdd(const Counter *) {};
     };
 
+
+
     // Simple counter of anything. There are two states defined: locked and
     // unlocked. If counter is locked, then any attempt to modify it will
-    // silently be skipped. Counter may also automatically lock itself on
-    // update
+    // silently be skipped. Counter may also lock itself on update.
     //
     class Counter : public core::Object
     {
@@ -91,61 +92,81 @@ namespace bsm
             CounterDelegate *_delegate;
     };
 
-    // Store cut value and count successfuly passed objects, events
+
+
+    // Cut is a wrapper around the cut value and its name. It has two internal
+    // counters: objects and events. By default, both counters are advanced if
+    // cut is passed. However, one many lock/unlock these counters from
+    // outside.
+    //
+    // For example, events counter may be locked on update at the beginning of
+    // the event analysis. The objects counter can be left as is. Unlock the
+    // events counter at the end of the event analysis. This way one may count
+    // how many events, objects pass the cut. Note: event many have more than
+    // one objects - the above counters are different.
     //
     class Cut : public core::Object
     {
         public:
+            // By default, cut value will be initialized with zero
+            //
             Cut();
+
             Cut(const float &value, const std::string &name = "");
             Cut(const Cut &);
 
-            virtual ~Cut();
+            virtual CounterPtr objects() const;
+            virtual CounterPtr events() const;
 
-            virtual const CounterPtr objects() const;
-            virtual const CounterPtr events() const;
-
-            // Get actual cut value
+            // Get/Set the cut value
             //
             virtual float value() const;
             virtual void setValue(const float &);
 
-            // Get name of the cut
+            // Get/Set the cut name
             //
             virtual std::string name() const;
             virtual void setName(const std::string &);
 
-            // apply cut: implicitly count number of success
+            // apply cut and count a number of success
             //
             virtual bool apply(const float &);
 
-            virtual bool isDisabled() const;
-
+            // Disable cut: apply method will always return True
+            //
             virtual void disable();
+
+            // Enable cut: let apply method do its job
+            //
             virtual void enable();
+
+            // Check the cut status
+            virtual bool isDisabled() const;
 
             // Object interface
             //
             virtual uint32_t id() const;
 
-            // Only cuts with the same value can be merged
+            // Only cuts with the same cut value and name can be merged
             //
             virtual void merge(const ObjectPtr &);
 
             virtual void print(std::ostream &) const;
 
         private:
-            // isPass is the actual application of the cut
+            // Cut implementation: method should be overriden by children
             //
             virtual bool isPass(const float &) = 0;
 
-            float _value;
-            std::string _name;
+            float _value;       // cut value
+            std::string _name;  // cut name
             bool _is_disabled;
 
-            CounterPtr _objects;
-            CounterPtr _events;
+            CounterPtr _objects;    // Counter of objects
+            CounterPtr _events;     // Counter of events
     };
+
+
 
     // Comparator has comparison policy defined with std functors:
     //  less, greater [http://goo.gl/bh9dl]
