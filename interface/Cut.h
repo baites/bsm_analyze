@@ -168,6 +168,26 @@ namespace bsm
 
 
 
+    // RAII type counter lock: set counter to lock on update when object is
+    // created and unlock the same counter on object destruction
+    //
+    class LockCounterOnUpdate
+    {
+        public:
+            LockCounterOnUpdate(const CounterPtr &);
+            ~LockCounterOnUpdate();
+
+        private:
+            // Prevent copying
+            //
+            LockCounterOnUpdate(const LockCounterOnUpdate &);
+            LockCounterOnUpdate &operator =(const LockCounterOnUpdate &);
+
+            CounterPtr _counter;
+    };
+
+
+
     // Comparator has comparison policy defined with std functors:
     //  less, greater [http://goo.gl/bh9dl]
     //
@@ -252,21 +272,6 @@ namespace bsm
                 CutPtr _lower_cut;
                 CutPtr _upper_cut;
         };
-
-    class LockCounterOnUpdate
-    {
-        public:
-            LockCounterOnUpdate(const CounterPtr &);
-            ~LockCounterOnUpdate();
-
-        private:
-            // Prevent copying
-            //
-            LockCounterOnUpdate(const LockCounterOnUpdate &);
-            LockCounterOnUpdate &operator =(const LockCounterOnUpdate &);
-
-            CounterPtr _counter;
-    };
 }
 
 // Comparator Template implementation
