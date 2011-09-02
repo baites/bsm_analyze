@@ -17,7 +17,7 @@ void ElectronIDEfficiencies(TString filename, TString id, TString variable, TStr
    TH1D * HyperTight3 = (TH1D*) file->Get(id+"HyperTight3"+variable)->Clone();
    TH1D * HyperTight4 = (TH1D*) file->Get(id+"HyperTight4"+variable)->Clone();
 
-   Int_t ngroup = 50;
+   Int_t ngroup = 2;
 
    All->Rebin(ngroup);
    VeryLoose->Rebin(ngroup);   
@@ -31,11 +31,11 @@ void ElectronIDEfficiencies(TString filename, TString id, TString variable, TStr
    HyperTight4->Rebin(ngroup);
 
    TCanvas * canvas = new TCanvas();
-   canvas->SetLogy();
+   //canvas->SetLogy();
 
    All->GetXaxis()->SetTitle(xtitle);
    All->GetYaxis()->SetTitle("Efficiency respect to synch selection");
-   All->GetYaxis()->SetRangeUser(0.01,1.0);
+   All->GetYaxis()->SetRangeUser(0.5,1.0);
    All->Draw("axis");
 
    TEfficiency * VeryLooseEff =  new TEfficiency();
@@ -133,6 +133,6 @@ void ElectronIDEfficiencies(TString filename, TString id, TString variable, TStr
    leg->AddEntry(HyperTight4Eff, "HyperTight4", "p");
    leg->Draw();
 
-   canvas->SaveAs(id+variable+"Efficiencies.png");
+   canvas->SaveAs(id+variable+"_"+filename.Remove(filename.Length()-5)+".png");
 }
 
