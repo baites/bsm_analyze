@@ -147,7 +147,7 @@ namespace bsm
             //
             virtual uint32_t id() const;
 
-            // Only cuts with the same cut value and name can be merged
+            // Only cuts with the same cut value can be merged
             //
             virtual void merge(const ObjectPtr &);
 

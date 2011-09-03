@@ -238,8 +238,7 @@ void Cut::merge(const ObjectPtr &pointer)
         boost::dynamic_pointer_cast<Cut>(pointer);
 
     if (!object
-            || value() != object->value()
-            || name() != object->name())
+            || value() != object->value())
         return;
 
     Object::merge(pointer);
