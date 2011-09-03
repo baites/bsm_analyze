@@ -16,6 +16,7 @@
 
 #include "bsm_core/interface/ID.h"
 #include "bsm_input/interface/Event.pb.h"
+#include "interface/Cut.h"
 #include "interface/Selector.h"
 #include "interface/SynchSelector.h"
 #include "interface/EfficiencyAnalyzer.h"

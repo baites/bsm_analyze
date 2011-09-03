@@ -16,6 +16,7 @@
 #include "bsm_input/interface/Input.pb.h"
 #include "bsm_input/interface/Trigger.pb.h"
 #include "bsm_input/interface/Writer.h"
+#include "interface/Cut.h"
 #include "interface/FilterAnalyzer.h"
 #include "interface/SynchSelector.h"
 

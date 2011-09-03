@@ -19,6 +19,7 @@
 #include "bsm_stat/interface/H1.h"
 #include "bsm_stat/interface/H2.h"
 #include "interface/Algorithm.h"
+#include "interface/Cut.h"
 #include "interface/DecayGenerator.h"
 #include "interface/Monitor.h"
 #include "interface/Selector.h"

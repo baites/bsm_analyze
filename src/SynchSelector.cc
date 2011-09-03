@@ -141,21 +141,21 @@ SynchSelector::SynchSelector():
     // Selectors
     //
     _primary_vertex_selector.reset(new PrimaryVertexSelector());
-    _primary_vertex_selector->rho()->setValue(2.0);
+    _primary_vertex_selector->cut(PrimaryVertexSelector::RHO)->setValue(2.0);
     monitor(_primary_vertex_selector);
 
     _electron_selector.reset(new ElectronSelector());
-    _electron_selector->primary_vertex()->disable();
+    _electron_selector->cut(ElectronSelector::PRIMARY_VERTEX)->disable();
     monitor(_electron_selector);
 
     _muon_selector.reset(new MuonSelector());
-    _muon_selector->pt()->setValue(35);
+    _muon_selector->cut(MuonSelector::PT)->setValue(35);
     monitor(_muon_selector);
 
     // Nice jets have pT > 25
     //
     _nice_jet_selector.reset(new JetSelector());
-    _nice_jet_selector->pt()->setValue(25);
+    _nice_jet_selector->cut(JetSelector::PT)->setValue(25);
     monitor(_nice_jet_selector);
 
     // Good jets have pT > 50
