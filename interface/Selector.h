@@ -8,26 +8,17 @@
 #ifndef BSM_SELECTOR
 #define BSM_SELECTOR
 
-#include <iosfwd>
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
 
 #include "bsm_core/interface/Object.h"
 #include "bsm_input/interface/bsm_input_fwd.h"
-#include "interface/Cut.h"
+#include "interface/bsm_fwd.h"
 
 namespace bsm
 {
-    typedef boost::shared_ptr<Cut> CutPtr;
-
-    // Common interface for all selectors. Each selector knows how to:
-    //
-    //  1. print
-    //  2. clone
-    //  3. merge
-    //
-    // the last two are required for the proper use in threads
+    // Selector Interface. Each selector can be enabled or disabled
     //
     class Selector : public core::Object
     {

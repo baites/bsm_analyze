@@ -32,6 +32,9 @@ namespace bsm
         class RangeComparator;
     class LockCounterOnUpdate;
 
+    typedef boost::shared_ptr<Counter> CounterPtr;
+    typedef boost::shared_ptr<Cut> CutPtr;
+
     class ElectronSelector;
     class JetSelector;
     class MultiplicityCutflow;

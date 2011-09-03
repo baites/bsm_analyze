@@ -18,9 +18,6 @@
 
 namespace bsm
 {
-    typedef boost::shared_ptr<Counter> CounterPtr;
-    typedef boost::shared_ptr<Cut> CutPtr;
-
     class CounterDelegate
     {
         public:
