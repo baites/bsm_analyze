@@ -188,8 +188,8 @@ namespace bsm
 
 
 
-    // Cut with comparison policy: less, greater, etc. Policy is defined with
-    // std functors [http://goo.gl/bh9dl]
+    // One side cut with comparison policy: less, greater, etc. Policy is
+    // defined with std functors [http://goo.gl/bh9dl]
     //
     // Examples:
     //
@@ -249,6 +249,50 @@ namespace bsm
 
 
 
+    // One sides cut with comparison policy on each side: less, greater, etc.
+    // Policy is defined with std functors [http://goo.gl/bh9dl]
+    //
+    // Note: both lower/uppers cuts are always applied, and then results are
+    //       merged with logic
+    //
+    // Examples:
+    //
+    //  1.  boost::shared_ptr<Cut>
+    //          cut(new RangeComparator<>(5, 10, "Default Cut"));
+    //      if (cut->apply(value))
+    //      {
+    //          // value is > 5 and < 10
+    //      }
+    //      else
+    //      {
+    //          // value is <= 5 or >= 10
+    //      }
+    //
+    //  2.  boost::shared_ptr<Cut>
+    //          cut(new RnageComparator<std::greater_equal<float>,
+    //              std::less_equal<float> >(5, 10, "Inclusive Cut"));
+    //      if (cut->apply(value))
+    //      {
+    //          // value is >= 5 and <= 10
+    //      }
+    //      else
+    //      {
+    //          // value is < 5 or > 10
+    //      }
+    //
+    //  3.  boost::shared_ptr<Cut>
+    //          cut(new RnageComparator<std::less<float>,
+    //              std::greater<float>,
+    //              std::logical_or<bool> >(5, 10, "Outside Range"));
+    //      if (cut->apply(value))
+    //      {
+    //          // value is < 5 or > 10
+    //      }
+    //      else
+    //      {
+    //          // value is >= 5 and <= 10
+    //      }
+    //
     template<class LowerCompare = std::greater<float>,
         class UpperCompare = std::less<float>,
         class Logic = std::logical_and<bool> >
@@ -261,13 +305,13 @@ namespace bsm
 
                 RangeComparator(const RangeComparator &);
 
+                // Access lower/upeer cut individually
+                //
                 CutPtr lowerCut() const;
                 CutPtr upperCut() const;
 
                 // Cut interface
                 //
-                virtual void setValue(const float &);   // throw exception
-
                 virtual void setName(const std::string &);
 
                 virtual void disable();
@@ -285,6 +329,15 @@ namespace bsm
                 virtual bool isPass(const float &value);
 
             private:
+                // Prohibited Cut interface
+                //
+
+                // cut default value does not make sence since there are two
+                // separate cuts: lower and upper. Use these instead
+                //
+                virtual void setValue(const float &);   // throw exception
+                virtual float value() const;            // throw exception
+
                 Logic _logic;
 
                 CutPtr _lower_cut;
@@ -393,14 +446,6 @@ template<class LowerCompare, class UpperCompare, class Logic>
 template<class LowerCompare, class UpperCompare, class Logic>
     void bsm::RangeComparator<LowerCompare,
         UpperCompare,
-        Logic>::setValue(const float &value)
-{
-    throw std::runtime_error("can not set value to RangeComparator");
-}
-
-template<class LowerCompare, class UpperCompare, class Logic>
-    void bsm::RangeComparator<LowerCompare,
-        UpperCompare,
         Logic>::setName(const std::string &name)
 {
     Cut::setName(name);
@@ -447,17 +492,6 @@ template<class LowerCompare, class UpperCompare, class Logic>
 }
 
 template<class LowerCompare, class UpperCompare, class Logic>
-    bool bsm::RangeComparator<LowerCompare,
-        UpperCompare,
-        Logic>::isPass(const float &number)
-{
-    bool lower_cut = lowerCut()->apply(number);
-    bool upper_cut = upperCut()->apply(number);
-
-    return _logic(lower_cut, upper_cut);
-}
-
-template<class LowerCompare, class UpperCompare, class Logic>
     void bsm::RangeComparator<LowerCompare,
         UpperCompare,
         Logic>::print(std::ostream &out) const
@@ -477,6 +511,39 @@ template<class LowerCompare, class UpperCompare, class Logic>
         << std::setw(5) << " ";
 
     Cut::print(out);
+}
+
+// Protected
+//
+template<class LowerCompare, class UpperCompare, class Logic>
+    bool bsm::RangeComparator<LowerCompare,
+        UpperCompare,
+        Logic>::isPass(const float &number)
+{
+    // Apply both cuts independently of results
+    //
+    bool lower_cut = lowerCut()->apply(number);
+    bool upper_cut = upperCut()->apply(number);
+
+    return _logic(lower_cut, upper_cut);
+}
+
+// Private
+//
+template<class LowerCompare, class UpperCompare, class Logic>
+    void bsm::RangeComparator<LowerCompare,
+        UpperCompare,
+        Logic>::setValue(const float &value)
+{
+    throw std::runtime_error("can not set the value to RangeComparator");
+}
+
+template<class LowerCompare, class UpperCompare, class Logic>
+    float bsm::RangeComparator<LowerCompare,
+        UpperCompare,
+        Logic>::value() const
+{
+    throw std::runtime_error("can not read the value to RangeComparator");
 }
 
 #endif
