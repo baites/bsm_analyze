@@ -17,12 +17,12 @@ using namespace bsm;
 
 int main(int argc, char *argv[])
 {
-    shared_ptr<Cut> cut1(new Comparator<>(10, "Original Comparator"));
+    shared_ptr<Cut> cut1(new Comparator<>(5, "Original Comparator"));
     shared_ptr<Cut> cut1_copy1
         = dynamic_pointer_cast<Cut>(cut1->clone());
     cut1_copy1->setName("Cut1 Copy1");
 
-    for(int i = 0; 50 > i; ++i)
+    for(int i = 0; 10 > i; ++i)
     {
         cut1->apply(i);
         cut1_copy1->apply(i);

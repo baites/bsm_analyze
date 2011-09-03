@@ -341,7 +341,6 @@ namespace bsm
                 // separate cuts: lower and upper. Use these instead
                 //
                 virtual void setValue(const float &);   // throw exception
-                virtual float value() const;            // throw exception
 
                 Logic _logic;
 
@@ -424,7 +423,7 @@ template<class LowerCompare, class UpperCompare, class Logic>
     Cut(object)
 {
     _lower_cut.reset(new LowerCut(*object.lowerCut()));
-    _lower_cut.reset(new LowerCut(*object.lowerCut()));
+    _upper_cut.reset(new UpperCut(*object.upperCut()));
 
     monitor(_lower_cut);
     monitor(_upper_cut);
@@ -515,7 +514,12 @@ template<class LowerCompare, class UpperCompare, class Logic>
     out << upperCut()->functor() << " " << upperCut()->value()
         << std::setw(5) << " ";
 
-    Cut::print(out);
+    if (!isDisabled())
+        out << std::setw(7) << std::left << *objects()
+            << " " << *events();
+    else
+        out << std::setw(7) << std::left << "-"
+            << " " << " ";
 }
 
 // Protected
@@ -541,14 +545,6 @@ template<class LowerCompare, class UpperCompare, class Logic>
         Logic>::setValue(const float &value)
 {
     throw std::runtime_error("can not set the value to RangeComparator");
-}
-
-template<class LowerCompare, class UpperCompare, class Logic>
-    float bsm::RangeComparator<LowerCompare,
-        UpperCompare,
-        Logic>::value() const
-{
-    throw std::runtime_error("can not read the value to RangeComparator");
 }
 
 #endif
