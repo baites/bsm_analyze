@@ -15,6 +15,7 @@
 #include "bsm_stat/interface/bsm_stat_fwd.h"
 #include "bsm_input/interface/bsm_input_fwd.h"
 #include "interface/Analyzer.h"
+#include "interface/Cut.h"
 #include "interface/bsm_fwd.h"
 
 namespace bsm
