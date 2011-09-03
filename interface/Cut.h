@@ -188,24 +188,36 @@ namespace bsm
 
 
 
-    // Comparator has comparison policy defined with std functors:
-    //  less, greater [http://goo.gl/bh9dl]
+    // Cut with comparison policy: less, greater, etc. Policy is defined with
+    // std functors [http://goo.gl/bh9dl]
     //
-    // Example:
+    // Examples:
+    //
     //  1.  boost::shared_ptr<Cut> default_cut(new Comparator<>(10));
-    //      if ((*default_cut)(energy))
+    //      if (default_cut->apply(energy))
     //      {
     //          // Energy > 10
     //      }
-    //
-    //  2.  boost::shared_ptr<Cut> my_cut(
-    //          new Comparator<std::less_equal<float> >(10));
-    //      if ((*my_cut)(energy))
+    //      else
     //      {
     //          // Energy <= 10
     //      }
     //
-    //  3.  cout << "Default cut (passes): " << *default_cut << endl;
+    //  2.  boost::shared_ptr<Cut> my_cut(
+    //          new Comparator<std::less_equal<float> >(10));
+    //      if (my_cut->apply(energy))
+    //      {
+    //          // Energy <= 10
+    //      }
+    //      else
+    //      {
+    //          // Energy > 10
+    //      }
+    //
+    //  3.  // Default Cut print
+    //      cout << "Default cut (passes): " << *default_cut << endl;
+    //
+    //  4.  // Custom print
     //      cout << "Default cut (> " << default_cut->value() << ")" << endl;
     //
     template<class Compare = std::greater<float> >
@@ -214,6 +226,8 @@ namespace bsm
             public:
                 Comparator(const float &value, const std::string &name = "");
 
+                // Access functor
+                //
                 const Compare functor() const;
 
                 // Object interface
@@ -225,11 +239,15 @@ namespace bsm
                 virtual void print(std::ostream &out) const;
 
             protected:
+                // Apply cut
+                //
                 virtual bool isPass(const float &number);
 
             private:
                 Compare _functor;
         };
+
+
 
     template<class LowerCompare = std::greater<float>,
         class UpperCompare = std::less<float>,
@@ -274,6 +292,8 @@ namespace bsm
         };
 }
 
+
+
 // Comparator Template implementation
 //
 template<class Compare>
@@ -303,17 +323,19 @@ template<class Compare>
 }
 
 template<class Compare>
-    bool bsm::Comparator<Compare>::isPass(const float &number)
-{
-    return _functor(number, value());
-}
-
-template<class Compare>
     void bsm::Comparator<Compare>::print(std::ostream &out) const
 {
     out << " [+] " << std::setw(30) << std::right << name() << " " << _functor << " ";
 
     Cut::print(out);
+}
+
+// Protected
+//
+template<class Compare>
+    bool bsm::Comparator<Compare>::isPass(const float &number)
+{
+    return functor()(number, value());
 }
 
 
