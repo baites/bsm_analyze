@@ -58,10 +58,6 @@ JetEnergyCorrectionOptions::JetEnergyCorrectionOptions()
     ;
 }
 
-JetEnergyCorrectionOptions::~JetEnergyCorrectionOptions()
-{
-}
-
 void JetEnergyCorrectionOptions::setDelegate(JetEnergyCorrectionDelegate *delegate)
 {
     if (_delegate != delegate)
@@ -75,15 +71,17 @@ JetEnergyCorrectionDelegate *JetEnergyCorrectionOptions::delegate() const
 
 // Options interface
 //
-JetEnergyCorrectionOptions::DescriptionPtr JetEnergyCorrectionOptions::description() const
+JetEnergyCorrectionOptions::DescriptionPtr
+    JetEnergyCorrectionOptions::description() const
 {
     return _description;
 }
 
 // Private
 //
-void JetEnergyCorrectionOptions::setCorrection(const JetEnergyCorrectionDelegate::Level &jec_level,
-        const std::string &file_name)
+void JetEnergyCorrectionOptions::setCorrection(
+    const JetEnergyCorrectionDelegate::Level &jec_level,
+    const std::string &file_name)
 {
     if (!delegate())
         return;
@@ -98,13 +96,14 @@ void JetEnergyCorrectionOptions::setCorrection(const JetEnergyCorrectionDelegate
             {
                 if (!fs::exists(file_name))
                     cerr << jec_level
-                        << " Jet Energy Correction file does not exist: "
+                        << " jet energy correction file does not exist: "
                         << file_name << endl;
                 else
                     delegate()->setCorrection(jec_level, file_name);
 
                 break;
             }
+
         default: cerr << "unsupported Jet Energy Correction level" << endl;
     }
 }
@@ -119,17 +118,17 @@ JetEnergyCorrections::JetEnergyCorrections()
 
 JetEnergyCorrections::JetEnergyCorrections(const JetEnergyCorrections &object)
 {
-    for(CorrectionFiles::const_iterator correction = object._correction_files.begin();
+    for(CorrectionFiles::const_iterator correction =
+            object._correction_files.begin();
             object._correction_files.end() != correction;
             ++correction)
     {
         setCorrection(correction->first, correction->second);
     }
-
-    corrector();
 }
 
-JetEnergyCorrections::LorentzVectorPtr JetEnergyCorrections::correctJet(const Jet *jet,
+JetEnergyCorrections::LorentzVectorPtr JetEnergyCorrections::correctJet(
+        const Jet *jet,
         const Event *event,
         const Electrons &electrons,
         const Muons &muons)
@@ -178,7 +177,10 @@ JetEnergyCorrections::LorentzVectorPtr JetEnergyCorrections::correctJet(const Je
             {
                 const LorentzVector &electron_p4 = (*electron)->physics_object().p4();
                 if (electron_p4 == child_p4)
+                {
                     *corrected_p4 -= electron_p4;
+                    correct(corrected_p4, jet, event);
+                }
             }
 
             // Muons
@@ -189,22 +191,18 @@ JetEnergyCorrections::LorentzVectorPtr JetEnergyCorrections::correctJet(const Je
             {
                 const LorentzVector &muon_p4 = (*muon)->physics_object().p4();
                 if (muon_p4 == child_p4)
+                {
                     *corrected_p4 -= muon_p4;
+                    correct(corrected_p4, jet, event);
+                }
             }
         }
     }
+    else
+        *corrected_p4 = jet->physics_object().p4();
+        //correct(corrected_p4, jet, event);
 
-    // Correct jet Lorentz Vector
-    //
-    jec->setJetEta(eta(*corrected_p4));
-    jec->setJetPt(pt(*corrected_p4));
-    jec->setJetE(corrected_p4->e());
-    jec->setNPV(event->primary_vertices().size());
-    jec->setJetA(jet->extra().area());
-    jec->setRho(event->extra().rho());
-
-    const float correction = jec->getCorrection();
-    *corrected_p4 *= correction;
+    //correct(corrected_p4, event);
 
     return corrected_p4;
 }
@@ -262,6 +260,25 @@ JetEnergyCorrections::CorrectorPtr JetEnergyCorrections::corrector()
     }
 
     return _jec;
+}
+
+void JetEnergyCorrections::correct(LorentzVectorPtr &p4,
+        const Jet *jet,
+        const Event *event)
+{
+    CorrectorPtr jec = corrector();
+
+    // Correct jet Lorentz Vector
+    //
+    jec->setJetEta(eta(*p4));
+    jec->setJetPt(pt(*p4));
+    jec->setJetE(p4->e());
+    jec->setNPV(event->primary_vertices().size());
+    jec->setJetA(jet->extra().area());
+    jec->setRho(event->extra().rho());
+
+    const float correction = jec->getCorrection();
+    *p4 *= correction;
 }
 
 

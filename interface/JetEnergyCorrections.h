@@ -45,7 +45,6 @@ namespace bsm
     {
         public:
             JetEnergyCorrectionOptions();
-            virtual ~JetEnergyCorrectionOptions();
 
             void setDelegate(JetEnergyCorrectionDelegate *);
             JetEnergyCorrectionDelegate *delegate() const;
@@ -67,8 +66,13 @@ namespace bsm
         public JetEnergyCorrectionDelegate
     {
         public:
+            // Inputs
+            //
             typedef std::vector<const Electron *> Electrons;
             typedef std::vector<const Muon *> Muons;
+
+            // Output
+            //
             typedef boost::shared_ptr<LorentzVector> LorentzVectorPtr;
 
             JetEnergyCorrections();
@@ -101,7 +105,6 @@ namespace bsm
             virtual uint32_t id() const;
 
             virtual ObjectPtr clone() const;
-            using Object::merge;
 
             virtual void print(std::ostream &) const;
 
@@ -111,6 +114,7 @@ namespace bsm
             typedef boost::shared_ptr<FactorizedJetCorrector> CorrectorPtr;
 
             CorrectorPtr corrector();
+            void correct(LorentzVectorPtr &, const Jet *jet, const Event *);
 
             CorrectorPtr _jec;
 
