@@ -137,6 +137,7 @@ namespace bsm
             virtual void enable();
 
             // Check the cut status
+            //
             virtual bool isDisabled() const;
 
             // Object interface
