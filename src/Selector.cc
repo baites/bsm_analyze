@@ -209,7 +209,7 @@ bsm::CutPtr MultiplicityCutflow::cut(const uint32_t &cut_id) const
     return getCut(cut_id);
 }
 
-void MultiplicityCutflow::apply(const uint32_t &number)
+bool MultiplicityCutflow::apply(const uint32_t &number)
 {
     // It does not make sense to apply all cuts. Only Nth one:
     //
@@ -217,6 +217,8 @@ void MultiplicityCutflow::apply(const uint32_t &number)
         cut(number)->apply(number);
     else
         cut(cuts() - 1)->apply(number);
+
+    return true;
 }
 
 uint32_t MultiplicityCutflow::id() const

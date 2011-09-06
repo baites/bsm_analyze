@@ -118,7 +118,7 @@ namespace bsm
 
             // Apply cutflow to a number
             //
-            virtual void apply(const uint32_t &);
+            virtual bool apply(const uint32_t &);
 
             // Object interface
             //
