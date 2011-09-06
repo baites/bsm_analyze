@@ -8,6 +8,7 @@
 #ifndef BSM_SELECTOR
 #define BSM_SELECTOR
 
+#include <map>
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
@@ -39,16 +40,20 @@ namespace bsm
             // Access cut. Throw out_of_range exception if id is not valid. ID
             // starts counting from 0
             //
-            CutPtr getCut(const uint32_t &cut_id) const;
+            CutPtr getCut(const uint32_t &id) const;
 
             // Add cut to monitorables
             //
-            void addCut(const CutPtr &);
+            void addCut(const uint32_t &id, const CutPtr &);
 
+            void removeCut(const uint32_t &id);
+
+            // Get number of registered cuts
+            //
             uint32_t cuts() const;
 
         private:
-            typedef std::vector<CutPtr> Cuts;
+            typedef std::map<uint32_t, CutPtr> Cuts;
 
             Cuts _cuts;
     };

@@ -95,101 +95,100 @@ Cut2DSelector::Cut2DSelector(const Region &region)
     setRegion(region);
 }
 
-Cut2DSelector::Cut2DSelector(const Cut2DSelector &object):
-    _region(object.region())
+Cut2DSelector::Region Cut2DSelector::region() const
 {
-    _dr = dynamic_pointer_cast<Cut>(object.dr()->clone());;
-    _ptrel = dynamic_pointer_cast<Cut>(object.ptrel()->clone());;
+    return _region;
+}
 
-    monitor(_dr);
-    monitor(_ptrel);
+bsm::CutPtr Cut2DSelector::cut(const Cut &cut_id) const
+{
+    return getCut(cut_id);
 }
 
 void Cut2DSelector::setRegion(const Region &new_region)
 {
     if (new_region == region()
-            && _dr
-            && _ptrel)
+            && cuts())
         return;
+
+    if (cuts())
+    {
+        removeCut(DELTA_R);
+        removeCut(PTREL);
+    }
 
     _region = new_region;
 
-    stopMonitor(_dr);
-    stopMonitor(_ptrel);
+    CutPtr dr;
+    CutPtr ptrel;
 
     switch(region())
     {
         case SIGNAL:
             {
-                _dr.reset(new Comparator<>(.5));
-                _ptrel.reset(new Comparator<>(25));
+                dr.reset(new Comparator<>(.5));
+                ptrel.reset(new Comparator<>(25));
 
                 break;
             }
 
         case S1:
             {
-                _dr.reset(new RangeComparator<>(.1, .2));
-                _ptrel.reset(new Comparator<less<float> >(25));
+                dr.reset(new RangeComparator<>(.1, .2));
+                ptrel.reset(new Comparator<less<float> >(25));
 
                 break;
             }
 
         case S2:
             {
-                _dr.reset(new RangeComparator<>(.2, .3));
-                _ptrel.reset(new Comparator<less<float> >(25));
+                dr.reset(new RangeComparator<>(.2, .3));
+                ptrel.reset(new Comparator<less<float> >(25));
 
                 break;
             }
 
         case S3:
             {
-                _dr.reset(new RangeComparator<>(.3, .5));
-                _ptrel.reset(new Comparator<less<float> >(25));
+                dr.reset(new RangeComparator<>(.3, .5));
+                ptrel.reset(new Comparator<less<float> >(25));
 
                 break;
             }
 
         case S1S2:
             {
-                _dr.reset(new RangeComparator<>(.1, .3));
-                _ptrel.reset(new Comparator<less<float> >(25));
+                dr.reset(new RangeComparator<>(.1, .3));
+                ptrel.reset(new Comparator<less<float> >(25));
 
                 break;
             }
 
         case S2S3:
             {
-                _dr.reset(new RangeComparator<>(.2, .5));
-                _ptrel.reset(new Comparator<less<float> >(25));
+                dr.reset(new RangeComparator<>(.2, .5));
+                ptrel.reset(new Comparator<less<float> >(25));
 
                 break;
             }
 
         case S1S2S3:
             {
-                _dr.reset(new RangeComparator<>(.1, .5));
-                _ptrel.reset(new Comparator<less<float> >(25));
+                dr.reset(new RangeComparator<>(.1, .5));
+                ptrel.reset(new Comparator<less<float> >(25));
 
                 break;
             }
-
 
         default:
             throw runtime_error("unsupported region");
     }
 
-    _dr->setName("DeltaR");
-    _ptrel->setName("pTrel");
+    dr->setName("DeltaR");
+    ptrel->setName("pTrel");
 
-    monitor(_dr);
-    monitor(_ptrel);
-}
-
-Cut2DSelector::Region Cut2DSelector::region() const
-{
-    return _region;
+    addCut(DELTA_R, dr);
+    addCut(PTREL, ptrel);
 }
 
 bool Cut2DSelector::apply(const LorentzVector &lepton,
@@ -197,34 +196,24 @@ bool Cut2DSelector::apply(const LorentzVector &lepton,
 {
     if (SIGNAL == region())
     {
-        return _dr->apply(bsm::dr(lepton, jet))
-            || _ptrel->apply(bsm::ptrel(lepton, jet));
+        return cut(DELTA_R)->apply(bsm::dr(lepton, jet))
+            || cut(PTREL)->apply(bsm::ptrel(lepton, jet));
     }
     else
-        return _dr->apply(bsm::dr(lepton, jet))
-            && _ptrel->apply(bsm::ptrel(lepton, jet));
-}
-
-Cut2DSelector::CutPtr Cut2DSelector::dr() const
-{
-    return _dr;
-}
-
-Cut2DSelector::CutPtr Cut2DSelector::ptrel() const
-{
-    return _ptrel;
+        return cut(DELTA_R)->apply(bsm::dr(lepton, jet))
+            && cut(PTREL)->apply(bsm::ptrel(lepton, jet));
 }
 
 void Cut2DSelector::enable()
 {
-    dr()->enable();
-    ptrel()->enable();
+    cut(DELTA_R)->enable();
+    cut(PTREL)->enable();
 }
 
 void Cut2DSelector::disable()
 {
-    dr()->disable();
-    ptrel()->disable();
+    cut(DELTA_R)->disable();
+    cut(PTREL)->disable();
 }
 
 uint32_t Cut2DSelector::id() const
@@ -235,13 +224,4 @@ uint32_t Cut2DSelector::id() const
 Cut2DSelector::ObjectPtr Cut2DSelector::clone() const
 {
     return ObjectPtr(new Cut2DSelector(*this));
-}
-
-void Cut2DSelector::print(ostream &out) const
-{
-    out << "     CUT                 " << setw(5) << " "
-        << " Objects Events" << endl;
-    out << setw(45) << setfill('-') << left << " " << setfill(' ') << endl;
-    out << *_dr << endl;
-    out << *_ptrel;
 }

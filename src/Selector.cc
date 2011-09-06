@@ -8,6 +8,7 @@
 #include <cfloat>
 #include <cmath>
 #include <functional>
+#include <iostream>
 #include <iomanip>
 #include <ostream>
 #include <sstream>
@@ -50,7 +51,7 @@ Selector::Selector(const Selector &object)
             object._cuts.end() != cut;
             ++cut)
     {
-        addCut(dynamic_pointer_cast<Cut>((*cut)->clone()));
+        addCut(cut->first, dynamic_pointer_cast<Cut>(cut->second->clone()));
     }
 }
 
@@ -60,7 +61,7 @@ void Selector::enable()
             _cuts.end() != cut;
             ++cut)
     {
-        (*cut)->enable();
+        cut->second->enable();
     }
 }
 
@@ -70,11 +71,11 @@ void Selector::disable()
             _cuts.end() != cut;
             ++cut)
     {
-        (*cut)->disable();
+        cut->second->disable();
     }
 }
 
-void Selector::print(std::ostream &out) const
+void Selector::print(ostream &out) const
 {
     if (_cuts.empty())
     {
@@ -90,7 +91,7 @@ void Selector::print(std::ostream &out) const
             _cuts.end() != cut;
             ++cut)
     {
-        out << *(*cut) << endl;
+        out << *cut->second << endl;
     }
 }
 
@@ -98,14 +99,24 @@ void Selector::print(std::ostream &out) const
 //
 bsm::CutPtr Selector::getCut(const uint32_t &cut_id) const
 {
-    return _cuts.at(cut_id);
+    Cuts::const_iterator cut = _cuts.find(cut_id);
+    if (_cuts.end() == cut)
+        throw out_of_range("failed to get cut: it is not defined");
+
+    return cut->second;
 }
 
-void Selector::addCut(const CutPtr &cut)
+void Selector::addCut(const uint32_t &cut_id, const CutPtr &cut)
 {
-    _cuts.push_back(cut);
+    if (!_cuts.insert(make_pair(cut_id, cut)).second)
+        cerr << "failed to add cut " << cut_id << ": remove it first" << endl;
+    else
+        monitor(cut);
+}
 
-    monitor(cut);
+void Selector::removeCut(const uint32_t &cut_id)
+{
+    _cuts.erase(cut_id);
 }
 
 uint32_t Selector::cuts() const
@@ -119,9 +130,11 @@ uint32_t Selector::cuts() const
 //
 ElectronSelector::ElectronSelector()
 {
-    addCut(CutPtr(new Comparator<>(30, "Pt")));
-    addCut(CutPtr(new Comparator<std::less<float> >(2.5, "|eta|")));
-    addCut(CutPtr(new Comparator<std::less<float> >(1, "|el.z() - pv.z()|")));
+    addCut(PT, CutPtr(new Comparator<>(30, "Pt")));
+    addCut(ETA, CutPtr(new Comparator<less<float> >(2.5, "|eta|")));
+    addCut(PRIMARY_VERTEX,
+            CutPtr(new Comparator<less<float> >(1,
+                    "|el.z() - pv.z()|")));
 }
 
 bool ElectronSelector::apply(const Electron &electron, const PrimaryVertex &pv)
@@ -153,8 +166,8 @@ ElectronSelector::ObjectPtr ElectronSelector::clone() const
 //
 JetSelector::JetSelector()
 {
-    addCut(CutPtr(new Comparator<>(50, "Pt")));
-    addCut(CutPtr(new Comparator<std::less<float> >(2.4, "|eta|")));
+    addCut(PT, CutPtr(new Comparator<>(50, "Pt")));
+    addCut(ETA, CutPtr(new Comparator<less<float> >(2.4, "|eta|")));
 }
 
 CutPtr JetSelector::cut(const Cut &cut_id) const
@@ -186,9 +199,9 @@ MultiplicityCutflow::MultiplicityCutflow(const uint32_t &max)
 {
     for(uint32_t i = 0; max > i; ++i)
     {
-        addCut(CutPtr(CutPtr(new Comparator<std::equal_to<uint32_t> >(i))));
+        addCut(i, CutPtr(new Comparator<equal_to<uint32_t> >(i)));
     }
-    addCut(CutPtr(new Comparator<std::greater_equal<uint32_t> >(max)));
+    addCut(max, CutPtr(new Comparator<greater_equal<uint32_t> >(max)));
 }
 
 bsm::CutPtr MultiplicityCutflow::cut(const uint32_t &cut_id) const
@@ -222,17 +235,23 @@ MultiplicityCutflow::ObjectPtr MultiplicityCutflow::clone() const
 //
 MuonSelector::MuonSelector()
 {
-    addCut(CutPtr(new Comparator<>(30, "pT")));
-    addCut(CutPtr(new Comparator<std::less<float> >(2.1, "|eta|")));
-    addCut(CutPtr(new Comparator<std::logical_and<bool> >(true, "is Global")));
-    addCut(CutPtr(new Comparator<std::logical_and<bool> >(true, "is Tracker")));
-    addCut(CutPtr(new Comparator<>(1, "Muon Segments")));
-    addCut(CutPtr(new Comparator<>(0, "Muon Hits")));
-    addCut(CutPtr(new Comparator<std::less<float> >(10, "Muon Chi2 / ndof")));
-    addCut(CutPtr(new Comparator<>(10, "Tracker hits")));
-    addCut(CutPtr(new Comparator<>(0, "Pixel hits")));
-    addCut(CutPtr(new Comparator<std::less<float> >(0.02, "|d0_bsp|")));
-    addCut(CutPtr(new Comparator<std::less<float> >(1, "|mu.z() - pv.z()|")));
+    addCut(PT, CutPtr(new Comparator<>(30, "pT")));
+    addCut(ETA, CutPtr(new Comparator<less<float> >(2.1, "|eta|")));
+    addCut(IS_GLOBAL,
+            CutPtr(new Comparator<logical_and<bool> >(true, "is Global")));
+    addCut(IS_TRACKER,
+            CutPtr(new Comparator<logical_and<bool> >(true,
+                    "is Tracker")));
+    addCut(MUON_SEGMENTS, CutPtr(new Comparator<>(1, "Muon Segments")));
+    addCut(MUON_HITS, CutPtr(new Comparator<>(0, "Muon Hits")));
+    addCut(MUON_NORMALIZED_CHI2,
+            CutPtr(new Comparator<less<float> >(10,
+                    "Muon Chi2 / ndof")));
+    addCut(TRACKER_HITS, CutPtr(new Comparator<>(10, "Tracker hits")));
+    addCut(PIXEL_HITS, CutPtr(new Comparator<>(0, "Pixel hits")));
+    addCut(D0, CutPtr(new Comparator<less<float> >(0.02, "|d0|")));
+    addCut(PRIMARY_VERTEX,
+            CutPtr(new Comparator<less<float> >(1, "|mu.z() - pv.z()|")));
 }
 
 CutPtr MuonSelector::cut(const Cut &cut_id) const
@@ -273,9 +292,11 @@ MuonSelector::ObjectPtr MuonSelector::clone() const
 //
 PrimaryVertexSelector::PrimaryVertexSelector()
 {
-    addCut(CutPtr(new Comparator<std::greater_equal<float> >(4, "ndof")));
-    addCut(CutPtr(new Comparator<std::less_equal<float> >(24, "|pv.z()|")));
-    addCut(CutPtr(new Comparator<std::less_equal<float> >(4.0, "pv.rho()")));
+    addCut(NDOF, CutPtr(new Comparator<greater_equal<float> >(4, "ndof")));
+    addCut(VERTEX_Z,
+            CutPtr(new Comparator<less_equal<float> >(24, "|pv.z()|")));
+    addCut(RHO,
+            CutPtr(new Comparator<less_equal<float> >(4.0, "pv.rho()")));
 }
 
 CutPtr PrimaryVertexSelector::cut(const Cut &cut_id) const
@@ -307,10 +328,12 @@ PrimaryVertexSelector::ObjectPtr PrimaryVertexSelector::clone() const
 //
 WJetSelector::WJetSelector()
 {
-    addCut(CutPtr(new Comparator<std::equal_to<uint32_t> >(2, "Children")));
-    addCut(CutPtr(new Comparator<>(200, "pT")));
-    addCut(CutPtr(new Comparator<std::less<float> >(0.4, "Mass drop")));
-    addCut(CutPtr(new RangeComparator<>(60, 130, "Mass bound")));
+    addCut(CHILDREN,
+            CutPtr(new Comparator<equal_to<uint32_t> >(2, "Children")));
+    addCut(PT, CutPtr(new Comparator<>(200, "pT")));
+    addCut(MASS_DROP,
+            CutPtr(new Comparator<less<float> >(0.4, "Mass drop")));
+    addCut(MASS, CutPtr(new RangeComparator<>(60, 130, "Mass bound")));
 }
 
 CutPtr WJetSelector::cut(const Cut &cut_id) const
@@ -332,7 +355,7 @@ bool WJetSelector::apply(const Jet &jet)
     float m12 = bsm::mass(jet.children().Get(0).physics_object().p4()
             + jet.children().Get(1).physics_object().p4());
 
-    return cut(MASS_DROP)->apply(std::max(m1, m2) / m0)
+    return cut(MASS_DROP)->apply(max(m1, m2) / m0)
         && cut(MASS)->apply(m12);
 }
 
