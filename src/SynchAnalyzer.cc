@@ -43,7 +43,7 @@ SynchAnalyzerOptions::SynchAnalyzerOptions()
         ("selection",
          po::value<string>()->default_value("")->notifier(
              boost::bind(&SynchAnalyzerOptions::setSelection, this, _1)),
-         "print events passing selection: htlep, leading_jet, cut_lepton, veto_second_lepton, lepton, jood_jets, pv")
+         "print events passing selection: htlep, leading_jet, cut_lepton, veto_second_lepton, lepton, good_jets, pv")
     ;
 }
 
@@ -157,7 +157,7 @@ void SynchAnalyzer::setSelection(const SynchSelector::Selection &selection)
         _synch_selector->cutflow()->cut(_selection)->objects()->setDelegate(this);
 }
 
-void SynchAnalyzer::didCounterAdd()
+void SynchAnalyzer::didCounterAdd(const Counter *)
 {
     if (_event)
         _out << _format->operator()(*_event) << endl;
