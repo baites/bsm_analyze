@@ -11,12 +11,50 @@
 #include "bsm_input/interface/bsm_input_fwd.h"
 #include "bsm_input/interface/Reader.h"
 #include "interface/Analyzer.h"
+#include "interface/AppController.h"
 #include "interface/bsm_fwd.h"
 
 namespace bsm
 {
+    class FilterDelegate
+    {
+        public:
+            virtual ~FilterDelegate()
+            {
+            }
+
+            // Event_Extra is the same as Event::Extra
+            //
+            virtual void setEventNumber(const Event_Extra &)
+            {
+            }
+    };
+
+    class FilterOptions: public Options
+    {
+        public:
+            FilterOptions();
+
+            void setDelegate(FilterDelegate *);
+            FilterDelegate *delegate() const;
+
+            // Options interface
+            //
+            virtual DescriptionPtr description() const;
+
+        private:
+            typedef std::vector<std::string> Events;
+
+            void setEvents(const Events &);
+            void setFormatLevel(std::string);
+
+            FilterDelegate *_delegate;
+            DescriptionPtr _description;
+    };
+
     class FilterAnalyzer : public Analyzer,
-        public ReaderDelegate
+        public ReaderDelegate,
+        public FilterDelegate
     {
         public:
             FilterAnalyzer();
@@ -34,6 +72,10 @@ namespace bsm
             //
             virtual void fileWillClose(const Reader *);
 
+            // Filter Delegate interface
+            //
+            virtual void setEventNumber(const Event_Extra &);
+
             // Object interface
             //
             virtual uint32_t id() const;
@@ -45,6 +87,10 @@ namespace bsm
         private:
             boost::shared_ptr<Writer> _writer;
             boost::shared_ptr<SynchSelector> _synch_selector;
+
+            std::vector<Event::Extra> _events;
+
+            boost::shared_ptr<Input> _input;
     };
 }
 
