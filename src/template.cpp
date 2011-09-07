@@ -71,6 +71,12 @@ int main(int argc, char *argv[])
 
             TGaxis::SetMaxDigits(3);
 
+            TH1Ptr d0 = convert(*analyzer->d0());
+            d0->SetName("d0");
+            d0->GetXaxis()->SetTitle("i.p. [cm]");
+            d0->GetXaxis()->SetTitleSize(0.045);
+            d0->SetMarkerSize(0.1);
+
             TH1Ptr htlep = convert(*analyzer->htlep());
             htlep->SetName("htlep");
             htlep->GetXaxis()->SetTitle("H_{T}^{lep} [GeV/c]");
@@ -95,6 +101,7 @@ int main(int argc, char *argv[])
 
             if (app->output())
             {
+                d0->Write();
                 htlep->Write();
                 mttbar_before_htlep->Write();
                 mttbar_after_htlep->Write();
@@ -121,6 +128,14 @@ int main(int argc, char *argv[])
                 mttbar_after_htlep->Draw("h");
 
                 canvas->Update();
+
+                shared_ptr<TCanvas> canvas2(new TCanvas());
+                canvas2->SetTitle("Other");
+                canvas2->SetWindowSize(800, 600);
+                canvas2->Divide(2, 2);
+
+                canvas2->cd(1);
+                d0->Draw("h");
 
                 root->Run();
             }
