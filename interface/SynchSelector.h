@@ -13,6 +13,7 @@
 #include "bsm_input/interface/bsm_input_fwd.h"
 #include "bsm_input/interface/Physics.pb.h"
 #include "interface/bsm_fwd.h"
+#include "interface/JetEnergyCorrections.h"
 #include "interface/AppController.h"
 #include "interface/Selector.h"
 
@@ -71,17 +72,7 @@ namespace bsm
         public:
             typedef boost::shared_ptr<Cut> CutPtr;
             typedef boost::shared_ptr<LorentzVector> LorentzVectorPtr;
-
-            struct CorrectedJet
-            {
-                CorrectedJet()
-                {
-                    jet = 0;
-                }
-
-                const Jet *jet;
-                LorentzVectorPtr corrected_p4;
-            };
+            typedef JetEnergyCorrections::CorrectedJet CorrectedJet;
 
             typedef boost::shared_ptr<MultiplicityCutflow> CutflowPtr;
 

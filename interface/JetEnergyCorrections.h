@@ -78,6 +78,22 @@ namespace bsm
             JetEnergyCorrections();
             JetEnergyCorrections(const JetEnergyCorrections &);
 
+            struct CorrectedJet
+            {
+                CorrectedJet()
+                {
+                    jet = 0;
+                    correction = 0;
+                }
+
+                const Jet *jet;
+                LorentzVectorPtr corrected_p4;
+
+                Electrons subtracted_electrons;
+                Muons subtracted_muons;
+                float correction;
+            };
+
             // IMPORTANT: Invalid pointer will be returned if Jet Energy
             //            Corrections are not loaded. As such, always check
             //            returned value for validity, e.g.:
@@ -88,7 +104,7 @@ namespace bsm
             //            else
             //              cout << "work with jet" << endl;
             //
-            LorentzVectorPtr correctJet(const Jet *,
+            CorrectedJet correctJet(const Jet *,
                     const Event *,
                     const Electrons &,
                     const Muons &);
@@ -114,7 +130,7 @@ namespace bsm
             typedef boost::shared_ptr<FactorizedJetCorrector> CorrectorPtr;
 
             CorrectorPtr corrector();
-            void correct(LorentzVectorPtr &, const Jet *jet, const Event *);
+            void correct(CorrectedJet &, const Event *);
 
             CorrectorPtr _jec;
 

@@ -118,44 +118,45 @@ JetEnergyCorrections::JetEnergyCorrections()
 
 JetEnergyCorrections::JetEnergyCorrections(const JetEnergyCorrections &object)
 {
-    for(CorrectionFiles::const_iterator correction =
-            object._correction_files.begin();
-            object._correction_files.end() != correction;
+    for(CorrectionFiles::const_reverse_iterator correction =
+            object._correction_files.rbegin();
+            object._correction_files.rend() != correction;
             ++correction)
     {
         setCorrection(correction->first, correction->second);
     }
 }
 
-JetEnergyCorrections::LorentzVectorPtr JetEnergyCorrections::correctJet(
+JetEnergyCorrections::CorrectedJet JetEnergyCorrections::correctJet(
         const Jet *jet,
         const Event *event,
         const Electrons &electrons,
         const Muons &muons)
 {
-    LorentzVectorPtr corrected_p4;
+    CorrectedJet corrected_jet;
+    corrected_jet.jet = jet;
 
     // Test if corrections are loaded
     //
     CorrectorPtr jec = corrector();
     if (!jec)
-        return corrected_p4;
+        return corrected_jet;
 
     // Check if jet uncorrected energy and area are available
     //
     if (!jet->has_uncorrected_p4()
             || !jet->has_extra()
             || !jet->extra().has_area())
-        return corrected_p4;
+        return corrected_jet;
 
     // Check if event RHO information is available
     //
     if (!event->has_extra()
             || !event->extra().has_rho())
-        return corrected_p4;
+        return corrected_jet;
 
-    corrected_p4.reset(new LorentzVector());
-    *corrected_p4 = jet->uncorrected_p4();
+    corrected_jet.corrected_p4.reset(new LorentzVector());
+    corrected_jet.corrected_p4->CopyFrom(jet->uncorrected_p4());
 
     // Remove leptons only if any were passed
     //
@@ -175,11 +176,12 @@ JetEnergyCorrections::LorentzVectorPtr JetEnergyCorrections::correctJet(
                     electrons.end() != electron;
                     ++electron)
             {
-                const LorentzVector &electron_p4 = (*electron)->physics_object().p4();
+                const LorentzVector &electron_p4 =
+                    (*electron)->physics_object().p4();
                 if (electron_p4 == child_p4)
                 {
-                    *corrected_p4 -= electron_p4;
-                    correct(corrected_p4, jet, event);
+                    *corrected_jet.corrected_p4 -= electron_p4;
+                    corrected_jet.subtracted_electrons.push_back(*electron);
                 }
             }
 
@@ -192,19 +194,16 @@ JetEnergyCorrections::LorentzVectorPtr JetEnergyCorrections::correctJet(
                 const LorentzVector &muon_p4 = (*muon)->physics_object().p4();
                 if (muon_p4 == child_p4)
                 {
-                    *corrected_p4 -= muon_p4;
-                    correct(corrected_p4, jet, event);
+                    *corrected_jet.corrected_p4 -= muon_p4;
+                    corrected_jet.subtracted_muons.push_back(*muon);
                 }
             }
         }
     }
-    else
-        *corrected_p4 = jet->physics_object().p4();
-        //correct(corrected_p4, jet, event);
 
-    //correct(corrected_p4, event);
+    correct(corrected_jet, event);
 
-    return corrected_p4;
+    return corrected_jet;
 }
 
 // Jet Energy Correction Delegate interface
@@ -262,23 +261,22 @@ JetEnergyCorrections::CorrectorPtr JetEnergyCorrections::corrector()
     return _jec;
 }
 
-void JetEnergyCorrections::correct(LorentzVectorPtr &p4,
-        const Jet *jet,
+void JetEnergyCorrections::correct(CorrectedJet &jet,
         const Event *event)
 {
     CorrectorPtr jec = corrector();
 
     // Correct jet Lorentz Vector
     //
-    jec->setJetEta(eta(*p4));
-    jec->setJetPt(pt(*p4));
-    jec->setJetE(p4->e());
+    jec->setJetEta(eta(*jet.corrected_p4));
+    jec->setJetPt(pt(*jet.corrected_p4));
+    jec->setJetE(jet.corrected_p4->e());
     jec->setNPV(event->primary_vertices().size());
-    jec->setJetA(jet->extra().area());
+    jec->setJetA(jet.jet->extra().area());
     jec->setRho(event->extra().rho());
 
-    const float correction = jec->getCorrection();
-    *p4 *= correction;
+    jet.correction = jec->getCorrection();
+    *jet.corrected_p4 *= jet.correction;
 }
 
 

@@ -414,38 +414,36 @@ bool SynchSelector::jets(const Event *event)
             event->jets().end() != jet;
             ++jet)
     {
-        LorentzVectorPtr corrected_p4 = _jec->correctJet(&*jet,
+        JetEnergyCorrections::CorrectedJet correction = _jec->correctJet(&*jet,
                 event,
                 _good_electrons,
                 _good_muons);
 
         // Skip jet if energy corrections failed
         //
-        if (!corrected_p4)
+        if (!correction.corrected_p4)
             continue;
 
         // Original jet in the event can not be modified and Jet Selector can
         // only be applied to jet: therefore copy jet, set corrected p4 and
         // apply selector
         //
-        Jet corrected_jet = *jet;
-        *corrected_jet.mutable_physics_object()->mutable_p4() = *corrected_p4;
+        Jet corrected_jet;
+        corrected_jet.CopyFrom(*jet);
+        corrected_jet.mutable_physics_object()->mutable_p4()->CopyFrom(
+                *correction.corrected_p4);
 
         if (!_nice_jet_selector->apply(corrected_jet))
             continue;
 
         // Store original jet and corrected p4
         //
-        CorrectedJet tmp;
-        tmp.jet = &*jet;
-        tmp.corrected_p4 = corrected_p4;
-
-        _nice_jets.push_back(tmp);
+        _nice_jets.push_back(correction);
 
         if (!_good_jet_selector->apply(corrected_jet))
             continue;
 
-        _good_jets.push_back(tmp);
+        _good_jets.push_back(correction);
     }
 
     return 1 < _good_jets.size()
