@@ -271,6 +271,31 @@ void SynchAnalyzer::dump(const Event *event)
     {
         _out << "corr p4: " << *jet->corrected_p4 << endl;
         _out << format(*jet->jet) << endl;
+        _out << "correction: " << jet->correction << endl;
+
+        if (!jet->subtracted_electrons.empty())
+        {
+            _out << "subtracted electrons" << endl;
+            for(SynchSelector::GoodElectrons::const_iterator electron =
+                    jet->subtracted_electrons.begin();
+                    jet->subtracted_electrons.end() != electron;
+                    ++electron)
+            {
+                _out << format(* *electron) << endl;
+            }
+        }
+
+        if (!jet->subtracted_muons.empty())
+        {
+            _out << "subtracted muons" << endl;
+            for(SynchSelector::GoodMuons::const_iterator muon =
+                    jet->subtracted_muons.begin();
+                    jet->subtracted_muons.end() != muon;
+                    ++muon)
+            {
+                _out << format(* *muon) << endl;
+            }
+        }
         _out << "---" << endl;
     }
 
