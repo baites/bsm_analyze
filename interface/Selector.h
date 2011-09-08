@@ -217,6 +217,7 @@ namespace bsm
             LockSelectorEventCounterOnUpdate(ElectronSelector &);
             LockSelectorEventCounterOnUpdate(JetSelector &);
             LockSelectorEventCounterOnUpdate(MuonSelector &);
+            LockSelectorEventCounterOnUpdate(PrimaryVertexSelector &);
             LockSelectorEventCounterOnUpdate(WJetSelector &);
 
         private:

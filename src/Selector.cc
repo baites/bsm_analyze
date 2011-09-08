@@ -423,6 +423,17 @@ LockSelectorEventCounterOnUpdate::LockSelectorEventCounterOnUpdate(
 }
 
 LockSelectorEventCounterOnUpdate::LockSelectorEventCounterOnUpdate(
+        PrimaryVertexSelector &selector)
+{
+    _lockers.push_back(Locker(
+                new LockCounterOnUpdate(selector.cut(PrimaryVertexSelector::NDOF)->events())));
+    _lockers.push_back(Locker(
+                new LockCounterOnUpdate(selector.cut(PrimaryVertexSelector::VERTEX_Z)->events())));
+    _lockers.push_back(Locker(
+                new LockCounterOnUpdate(selector.cut(PrimaryVertexSelector::RHO)->events())));
+}
+
+LockSelectorEventCounterOnUpdate::LockSelectorEventCounterOnUpdate(
         WJetSelector &selector)
 {
     _lockers.push_back(Locker(
