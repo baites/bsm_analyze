@@ -201,6 +201,9 @@ JetEnergyCorrections::CorrectedJet JetEnergyCorrections::correctJet(
         }
     }
 
+    corrected_jet.subtracted_p4.reset(new LorentzVector());
+    corrected_jet.subtracted_p4->CopyFrom(*corrected_jet.corrected_p4);
+
     correct(corrected_jet, event);
 
     return corrected_jet;
