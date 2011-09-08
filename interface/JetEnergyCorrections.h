@@ -88,6 +88,7 @@ namespace bsm
 
                 const Jet *jet;
                 LorentzVectorPtr corrected_p4;
+                LorentzVectorPtr subtracted_p4;
 
                 Electrons subtracted_electrons;
                 Muons subtracted_muons;

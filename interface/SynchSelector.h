@@ -76,6 +76,7 @@ namespace bsm
 
             typedef boost::shared_ptr<MultiplicityCutflow> CutflowPtr;
 
+            typedef std::vector<const PrimaryVertex *> GoodPrimaryVertices;
             typedef std::vector<const Electron *> GoodElectrons;
             typedef std::vector<const Muon *> GoodMuons;
             typedef std::vector<CorrectedJet> GoodJets;
@@ -113,6 +114,7 @@ namespace bsm
 
             CutflowPtr cutflow() const;
 
+            const GoodPrimaryVertices &goodPrimaryVertices() const;
             const GoodElectrons &goodElectrons() const;
             const GoodMuons &goodMuons() const;
             const GoodJets &niceJets() const;
@@ -157,6 +159,7 @@ namespace bsm
             bool leadingJetCut();
             bool htlepCut(const Event *);
 
+            void selectGoodPrimaryVertices(const Event *);
             void selectGoodElectrons(const Event *);
             void selectGoodMuons(const Event *);
 
@@ -177,6 +180,7 @@ namespace bsm
 
             boost::shared_ptr<JetEnergyCorrections> _jec;
 
+            GoodPrimaryVertices _good_primary_vertices;
             GoodElectrons _good_electrons;
             GoodMuons _good_muons;
             GoodJets _nice_jets; // pT > 25
