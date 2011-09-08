@@ -219,9 +219,11 @@ void JetEnergyCorrections::setCorrection(const Level &jec_level,
         _correction_files[jec_level] = file_name;
 
         clog << jec_level << " loaded " << file_name << endl;
-    }
 
-    corrector();
+        _jec.reset();
+
+        corrector();
+    }
 }
 
 // Object interface
