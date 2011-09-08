@@ -241,6 +241,17 @@ void SynchAnalyzer::dump(const Event *event)
     _out << setw(20) << setfill('-') << " " << endl;
     _out << "Selected Objects" << endl;
     _out << setw(20) << setfill('-') << " " << endl;
+
+    _out << _synch_selector->goodPrimaryVertices().size() << " good Primary Vertices" << endl;
+    for(SynchSelector::GoodPrimaryVertices::const_iterator pv =
+            _synch_selector->goodPrimaryVertices().begin();
+            _synch_selector->goodPrimaryVertices().end() != pv;
+            ++pv)
+    {
+        _out << format(*(*pv)) << endl;
+        _out << "---" << endl;
+    }
+
     _out << _synch_selector->goodMuons().size() << " good muons" << endl;
     for(SynchSelector::GoodMuons::const_iterator muon =
             _synch_selector->goodMuons().begin();
