@@ -263,6 +263,7 @@ bool SynchSelector::apply(const Event *event)
 {
     _cutflow->apply(PRESELECTION);
 
+    _good_primary_vertices.clear();
     _good_electrons.clear();
     _good_muons.clear();
     _nice_jets.clear();
@@ -281,6 +282,12 @@ bool SynchSelector::apply(const Event *event)
 SynchSelector::CutflowPtr SynchSelector::cutflow() const
 {
     return _cutflow;
+}
+
+const SynchSelector::GoodPrimaryVertices
+    &SynchSelector::goodPrimaryVertices() const
+{
+    return _good_primary_vertices;
 }
 
 const SynchSelector::GoodElectrons &SynchSelector::goodElectrons() const
@@ -396,8 +403,9 @@ void SynchSelector::print(std::ostream &out) const
 //
 bool SynchSelector::primaryVertices(const Event *event)
 {
-    return event->primary_vertices().size()
-        && _primary_vertex_selector->apply(*event->primary_vertices().begin())
+    selectGoodPrimaryVertices(event);
+
+    return !goodPrimaryVertices().empty()
         && (_cutflow->apply(PRIMARY_VERTEX), true);
 }
 
@@ -578,6 +586,20 @@ bool SynchSelector::isolation(const LorentzVector *p4, const PFIsolation *isolat
             + isolation->neutral_hadron()
             + isolation->photon())
         / pt(*p4);
+}
+
+void SynchSelector::selectGoodPrimaryVertices(const Event *event)
+{
+    typedef ::google::protobuf::RepeatedPtrField<PrimaryVertex> PrimaryVertices;
+
+    LockSelectorEventCounterOnUpdate lock(*_primary_vertex_selector);
+    for(PrimaryVertices::const_iterator pv = event->primary_vertices().begin();
+            event->primary_vertices().end() != pv;
+            ++pv)
+    {
+        if (_primary_vertex_selector->apply(*pv))
+            _good_primary_vertices.push_back(&*pv);
+    }
 }
 
 void SynchSelector::selectGoodElectrons(const Event *event)
