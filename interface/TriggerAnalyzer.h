@@ -15,11 +15,40 @@
 #include <boost/shared_ptr.hpp>
 
 #include "bsm_input/interface/Trigger.pb.h"
-#include "interface/Analyzer.h"
 #include "interface/bsm_fwd.h"
+#include "interface/Analyzer.h"
+#include "interface/AppController.h"
 
 namespace bsm
 {
+    class TriggerDelegate
+    {
+        public:
+            virtual ~TriggerDelegate() {}
+
+            virtual void setTrigger(const Trigger &) {}
+    };
+
+    class TriggerOptions : public Options
+    {
+        public:
+            TriggerOptions();
+
+            void setDelegate(TriggerDelegate *);
+            TriggerDelegate *delegate() const;
+
+            // Options interface
+            //
+            virtual DescriptionPtr description() const;
+
+        private:
+            void setTrigger(std::string) const;
+
+            TriggerDelegate *_delegate;
+
+            DescriptionPtr _description;
+    };
+
     class TriggerAnalyzer : public Analyzer
     {
         public:
@@ -46,7 +75,7 @@ namespace bsm
 
             typedef std::map<std::size_t, std::string> HLTMap;
 
-            typedef std::map<bsm::Trigger, uint32_t> HLTCutflow;
+            typedef std::map<Trigger, uint32_t> HLTCutflow;
 
             HLTMap _hlt_map;
             HLTCutflow _hlt_cutflow;
@@ -54,9 +83,9 @@ namespace bsm
 
     // Helpers
     //
-    bool operator <(const bsm::Trigger &, const bsm::Trigger &);
+    bool operator <(const Trigger &, const Trigger &);
 
-    std::ostream &operator <<(std::ostream &, const bsm::Trigger &);
+    std::ostream &operator <<(std::ostream &, const Trigger &);
 }
 
 #endif

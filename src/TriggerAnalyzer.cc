@@ -9,6 +9,8 @@
 #include <iostream>
 #include <ostream>
 
+#include <boost/algorithm/string.hpp>
+#include <boost/functional/hash.hpp>
 #include <boost/pointer_cast.hpp>
 
 #include "bsm_core/interface/ID.h"
@@ -18,11 +20,66 @@
 #include "interface/TriggerAnalyzer.h"
 
 using namespace std;
-
-using boost::dynamic_pointer_cast;
+using namespace boost;
 
 using bsm::TriggerAnalyzer;
+using bsm::TriggerOptions;
 
+// Trigger options
+//
+TriggerOptions::TriggerOptions()
+{
+    _delegate = 0;
+
+    _description.reset(new po::options_description("Trigger Options"));
+    _description->add_options()
+        ("trigger",
+         po::value<string>()->notifier(
+             boost::bind(&TriggerOptions::setTrigger, this,
+                 _1)),
+         "Use trigger")
+    ;
+}
+
+void TriggerOptions::setDelegate(TriggerDelegate *delegate)
+{
+    if (_delegate != delegate)
+        _delegate = delegate;
+}
+
+bsm::TriggerDelegate *TriggerOptions::delegate() const
+{
+    return _delegate;
+}
+
+// Options interface
+//
+TriggerOptions::DescriptionPtr
+    TriggerOptions::description() const
+{
+    return _description;
+}
+
+// Private
+//
+void TriggerOptions::setTrigger(std::string trigger_name) const
+{
+    if (!delegate())
+        return;
+
+    hash<std::string> make_hash;
+
+    to_lower(trigger_name);
+    Trigger trigger;
+    trigger.set_hash(make_hash(trigger_name));
+
+    delegate()->setTrigger(trigger);
+}
+
+
+
+// Trigger Analzyer
+//
 TriggerAnalyzer::TriggerAnalyzer()
 {
 }
