@@ -52,6 +52,7 @@ namespace bsm
             //
             virtual uint32_t id() const;
             virtual ObjectPtr clone() const;
+            virtual void merge(const ObjectPtr &);
             virtual void print(std::ostream &) const;
 
         private:
@@ -63,6 +64,8 @@ namespace bsm
 
             float mttbar() const;
 
+            bool isGoodLepton() const;
+
             boost::shared_ptr<SynchSelector> _synch_selector;
 
             H1ProxyPtr _d0;
@@ -73,8 +76,10 @@ namespace bsm
 
             const Event *_event;
 
-            CounterPtr _secondary_lepton_counter;
-            CounterPtr _leading_jet_counter;
+            Counter *_secondary_lepton_counter;
+            Counter *_leading_jet_counter;
+
+            bool _is_good_lepton;
     };
 }
 
