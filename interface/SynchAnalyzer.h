@@ -98,7 +98,7 @@ namespace bsm
 
             // Counter Delegate interface
             //
-            virtual void didCounterAdd();
+            virtual void didCounterAdd(const Counter *);
 
             // Event Dump Delegate interface
             //

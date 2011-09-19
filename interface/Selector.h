@@ -8,284 +8,207 @@
 #ifndef BSM_SELECTOR
 #define BSM_SELECTOR
 
-#include <iosfwd>
+#include <map>
 #include <vector>
 
 #include <boost/shared_ptr.hpp>
 
 #include "bsm_core/interface/Object.h"
 #include "bsm_input/interface/bsm_input_fwd.h"
-#include "interface/Cut.h"
+#include "interface/bsm_fwd.h"
 
 namespace bsm
 {
-    typedef boost::shared_ptr<Cut> CutPtr;
-
-    // Common interface for all selectors. Each selector knows how to:
-    //
-    //  1. print
-    //  2. clone
-    //  3. merge
-    //
-    // the last two are required for the proper use in threads
+    // Selector Interface. Each selector can be enabled or disabled
     //
     class Selector : public core::Object
     {
         public:
+            Selector() {}
+            Selector(const Selector &);
+
             // Enable disable all cuts
             //
-            virtual void enable() = 0;
-            virtual void disable() = 0;
+            virtual void enable();
+            virtual void disable();
+
+            // Object interface
+            //
+            virtual void print(std::ostream &) const;
+
+        protected:
+            // Access cut. Throw out_of_range exception if id is not valid. ID
+            // starts counting from 0
+            //
+            CutPtr getCut(const uint32_t &id) const;
+
+            // Add cut to monitorables
+            //
+            void addCut(const uint32_t &id, const CutPtr &);
+
+            void removeCut(const uint32_t &id);
+
+            // Get number of registered cuts
+            //
+            uint32_t cuts() const;
+
+        private:
+            typedef std::map<uint32_t, CutPtr> Cuts;
+
+            Cuts _cuts;
     };
 
     class ElectronSelector : public Selector
     {
         public:
+            enum Cut
+            {
+                PT = 0,
+                ETA,
+                PRIMARY_VERTEX
+            };
+
             ElectronSelector();
-            ElectronSelector(const ElectronSelector &);
+
+            CutPtr cut(const Cut &) const;
 
             // Test if electron passes the selector
             //
-            virtual bool apply(const Electron &, const PrimaryVertex &);
-
-            // Cuts accessors
-            //
-            CutPtr pt() const;
-            CutPtr eta() const;
-            CutPtr primary_vertex() const;
-
-            // Selector interface
-            //
-            virtual void enable();
-            virtual void disable();
+            bool apply(const Electron &, const PrimaryVertex &);
 
             // Object interface
             //
             virtual uint32_t id() const;
 
             virtual ObjectPtr clone() const;
-            using Object::merge;
-
-            virtual void print(std::ostream &) const;
-
-        private:
-            // Prevent copying
-            //
-            ElectronSelector &operator =(const ElectronSelector &);
-
-            CutPtr _pt;
-            CutPtr _eta;
-            CutPtr _primary_vertex;
     };
 
     class JetSelector : public Selector
     {
         public:
+            enum Cut
+            {
+                PT = 0,
+                ETA
+            };
+
             JetSelector();
-            JetSelector(const JetSelector &);
+
+            CutPtr cut(const Cut &) const;
 
             // Test if object passes the selector
             //
             virtual bool apply(const Jet &);
-
-            // Cuts accessors
-            //
-            CutPtr pt() const;
-            CutPtr eta() const;
-
-            // Selector interface
-            //
-            virtual void enable();
-            virtual void disable();
 
             // Object interface
             //
             virtual uint32_t id() const;
 
             virtual ObjectPtr clone() const;
-            using Object::merge;
-
-            virtual void print(std::ostream &) const;
-
-        private:
-            CutPtr _pt;
-            CutPtr _eta;
     };
 
     class MultiplicityCutflow : public Selector
     {
         public:
             MultiplicityCutflow(const uint32_t &max);
-            MultiplicityCutflow(const MultiplicityCutflow &);
-
-            // Apply cutflow to a number
-            //
-            virtual void apply(const uint32_t &);
 
             // Cuts accessors
             //
             CutPtr cut(const uint32_t &) const;
 
-            virtual void enable();
-            virtual void disable();
+            // Apply cutflow to a number
+            //
+            virtual bool apply(const uint32_t &);
 
             // Object interface
             //
             virtual uint32_t id() const;
 
             virtual ObjectPtr clone() const;
-            using Object::merge;
-
-            virtual void print(std::ostream &) const;
-
-        private:
-            // Prevent copying
-            //
-            MultiplicityCutflow &operator =(const MultiplicityCutflow &);
-
-            typedef std::vector<CutPtr> Cuts;
-
-            Cuts _cuts;
     };
 
     class MuonSelector : public Selector
     {
         public:
+            enum Cut
+            {
+                PT = 0,
+                ETA,
+                IS_GLOBAL,
+                IS_TRACKER,
+                MUON_SEGMENTS,
+                MUON_HITS,
+                MUON_NORMALIZED_CHI2,
+                TRACKER_HITS,
+                PIXEL_HITS,
+                D0,
+                PRIMARY_VERTEX
+            };
+
             MuonSelector();
-            MuonSelector(const MuonSelector &);
+
+            CutPtr cut(const Cut &) const;
 
             // Test if muon passes the selector
             //
             virtual bool apply(const Muon &, const PrimaryVertex &);
 
-            // Cuts accessors
-            //
-            CutPtr pt() const;
-            CutPtr eta() const;
-            CutPtr is_global() const;
-            CutPtr is_tracker() const;
-            CutPtr muon_segments() const;
-            CutPtr muon_hits() const;
-            CutPtr muon_normalized_chi2() const;
-            CutPtr tracker_hits() const;
-            CutPtr pixel_hits() const;
-            CutPtr d0_bsp() const;
-            CutPtr primary_vertex() const;
-
-            // Selector interface
-            //
-            virtual void enable();
-            virtual void disable();
-
             // Object interface
             //
             virtual uint32_t id() const;
 
             virtual ObjectPtr clone() const;
-            using Object::merge;
-
-            virtual void print(std::ostream &) const;
-
-        private:
-            // Prevent copying
-            //
-            MuonSelector &operator =(const MuonSelector &);
-
-            CutPtr _pt;
-            CutPtr _eta;
-            CutPtr _is_global;
-            CutPtr _is_tracker;
-            CutPtr _muon_segments;
-            CutPtr _muon_hits;
-            CutPtr _muon_normalized_chi2;
-            CutPtr _tracker_hits;
-            CutPtr _pixel_hits;
-            CutPtr _d0_bsp;
-            CutPtr _primary_vertex;
     };
 
     class PrimaryVertexSelector : public Selector
     {
         public:
+            enum Cut
+            {
+                NDOF = 0,
+                VERTEX_Z,
+                RHO
+            };
+
             PrimaryVertexSelector();
-            PrimaryVertexSelector(const PrimaryVertexSelector &);
+
+            CutPtr cut(const Cut &) const;
 
             // Test if muon passes the selector
             //
             virtual bool apply(const PrimaryVertex &);
 
-            // Cuts accessors
-            //
-            CutPtr ndof() const;
-            CutPtr vertex_z() const;
-            CutPtr rho() const;
-
-            // Selector interface
-            //
-            virtual void enable();
-            virtual void disable();
-
             // Object interface
             //
             virtual uint32_t id() const;
 
             virtual ObjectPtr clone() const;
-            using Object::merge;
-
-            virtual void print(std::ostream &) const;
-
-        private:
-            // Prevent copying
-            //
-            PrimaryVertexSelector &operator =(const PrimaryVertexSelector &);
-
-            CutPtr _ndof;
-            CutPtr _vertex_z;
-            CutPtr _rho;
     };
 
     class WJetSelector : public Selector
     {
         public:
+            enum Cut
+            {
+                CHILDREN,
+                PT,
+                MASS_DROP,
+                MASS
+            };
+
             WJetSelector();
-            WJetSelector(const WJetSelector &);
+
+            CutPtr cut(const Cut &) const;
 
             // Test if object passes the selector
             //
             virtual bool apply(const Jet &);
-
-            // Cuts accessors
-            //
-            CutPtr children() const;
-            CutPtr pt() const;
-            CutPtr mass_drop() const;
-            CutPtr mass_lower_bound() const;
-            CutPtr mass_upper_bound() const;
-
-            // Selector interface
-            //
-            virtual void enable();
-            virtual void disable();
 
             // Object interface
             //
             virtual uint32_t id() const;
 
             virtual ObjectPtr clone() const;
-            using Object::merge;
-
-            virtual void print(std::ostream &) const;
-
-        private:
-            // Prevent copying
-            //
-            WJetSelector &operator =(const WJetSelector &);
-
-            CutPtr _children;
-            CutPtr _pt;
-            CutPtr _mass_drop;
-            CutPtr _mass_lower_bound;
-            CutPtr _mass_upper_bound;;
     };
 
     class LockSelectorEventCounterOnUpdate
@@ -294,6 +217,7 @@ namespace bsm
             LockSelectorEventCounterOnUpdate(ElectronSelector &);
             LockSelectorEventCounterOnUpdate(JetSelector &);
             LockSelectorEventCounterOnUpdate(MuonSelector &);
+            LockSelectorEventCounterOnUpdate(PrimaryVertexSelector &);
             LockSelectorEventCounterOnUpdate(WJetSelector &);
 
         private:

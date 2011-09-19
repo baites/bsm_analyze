@@ -22,7 +22,7 @@ using bsm::LockCounterOnUpdate;
 // Counter
 //
 Counter::Counter():
-    _count(0),
+    _counts(0),
     _is_locked(false),
     _is_lock_on_update(false)
 {
@@ -40,9 +40,16 @@ bsm::CounterDelegate *Counter::delegate() const
     return _delegate;
 }
 
+// Obsolete method: use explicit counts instead
+//
 Counter::operator uint32_t() const
 {
-    return _count;
+    return _counts;
+}
+
+uint32_t Counter::counts() const
+{
+    return _counts;
 }
 
 bool Counter::isLocked() const
@@ -71,14 +78,19 @@ void Counter::unlock()
     _is_lock_on_update = false;
 }
 
-void Counter::add()
+void Counter::add(const uint32_t &counts)
 {
     if (isLocked())
         return;
 
-    ++_count;
+    _counts += counts;
 
-    update();
+    if (isLockOnUpdate())
+    {
+        lock();
+
+        _is_lock_on_update = false;
+    }
 
     if (delegate())
         delegate()->didCounterAdd(this);
@@ -94,38 +106,23 @@ Counter::ObjectPtr Counter::clone() const
     return ObjectPtr(new Counter(*this));
 }
 
-void Counter::merge(const ObjectPtr &object_pointer)
+void Counter::merge(const ObjectPtr &pointer)
 {
-    if (isLocked()
-            || id() != object_pointer->id())
+    if (id() != pointer->id())
         return;
 
     boost::shared_ptr<Counter> object =
-        boost::dynamic_pointer_cast<Counter>(object_pointer);
+        boost::dynamic_pointer_cast<Counter>(pointer);
 
     if (!object)
         return;
 
-    _count += object->_count;
-
-    update();
+    add(object->counts());
 }
 
 void Counter::print(ostream &out) const
 {
-    out << _count;
-}
-
-// Private
-//
-void Counter::update()
-{
-    if (isLockOnUpdate())
-    {
-        lock();
-
-        _is_lock_on_update = false;
-    }
+    out << _counts;
 }
 
 
@@ -134,6 +131,7 @@ void Counter::update()
 //
 Cut::Cut():
     _value(0),
+    _name(""),
     _is_disabled(false)
 {
     _objects.reset(new Counter());
@@ -156,39 +154,25 @@ Cut::Cut(const float &value, const string &name):
 }
 
 Cut::Cut(const Cut &object):
-    _value(object._value),
-    _name(object._name),
-    _is_disabled(object._is_disabled)
+    _value(object.value()),
+    _name(object.name()),
+    _is_disabled(object.isDisabled())
 {
-    _objects.reset(new Counter(*object._objects));
-    _events.reset(new Counter(*object._events));
+    _objects.reset(new Counter(*object.objects()));
+    _events.reset(new Counter(*object.events()));
 
     monitor(_objects);
     monitor(_events);
 }
 
-Cut::~Cut()
-{
-}
-
-const CounterPtr Cut::objects() const
+CounterPtr Cut::objects() const
 {
     return _objects;
 }
 
-const CounterPtr Cut::events() const
+CounterPtr Cut::events() const
 {
     return _events;
-}
-
-string Cut::name() const
-{
-    return _name;
-}
-
-void Cut::setName(const string &name)
-{
-    _name = name;
 }
 
 float Cut::value() const
@@ -201,6 +185,16 @@ void Cut::setValue(const float &value)
     _value = value;
 }
 
+string Cut::name() const
+{
+    return _name;
+}
+
+void Cut::setName(const string &name)
+{
+    _name = name;
+}
+
 bool Cut::apply(const float &value)
 {
     if (isDisabled())
@@ -209,15 +203,10 @@ bool Cut::apply(const float &value)
     if (!isPass(value))
         return false;
 
-    _objects->add();
-    _events->add();
+    objects()->add();
+    events()->add();
 
     return true;
-}
-
-bool Cut::isDisabled() const
-{
-    return _is_disabled;
 }
 
 void Cut::disable()
@@ -230,27 +219,29 @@ void Cut::enable()
     _is_disabled = false;
 }
 
+bool Cut::isDisabled() const
+{
+    return _is_disabled;
+}
+
 uint32_t Cut::id() const
 {
     return core::ID<Cut>::get();
 }
 
-void Cut::merge(const ObjectPtr &object_pointer)
+void Cut::merge(const ObjectPtr &pointer)
 {
-    if (id() != object_pointer->id())
+    if (id() != pointer->id())
         return;
 
     boost::shared_ptr<Cut> object =
-        boost::dynamic_pointer_cast<Cut>(object_pointer);
+        boost::dynamic_pointer_cast<Cut>(pointer);
 
     if (!object
-            || _value != object->_value
-            || _name != object->_name)
+            || value() != object->value())
         return;
 
-    _is_disabled = object->_is_disabled;
-
-    Object::merge(object_pointer);
+    Object::merge(pointer);
 }
 
 void Cut::print(ostream &out) const
@@ -260,6 +251,9 @@ void Cut::print(ostream &out) const
     if (!isDisabled())
         out << setw(7) << left << *objects()
             << " " << *events();
+    else
+        out << setw(7) << left << "-"
+            << " " << " ";
 }
 
 

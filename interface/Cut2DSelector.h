@@ -57,22 +57,24 @@ namespace bsm
     class Cut2DSelector : public Selector, public Cut2DSelectorDelegate
     {
         public:
-            typedef boost::shared_ptr<Cut> CutPtr;
-
             Cut2DSelector(const Region &region = SIGNAL);
-            Cut2DSelector(const Cut2DSelector &);
+
+            enum Cut
+            {
+                DELTA_R = 0,
+                PTREL
+            };
+
+            Region region() const;
+
+            // Cuts accessors
+            //
+            CutPtr cut(const Cut &) const;
 
             // Test if object passes the selector
             //
             virtual bool apply(const LorentzVector &lepton,
                     const LorentzVector &jet);
-
-            // Cuts accessors
-            //
-            CutPtr dr() const;
-            CutPtr ptrel() const;
-
-            Region region() const;
 
             // Delegate Interface
             //
@@ -89,12 +91,7 @@ namespace bsm
 
             virtual ObjectPtr clone() const;
 
-            virtual void print(std::ostream &) const;
-
         private:
-            CutPtr _dr;
-            CutPtr _ptrel;
-
             Region _region;
     };
 }

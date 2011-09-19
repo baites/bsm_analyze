@@ -141,21 +141,21 @@ SynchSelector::SynchSelector():
     // Selectors
     //
     _primary_vertex_selector.reset(new PrimaryVertexSelector());
-    _primary_vertex_selector->rho()->setValue(2.0);
+    _primary_vertex_selector->cut(PrimaryVertexSelector::RHO)->setValue(2.0);
     monitor(_primary_vertex_selector);
 
     _electron_selector.reset(new ElectronSelector());
-    _electron_selector->primary_vertex()->disable();
+    _electron_selector->cut(ElectronSelector::PRIMARY_VERTEX)->disable();
     monitor(_electron_selector);
 
     _muon_selector.reset(new MuonSelector());
-    _muon_selector->pt()->setValue(35);
+    _muon_selector->cut(MuonSelector::PT)->setValue(35);
     monitor(_muon_selector);
 
     // Nice jets have pT > 25
     //
     _nice_jet_selector.reset(new JetSelector());
-    _nice_jet_selector->pt()->setValue(25);
+    _nice_jet_selector->cut(JetSelector::PT)->setValue(25);
     monitor(_nice_jet_selector);
 
     // Good jets have pT > 50
@@ -263,6 +263,7 @@ bool SynchSelector::apply(const Event *event)
 {
     _cutflow->apply(PRESELECTION);
 
+    _good_primary_vertices.clear();
     _good_electrons.clear();
     _good_muons.clear();
     _nice_jets.clear();
@@ -281,6 +282,12 @@ bool SynchSelector::apply(const Event *event)
 SynchSelector::CutflowPtr SynchSelector::cutflow() const
 {
     return _cutflow;
+}
+
+const SynchSelector::GoodPrimaryVertices
+    &SynchSelector::goodPrimaryVertices() const
+{
+    return _good_primary_vertices;
 }
 
 const SynchSelector::GoodElectrons &SynchSelector::goodElectrons() const
@@ -396,8 +403,9 @@ void SynchSelector::print(std::ostream &out) const
 //
 bool SynchSelector::primaryVertices(const Event *event)
 {
-    return event->primary_vertices().size()
-        && _primary_vertex_selector->apply(*event->primary_vertices().begin())
+    selectGoodPrimaryVertices(event);
+
+    return !goodPrimaryVertices().empty()
         && (_cutflow->apply(PRIMARY_VERTEX), true);
 }
 
@@ -414,38 +422,36 @@ bool SynchSelector::jets(const Event *event)
             event->jets().end() != jet;
             ++jet)
     {
-        LorentzVectorPtr corrected_p4 = _jec->correctJet(&*jet,
+        JetEnergyCorrections::CorrectedJet correction = _jec->correctJet(&*jet,
                 event,
                 _good_electrons,
                 _good_muons);
 
         // Skip jet if energy corrections failed
         //
-        if (!corrected_p4)
+        if (!correction.corrected_p4)
             continue;
 
         // Original jet in the event can not be modified and Jet Selector can
         // only be applied to jet: therefore copy jet, set corrected p4 and
         // apply selector
         //
-        Jet corrected_jet = *jet;
-        *corrected_jet.mutable_physics_object()->mutable_p4() = *corrected_p4;
+        Jet corrected_jet;
+        corrected_jet.CopyFrom(*jet);
+        corrected_jet.mutable_physics_object()->mutable_p4()->CopyFrom(
+                *correction.corrected_p4);
 
         if (!_nice_jet_selector->apply(corrected_jet))
             continue;
 
         // Store original jet and corrected p4
         //
-        CorrectedJet tmp;
-        tmp.jet = &*jet;
-        tmp.corrected_p4 = corrected_p4;
-
-        _nice_jets.push_back(tmp);
+        _nice_jets.push_back(correction);
 
         if (!_good_jet_selector->apply(corrected_jet))
             continue;
 
-        _good_jets.push_back(tmp);
+        _good_jets.push_back(correction);
     }
 
     return 1 < _good_jets.size()
@@ -580,6 +586,20 @@ bool SynchSelector::isolation(const LorentzVector *p4, const PFIsolation *isolat
             + isolation->neutral_hadron()
             + isolation->photon())
         / pt(*p4);
+}
+
+void SynchSelector::selectGoodPrimaryVertices(const Event *event)
+{
+    typedef ::google::protobuf::RepeatedPtrField<PrimaryVertex> PrimaryVertices;
+
+    LockSelectorEventCounterOnUpdate lock(*_primary_vertex_selector);
+    for(PrimaryVertices::const_iterator pv = event->primary_vertices().begin();
+            event->primary_vertices().end() != pv;
+            ++pv)
+    {
+        if (_primary_vertex_selector->apply(*pv))
+            _good_primary_vertices.push_back(&*pv);
+    }
 }
 
 void SynchSelector::selectGoodElectrons(const Event *event)

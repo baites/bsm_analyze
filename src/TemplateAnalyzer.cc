@@ -20,6 +20,7 @@
 #include "bsm_stat/interface/H1.h"
 #include "bsm_stat/interface/H2.h"
 #include "interface/Algorithm.h"
+#include "interface/Cut.h"
 #include "interface/DecayGenerator.h"
 #include "interface/StatProxy.h"
 #include "interface/SynchSelector.h"
@@ -42,6 +43,9 @@ TemplateAnalyzer::TemplateAnalyzer()
     _leading_jet_counter =
         _synch_selector->cutflow()->cut(SynchSelector::LEADING_JET)->objects();
     _leading_jet_counter->setDelegate(this);
+
+    _d0.reset(new H1Proxy(500, 0, .05));
+    monitor(_d0);
 
     _htlep.reset(new H1Proxy(50, 0, 500));
     monitor(_htlep);
@@ -72,6 +76,9 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object)
         _synch_selector->cutflow()->cut(SynchSelector::LEADING_JET)->objects();
     _leading_jet_counter->setDelegate(this);
 
+    _d0 = dynamic_pointer_cast<H1Proxy>(object._d0->clone());
+    monitor(_d0);
+
     _htlep = dynamic_pointer_cast<H1Proxy>(object._htlep->clone());
     monitor(_htlep);
 
@@ -87,6 +94,11 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object)
     monitor(_dr_vs_ptrel);
 
     _event = 0;
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::d0() const
+{
+    return _d0->histogram();
 }
 
 const TemplateAnalyzer::H1Ptr TemplateAnalyzer::htlep() const
@@ -175,6 +187,35 @@ void TemplateAnalyzer::print(std::ostream &out) const
 //
 void TemplateAnalyzer::fillDrVsPtrel()
 {
+    if (SynchSelector::ELECTRON == _synch_selector->leptonMode())
+    {
+        typedef ::google::protobuf::RepeatedPtrField<Electron::ElectronID>
+            ElectronIDs;
+
+        const Electron *electron = (*_synch_selector->goodElectrons().begin());
+        bool electron_id_is_found = false;
+        for(ElectronIDs::const_iterator id = electron->electronid().begin();
+                electron->electronid().end() != id;
+                ++id)
+        {
+            if (Electron::HyperTight1 != id->name())
+                continue;
+
+            electron_id_is_found = true;
+            if  (!id->identification()
+                    || !id->conversion_rejection())
+                return;
+            else
+                break;
+        }
+
+        if (!electron_id_is_found)
+            return;
+
+        if (0.02 < fabs((*_synch_selector->goodElectrons().begin())->extra().d0_bsp()))
+            return;
+    }
+
     // Secondary lepton veto cut passed: find closest jet to the lepton
     //
     const LorentzVector &lepton_p4 =
@@ -203,7 +244,20 @@ void TemplateAnalyzer::fillDrVsPtrel()
     if (nice_jets.end() == closest_jet)
         return;
 
-    drVsPtrel()->fill(ptrel(lepton_p4, *closest_jet->corrected_p4), deltar_min);
+    const float ptrel_value = ptrel(lepton_p4, *closest_jet->corrected_p4);
+    drVsPtrel()->fill(ptrel_value, deltar_min);
+
+    if (5 > ptrel_value)
+    {
+        if (SynchSelector::ELECTRON == _synch_selector->leptonMode())
+        {
+            d0()->fill((*_synch_selector->goodElectrons().begin())->extra().d0_bsp());
+        }
+        else
+        {
+            d0()->fill((*_synch_selector->goodMuons().begin())->extra().d0_bsp());
+        }
+    }
 }
 
 void TemplateAnalyzer::fillHtlep()

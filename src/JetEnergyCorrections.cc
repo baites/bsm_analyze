@@ -58,10 +58,6 @@ JetEnergyCorrectionOptions::JetEnergyCorrectionOptions()
     ;
 }
 
-JetEnergyCorrectionOptions::~JetEnergyCorrectionOptions()
-{
-}
-
 void JetEnergyCorrectionOptions::setDelegate(JetEnergyCorrectionDelegate *delegate)
 {
     if (_delegate != delegate)
@@ -75,15 +71,17 @@ JetEnergyCorrectionDelegate *JetEnergyCorrectionOptions::delegate() const
 
 // Options interface
 //
-JetEnergyCorrectionOptions::DescriptionPtr JetEnergyCorrectionOptions::description() const
+JetEnergyCorrectionOptions::DescriptionPtr
+    JetEnergyCorrectionOptions::description() const
 {
     return _description;
 }
 
 // Private
 //
-void JetEnergyCorrectionOptions::setCorrection(const JetEnergyCorrectionDelegate::Level &jec_level,
-        const std::string &file_name)
+void JetEnergyCorrectionOptions::setCorrection(
+    const JetEnergyCorrectionDelegate::Level &jec_level,
+    const std::string &file_name)
 {
     if (!delegate())
         return;
@@ -98,13 +96,14 @@ void JetEnergyCorrectionOptions::setCorrection(const JetEnergyCorrectionDelegate
             {
                 if (!fs::exists(file_name))
                     cerr << jec_level
-                        << " Jet Energy Correction file does not exist: "
+                        << " jet energy correction file does not exist: "
                         << file_name << endl;
                 else
                     delegate()->setCorrection(jec_level, file_name);
 
                 break;
             }
+
         default: cerr << "unsupported Jet Energy Correction level" << endl;
     }
 }
@@ -119,44 +118,45 @@ JetEnergyCorrections::JetEnergyCorrections()
 
 JetEnergyCorrections::JetEnergyCorrections(const JetEnergyCorrections &object)
 {
-    for(CorrectionFiles::const_iterator correction = object._correction_files.begin();
-            object._correction_files.end() != correction;
+    for(CorrectionFiles::const_reverse_iterator correction =
+            object._correction_files.rbegin();
+            object._correction_files.rend() != correction;
             ++correction)
     {
         setCorrection(correction->first, correction->second);
     }
-
-    corrector();
 }
 
-JetEnergyCorrections::LorentzVectorPtr JetEnergyCorrections::correctJet(const Jet *jet,
+JetEnergyCorrections::CorrectedJet JetEnergyCorrections::correctJet(
+        const Jet *jet,
         const Event *event,
         const Electrons &electrons,
         const Muons &muons)
 {
-    LorentzVectorPtr corrected_p4;
+    CorrectedJet corrected_jet;
+    corrected_jet.jet = jet;
 
     // Test if corrections are loaded
     //
     CorrectorPtr jec = corrector();
     if (!jec)
-        return corrected_p4;
+        return corrected_jet;
 
     // Check if jet uncorrected energy and area are available
     //
     if (!jet->has_uncorrected_p4()
             || !jet->has_extra()
             || !jet->extra().has_area())
-        return corrected_p4;
+        return corrected_jet;
 
     // Check if event RHO information is available
     //
     if (!event->has_extra()
             || !event->extra().has_rho())
-        return corrected_p4;
+        return corrected_jet;
 
-    corrected_p4.reset(new LorentzVector());
-    *corrected_p4 = jet->uncorrected_p4();
+    corrected_jet.corrected_p4.reset(new LorentzVector());
+    corrected_jet.corrected_p4->CopyFrom(jet->uncorrected_p4());
 
     // Remove leptons only if any were passed
     //
@@ -176,9 +176,13 @@ JetEnergyCorrections::LorentzVectorPtr JetEnergyCorrections::correctJet(const Je
                     electrons.end() != electron;
                     ++electron)
             {
-                const LorentzVector &electron_p4 = (*electron)->physics_object().p4();
+                const LorentzVector &electron_p4 =
+                    (*electron)->physics_object().p4();
                 if (electron_p4 == child_p4)
-                    *corrected_p4 -= electron_p4;
+                {
+                    *corrected_jet.corrected_p4 -= electron_p4;
+                    corrected_jet.subtracted_electrons.push_back(*electron);
+                }
             }
 
             // Muons
@@ -189,24 +193,20 @@ JetEnergyCorrections::LorentzVectorPtr JetEnergyCorrections::correctJet(const Je
             {
                 const LorentzVector &muon_p4 = (*muon)->physics_object().p4();
                 if (muon_p4 == child_p4)
-                    *corrected_p4 -= muon_p4;
+                {
+                    *corrected_jet.corrected_p4 -= muon_p4;
+                    corrected_jet.subtracted_muons.push_back(*muon);
+                }
             }
         }
     }
 
-    // Correct jet Lorentz Vector
-    //
-    jec->setJetEta(eta(*corrected_p4));
-    jec->setJetPt(pt(*corrected_p4));
-    jec->setJetE(corrected_p4->e());
-    jec->setNPV(event->primary_vertices().size());
-    jec->setJetA(jet->extra().area());
-    jec->setRho(event->extra().rho());
+    corrected_jet.subtracted_p4.reset(new LorentzVector());
+    corrected_jet.subtracted_p4->CopyFrom(*corrected_jet.corrected_p4);
 
-    const float correction = jec->getCorrection();
-    *corrected_p4 *= correction;
+    correct(corrected_jet, event);
 
-    return corrected_p4;
+    return corrected_jet;
 }
 
 // Jet Energy Correction Delegate interface
@@ -222,9 +222,11 @@ void JetEnergyCorrections::setCorrection(const Level &jec_level,
         _correction_files[jec_level] = file_name;
 
         clog << jec_level << " loaded " << file_name << endl;
-    }
 
-    corrector();
+        _jec.reset();
+
+        corrector();
+    }
 }
 
 // Object interface
@@ -262,6 +264,24 @@ JetEnergyCorrections::CorrectorPtr JetEnergyCorrections::corrector()
     }
 
     return _jec;
+}
+
+void JetEnergyCorrections::correct(CorrectedJet &jet,
+        const Event *event)
+{
+    CorrectorPtr jec = corrector();
+
+    // Correct jet Lorentz Vector
+    //
+    jec->setJetEta(eta(*jet.corrected_p4));
+    jec->setJetPt(pt(*jet.corrected_p4));
+    jec->setJetE(jet.corrected_p4->e());
+    jec->setNPV(event->primary_vertices().size());
+    jec->setJetA(jet.jet->extra().area());
+    jec->setRho(event->extra().rho());
+
+    jet.correction = jec->getCorrection();
+    *jet.corrected_p4 *= jet.correction;
 }
 
 

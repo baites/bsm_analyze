@@ -14,6 +14,7 @@
 #include "bsm_input/interface/Event.pb.h"
 #include "bsm_input/interface/Jet.pb.h"
 #include "bsm_input/interface/Muon.pb.h"
+#include "interface/Cut.h"
 #include "interface/Selector.h"
 #include "interface/CutflowAnalyzer.h"
 
@@ -39,8 +40,8 @@ CutflowAnalyzer::CutflowAnalyzer()
 
     _pf_mu_selector_step1.reset(new MuonSelector());
     _pf_mu_selector_step1->disable();
-    _pf_mu_selector_step1->pt()->enable();
-    _pf_mu_selector_step1->eta()->enable();
+    _pf_mu_selector_step1->cut(MuonSelector::PT)->enable();
+    _pf_mu_selector_step1->cut(MuonSelector::ETA)->enable();
 
     _pf_mu_number_selector_step1.reset(new MultiplicityCutflow(4));
 
@@ -49,8 +50,8 @@ CutflowAnalyzer::CutflowAnalyzer()
 
     _reco_mu_selector_step1.reset(new MuonSelector());
     _reco_mu_selector_step1->disable();
-    _reco_mu_selector_step1->pt()->enable();
-    _reco_mu_selector_step1->eta()->enable();
+    _reco_mu_selector_step1->cut(MuonSelector::PT)->enable();
+    _reco_mu_selector_step1->cut(MuonSelector::ETA)->enable();
 
     _reco_mu_number_selector_step1.reset(new MultiplicityCutflow(4));
 

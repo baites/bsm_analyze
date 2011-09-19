@@ -15,6 +15,7 @@
 #include "bsm_stat/interface/bsm_stat_fwd.h"
 #include "bsm_input/interface/bsm_input_fwd.h"
 #include "interface/Analyzer.h"
+#include "interface/Cut.h"
 #include "interface/bsm_fwd.h"
 
 namespace bsm
@@ -28,6 +29,7 @@ namespace bsm
             TemplateAnalyzer();
             TemplateAnalyzer(const TemplateAnalyzer &);
 
+            const H1Ptr d0() const;
             const H1Ptr htlep() const;
             const H1Ptr mttbarBeforeHtlep() const;
             const H1Ptr mttbarAfterHtlep() const;
@@ -63,6 +65,7 @@ namespace bsm
 
             boost::shared_ptr<SynchSelector> _synch_selector;
 
+            H1ProxyPtr _d0;
             H1ProxyPtr _htlep;
             H1ProxyPtr _mttbar_before_htlep;
             H1ProxyPtr _mttbar_after_htlep;

@@ -16,14 +16,14 @@
 #include "bsm_core/interface/ID.h"
 #include "bsm_input/interface/Algebra.h"
 #include "bsm_input/interface/Event.pb.h"
+#include "bsm_input/interface/Utility.h"
 #include "interface/JetEnergyCorrections.h"
 #include "interface/JetEnergyCorrectionsAnalyzer.h"
 #include "interface/Monitor.h"
 #include "interface/Selector.h"
 
 using namespace std;
-
-using boost::dynamic_pointer_cast;
+using namespace boost;
 
 using bsm::JetEnergyCorrectionsAnalyzer;
 using bsm::JetEnergyCorrectionDelegate;
@@ -197,9 +197,13 @@ void JetEnergyCorrectionsAnalyzer::jets(const Event *event)
             const LorentzVector &uncorrected_p4 = jet->uncorrected_p4();
             _jet_uncorrected_p4->fill(uncorrected_p4);
 
-            LorentzVectorPtr corrected_p4 = _jec->correctJet(&*jet, event, electrons, muons);
-            if (!corrected_p4)
+            JetEnergyCorrections::CorrectedJet correction =
+                _jec->correctJet(&*jet, event, electrons, muons);
+            if (!correction.corrected_p4)
                 continue;
+
+            LorentzVectorPtr corrected_p4 = correction.corrected_p4;
+            LorentzVectorPtr subtracted_p4 = correction.subtracted_p4;
 
             _jet_offline_corrected_p4->fill(*corrected_p4);
 
@@ -219,10 +223,47 @@ void JetEnergyCorrectionsAnalyzer::jets(const Event *event)
                 << endl;
 
             _out << setw(5) << " "
+                << " Correction " << correction.correction << endl;
+
+            _out << setw(5) << " "
+                << " Subtracted "
+                << "pT: " << pt(*subtracted_p4)
+                << " eta: " << eta(*subtracted_p4)
+                << endl;
+
+            _out << setw(5) << " "
                 << "Offline JEC "
                 << "pT: " << pt(*corrected_p4)
                 << " eta: " << eta(*corrected_p4)
                 << endl;
+
+            shared_ptr<Format> format(new FullFormat());
+
+            if (!correction.subtracted_muons.empty())
+            {
+                _out << "subtracted muons" << endl;
+                for(JetEnergyCorrections::Muons::const_iterator muon =
+                        correction.subtracted_muons.begin();
+                        correction.subtracted_muons.end() != muon;
+                        ++muon)
+                {
+                    _out << (*format)(*(*muon)) << endl;
+                    _out << "---" << endl;
+                }
+            }
+
+            if (!correction.subtracted_electrons.empty())
+            {
+                _out << "subtracted electrons" << endl;
+                for(JetEnergyCorrections::Electrons::const_iterator electron =
+                        correction.subtracted_electrons.begin();
+                        correction.subtracted_electrons.end() != electron;
+                        ++electron)
+                {
+                    _out << (*format)(*(*electron)) << endl;
+                    _out << "---" << endl;
+                }
+            }
         }
     }
 

@@ -17,6 +17,7 @@
 #include "bsm_input/interface/Physics.pb.h"
 #include "bsm_input/interface/PrimaryVertex.pb.h"
 #include "bsm_input/interface/Utility.h"
+#include "interface/Cut.h"
 #include "interface/DumpEventAnalyzer.h"
 #include "interface/Selector.h"
 
@@ -52,8 +53,8 @@ DumpEventAnalyzer::DumpEventAnalyzer()
     _electron_selector.reset(new ElectronSelector());
     _muon_selector.reset(new MuonSelector());
 
-    _electron_selector->primary_vertex()->disable();
-    _muon_selector->pt()->setValue(35);
+    _electron_selector->cut(ElectronSelector::PRIMARY_VERTEX)->disable();
+    _muon_selector->cut(MuonSelector::PT)->setValue(35);
 
     monitor(_primary_vertex_selector);
     monitor(_jet_selector);

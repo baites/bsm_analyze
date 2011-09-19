@@ -43,7 +43,7 @@ SynchAnalyzerOptions::SynchAnalyzerOptions()
         ("selection",
          po::value<string>()->default_value("")->notifier(
              boost::bind(&SynchAnalyzerOptions::setSelection, this, _1)),
-         "print events passing selection: htlep, leading_jet, cut_lepton, veto_second_lepton, lepton, jood_jets, pv")
+         "print events passing selection: htlep, leading_jet, cut_lepton, veto_second_lepton, lepton, good_jets, pv")
     ;
 }
 
@@ -157,7 +157,7 @@ void SynchAnalyzer::setSelection(const SynchSelector::Selection &selection)
         _synch_selector->cutflow()->cut(_selection)->objects()->setDelegate(this);
 }
 
-void SynchAnalyzer::didCounterAdd()
+void SynchAnalyzer::didCounterAdd(const Counter *)
 {
     if (_event)
         _out << _format->operator()(*_event) << endl;
@@ -241,6 +241,17 @@ void SynchAnalyzer::dump(const Event *event)
     _out << setw(20) << setfill('-') << " " << endl;
     _out << "Selected Objects" << endl;
     _out << setw(20) << setfill('-') << " " << endl;
+
+    _out << _synch_selector->goodPrimaryVertices().size() << " good Primary Vertices" << endl;
+    for(SynchSelector::GoodPrimaryVertices::const_iterator pv =
+            _synch_selector->goodPrimaryVertices().begin();
+            _synch_selector->goodPrimaryVertices().end() != pv;
+            ++pv)
+    {
+        _out << format(*(*pv)) << endl;
+        _out << "---" << endl;
+    }
+
     _out << _synch_selector->goodMuons().size() << " good muons" << endl;
     for(SynchSelector::GoodMuons::const_iterator muon =
             _synch_selector->goodMuons().begin();
@@ -271,6 +282,31 @@ void SynchAnalyzer::dump(const Event *event)
     {
         _out << "corr p4: " << *jet->corrected_p4 << endl;
         _out << format(*jet->jet) << endl;
+        _out << "correction: " << jet->correction << endl;
+
+        if (!jet->subtracted_electrons.empty())
+        {
+            _out << "subtracted electrons" << endl;
+            for(SynchSelector::GoodElectrons::const_iterator electron =
+                    jet->subtracted_electrons.begin();
+                    jet->subtracted_electrons.end() != electron;
+                    ++electron)
+            {
+                _out << format(* *electron) << endl;
+            }
+        }
+
+        if (!jet->subtracted_muons.empty())
+        {
+            _out << "subtracted muons" << endl;
+            for(SynchSelector::GoodMuons::const_iterator muon =
+                    jet->subtracted_muons.begin();
+                    jet->subtracted_muons.end() != muon;
+                    ++muon)
+            {
+                _out << format(* *muon) << endl;
+            }
+        }
         _out << "---" << endl;
     }
 

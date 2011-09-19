@@ -8,6 +8,7 @@
 #include <cfloat>
 #include <cmath>
 #include <functional>
+#include <iostream>
 #include <iomanip>
 #include <ostream>
 #include <sstream>
@@ -30,6 +31,8 @@ using namespace std;
 
 using boost::dynamic_pointer_cast;
 
+using bsm::Selector;
+
 using bsm::CutPtr;
 using bsm::ElectronSelector;
 using bsm::JetEnergyCorrectionDelegate;
@@ -40,65 +43,111 @@ using bsm::PrimaryVertexSelector;
 using bsm::WJetSelector;
 using bsm::LockSelectorEventCounterOnUpdate;
 
+// Selector
+//
+Selector::Selector(const Selector &object)
+{
+    for(Cuts::const_iterator cut = object._cuts.begin();
+            object._cuts.end() != cut;
+            ++cut)
+    {
+        addCut(cut->first, dynamic_pointer_cast<Cut>(cut->second->clone()));
+    }
+}
+
+void Selector::enable()
+{
+    for(Cuts::const_iterator cut = _cuts.begin();
+            _cuts.end() != cut;
+            ++cut)
+    {
+        cut->second->enable();
+    }
+}
+
+void Selector::disable()
+{
+    for(Cuts::const_iterator cut = _cuts.begin();
+            _cuts.end() != cut;
+            ++cut)
+    {
+        cut->second->disable();
+    }
+}
+
+void Selector::print(ostream &out) const
+{
+    if (_cuts.empty())
+    {
+        out << "no cuts available" << endl;
+
+        return;
+    }
+
+    out << "     CUT                 " << setw(5) << " "
+        << " Objects Events" << endl;
+    out << setw(45) << setfill('-') << left << " " << setfill(' ') << endl;
+    for(Cuts::const_iterator cut = _cuts.begin();
+            _cuts.end() != cut;
+            ++cut)
+    {
+        out << *cut->second << endl;
+    }
+}
+
+// Protected
+//
+bsm::CutPtr Selector::getCut(const uint32_t &cut_id) const
+{
+    Cuts::const_iterator cut = _cuts.find(cut_id);
+    if (_cuts.end() == cut)
+        throw out_of_range("failed to get cut: it is not defined");
+
+    return cut->second;
+}
+
+void Selector::addCut(const uint32_t &cut_id, const CutPtr &cut)
+{
+    if (!_cuts.insert(make_pair(cut_id, cut)).second)
+        cerr << "failed to add cut " << cut_id << ": remove it first" << endl;
+    else
+        monitor(cut);
+}
+
+void Selector::removeCut(const uint32_t &cut_id)
+{
+    _cuts.erase(cut_id);
+}
+
+uint32_t Selector::cuts() const
+{
+    return _cuts.size();
+}
+
+
+
 // ElectronSelector
 //
 ElectronSelector::ElectronSelector()
 {
-    _pt.reset(new Comparator<>(30, "Pt"));
-    _eta.reset(new Comparator<std::less<float> >(2.5, "|eta|"));
-    _primary_vertex.reset(new Comparator<std::less<float> >(1, "|el.z() - pv.z()|"));
-
-    monitor(_pt);
-    monitor(_eta);
-    monitor(_primary_vertex);
-}
-
-ElectronSelector::ElectronSelector(const ElectronSelector &object)
-{
-    _pt = dynamic_pointer_cast<Cut>(object._pt->clone());
-    _eta = dynamic_pointer_cast<Cut>(object._eta->clone());
-    _primary_vertex = dynamic_pointer_cast<Cut>(object._primary_vertex->clone());
-
-    monitor(_pt);
-    monitor(_eta);
-    monitor(_primary_vertex);
+    addCut(PT, CutPtr(new Comparator<>(30, "Pt")));
+    addCut(ETA, CutPtr(new Comparator<less<float> >(2.5, "|eta|")));
+    addCut(PRIMARY_VERTEX,
+            CutPtr(new Comparator<less<float> >(1,
+                    "|el.z() - pv.z()|")));
 }
 
 bool ElectronSelector::apply(const Electron &electron, const PrimaryVertex &pv)
 {
-    return _pt->apply(bsm::pt(electron.physics_object().p4()))
-        && _eta->apply(fabs(bsm::eta(electron.physics_object().p4())))
-        && _primary_vertex->apply(fabs(electron.physics_object().vertex().z()
+    return cut(PT)->apply(bsm::pt(electron.physics_object().p4()))
+        && cut(ETA)->apply(fabs(bsm::eta(electron.physics_object().p4())))
+        && cut(PRIMARY_VERTEX)->apply(fabs(electron.physics_object().vertex().z()
                     - pv.vertex().z()));
 }
 
-CutPtr ElectronSelector::pt() const
+CutPtr ElectronSelector::cut(const Cut &cut_id) const
 {
-    return _pt;
-}
-
-CutPtr ElectronSelector::eta() const
-{
-    return _eta;
-}
-
-CutPtr ElectronSelector::primary_vertex() const
-{
-    return _primary_vertex;
-}
-
-void ElectronSelector::enable()
-{
-    pt()->enable();
-    eta()->enable();
-    primary_vertex()->enable();
-}
-
-void ElectronSelector::disable()
-{
-    pt()->disable();
-    eta()->disable();
-    primary_vertex()->disable();
+    return getCut(cut_id);
 }
 
 uint32_t ElectronSelector::id() const
@@ -111,64 +160,25 @@ ElectronSelector::ObjectPtr ElectronSelector::clone() const
     return ObjectPtr(new ElectronSelector(*this));
 }
 
-void ElectronSelector::print(std::ostream &out) const
-{
-    out << "     CUT                 " << setw(5) << " "
-        << " Objects Events" << endl;
-    out << setw(45) << setfill('-') << left << " " << setfill(' ') << endl;
-    out << *_pt << endl;
-    out << *_eta << endl;
-    out << *_primary_vertex;
-}
-
 
 
 // JetSelector
 //
 JetSelector::JetSelector()
 {
-    _pt.reset(new Comparator<>(50, "Pt"));
-    _eta.reset(new Comparator<std::less<float> >(2.4, "|eta|"));
-
-    monitor(_pt);
-    monitor(_eta);
+    addCut(PT, CutPtr(new Comparator<>(50, "Pt")));
+    addCut(ETA, CutPtr(new Comparator<less<float> >(2.4, "|eta|")));
 }
 
-JetSelector::JetSelector(const JetSelector &object)
+CutPtr JetSelector::cut(const Cut &cut_id) const
 {
-    _pt = dynamic_pointer_cast<Cut>(object._pt->clone());;
-    _eta = dynamic_pointer_cast<Cut>(object._eta->clone());;
-
-    monitor(_pt);
-    monitor(_eta);
+    return getCut(cut_id);
 }
 
 bool JetSelector::apply(const Jet &jet)
 {
-    return _pt->apply(bsm::pt(jet.physics_object().p4()))
-        && _eta->apply(fabs(bsm::eta(jet.physics_object().p4())));
-}
-
-CutPtr JetSelector::pt() const
-{
-    return _pt;
-}
-
-CutPtr JetSelector::eta() const
-{
-    return _eta;
-}
-
-void JetSelector::enable()
-{
-    pt()->enable();
-    eta()->enable();
-}
-
-void JetSelector::disable()
-{
-    pt()->disable();
-    eta()->disable();
+    return cut(PT)->apply(bsm::pt(jet.physics_object().p4()))
+        && cut(ETA)->apply(fabs(bsm::eta(jet.physics_object().p4())));
 }
 
 uint32_t JetSelector::id() const
@@ -181,15 +191,6 @@ JetSelector::ObjectPtr JetSelector::clone() const
     return ObjectPtr(new JetSelector(*this));
 }
 
-void JetSelector::print(std::ostream &out) const
-{
-    out << "     CUT                 " << setw(5) << " "
-        << " Objects Events" << endl;
-    out << setw(45) << setfill('-') << left << " " << setfill(' ') << endl;
-    out << *_pt << endl;
-    out << *_eta;
-}
-
 
 
 // Multiplicity Cutflow
@@ -198,66 +199,26 @@ MultiplicityCutflow::MultiplicityCutflow(const uint32_t &max)
 {
     for(uint32_t i = 0; max > i; ++i)
     {
-        _cuts.push_back(CutPtr(new Comparator<std::equal_to<uint32_t> >(i)));
+        addCut(i, CutPtr(new Comparator<equal_to<uint32_t> >(i)));
     }
-    _cuts.push_back(CutPtr(new Comparator<std::greater_equal<uint32_t> >(max)));
-
-    for(Cuts::const_iterator cut = _cuts.begin();
-            _cuts.end() != cut;
-            ++cut)
-    {
-        monitor(*cut);
-    }
+    addCut(max, CutPtr(new Comparator<greater_equal<uint32_t> >(max)));
 }
 
-MultiplicityCutflow::MultiplicityCutflow(const MultiplicityCutflow &object)
+bsm::CutPtr MultiplicityCutflow::cut(const uint32_t &cut_id) const
 {
-    for(Cuts::const_iterator cut = object._cuts.begin();
-            object._cuts.end() != cut;
-            ++cut)
-    {
-        const CutPtr clone = dynamic_pointer_cast<Cut>((*cut)->clone());
-
-        _cuts.push_back(clone);
-        monitor(clone);
-    }
+    return getCut(cut_id);
 }
 
-void MultiplicityCutflow::apply(const uint32_t &number)
+bool MultiplicityCutflow::apply(const uint32_t &number)
 {
     // It does not make sense to apply all cuts. Only Nth one:
     //
-    if (_cuts.size() > number)
-        _cuts[number]->apply(number);
+    if (cuts() > number)
+        cut(number)->apply(number);
     else
-        (*--_cuts.end())->apply(number);
-}
+        cut(cuts() - 1)->apply(number);
 
-bsm::CutPtr MultiplicityCutflow::cut(const uint32_t &cut) const
-{
-    return cut >= _cuts.size()
-        ? *(--_cuts.end())
-        : _cuts[cut];
-}
-
-void MultiplicityCutflow::enable()
-{
-    for(Cuts::const_iterator cut = _cuts.begin();
-            _cuts.end() != cut;
-            ++cut)
-    {
-        (*cut)->enable();
-    }
-}
-
-void MultiplicityCutflow::disable()
-{
-    for(Cuts::const_iterator cut = _cuts.begin();
-            _cuts.end() != cut;
-            ++cut)
-    {
-        (*cut)->disable();
-    }
+    return true;
 }
 
 uint32_t MultiplicityCutflow::id() const
@@ -270,175 +231,51 @@ MultiplicityCutflow::ObjectPtr MultiplicityCutflow::clone() const
     return ObjectPtr(new MultiplicityCutflow(*this));
 }
 
-void MultiplicityCutflow::print(std::ostream &out) const
-{
-    out << "     CUT                 " << setw(5) << " "
-        << " Objects Events" << endl;
-    out << setw(45) << setfill('-') << left << " " << setfill(' ') << endl;
-    for(uint32_t cut = 0, max = _cuts.size() - 1; max > cut; ++cut)
-    {
-        out << *_cuts[cut] << endl;
-    }
-    out << **(_cuts.end() - 1);
-}
-
 
 
 // Muon Selector
 //
 MuonSelector::MuonSelector()
 {
-    _pt.reset(new Comparator<>(30, "pT"));
-    _eta.reset(new Comparator<std::less<float> >(2.1, "|eta|"));
-    _is_global.reset(new Comparator<std::logical_and<bool> >(true, "is Global"));
-    _is_tracker.reset(new Comparator<std::logical_and<bool> >(true, "is Tracker"));
-    _muon_segments.reset(new Comparator<>(1, "Muon Segments"));
-    _muon_hits.reset(new Comparator<>(0, "Muon Hits"));
-    _muon_normalized_chi2.reset(new Comparator<std::less<float> >(10, "Muon Chi2 / ndof"));
-    _tracker_hits.reset(new Comparator<>(10, "Tracker hits"));
-    _pixel_hits.reset(new Comparator<>(0, "Pixel hits"));
-    _d0_bsp.reset(new Comparator<std::less<float> >(0.02, "|d0_bsp|"));
-    _primary_vertex.reset(new Comparator<std::less<float> >(1, "|mu.z() - pv.z()|"));
-
-    monitor(_pt);
-    monitor(_eta);
-    monitor(_is_global);
-    monitor(_is_tracker);
-    monitor(_muon_segments);
-    monitor(_muon_hits);
-    monitor(_muon_normalized_chi2);
-    monitor(_tracker_hits);
-    monitor(_pixel_hits);
-    monitor(_d0_bsp);
-    monitor(_primary_vertex);
+    addCut(PT, CutPtr(new Comparator<>(30, "pT")));
+    addCut(ETA, CutPtr(new Comparator<less<float> >(2.1, "|eta|")));
+    addCut(IS_GLOBAL,
+            CutPtr(new Comparator<logical_and<bool> >(true, "is Global")));
+    addCut(IS_TRACKER,
+            CutPtr(new Comparator<logical_and<bool> >(true,
+                    "is Tracker")));
+    addCut(MUON_SEGMENTS, CutPtr(new Comparator<>(1, "Muon Segments")));
+    addCut(MUON_HITS, CutPtr(new Comparator<>(0, "Muon Hits")));
+    addCut(MUON_NORMALIZED_CHI2,
+            CutPtr(new Comparator<less<float> >(10,
+                    "Muon Chi2 / ndof")));
+    addCut(TRACKER_HITS, CutPtr(new Comparator<>(10, "Tracker hits")));
+    addCut(PIXEL_HITS, CutPtr(new Comparator<>(0, "Pixel hits")));
+    addCut(D0, CutPtr(new Comparator<less<float> >(0.02, "|d0|")));
+    addCut(PRIMARY_VERTEX,
+            CutPtr(new Comparator<less<float> >(1, "|mu.z() - pv.z()|")));
 }
 
-MuonSelector::MuonSelector(const MuonSelector &object)
+CutPtr MuonSelector::cut(const Cut &cut_id) const
 {
-    _pt = dynamic_pointer_cast<Cut>(object._pt->clone());
-    _eta = dynamic_pointer_cast<Cut>(object._eta->clone());
-    _is_global = dynamic_pointer_cast<Cut>(object._is_global->clone());
-    _is_tracker = dynamic_pointer_cast<Cut>(object._is_tracker->clone());
-    _muon_segments = dynamic_pointer_cast<Cut>(object._muon_segments->clone());
-    _muon_hits = dynamic_pointer_cast<Cut>(object._muon_hits->clone());
-    _muon_normalized_chi2 = dynamic_pointer_cast<Cut>(object._muon_normalized_chi2->clone());
-    _tracker_hits = dynamic_pointer_cast<Cut>(object._tracker_hits->clone());
-    _pixel_hits = dynamic_pointer_cast<Cut>(object._pixel_hits->clone());
-    _d0_bsp = dynamic_pointer_cast<Cut>(object._d0_bsp->clone());
-    _primary_vertex = dynamic_pointer_cast<Cut>(object._primary_vertex->clone());
-
-    monitor(_pt);
-    monitor(_eta);
-    monitor(_is_global);
-    monitor(_is_tracker);
-    monitor(_muon_segments);
-    monitor(_muon_hits);
-    monitor(_muon_normalized_chi2);
-    monitor(_tracker_hits);
-    monitor(_pixel_hits);
-    monitor(_d0_bsp);
-    monitor(_primary_vertex);
+    return getCut(cut_id);
 }
 
 bool MuonSelector::apply(const Muon &muon, const PrimaryVertex &pv)
 {
     return muon.has_extra()
-        && _pt->apply(bsm::pt(muon.physics_object().p4()))
-        && _eta->apply(fabs(bsm::eta(muon.physics_object().p4())))
-        && _is_global->apply(muon.extra().is_global())
-        && _is_tracker->apply(muon.extra().is_tracker())
-        && _muon_segments->apply(muon.extra().number_of_matches())
-        && _muon_hits->apply(muon.global_track().hits())
-        && _muon_normalized_chi2->apply(muon.global_track().normalized_chi2())
-        && _tracker_hits->apply(muon.inner_track().hits())
-        && _pixel_hits->apply(muon.extra().pixel_hits())
-        && _d0_bsp->apply(fabs(muon.extra().d0_bsp()))
-        && _primary_vertex->apply(fabs(muon.physics_object().vertex().z() - pv.vertex().z()));
-}
-
-CutPtr MuonSelector::pt() const
-{
-    return _pt;
-}
-
-CutPtr MuonSelector::eta() const
-{
-    return _eta;
-}
-
-CutPtr MuonSelector::is_global() const
-{
-    return _is_global;
-}
-
-CutPtr MuonSelector::is_tracker() const
-{
-    return _is_tracker;
-}
-
-CutPtr MuonSelector::muon_segments() const
-{
-    return _muon_segments;
-}
-
-CutPtr MuonSelector::muon_hits() const
-{
-    return _muon_hits;
-}
-
-CutPtr MuonSelector::muon_normalized_chi2() const
-{
-    return _muon_normalized_chi2;
-}
-
-CutPtr MuonSelector::tracker_hits() const
-{
-    return _tracker_hits;
-}
-
-CutPtr MuonSelector::pixel_hits() const
-{
-    return _pixel_hits;
-}
-
-CutPtr MuonSelector::d0_bsp() const
-{
-    return _d0_bsp;
-}
-
-CutPtr MuonSelector::primary_vertex() const
-{
-    return _primary_vertex;
-}
-
-void MuonSelector::enable()
-{
-    pt()->enable();
-    eta()->enable();
-    is_global()->enable();
-    is_tracker()->enable();
-    muon_segments()->enable();
-    muon_hits()->enable();
-    muon_normalized_chi2()->enable();
-    tracker_hits()->enable();
-    pixel_hits()->enable();
-    d0_bsp()->enable();
-    primary_vertex()->enable();
-}
-
-void MuonSelector::disable()
-{
-    pt()->disable();
-    eta()->disable();
-    is_global()->disable();
-    is_tracker()->disable();
-    muon_segments()->disable();
-    muon_hits()->disable();
-    muon_normalized_chi2()->disable();
-    tracker_hits()->disable();
-    pixel_hits()->disable();
-    d0_bsp()->disable();
-    primary_vertex()->disable();
+        && cut(PT)->apply(bsm::pt(muon.physics_object().p4()))
+        && cut(ETA)->apply(fabs(bsm::eta(muon.physics_object().p4())))
+        && cut(IS_GLOBAL)->apply(muon.extra().is_global())
+        && cut(IS_TRACKER)->apply(muon.extra().is_tracker())
+        && cut(MUON_SEGMENTS)->apply(muon.extra().number_of_matches())
+        && cut(MUON_HITS)->apply(muon.global_track().hits())
+        && cut(MUON_NORMALIZED_CHI2)->apply(muon.global_track().normalized_chi2())
+        && cut(TRACKER_HITS)->apply(muon.inner_track().hits())
+        && cut(PIXEL_HITS)->apply(muon.extra().pixel_hits())
+        && cut(D0)->apply(fabs(muon.extra().d0_bsp()))
+        && cut(PRIMARY_VERTEX)->apply(fabs(muon.physics_object().vertex().z()
+                    - pv.vertex().z()));
 }
 
 uint32_t MuonSelector::id() const
@@ -451,85 +288,30 @@ MuonSelector::ObjectPtr MuonSelector::clone() const
     return ObjectPtr(new MuonSelector(*this));
 }
 
-void MuonSelector::print(std::ostream &out) const
-{
-    out << "     CUT                 " << setw(5) << " "
-        << " Objects Events" << endl;
-    out << setw(45) << setfill('-') << left << " " << setfill(' ') << endl;
-    out << *_pt << endl;
-    out << *_eta << endl;
-    out << *_is_global << endl;
-    out << *_is_tracker << endl;
-    out << *_muon_segments << endl;
-    out << *_muon_hits << endl;
-    out << *_muon_normalized_chi2 << endl;
-    out << *_tracker_hits << endl;
-    out << *_pixel_hits << endl;
-    out << *_d0_bsp << endl;
-    out << *_primary_vertex;
-}
-
 
 
 // PrimaryVertex Selector
 //
 PrimaryVertexSelector::PrimaryVertexSelector()
 {
-    _ndof.reset(new Comparator<std::greater_equal<float> >(4, "ndof"));
-    _vertex_z.reset(new Comparator<std::less_equal<float> >(24, "|pv.z()|"));
-    _rho.reset(new Comparator<std::less_equal<float> >(4.0, "pv.rho()"));
-
-    monitor(_ndof);
-    monitor(_vertex_z);
-    monitor(_rho);
+    addCut(NDOF, CutPtr(new Comparator<greater_equal<float> >(4, "ndof")));
+    addCut(VERTEX_Z,
+            CutPtr(new Comparator<less_equal<float> >(24, "|pv.z()|")));
+    addCut(RHO,
+            CutPtr(new Comparator<less_equal<float> >(4.0, "pv.rho()")));
 }
 
-PrimaryVertexSelector::PrimaryVertexSelector(const PrimaryVertexSelector &object)
+CutPtr PrimaryVertexSelector::cut(const Cut &cut_id) const
 {
-    _ndof = dynamic_pointer_cast<Cut>(object._ndof->clone());
-    _vertex_z = dynamic_pointer_cast<Cut>(object._vertex_z->clone());
-    _rho = dynamic_pointer_cast<Cut>(object._rho->clone());
-
-    monitor(_ndof);
-    monitor(_vertex_z);
-    monitor(_rho);
+    return getCut(cut_id);
 }
 
 bool PrimaryVertexSelector::apply(const PrimaryVertex &pv)
 {
     return pv.has_extra()
-        && _ndof->apply(pv.extra().ndof())
-        && _vertex_z->apply(pv.vertex().z())
-        && _rho->apply(pv.extra().rho());
-}
-
-CutPtr PrimaryVertexSelector::ndof() const
-{
-    return _ndof;
-}
-
-CutPtr PrimaryVertexSelector::vertex_z() const
-{
-    return _vertex_z;
-}
-
-CutPtr PrimaryVertexSelector::rho() const
-{
-    return _rho;
-}
-
-void PrimaryVertexSelector::enable()
-{
-    ndof()->enable();
-    vertex_z()->enable();
-    rho()->enable();
-}
-
-void PrimaryVertexSelector::disable()
-{
-    ndof()->disable();
-    vertex_z()->disable();
-    rho()->disable();
+        && cut(NDOF)->apply(pv.extra().ndof())
+        && cut(VERTEX_Z)->apply(pv.vertex().z())
+        && cut(RHO)->apply(pv.extra().rho());
 }
 
 uint32_t PrimaryVertexSelector::id() const
@@ -542,56 +324,31 @@ PrimaryVertexSelector::ObjectPtr PrimaryVertexSelector::clone() const
     return ObjectPtr(new PrimaryVertexSelector(*this));
 }
 
-void PrimaryVertexSelector::print(std::ostream &out) const
-{
-    out << "     CUT                 " << setw(5) << " "
-        << " Objects Events" << endl;
-    out << setw(45) << setfill('-') << left << " " << setfill(' ') << endl;
-    out << *_ndof << endl;
-    out << *_vertex_z << endl;
-    out << *_rho;
-}
-
 
 
 // WJetSelector
 //
 WJetSelector::WJetSelector()
 {
-    _children.reset(new Comparator<std::equal_to<uint32_t> >(2, "Children"));
-    _pt.reset(new Comparator<>(200, "pT"));
-    _mass_drop.reset(new Comparator<std::less<float> >(0.4, "Mass drop"));
-    _mass_lower_bound.reset(new Comparator<>(60, "Mass lower bound"));
-    _mass_upper_bound.reset(new Comparator<std::less<float> >(130, "Mass upper bound"));
-
-    monitor(_children);
-    monitor(_pt);
-    monitor(_mass_drop);
-    monitor(_mass_lower_bound);
-    monitor(_mass_upper_bound);
+    addCut(CHILDREN,
+            CutPtr(new Comparator<equal_to<uint32_t> >(2, "Children")));
+    addCut(PT, CutPtr(new Comparator<>(200, "pT")));
+    addCut(MASS_DROP,
+            CutPtr(new Comparator<less<float> >(0.4, "Mass drop")));
+    addCut(MASS, CutPtr(new RangeComparator<>(60, 130, "Mass bound")));
 }
 
-WJetSelector::WJetSelector(const WJetSelector &object)
+CutPtr WJetSelector::cut(const Cut &cut_id) const
 {
-    _children = dynamic_pointer_cast<Cut>(object._children->clone());;
-    _pt = dynamic_pointer_cast<Cut>(object._pt->clone());;
-    _mass_drop = dynamic_pointer_cast<Cut>(object._mass_drop->clone());;
-    _mass_lower_bound = dynamic_pointer_cast<Cut>(object._mass_lower_bound->clone());;
-    _mass_upper_bound = dynamic_pointer_cast<Cut>(object._mass_upper_bound->clone());;
-
-    monitor(_children);
-    monitor(_pt);
-    monitor(_mass_drop);
-    monitor(_mass_lower_bound);
-    monitor(_mass_upper_bound);
+    return getCut(cut_id);
 }
 
 bool WJetSelector::apply(const Jet &jet)
 {
-    if (!_children->apply(jet.children().size()))
+    if (!cut(CHILDREN)->apply(jet.children().size()))
         return false;
 
-    if (!_pt->apply(bsm::pt(jet.physics_object().p4())))
+    if (!cut(PT)->apply(bsm::pt(jet.physics_object().p4())))
         return false;
 
     float m0 = bsm::mass(jet.physics_object().p4());
@@ -600,52 +357,8 @@ bool WJetSelector::apply(const Jet &jet)
     float m12 = bsm::mass(jet.children().Get(0).physics_object().p4()
             + jet.children().Get(1).physics_object().p4());
 
-    return _mass_drop->apply(std::max(m1, m2) / m0)
-        && _mass_lower_bound->apply(m12)
-        && _mass_upper_bound->apply(m12);
-}
-
-CutPtr WJetSelector::children() const
-{
-    return _children;
-}
-
-CutPtr WJetSelector::pt() const
-{
-    return _pt;
-}
-
-CutPtr WJetSelector::mass_drop() const
-{
-    return _mass_drop;
-}
-
-CutPtr WJetSelector::mass_lower_bound() const
-{
-    return _mass_lower_bound;
-}
-
-CutPtr WJetSelector::mass_upper_bound() const
-{
-    return _mass_upper_bound;
-}
-
-void WJetSelector::enable()
-{
-    children()->enable();
-    pt()->enable();
-    mass_drop()->enable();
-    mass_lower_bound()->enable();
-    mass_upper_bound()->enable();
-}
-
-void WJetSelector::disable()
-{
-    children()->disable();
-    pt()->disable();
-    mass_drop()->disable();
-    mass_lower_bound()->disable();
-    mass_upper_bound()->disable();
+    return cut(MASS_DROP)->apply(max(m1, m2) / m0)
+        && cut(MASS)->apply(m12);
 }
 
 uint32_t WJetSelector::id() const
@@ -658,18 +371,6 @@ WJetSelector::ObjectPtr WJetSelector::clone() const
     return ObjectPtr(new WJetSelector(*this));
 }
 
-void WJetSelector::print(std::ostream &out) const
-{
-    out << "     CUT                 " << setw(5) << " "
-        << " Objects Events" << endl;
-    out << setw(45) << setfill('-') << left << " " << setfill(' ') << endl;
-    out << *_children << endl;
-    out << *_pt << endl;
-    out << *_mass_drop << endl;
-    out << *_mass_lower_bound << endl;
-    out << *_mass_upper_bound;
-}
-
 
 
 // Lock Selector Event Counter on Update
@@ -678,60 +379,69 @@ LockSelectorEventCounterOnUpdate::LockSelectorEventCounterOnUpdate(
         ElectronSelector &selector)
 {
     _lockers.push_back(Locker(
-                new LockCounterOnUpdate(selector.pt()->events())));
+                new LockCounterOnUpdate(selector.cut(ElectronSelector::PT)->events())));
     _lockers.push_back(Locker(
-                new LockCounterOnUpdate(selector.eta()->events())));
+                new LockCounterOnUpdate(selector.cut(ElectronSelector::ETA)->events())));
     _lockers.push_back(Locker(
-                new LockCounterOnUpdate(selector.primary_vertex()->events())));
+                new LockCounterOnUpdate(selector.cut(ElectronSelector::PRIMARY_VERTEX)->events())));
 }
 
 LockSelectorEventCounterOnUpdate::LockSelectorEventCounterOnUpdate(
         JetSelector &selector)
 {
     _lockers.push_back(Locker(
-                new LockCounterOnUpdate(selector.pt()->events())));
+                new LockCounterOnUpdate(selector.cut(JetSelector::PT)->events())));
     _lockers.push_back(Locker(
-                new LockCounterOnUpdate(selector.eta()->events())));
+                new LockCounterOnUpdate(selector.cut(JetSelector::ETA)->events())));
 }
 
 LockSelectorEventCounterOnUpdate::LockSelectorEventCounterOnUpdate(
         MuonSelector &selector)
 {
     _lockers.push_back(Locker(
-                new LockCounterOnUpdate(selector.pt()->events())));
+                new LockCounterOnUpdate(selector.cut(MuonSelector::PT)->events())));
     _lockers.push_back(Locker(
-                new LockCounterOnUpdate(selector.eta()->events())));
+                new LockCounterOnUpdate(selector.cut(MuonSelector::ETA)->events())));
     _lockers.push_back(Locker(
-                new LockCounterOnUpdate(selector.is_global()->events())));
+                new LockCounterOnUpdate(selector.cut(MuonSelector::IS_GLOBAL)->events())));
     _lockers.push_back(Locker(
-                new LockCounterOnUpdate(selector.is_tracker()->events())));
+                new LockCounterOnUpdate(selector.cut(MuonSelector::IS_TRACKER)->events())));
     _lockers.push_back(Locker(
-                new LockCounterOnUpdate(selector.muon_segments()->events())));
+                new LockCounterOnUpdate(selector.cut(MuonSelector::MUON_SEGMENTS)->events())));
     _lockers.push_back(Locker(
-                new LockCounterOnUpdate(selector.muon_hits()->events())));
+                new LockCounterOnUpdate(selector.cut(MuonSelector::MUON_HITS)->events())));
     _lockers.push_back(Locker(
-                new LockCounterOnUpdate(selector.muon_normalized_chi2()->events())));
+                new LockCounterOnUpdate(selector.cut(MuonSelector::MUON_NORMALIZED_CHI2)->events())));
     _lockers.push_back(Locker(
-                new LockCounterOnUpdate(selector.tracker_hits()->events())));
+                new LockCounterOnUpdate(selector.cut(MuonSelector::TRACKER_HITS)->events())));
     _lockers.push_back(Locker(
-                new LockCounterOnUpdate(selector.pixel_hits()->events())));
+                new LockCounterOnUpdate(selector.cut(MuonSelector::PIXEL_HITS)->events())));
     _lockers.push_back(Locker(
-                new LockCounterOnUpdate(selector.d0_bsp()->events())));
+                new LockCounterOnUpdate(selector.cut(MuonSelector::D0)->events())));
     _lockers.push_back(Locker(
-                new LockCounterOnUpdate(selector.primary_vertex()->events())));
+                new LockCounterOnUpdate(selector.cut(MuonSelector::PRIMARY_VERTEX)->events())));
+}
+
+LockSelectorEventCounterOnUpdate::LockSelectorEventCounterOnUpdate(
+        PrimaryVertexSelector &selector)
+{
+    _lockers.push_back(Locker(
+                new LockCounterOnUpdate(selector.cut(PrimaryVertexSelector::NDOF)->events())));
+    _lockers.push_back(Locker(
+                new LockCounterOnUpdate(selector.cut(PrimaryVertexSelector::VERTEX_Z)->events())));
+    _lockers.push_back(Locker(
+                new LockCounterOnUpdate(selector.cut(PrimaryVertexSelector::RHO)->events())));
 }
 
 LockSelectorEventCounterOnUpdate::LockSelectorEventCounterOnUpdate(
         WJetSelector &selector)
 {
     _lockers.push_back(Locker(
-                new LockCounterOnUpdate(selector.children()->events())));
+                new LockCounterOnUpdate(selector.cut(WJetSelector::CHILDREN)->events())));
     _lockers.push_back(Locker(
-                new LockCounterOnUpdate(selector.pt()->events())));
+                new LockCounterOnUpdate(selector.cut(WJetSelector::PT)->events())));
     _lockers.push_back(Locker(
-                new LockCounterOnUpdate(selector.mass_drop()->events())));
+                new LockCounterOnUpdate(selector.cut(WJetSelector::MASS_DROP)->events())));
     _lockers.push_back(Locker(
-                new LockCounterOnUpdate(selector.mass_lower_bound()->events())));
-    _lockers.push_back(Locker(
-                new LockCounterOnUpdate(selector.mass_upper_bound()->events())));
+                new LockCounterOnUpdate(selector.cut(WJetSelector::MASS)->events())));
 }

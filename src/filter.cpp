@@ -20,6 +20,7 @@ using boost::shared_ptr;
 
 using bsm::AppController;
 using bsm::FilterAnalyzer;
+using bsm::FilterOptions;
 using bsm::JetEnergyCorrectionOptions;
 using bsm::SynchSelectorOptions;
 
@@ -35,12 +36,15 @@ int main(int argc, char *argv[])
 
         boost::shared_ptr<JetEnergyCorrectionOptions> jec_options(new JetEnergyCorrectionOptions());
         boost::shared_ptr<SynchSelectorOptions> synch_selector_options(new SynchSelectorOptions());
+        boost::shared_ptr<FilterOptions> filter_options(new FilterOptions());
 
         jec_options->setDelegate(analyzer->getJetEnergyCorrectionDelegate());
         synch_selector_options->setDelegate(analyzer->getSynchSelectorDelegate());
+        filter_options->setDelegate(analyzer.get());
 
         app->addOptions(*jec_options);
         app->addOptions(*synch_selector_options);
+        app->addOptions(*filter_options);
 
         app->setAnalyzer(analyzer, true);
 
