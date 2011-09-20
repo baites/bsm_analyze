@@ -64,6 +64,9 @@ namespace bsm
     class Cut2DSelector;
     class Cut2DSelectorDelegate;
 
+    class TriggerDelegate;
+    class TriggerOptions;
+
     class H1Proxy;
     class H2Proxy;
 

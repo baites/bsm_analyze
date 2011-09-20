@@ -16,11 +16,14 @@
 #include "bsm_input/interface/bsm_input_fwd.h"
 #include "interface/Analyzer.h"
 #include "interface/Cut.h"
+#include "interface/TriggerAnalyzer.h"
 #include "interface/bsm_fwd.h"
 
 namespace bsm
 {
-    class TemplateAnalyzer : public Analyzer, public CounterDelegate
+    class TemplateAnalyzer : public Analyzer,
+        public CounterDelegate,
+        public TriggerDelegate
     {
         public:
             typedef boost::shared_ptr<stat::H1> H1Ptr;
@@ -42,6 +45,10 @@ namespace bsm
             // Counter Delegate interface
             //
             virtual void didCounterAdd(const Counter *);
+
+            // Trigger Delegate inteface
+            //
+            virtual void setTrigger(const Trigger &);
 
             // Anlayzer interface
             //
@@ -80,6 +87,9 @@ namespace bsm
             Counter *_leading_jet_counter;
 
             bool _is_good_lepton;
+
+            typedef std::vector<uint64_t> Triggers;
+            Triggers _triggers; // hashes of triggers to be passed
     };
 }
 

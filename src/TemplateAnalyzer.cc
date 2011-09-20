@@ -66,7 +66,8 @@ TemplateAnalyzer::TemplateAnalyzer():
 }
 
 TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
-    _is_good_lepton(object.isGoodLepton())
+    _is_good_lepton(object.isGoodLepton()),
+    _triggers(object._triggers.begin(), object._triggers.end())
 {
     _synch_selector = 
         dynamic_pointer_cast<SynchSelector>(object._synch_selector->clone());
@@ -158,6 +159,11 @@ void TemplateAnalyzer::didCounterAdd(const Counter *counter)
     }
 }
 
+void TemplateAnalyzer::setTrigger(const Trigger &trigger)
+{
+    _triggers.push_back(trigger.hash());
+}
+
 void TemplateAnalyzer::onFileOpen(const std::string &filename, const Input *input)
 {
 }
@@ -168,6 +174,36 @@ void TemplateAnalyzer::process(const Event *event)
 
     if (!event->has_missing_energy())
         return;
+
+    if (!_triggers.empty()
+            && event->hlts().size())
+    {
+        // OR triggers
+        //
+        typedef ::google::protobuf::RepeatedPtrField<Trigger> PBTriggers;
+        bool is_trigger_pass = false;
+        for(Triggers::const_iterator trigger = _triggers.begin();
+                _triggers.end() != trigger
+                    && !is_trigger_pass;
+                ++trigger)
+        {
+            for(PBTriggers::const_iterator hlt = event->hlts().begin();
+                    event->hlts().end() != hlt;
+                    ++hlt)
+            {
+                if (hlt->hash() == *trigger)
+                {
+                    if (hlt->pass())
+                        is_trigger_pass = true;
+
+                    break;
+                }
+            }
+        }
+
+        if (!is_trigger_pass)
+            return;
+    }
 
     _event = event;
 
