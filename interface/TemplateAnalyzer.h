@@ -16,11 +16,14 @@
 #include "bsm_input/interface/bsm_input_fwd.h"
 #include "interface/Analyzer.h"
 #include "interface/Cut.h"
+#include "interface/TriggerAnalyzer.h"
 #include "interface/bsm_fwd.h"
 
 namespace bsm
 {
-    class TemplateAnalyzer : public Analyzer, public CounterDelegate
+    class TemplateAnalyzer : public Analyzer,
+        public CounterDelegate,
+        public TriggerDelegate
     {
         public:
             typedef boost::shared_ptr<stat::H1> H1Ptr;
@@ -43,6 +46,10 @@ namespace bsm
             //
             virtual void didCounterAdd(const Counter *);
 
+            // Trigger Delegate inteface
+            //
+            virtual void setTrigger(const Trigger &);
+
             // Anlayzer interface
             //
             virtual void onFileOpen(const std::string &filename, const Input *);
@@ -52,6 +59,7 @@ namespace bsm
             //
             virtual uint32_t id() const;
             virtual ObjectPtr clone() const;
+            virtual void merge(const ObjectPtr &);
             virtual void print(std::ostream &) const;
 
         private:
@@ -63,6 +71,8 @@ namespace bsm
 
             float mttbar() const;
 
+            bool isGoodLepton() const;
+
             boost::shared_ptr<SynchSelector> _synch_selector;
 
             H1ProxyPtr _d0;
@@ -73,8 +83,13 @@ namespace bsm
 
             const Event *_event;
 
-            CounterPtr _secondary_lepton_counter;
-            CounterPtr _leading_jet_counter;
+            Counter *_secondary_lepton_counter;
+            Counter *_leading_jet_counter;
+
+            bool _is_good_lepton;
+
+            typedef std::vector<uint64_t> Triggers;
+            Triggers _triggers; // hashes of triggers to be passed
     };
 }
 

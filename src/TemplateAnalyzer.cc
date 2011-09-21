@@ -31,17 +31,20 @@ using namespace boost;
 
 using bsm::TemplateAnalyzer;
 
-TemplateAnalyzer::TemplateAnalyzer()
+TemplateAnalyzer::TemplateAnalyzer():
+    _is_good_lepton(false)
 {
     _synch_selector.reset(new SynchSelector());
     monitor(_synch_selector);
 
     _secondary_lepton_counter =
-        _synch_selector->cutflow()->cut(SynchSelector::VETO_SECOND_LEPTON)->objects();
+        _synch_selector->cutflow()->cut(
+                SynchSelector::VETO_SECOND_LEPTON)->objects().get();
     _secondary_lepton_counter->setDelegate(this);
 
     _leading_jet_counter =
-        _synch_selector->cutflow()->cut(SynchSelector::LEADING_JET)->objects();
+        _synch_selector->cutflow()->cut(
+                SynchSelector::LEADING_JET)->objects().get();
     _leading_jet_counter->setDelegate(this);
 
     _d0.reset(new H1Proxy(500, 0, .05));
@@ -56,24 +59,28 @@ TemplateAnalyzer::TemplateAnalyzer()
     _mttbar_after_htlep.reset(new H1Proxy(400, 0, 4000));
     monitor(_mttbar_after_htlep);
 
-    _dr_vs_ptrel.reset(new H2Proxy(50, 0, 50, 15, 0, 1.5));
+    _dr_vs_ptrel.reset(new H2Proxy(100, 0, 100, 15, 0, 1.5));
     monitor(_dr_vs_ptrel);
 
     _event = 0;
 }
 
-TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object)
+TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
+    _is_good_lepton(object.isGoodLepton()),
+    _triggers(object._triggers.begin(), object._triggers.end())
 {
     _synch_selector = 
         dynamic_pointer_cast<SynchSelector>(object._synch_selector->clone());
     monitor(_synch_selector);
 
     _secondary_lepton_counter =
-        _synch_selector->cutflow()->cut(SynchSelector::VETO_SECOND_LEPTON)->objects();
+        _synch_selector->cutflow()->cut(
+                SynchSelector::VETO_SECOND_LEPTON)->objects().get();
     _secondary_lepton_counter->setDelegate(this);
 
     _leading_jet_counter =
-        _synch_selector->cutflow()->cut(SynchSelector::LEADING_JET)->objects();
+        _synch_selector->cutflow()->cut(
+                SynchSelector::LEADING_JET)->objects().get();
     _leading_jet_counter->setDelegate(this);
 
     _d0 = dynamic_pointer_cast<H1Proxy>(object._d0->clone());
@@ -139,14 +146,22 @@ bsm::Cut2DSelectorDelegate *TemplateAnalyzer::getCut2DSelectorDelegate() const
 
 void TemplateAnalyzer::didCounterAdd(const Counter *counter)
 {
-    if (counter == _secondary_lepton_counter.get())
+    if (counter == _secondary_lepton_counter)
         fillDrVsPtrel();
-    else if (counter == _leading_jet_counter.get())
+    else if (counter == _leading_jet_counter)
     {
-        fillHtlep();
+        if (isGoodLepton())
+        {
+            fillHtlep();
 
-        mttbarBeforeHtlep()->fill(mttbar());
+            mttbarBeforeHtlep()->fill(mttbar());
+        }
     }
+}
+
+void TemplateAnalyzer::setTrigger(const Trigger &trigger)
+{
+    _triggers.push_back(trigger.hash());
 }
 
 void TemplateAnalyzer::onFileOpen(const std::string &filename, const Input *input)
@@ -155,14 +170,47 @@ void TemplateAnalyzer::onFileOpen(const std::string &filename, const Input *inpu
 
 void TemplateAnalyzer::process(const Event *event)
 {
+    _is_good_lepton = false;
+
     if (!event->has_missing_energy())
         return;
+
+    if (!_triggers.empty()
+            && event->hlts().size())
+    {
+        // OR triggers
+        //
+        typedef ::google::protobuf::RepeatedPtrField<Trigger> PBTriggers;
+        bool is_trigger_pass = false;
+        for(Triggers::const_iterator trigger = _triggers.begin();
+                _triggers.end() != trigger
+                    && !is_trigger_pass;
+                ++trigger)
+        {
+            for(PBTriggers::const_iterator hlt = event->hlts().begin();
+                    event->hlts().end() != hlt;
+                    ++hlt)
+            {
+                if (hlt->hash() == *trigger)
+                {
+                    if (hlt->pass())
+                        is_trigger_pass = true;
+
+                    break;
+                }
+            }
+        }
+
+        if (!is_trigger_pass)
+            return;
+    }
 
     _event = event;
 
     // Process only events, that pass the synch selector
     //
-    if (_synch_selector->apply(event))
+    if (_synch_selector->apply(event)
+            && isGoodLepton())
         mttbarAfterHtlep()->fill(mttbar());
 
     _event = 0;
@@ -176,6 +224,23 @@ uint32_t TemplateAnalyzer::id() const
 TemplateAnalyzer::ObjectPtr TemplateAnalyzer::clone() const
 {
     return ObjectPtr(new TemplateAnalyzer(*this));
+}
+
+void TemplateAnalyzer::merge(const ObjectPtr &pointer)
+{
+    if (pointer->id() != id())
+        return;
+
+    boost::shared_ptr<TemplateAnalyzer> object =
+        dynamic_pointer_cast<TemplateAnalyzer>(pointer);
+
+    if (!object)
+        return;
+
+    _secondary_lepton_counter->setDelegate(0);
+    _leading_jet_counter->setDelegate(0);
+
+    Object::merge(pointer);
 }
 
 void TemplateAnalyzer::print(std::ostream &out) const
@@ -193,7 +258,6 @@ void TemplateAnalyzer::fillDrVsPtrel()
             ElectronIDs;
 
         const Electron *electron = (*_synch_selector->goodElectrons().begin());
-        bool electron_id_is_found = false;
         for(ElectronIDs::const_iterator id = electron->electronid().begin();
                 electron->electronid().end() != id;
                 ++id)
@@ -201,20 +265,18 @@ void TemplateAnalyzer::fillDrVsPtrel()
             if (Electron::HyperTight1 != id->name())
                 continue;
 
-            electron_id_is_found = true;
-            if  (!id->identification()
-                    || !id->conversion_rejection())
-                return;
-            else
-                break;
+            if  (id->identification()
+                    && id->conversion_rejection())
+                _is_good_lepton = true;
+
+            break;
         }
-
-        if (!electron_id_is_found)
-            return;
-
-        if (0.02 < fabs((*_synch_selector->goodElectrons().begin())->extra().d0_bsp()))
-            return;
     }
+    else
+        _is_good_lepton = true;
+
+    if (!isGoodLepton())
+        return;
 
     // Secondary lepton veto cut passed: find closest jet to the lepton
     //
@@ -428,4 +490,9 @@ float TemplateAnalyzer::mttbar() const
     // Best Solution is found
     //
     return mass(best_solution.ltop + best_solution.htop);
+}
+
+bool TemplateAnalyzer::isGoodLepton() const
+{
+    return _is_good_lepton;
 }
