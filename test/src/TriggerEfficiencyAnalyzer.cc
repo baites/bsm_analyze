@@ -135,7 +135,7 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
     // Loop over the trigger menu to see which trigger is fire
     for(Triggers::const_iterator hlt = event->hlts().begin(); event->hlts().end() != hlt; ++hlt)
     {
-        if (_hlt_map[hlt->hash()] == "hlt_ele10_caloidt_caloisovl_trkidt_trkisovl_ht200")
+        if (_hlt_map[hlt->hash()] == "hlt_ele10_caloidt_caloisovl_trkidt_trkisovl_ht200" && hlt->pass())
             _bookkeeper->get1d("TriggerOption1HT")->fill(ht);    	
     }
 

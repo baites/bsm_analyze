@@ -7,6 +7,7 @@
 
 #include <cmath>
 
+#include "interface/Cut.h"
 #include "interface/ElectronIDAnalyzer.h"
 #include "bsm_input/interface/Algebra.h"
 
