@@ -131,6 +131,9 @@ void HistogramBookkeeper::print(std::ostream & os) const
 
     sort(keys.begin(), keys.end());
 
+    os << format("Number of 1d histograms: %d\n") % _cache1d.size();
+    os << "========================================\n";
+
     for (vector<string>::const_iterator key = keys.begin(); key != keys.end(); ++key)
         os << format ("%-30s : %7d\n") % (*key) % _cache1d.at(*key)->histogram()->entries();
 
