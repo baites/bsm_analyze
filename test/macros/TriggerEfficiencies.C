@@ -20,7 +20,7 @@ void TriggerEfficiencies(TString filename, TString id, TString variable, TString
 
    All->GetXaxis()->SetTitle(xtitle);
    All->GetYaxis()->SetTitle("Efficiency respect to synch selection");
-   All->GetYaxis()->SetRangeUser(0.5,1.0);
+   All->GetYaxis()->SetRangeUser(0.0,1.0);
    All->Draw("axis");
 
    TEfficiency * TriggerEff = new TEfficiency();

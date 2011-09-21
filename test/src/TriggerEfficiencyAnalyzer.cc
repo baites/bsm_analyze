@@ -1,4 +1,4 @@
-
+ 
 // HistogramProducer: TriggerEfficiencyAnalyzer
 //
 // Produce histograms trigger turnon curves.
@@ -32,8 +32,8 @@ TriggerEfficiencyAnalyzer::TriggerEfficiencyAnalyzer()
     // Initializing bookkeeper (booking histograms)
 
     _bookkeeper.reset(new HistogramBookkeeper());
-    _bookkeeper->book1d("AllEventsHT", 50, 50, 800);
-    _bookkeeper->book1d("TriggerOption1HT", 50, 50, 800);    
+    _bookkeeper->book1d("AllEventsHT", 50, 50, 400);
+    _bookkeeper->book1d("TriggerOption1HT", 50, 50, 400);    
     monitor(_bookkeeper);
 }
 
@@ -110,6 +110,38 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
 	// Check if the event pass the selection
     if (!_synch_selector->apply(event)) return;
 
+    // Get the collection of good electron from the synch selection
+    SynchSelector::GoodElectrons const & electrons = _synch_selector->goodElectrons();
+
+    // Electron id selection
+    bool passeid = false;
+
+    // Loop over the collection (it should be one electron)
+    for (std::size_t i = 0; i < electrons.size(); ++i)
+    {
+        bsm::Electron const & electron = *electrons[i];
+
+        // Loop over the possible electron ids 
+        for (int j = 0; j < electron.electronid_size(); ++j)
+        {
+            const bsm::Electron::ElectronID & electronid = electron.electronid(j);
+     
+            // Keep looping if the electron id is not HyperTight1
+            if (electronid.name() != bsm::Electron::HyperTight1) continue; 
+     
+            // Check if HyperTight1 minimal condition
+            if (electronid.identification() && electronid.conversion_rejection())
+            	passeid = true;
+            	
+            break;
+        }
+        
+        break;
+    }
+
+    // Reject the event if do not pass the electronid
+    if (!passeid) return;
+
     typedef ::google::protobuf::RepeatedPtrField<Trigger> Triggers;
 
     // Check if the event contains htl information
@@ -136,7 +168,10 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
     for(Triggers::const_iterator hlt = event->hlts().begin(); event->hlts().end() != hlt; ++hlt)
     {
         if (_hlt_map[hlt->hash()] == "hlt_ele10_caloidt_caloisovl_trkidt_trkisovl_ht200" && hlt->pass())
-            _bookkeeper->get1d("TriggerOption1HT")->fill(ht);    	
+        {
+            _bookkeeper->get1d("TriggerOption1HT")->fill(ht);
+            break;
+        }
     }
 
     return;
