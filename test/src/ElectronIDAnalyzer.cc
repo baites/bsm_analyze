@@ -8,6 +8,7 @@
 #include <cmath>
 
 #include "interface/ElectronIDAnalyzer.h"
+#include "interface/Cut.h"
 #include "bsm_input/interface/Algebra.h"
 
 namespace bsm
