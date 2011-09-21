@@ -19,6 +19,7 @@ ElectronIDAnalyzer::ElectronIDAnalyzer()
     // Initializing selector
 
     _synch_selector.reset(new SynchSelector());
+    _synch_selector->htlep()->disable();
     monitor(_synch_selector);
 
     // Histogram booking

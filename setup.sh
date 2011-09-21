@@ -8,7 +8,7 @@
 
 CODE=`pwd`
 
-library_path=DYLD_LIBRARY_PATH
+library_path=$DYLD_LIBRARY_PATH
 if [[ "Linux" == "`uname`" ]]
 then
     if [[ "" == "$CMSSW_BASE" ]]
