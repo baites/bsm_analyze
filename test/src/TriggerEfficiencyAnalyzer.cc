@@ -32,8 +32,8 @@ TriggerEfficiencyAnalyzer::TriggerEfficiencyAnalyzer()
     // Initializing bookkeeper (booking histograms)
 
     _bookkeeper.reset(new HistogramBookkeeper());
-    _bookkeeper->book1d("AllEventsHT", 50, 0, 300);
-    _bookkeeper->book1d("TriggerOption1HT", 50, 0, 300);    
+    _bookkeeper->book1d("AllEventsHT", 50, 50, 800);
+    _bookkeeper->book1d("TriggerOption1HT", 50, 50, 800);    
     monitor(_bookkeeper);
 }
 
