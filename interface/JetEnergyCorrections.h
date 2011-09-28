@@ -39,6 +39,8 @@ namespace bsm
 
             virtual void setCorrection(const Level &,
                     const std::string &file_name) {}
+
+            virtual void setDeltaRCorrection() {}
     };
 
     class JetEnergyCorrectionOptions : public Options
@@ -56,6 +58,8 @@ namespace bsm
         private:
             void setCorrection(const JetEnergyCorrectionDelegate::Level &,
                     const std::string &file_name); 
+            
+            void setDeltaRCorrection();
 
             JetEnergyCorrectionDelegate *_delegate;
 
@@ -117,6 +121,8 @@ namespace bsm
             virtual void setCorrection(const Level &,
                     const std::string &file_name);
 
+            virtual void setDeltaRCorrection();
+
             // Object interface
             //
             virtual uint32_t id() const;
@@ -137,6 +143,8 @@ namespace bsm
 
             Corrections _corrections;
             CorrectionFiles _correction_files;
+
+            bool _use_dr_correction;
     };
 
     // Helpers
