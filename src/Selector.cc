@@ -273,7 +273,7 @@ bool MuonSelector::apply(const Muon &muon, const PrimaryVertex &pv)
         && cut(MUON_NORMALIZED_CHI2)->apply(muon.global_track().normalized_chi2())
         && cut(TRACKER_HITS)->apply(muon.inner_track().hits())
         && cut(PIXEL_HITS)->apply(muon.extra().pixel_hits())
-        && cut(D0)->apply(fabs(muon.extra().d0_bsp()))
+        && cut(D0)->apply(fabs(muon.extra().d0()))
         && cut(PRIMARY_VERTEX)->apply(fabs(muon.physics_object().vertex().z()
                     - pv.vertex().z()));
 }
@@ -345,17 +345,17 @@ CutPtr WJetSelector::cut(const Cut &cut_id) const
 
 bool WJetSelector::apply(const Jet &jet)
 {
-    if (!cut(CHILDREN)->apply(jet.children().size()))
+    if (!cut(CHILDREN)->apply(jet.child().size()))
         return false;
 
     if (!cut(PT)->apply(bsm::pt(jet.physics_object().p4())))
         return false;
 
     float m0 = bsm::mass(jet.physics_object().p4());
-    float m1 = bsm::mass(jet.children().Get(0).physics_object().p4());
-    float m2 = bsm::mass(jet.children().Get(1).physics_object().p4());
-    float m12 = bsm::mass(jet.children().Get(0).physics_object().p4()
-            + jet.children().Get(1).physics_object().p4());
+    float m1 = bsm::mass(jet.child().Get(0).physics_object().p4());
+    float m2 = bsm::mass(jet.child().Get(1).physics_object().p4());
+    float m12 = bsm::mass(jet.child().Get(0).physics_object().p4()
+            + jet.child().Get(1).physics_object().p4());
 
     return cut(MASS_DROP)->apply(max(m1, m2) / m0)
         && cut(MASS)->apply(m12);

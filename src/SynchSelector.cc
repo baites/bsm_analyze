@@ -418,8 +418,8 @@ bool SynchSelector::jets(const Event *event)
 
     LockSelectorEventCounterOnUpdate lock_nice_jets(*_nice_jet_selector);
     LockSelectorEventCounterOnUpdate lock_good_jets(*_good_jet_selector);
-    for(Jets::const_iterator jet = event->jets().begin();
-            event->jets().end() != jet;
+    for(Jets::const_iterator jet = event->jet().begin();
+            event->jet().end() != jet;
             ++jet)
     {
         JetEnergyCorrections::CorrectedJet correction = _jec->correctJet(&*jet,
@@ -593,8 +593,8 @@ void SynchSelector::selectGoodPrimaryVertices(const Event *event)
     typedef ::google::protobuf::RepeatedPtrField<PrimaryVertex> PrimaryVertices;
 
     LockSelectorEventCounterOnUpdate lock(*_primary_vertex_selector);
-    for(PrimaryVertices::const_iterator pv = event->primary_vertices().begin();
-            event->primary_vertices().end() != pv;
+    for(PrimaryVertices::const_iterator pv = event->primary_vertex().begin();
+            event->primary_vertex().end() != pv;
             ++pv)
     {
         if (_primary_vertex_selector->apply(*pv))
@@ -606,11 +606,11 @@ void SynchSelector::selectGoodElectrons(const Event *event)
 {
     typedef ::google::protobuf::RepeatedPtrField<Electron> Electrons;
 
-    const PrimaryVertex &pv = *event->primary_vertices().begin();
+    const PrimaryVertex &pv = *event->primary_vertex().begin();
 
     LockSelectorEventCounterOnUpdate lock(*_electron_selector);
-    for(Electrons::const_iterator electron = event->pf_electrons().begin();
-            event->pf_electrons().end() != electron;
+    for(Electrons::const_iterator electron = event->electron().begin();
+            event->electron().end() != electron;
             ++electron)
     {
         if (_electron_selector->apply(*electron, pv))
@@ -622,11 +622,11 @@ void SynchSelector::selectGoodMuons(const Event *event)
 {
     typedef ::google::protobuf::RepeatedPtrField<Muon> Muons;
 
-    const PrimaryVertex &pv = *event->primary_vertices().begin();
+    const PrimaryVertex &pv = *event->primary_vertex().begin();
 
     LockSelectorEventCounterOnUpdate lock(*_muon_selector);
-    for(Muons::const_iterator muon = event->pf_muons().begin();
-            event->pf_muons().end() != muon;
+    for(Muons::const_iterator muon = event->muon().begin();
+            event->muon().end() != muon;
             ++muon)
     {
         if (_muon_selector->apply(*muon, pv))

@@ -158,7 +158,7 @@ void DumpEventAnalyzer::dump(const Event *event)
 
 void DumpEventAnalyzer::dumpPrimaryVertices(const Event *event)
 {
-    if (!event->primary_vertices().size())
+    if (!event->primary_vertex().size())
         return;
 
     typedef ::google::protobuf::RepeatedPtrField<PrimaryVertex> PrimaryVertices;
@@ -166,8 +166,8 @@ void DumpEventAnalyzer::dumpPrimaryVertices(const Event *event)
     _out << "Primary Vertices" << endl;
 
     uint32_t id = 1;
-    for(PrimaryVertices::const_iterator pv = event->primary_vertices().begin();
-            event->primary_vertices().end() != pv;
+    for(PrimaryVertices::const_iterator pv = event->primary_vertex().begin();
+            event->primary_vertex().end() != pv;
             ++pv, ++id)
     {
         _out << "[" << setw(2) << right << id << "] "
@@ -190,7 +190,7 @@ void DumpEventAnalyzer::dumpPrimaryVertices(const Event *event)
 
 void DumpEventAnalyzer::dumpJets(const Event *event)
 {
-    if (!event->jets().size())
+    if (!event->jet().size())
         return;
 
     typedef ::google::protobuf::RepeatedPtrField<Jet> Jets;
@@ -198,8 +198,8 @@ void DumpEventAnalyzer::dumpJets(const Event *event)
     _out << "Jets" << endl;
 
     uint32_t id = 1;
-    for(Jets::const_iterator jet = event->jets().begin();
-            event->jets().end() != jet;
+    for(Jets::const_iterator jet = event->jet().begin();
+            event->jet().end() != jet;
             ++jet, ++id)
     {
         const LorentzVector &p4 = jet->physics_object().p4();
@@ -217,18 +217,18 @@ void DumpEventAnalyzer::dumpJets(const Event *event)
 
 void DumpEventAnalyzer::dumpElectrons(const Event *event)
 {
-    if (!event->pf_electrons().size())
+    if (!event->electron().size())
         return;
 
     typedef ::google::protobuf::RepeatedPtrField<Electron> Electrons;
 
     _out << "Electrons" << endl;
 
-    const PrimaryVertex &pv = *event->primary_vertices().begin();
+    const PrimaryVertex &pv = *event->primary_vertex().begin();
 
     uint32_t id = 1;
-    for(Electrons::const_iterator electron = event->pf_electrons().begin();
-            event->pf_electrons().end() != electron;
+    for(Electrons::const_iterator electron = event->electron().begin();
+            event->electron().end() != electron;
             ++electron, ++id)
     {
         const LorentzVector &p4 = electron->physics_object().p4();
@@ -250,18 +250,18 @@ void DumpEventAnalyzer::dumpElectrons(const Event *event)
 
 void DumpEventAnalyzer::dumpMuons(const Event *event)
 {
-    if (!event->pf_muons().size())
+    if (!event->muon().size())
         return;
 
     typedef ::google::protobuf::RepeatedPtrField<Muon> Muons;
 
     _out << "Muons" << endl;
 
-    const PrimaryVertex &pv = *event->primary_vertices().begin();
+    const PrimaryVertex &pv = *event->primary_vertex().begin();
 
     uint32_t id = 1;
-    for(Muons::const_iterator muon = event->pf_muons().begin();
-            event->pf_muons().end() != muon;
+    for(Muons::const_iterator muon = event->muon().begin();
+            event->muon().end() != muon;
             ++muon, ++id)
     {
         const LorentzVector &p4 = muon->physics_object().p4();

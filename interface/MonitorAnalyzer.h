@@ -30,10 +30,8 @@ namespace bsm
             // Getters
             //
             const ElMonitorPtr pfElectrons() const;
-            const ElMonitorPtr gsfElectrons() const;
 
             const MuMonitorPtr pfMuons() const;
-            const MuMonitorPtr recoMuons() const;
 
             const JetMonitorPtr jets() const;
             const METMonitorPtr missingEnergy() const;
@@ -59,10 +57,8 @@ namespace bsm
             MonitorAnalyzer &operator =(const MonitorAnalyzer &);
 
             ElMonitorPtr _pf_electrons;
-            ElMonitorPtr _gsf_electrons;
 
             MuMonitorPtr _pf_muons;
-            MuMonitorPtr _reco_muons;
 
             JetMonitorPtr _jets;
             METMonitorPtr _missing_energy;

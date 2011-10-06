@@ -494,7 +494,7 @@ float MttbarAnalyzer::getMttbarGen(const Event *event)
 {
     float mass_gen = 0;
 
-    const GenParticles &particles = event->gen_particles();
+    const GenParticles &particles = event->gen_particle();
     // Search for the first top
     //
     const GenParticles::const_iterator top = find(particles, TOP);
@@ -548,13 +548,13 @@ MttbarAnalyzer::GenParticles::const_iterator
 
 bool MttbarAnalyzer::isLeptonicDecay(const GenParticle &particle)
 {
-    const GenParticles::const_iterator wboson = find(particle.children(), WBOSON);
-    if (particle.children().end() == wboson)
+    const GenParticles::const_iterator wboson = find(particle.child(), WBOSON);
+    if (particle.child().end() == wboson)
         return false;
 
-    const GenParticles::const_iterator lepton = find(wboson->children(),
+    const GenParticles::const_iterator lepton = find(wboson->child(),
         SynchSelector::ELECTRON == _synch_selector->leptonMode()
         ? ELECTRON
         : MUON);
-    return wboson->children().end() != lepton;
+    return wboson->child().end() != lepton;
 }

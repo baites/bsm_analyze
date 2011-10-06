@@ -154,7 +154,7 @@ void JetEnergyCorrectionsAnalyzer::print(std::ostream &out) const
 //
 void JetEnergyCorrectionsAnalyzer::jets(const Event *event)
 {
-    if (!event->jets().size()
+    if (!event->jet().size()
             || !event->has_extra())
         return;
 
@@ -164,8 +164,8 @@ void JetEnergyCorrectionsAnalyzer::jets(const Event *event)
 
     JetEnergyCorrections::Electrons electrons;
     typedef ::google::protobuf::RepeatedPtrField<Electron> Electrons;
-    for(Electrons::const_iterator electron = event->pf_electrons().begin();
-            event->pf_electrons().end() != electron;
+    for(Electrons::const_iterator electron = event->electron().begin();
+            event->electron().end() != electron;
             ++electron)
     {
         electrons.push_back(&*electron);
@@ -173,8 +173,8 @@ void JetEnergyCorrectionsAnalyzer::jets(const Event *event)
 
     JetEnergyCorrections::Muons muons;
     typedef ::google::protobuf::RepeatedPtrField<Muon> Muons;
-    for(Muons::const_iterator muon = event->pf_muons().begin();
-            event->pf_muons().end() != muon;
+    for(Muons::const_iterator muon = event->muon().begin();
+            event->muon().end() != muon;
             ++muon)
     {
         muons.push_back(&*muon);
@@ -182,8 +182,8 @@ void JetEnergyCorrectionsAnalyzer::jets(const Event *event)
 
     LockSelectorEventCounterOnUpdate lock(*_jet_selector);
     uint32_t id = 1;
-    for(Jets::const_iterator jet = event->jets().begin();
-            event->jets().end() != jet;
+    for(Jets::const_iterator jet = event->jet().begin();
+            event->jet().end() != jet;
             ++jet, ++id)
     {
         if (!jet->has_extra())

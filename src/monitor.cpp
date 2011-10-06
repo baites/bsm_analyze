@@ -86,14 +86,8 @@ void plot(const MonitorAnalyzerPtr &analyzer, char *argv[])
     shared_ptr<MuonCanvas> mu_pf_canvas(new MuonCanvas("Particle Flow Muons"));
     mu_pf_canvas->draw(*analyzer->pfMuons());
 
-    shared_ptr<MuonCanvas> mu_reco_canvas(new MuonCanvas("Reco Muons"));
-    mu_reco_canvas->draw(*analyzer->recoMuons());
-
     shared_ptr<ElectronCanvas> el_pf_canvas(new ElectronCanvas("Particle Flow Electrons"));
     el_pf_canvas->draw(*analyzer->pfElectrons());
-
-    shared_ptr<ElectronCanvas> el_gsf_canvas(new ElectronCanvas("GSF Electrons"));
-    el_gsf_canvas->draw(*analyzer->gsfElectrons());
 
     shared_ptr<PrimaryVertexCanvas> pv_canvas(new PrimaryVertexCanvas("Primary Vertex"));
     pv_canvas->draw(*analyzer->primaryVertices());

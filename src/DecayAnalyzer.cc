@@ -49,10 +49,10 @@ void DecayAnalyzer::onFileOpen(const std::string &filename, const Input *)
 
 void DecayAnalyzer::process(const Event *event)
 {
-    if (!event->gen_particles().size())
+    if (!event->gen_particle().size())
         return;
 
-    genParticles(event->gen_particles());
+    genParticles(event->gen_particle());
 }
 
 const bsm::H2Ptr DecayAnalyzer::decay_level_1() const
@@ -101,6 +101,6 @@ void DecayAnalyzer::genParticles(const GenParticles &particles,
         }
 
         if (level < 2)
-            genParticles(particle->children(), &*particle, level + 1);
+            genParticles(particle->child(), &*particle, level + 1);
     }
 }

@@ -52,9 +52,6 @@ namespace bsm
             ElSelectorPtr _pf_el_selector;
             CutflowPtr _pf_el_number_selector;
 
-            ElSelectorPtr _gsf_el_selector;
-            CutflowPtr _gsf_el_number_selector;
-
             // Et and Eta cuts only
             //
             MuSelectorPtr _pf_mu_selector_step1;
@@ -62,12 +59,6 @@ namespace bsm
 
             MuSelectorPtr _pf_mu_selector;
             CutflowPtr _pf_mu_number_selector;
-
-            MuSelectorPtr _reco_mu_selector_step1;
-            CutflowPtr _reco_mu_number_selector_step1;
-
-            MuSelectorPtr _reco_mu_selector;
-            CutflowPtr _reco_mu_number_selector;
     };
 
     // Generate Cutflow table for the ttbar-> mu+nu+j + j+j channel:

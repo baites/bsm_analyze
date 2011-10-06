@@ -176,7 +176,7 @@ void TemplateAnalyzer::process(const Event *event)
         return;
 
     if (!_triggers.empty()
-            && event->hlts().size())
+            && event->hlt().trigger().size())
     {
         // OR triggers
         //
@@ -187,8 +187,8 @@ void TemplateAnalyzer::process(const Event *event)
                     && !is_trigger_pass;
                 ++trigger)
         {
-            for(PBTriggers::const_iterator hlt = event->hlts().begin();
-                    event->hlts().end() != hlt;
+            for(PBTriggers::const_iterator hlt = event->hlt().trigger().begin();
+                    event->hlt().trigger().end() != hlt;
                     ++hlt)
             {
                 if (hlt->hash() == *trigger)
@@ -258,8 +258,8 @@ void TemplateAnalyzer::fillDrVsPtrel()
             ElectronIDs;
 
         const Electron *electron = (*_synch_selector->goodElectrons().begin());
-        for(ElectronIDs::const_iterator id = electron->electronid().begin();
-                electron->electronid().end() != id;
+        for(ElectronIDs::const_iterator id = electron->id().begin();
+                electron->id().end() != id;
                 ++id)
         {
             if (Electron::HyperTight1 != id->name())
@@ -313,11 +313,11 @@ void TemplateAnalyzer::fillDrVsPtrel()
     {
         if (SynchSelector::ELECTRON == _synch_selector->leptonMode())
         {
-            d0()->fill((*_synch_selector->goodElectrons().begin())->extra().d0_bsp());
+            d0()->fill((*_synch_selector->goodElectrons().begin())->extra().d0());
         }
         else
         {
-            d0()->fill((*_synch_selector->goodMuons().begin())->extra().d0_bsp());
+            d0()->fill((*_synch_selector->goodMuons().begin())->extra().d0());
         }
     }
 }

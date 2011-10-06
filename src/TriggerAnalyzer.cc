@@ -93,7 +93,7 @@ void TriggerAnalyzer::onFileOpen(const std::string &filename, const Input *input
         return;
     }
 
-    if (!input->info().triggers().size())
+    if (!input->info().trigger().path().size())
     {
         clog << "Trigger menu is not available" << endl;
 
@@ -101,8 +101,8 @@ void TriggerAnalyzer::onFileOpen(const std::string &filename, const Input *input
     }
 
     typedef ::google::protobuf::RepeatedPtrField<TriggerItem> TriggerItems;
-    for(TriggerItems::const_iterator hlt = input->info().triggers().begin();
-            input->info().triggers().end() != hlt;
+    for(TriggerItems::const_iterator hlt = input->info().trigger().path().begin();
+            input->info().trigger().path().end() != hlt;
             ++hlt)
     {
         if (_hlt_map.end() != _hlt_map.find(hlt->hash()))
@@ -116,15 +116,15 @@ void TriggerAnalyzer::process(const Event *event)
 {
     typedef ::google::protobuf::RepeatedPtrField<Trigger> Triggers;
 
-    if (!event->hlts().size())
+    if (!event->hlt().trigger().size())
     {
         cout << "HLT is not available" << endl;
 
         return;
     }
 
-    for(Triggers::const_iterator hlt = event->hlts().begin();
-            event->hlts().end() != hlt;
+    for(Triggers::const_iterator hlt = event->hlt().trigger().begin();
+            event->hlt().trigger().end() != hlt;
             ++hlt)
     {
         if (hlt->pass())

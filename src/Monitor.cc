@@ -349,7 +349,7 @@ void JetsMonitor::fill(const Jets &jets)
             jets.end() != jet;
             ++jet)
     {
-        children()->fill(jet->children().size());
+        children()->fill(jet->child().size());
 
         jet_pt = bsm::pt(jet->physics_object().p4());
         jet_uncorrected_pt = 0;

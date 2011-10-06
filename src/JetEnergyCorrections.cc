@@ -215,8 +215,8 @@ JetEnergyCorrections::CorrectedJet JetEnergyCorrections::correctJet(
         else
         {
             typedef ::google::protobuf::RepeatedPtrField<Jet::Child> Children;
-            for(Children::const_iterator child = jet->children().begin();
-                    jet->children().end() != child;
+            for(Children::const_iterator child = jet->child().begin();
+                    jet->child().end() != child;
                     ++child)
             {
                 const LorentzVector &child_p4 = child->physics_object().p4();
@@ -333,7 +333,7 @@ void JetEnergyCorrections::correct(CorrectedJet &jet,
     jec->setJetEta(eta(*jet.corrected_p4));
     jec->setJetPt(pt(*jet.corrected_p4));
     jec->setJetE(jet.corrected_p4->e());
-    jec->setNPV(event->primary_vertices().size());
+    jec->setNPV(event->primary_vertex().size());
     jec->setJetA(jet.jet->extra().area());
     jec->setRho(event->extra().rho());
 

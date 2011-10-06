@@ -130,7 +130,7 @@ void WtagMassAnalyzer::onFileOpen(const std::string &filename, const Input *inpu
 
 void WtagMassAnalyzer::process(const Event *event)
 {
-    if (!event->primary_vertices().size()
+    if (!event->primary_vertex().size()
             || !event->has_missing_energy())
         return;
 
@@ -196,11 +196,11 @@ bool WtagMassAnalyzer::muons(const Event *event)
 
     uint32_t good_muons = 0;
 
-    const PrimaryVertex &pv = event->primary_vertices().Get(0);
+    const PrimaryVertex &pv = event->primary_vertex().Get(0);
 
     LockSelectorEventCounterOnUpdate lock(*_mu_selector);
-    for(Muons::const_iterator muon = event->pf_muons().begin();
-            event->pf_muons().end() != muon;
+    for(Muons::const_iterator muon = event->muon().begin();
+            event->muon().end() != muon;
             ++muon)
     {
         if (_mu_selector->apply(*muon, pv))
@@ -216,13 +216,13 @@ void WtagMassAnalyzer::electrons(const Event *event)
 {
     typedef ::google::protobuf::RepeatedPtrField<Electron> Electrons;
 
-    const PrimaryVertex &pv = event->primary_vertices().Get(0);
+    const PrimaryVertex &pv = event->primary_vertex().Get(0);
 
     LockSelectorEventCounterOnUpdate lock(*_el_selector);
     const Electron *electron = 0;
     uint32_t good_electrons = 0;
-    for(Electrons::const_iterator el = event->pf_electrons().begin();
-            event->pf_electrons().end() != el;
+    for(Electrons::const_iterator el = event->electron().begin();
+            event->electron().end() != el;
             ++el)
     {
         if (_el_selector->apply(*el, pv))
@@ -265,8 +265,8 @@ void WtagMassAnalyzer::jets(const Event *event, const Electron *el)
     LockSelectorEventCounterOnUpdate lock(*_wjet_selector);
     const Jet *wjet = 0;
     uint32_t wjets = 0;
-    for(PBJets::const_iterator jet = event->jets().begin();
-            event->jets().end() != jet;
+    for(PBJets::const_iterator jet = event->jet().begin();
+            event->jet().end() != jet;
             ++jet)
     {
         utility::set(_p4.get(), &jet->physics_object().p4());
