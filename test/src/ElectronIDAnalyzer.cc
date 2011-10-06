@@ -175,9 +175,9 @@ void ElectronIDAnalyzer::process(const Event *event)
         _bookkeeper->get1d("EIDAllEta")->fill(eta(electron.physics_object().p4()));
         _bookkeeper->get1d("EIDAllPhi")->fill(phi(electron.physics_object().p4()));
 
-        for (int j = 0; j < electron.electronid_size(); ++j)
+        for (int j = 0; j < electron.id_size(); ++j)
         {
-            const bsm::Electron::ElectronID & electronid = electron.electronid(j);
+            const bsm::Electron::ElectronID & electronid = electron.id(j);
 
             if (electronid.name() == bsm::Electron::VeryLoose && electronid.identification())
             {

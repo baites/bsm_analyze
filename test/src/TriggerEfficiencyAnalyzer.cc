@@ -55,7 +55,7 @@ void TriggerEfficiencyAnalyzer::onFileOpen(const std::string &filename, const In
         return;
     }
 
-    if (!input->info().triggers().size())
+    if (!input->info().trigger().path().size())
     {
         clog << "Trigger menu is not available" << endl;
         return;
@@ -63,8 +63,8 @@ void TriggerEfficiencyAnalyzer::onFileOpen(const std::string &filename, const In
 
     typedef ::google::protobuf::RepeatedPtrField<TriggerItem> TriggerItems;
     for(
-        TriggerItems::const_iterator hlt = input->info().triggers().begin();
-        input->info().triggers().end() != hlt;
+        TriggerItems::const_iterator hlt = input->info().trigger().path().begin();
+        input->info().trigger().path().end() != hlt;
         ++hlt
     )
     {
@@ -122,9 +122,9 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
         bsm::Electron const & electron = *electrons[i];
 
         // Loop over the possible electron ids 
-        for (int j = 0; j < electron.electronid_size(); ++j)
+        for (int j = 0; j < electron.id_size(); ++j)
         {
-            const bsm::Electron::ElectronID & electronid = electron.electronid(j);
+            const bsm::Electron::ElectronID & electronid = electron.id(j);
      
             // Keep looping if the electron id is not HyperTight1
             if (electronid.name() != bsm::Electron::HyperTight1) continue; 
@@ -145,7 +145,7 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
     typedef ::google::protobuf::RepeatedPtrField<Trigger> Triggers;
 
     // Check if the event contains htl information
-    if (!event->hlts().size())
+    if (!event->hlt().trigger().size())
     {
         clog << "HLT is not available" << endl;
         return;
@@ -165,7 +165,9 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
     _bookkeeper->get1d("AllEventsHT")->fill(ht);
 
     // Loop over the trigger menu to see which trigger is fire
-    for(Triggers::const_iterator hlt = event->hlts().begin(); event->hlts().end() != hlt; ++hlt)
+    for(Triggers::const_iterator hlt = event->hlt().trigger().begin();
+            event->hlt().trigger().end() != hlt;
+            ++hlt)
     {
         if (_hlt_map[hlt->hash()] == "hlt_ele10_caloidt_caloisovl_trkidt_trkisovl_ht200" && hlt->pass())
         {

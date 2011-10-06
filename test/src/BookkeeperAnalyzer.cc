@@ -63,9 +63,9 @@ void BookkeeperAnalyzer::process(const Event *event)
 
         // Loop over all the electron categories
         // An electron can comply with multiple categories
-        for (int j = 0; j < electron.electronid_size(); ++j)
+        for (int j = 0; j < electron.id_size(); ++j)
         {
-            bsm::Electron::ElectronID const & electronid = electron.electronid(j);
+            bsm::Electron::ElectronID const & electronid = electron.id(j);
 
             // Check if the electron has the identification bit for the category tight
             if (electronid.name() == bsm::Electron::Loose && electronid.identification())
