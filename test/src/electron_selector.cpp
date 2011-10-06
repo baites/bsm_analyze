@@ -64,13 +64,13 @@ try
                     reader->read(event);
                     ++events_read)
             {
-                if (!event->primary_vertices().size())
+                if (!event->primary_vertex().size())
                     continue;
 
-                const PrimaryVertex &pv = *event->primary_vertices().begin();
+                const PrimaryVertex &pv = *event->primary_vertex().begin();
 
-                for(Electrons::const_iterator electron = event->pf_electrons().begin();
-                        event->pf_electrons().end() != electron;
+                for(Electrons::const_iterator electron = event->electron().begin();
+                        event->electron().end() != electron;
                         ++electron)
                 {
                     el_selector->apply(*electron, pv);

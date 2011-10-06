@@ -61,8 +61,8 @@ try
                     reader->read(event);
                     ++events_read)
             {
-                cutflow->apply(event->primary_vertices().size());
-                clone->apply(event->primary_vertices().size());
+                cutflow->apply(event->primary_vertex().size());
+                clone->apply(event->primary_vertex().size());
 
                 event->Clear();
             }

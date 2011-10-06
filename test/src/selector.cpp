@@ -25,11 +25,11 @@ using namespace std;
 using namespace boost;
 using namespace bsm;
 
-shared_ptr<ElectronsMonitor> all_pf_electrons;
-shared_ptr<ElectronsMonitor> selected_pf_electrons;
+shared_ptr<ElectronsMonitor> all_electron;
+shared_ptr<ElectronsMonitor> selected_electron;
 
-shared_ptr<MuonsMonitor> all_pf_muons;
-shared_ptr<MuonsMonitor> selected_pf_muons;
+shared_ptr<MuonsMonitor> all_muon;
+shared_ptr<MuonsMonitor> selected_muon;
 
 typedef ElectronsMonitor::Electrons Electrons;
 typedef MuonsMonitor::Muons Muons;
@@ -48,11 +48,11 @@ try
 
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 
-    all_pf_electrons.reset(new ElectronsMonitor());
-    selected_pf_electrons.reset(new ElectronsMonitor());
+    all_electron.reset(new ElectronsMonitor());
+    selected_electron.reset(new ElectronsMonitor());
 
-    all_pf_muons.reset(new MuonsMonitor());
-    selected_pf_muons.reset(new MuonsMonitor());
+    all_muon.reset(new MuonsMonitor());
+    selected_muon.reset(new MuonsMonitor());
 
     {
         shared_ptr<ElectronSelector> el_selector(new ElectronSelector());
@@ -77,18 +77,18 @@ try
                     reader->read(event);
                     ++events_read)
             {
-                if (!event->primary_vertices().size())
+                if (!event->primary_vertex().size())
                     continue;
 
-                const PrimaryVertex &pv = *event->primary_vertices().begin();
+                const PrimaryVertex &pv = *event->primary_vertex().begin();
 
-                if (event->pf_electrons().size())
+                if (event->electron().size())
                 {
-                    all_pf_electrons->fill(event->pf_electrons());
+                    all_electron->fill(event->electron());
 
                     Electrons selected_electrons;
-                    for(Electrons::const_iterator electron = event->pf_electrons().begin();
-                            event->pf_electrons().end() != electron;
+                    for(Electrons::const_iterator electron = event->electron().begin();
+                            event->electron().end() != electron;
                             ++electron)
                     {
                         per_file_el_selector->apply(*electron, pv);
@@ -99,16 +99,16 @@ try
                     if (!selected_electrons.size())
                         continue;
 
-                    selected_pf_electrons->fill(selected_electrons);
+                    selected_electron->fill(selected_electrons);
                 }
 
-                if (event->pf_muons().size())
+                if (event->muon().size())
                 {
-                    all_pf_muons->fill(event->pf_muons());
+                    all_muon->fill(event->muon());
 
                     Muons selected_muons;
-                    for(Muons::const_iterator muon = event->pf_muons().begin();
-                            event->pf_muons().end() != muon;
+                    for(Muons::const_iterator muon = event->muon().begin();
+                            event->muon().end() != muon;
                             ++muon)
                     {
                         per_file_mu_selector->apply(*muon, pv);
@@ -119,7 +119,7 @@ try
                     if (!selected_muons.size())
                         continue;
 
-                    selected_pf_muons->fill(selected_muons);
+                    selected_muon->fill(selected_muons);
                 }
 
                 event->Clear();
@@ -145,16 +145,16 @@ try
     }
 
     cout << "All PF Electrons" << endl;
-    cout << *all_pf_electrons << endl;
+    cout << *all_electron << endl;
     cout << endl;
     cout << "Selected PF Electrons" << endl;
-    cout << *selected_pf_electrons << endl;
+    cout << *selected_electron << endl;
 
     cout << "All PF Muons" << endl;
-    cout << *all_pf_muons << endl;
+    cout << *all_muon << endl;
     cout << endl;
     cout << "Selected PF Muons" << endl;
-    cout << *selected_pf_muons << endl;
+    cout << *selected_muon << endl;
 
     plot();
 
@@ -183,17 +183,17 @@ void plot()
     char *empty_argv[] = { "root" };
     shared_ptr<TRint> app(new TRint("app", &empty_argc, empty_argv));
 
-    shared_ptr<ElectronCanvas> all_pf_electrons_canvas(new ElectronCanvas("All PF Electrons"));
-    all_pf_electrons_canvas->draw(*all_pf_electrons);
+    shared_ptr<ElectronCanvas> all_electron_canvas(new ElectronCanvas("All PF Electrons"));
+    all_electron_canvas->draw(*all_electron);
 
     shared_ptr<ElectronCanvas> selected_pf_electron_canvas(new ElectronCanvas("Selected PF Electrons"));
-    selected_pf_electron_canvas->draw(*selected_pf_electrons);
+    selected_pf_electron_canvas->draw(*selected_electron);
 
-    shared_ptr<MuonCanvas> all_pf_muons_canvas(new MuonCanvas("All PF Muons"));
-    all_pf_muons_canvas->draw(*all_pf_muons);
+    shared_ptr<MuonCanvas> all_muon_canvas(new MuonCanvas("All PF Muons"));
+    all_muon_canvas->draw(*all_muon);
 
     shared_ptr<MuonCanvas> selected_pf_muon_canvas(new MuonCanvas("Selected PF Muons"));
-    selected_pf_muon_canvas->draw(*selected_pf_muons);
+    selected_pf_muon_canvas->draw(*selected_muon);
 
     app->Run();
 }

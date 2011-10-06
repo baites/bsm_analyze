@@ -73,10 +73,10 @@ try
                     reader->read(event);
                     ++events_read)
             {
-                jets->fill(event->jets());
+                jets->fill(event->jet());
 
-                for(JetsMonitor::Jets::const_iterator jet = event->jets().begin();
-                        event->jets().end() != jet;
+                for(JetsMonitor::Jets::const_iterator jet = event->jet().begin();
+                        event->jet().end() != jet;
                         ++jet)
                 {
                     if (!jet->has_gen_parton())
@@ -85,9 +85,9 @@ try
                     gen_particles->fill(jet->gen_parton());
                 }
 
-                muons->fill(event->pf_muons());
-                electrons->fill(event->pf_electrons());
-                primary_vertices->fill(event->primary_vertices());
+                muons->fill(event->muon());
+                electrons->fill(event->electron());
+                primary_vertices->fill(event->primary_vertex());
 
                 if (event->has_missing_energy())
                     missing_energy->fill(event->missing_energy());
