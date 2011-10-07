@@ -35,9 +35,18 @@ TriggerOptions::TriggerOptions()
     _description->add_options()
         ("trigger",
          po::value<string>()->notifier(
-             boost::bind(&TriggerOptions::setTrigger, this,
-                 _1)),
+             boost::bind(&TriggerOptions::setTrigger, this, _1)),
          "Use trigger")
+
+        ("trigger-filter",
+         po::value<string>()->notifier(
+             boost::bind(&TriggerOptions::setFilter, this, _1)),
+         "Set trigger filter name to be used")
+
+        ("trigger-producer",
+         po::value<string>()->notifier(
+             boost::bind(&TriggerOptions::setProducer, this, _1)),
+         "Set trigger producer name to be used")
     ;
 }
 
@@ -74,6 +83,28 @@ void TriggerOptions::setTrigger(std::string trigger_name) const
     trigger.set_hash(make_hash(trigger_name));
 
     delegate()->setTrigger(trigger);
+}
+
+void TriggerOptions::setFilter(string filter) const
+{
+    if (!delegate())
+        return;
+
+    hash<std::string> make_hash;
+
+    to_lower(filter);
+    delegate()->setFilter(make_hash(filter));
+}
+
+void TriggerOptions::setProducer(string producer) const
+{
+    if (!delegate())
+        return;
+
+    hash<std::string> make_hash;
+
+    to_lower(producer);
+    delegate()->setProducer(make_hash(producer));
 }
 
 

@@ -8,6 +8,8 @@
 #ifndef BSM_TRIGGER_ANALYZER
 #define BSM_TRIGGER_ANALYZER
 
+#include <stdint.h>
+
 #include <iosfwd>
 #include <string>
 #include <vector>
@@ -24,9 +26,13 @@ namespace bsm
     class TriggerDelegate
     {
         public:
+            typedef uint64_t Hash;
+
             virtual ~TriggerDelegate() {}
 
             virtual void setTrigger(const Trigger &) {}
+            virtual void setFilter(const Hash &) {}
+            virtual void setProducer(const Hash &) {}
     };
 
     class TriggerOptions : public Options
@@ -43,6 +49,8 @@ namespace bsm
 
         private:
             void setTrigger(std::string) const;
+            void setFilter(std::string) const;
+            void setProducer(std::string) const;
 
             TriggerDelegate *_delegate;
 
