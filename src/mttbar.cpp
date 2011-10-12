@@ -74,79 +74,89 @@ int main(int argc, char *argv[])
 
             TGaxis::SetMaxDigits(3);
 
-            shared_ptr<TCanvas> canvas(new TCanvas());
-            canvas->SetTitle("Mass");
-            canvas->SetWindowSize(1200, 800);
-            canvas->Divide(3, 2);
-
-            canvas->cd(1);
             TH1Ptr mreco = convert(*analyzer->mreco());
             mreco->SetName("mreco");
             mreco->GetXaxis()->SetTitle("m_{t#bar{t}}^{reco} [GeV/c^{2}]");
             mreco->GetXaxis()->SetTitleSize(0.045);
-            mreco->Draw("h");
 
-            mreco->SaveAs("mreco.root");
-
-            canvas->cd(2);
             TH1Ptr mgen = convert(*analyzer->mgen());
             mgen->SetName("mgen");
             mgen->GetXaxis()->SetTitle("m_{t#bar{t}}^{gen} [GeV/c^{2}]");
             mgen->GetXaxis()->SetTitleSize(0.045);
-            mgen->Draw("h");
 
-            canvas->cd(3);
             TH1Ptr mreco_minus_mgen = convert(*analyzer->mrecoMinusMgen());
             mreco_minus_mgen->SetName("mreco_minus_mgen");
             mreco_minus_mgen->GetXaxis()->SetTitle("(m_{t#bar{t}}^{reco} - m_{t#bar{t}}^{gen}) / m_{t#bar{t}}^{gen}");
             mreco_minus_mgen->GetXaxis()->SetTitleSize(0.045);
-            mreco_minus_mgen->Draw("h");
 
-            canvas->cd(4);
-            canvas->cd(4)->SetLeftMargin(10);
             TH2Ptr mltop_vs_mhtop = convert(*analyzer->mltopVsMhtop());
             mltop_vs_mhtop->SetName("mltop_vs_mhtop");
             mltop_vs_mhtop->GetXaxis()->SetTitle("m_{t,lepton} [GeV/c^{2}]");
             mltop_vs_mhtop->GetXaxis()->SetTitleSize(0.045);
             mltop_vs_mhtop->GetYaxis()->SetTitle("m_{t,hadron} [GeV/c^{2}]");
             mltop_vs_mhtop->GetYaxis()->SetTitleSize(0.06);
-            mltop_vs_mhtop->Draw("colz");
 
-            canvas->cd(5);
-            canvas->cd(5)->SetLeftMargin(10);
             TH2Ptr mreco_vs_mgen = convert(*analyzer->mrecoVsMgen());
             mreco_vs_mgen->SetName("mreco_vs_mgen");
             mreco_vs_mgen->GetXaxis()->SetTitle("m_{t#bar{t}}^{reco} [GeV/c^{2}]");
             mreco_vs_mgen->GetXaxis()->SetTitleSize(0.045);
             mreco_vs_mgen->GetYaxis()->SetTitle("m_{t#bar{t}}^{gen} [GeV/c^{2}]");
             mreco_vs_mgen->GetYaxis()->SetTitleSize(0.045);
-            mreco_vs_mgen->Draw("colz");
 
-            canvas->Update();
+            if (app->output())
+            {
+                mreco->Write();
+                mltop_vs_mhtop->Write();
+            }
+            
+            if (app->isInteractive())
+            {
+                shared_ptr<TCanvas> canvas(new TCanvas());
+                canvas->SetTitle("Mass");
+                canvas->SetWindowSize(1200, 800);
+                canvas->Divide(3, 2);
 
-            mltop_vs_mhtop->SaveAs("mltop_vs_mhtop.root");
+                canvas->cd(1);
+                mreco->Draw("h");
 
-            boost::shared_ptr<LorentzVectorCanvas> met(
-                    new LorentzVectorCanvas("Reconstructed Missing Energy"));
-            met->draw(*analyzer->missingEnergyMonitor());
+                canvas->cd(2);
+                mgen->Draw("h");
 
-            boost::shared_ptr<LorentzVectorCanvas> lwboson(
-                    new LorentzVectorCanvas("Leptonic W-Boson"));
-            lwboson->draw(*analyzer->lwbosonMonitor());
+                canvas->cd(3);
+                mreco_minus_mgen->Draw("h");
 
-            boost::shared_ptr<LorentzVectorCanvas> ltop_p4(
-                    new LorentzVectorCanvas("Leptonic Top"));
-            ltop_p4->draw(*analyzer->ltopMonitor());
+                canvas->cd(4);
+                canvas->cd(4)->SetLeftMargin(10);
+                mltop_vs_mhtop->Draw("colz");
 
-            boost::shared_ptr<LorentzVectorCanvas> htop_p4(
-                    new LorentzVectorCanvas("Hadronic Top"));
-            htop_p4->draw(*analyzer->htopMonitor());
+                canvas->cd(5);
+                canvas->cd(5)->SetLeftMargin(10);
+                mreco_vs_mgen->Draw("colz");
 
-            boost::shared_ptr<DeltaCanvas> top_delta(
-                    new DeltaCanvas("Delta between Leptonic and Hadronic tops"));
-            top_delta->draw(*analyzer->topDeltaMonitor());
+                canvas->Update();
 
-            root->Run();
+                boost::shared_ptr<LorentzVectorCanvas> met(
+                        new LorentzVectorCanvas("Reconstructed Missing Energy"));
+                met->draw(*analyzer->missingEnergyMonitor());
+
+                boost::shared_ptr<LorentzVectorCanvas> lwboson(
+                        new LorentzVectorCanvas("Leptonic W-Boson"));
+                lwboson->draw(*analyzer->lwbosonMonitor());
+
+                boost::shared_ptr<LorentzVectorCanvas> ltop_p4(
+                        new LorentzVectorCanvas("Leptonic Top"));
+                ltop_p4->draw(*analyzer->ltopMonitor());
+
+                boost::shared_ptr<LorentzVectorCanvas> htop_p4(
+                        new LorentzVectorCanvas("Hadronic Top"));
+                htop_p4->draw(*analyzer->htopMonitor());
+
+                boost::shared_ptr<DeltaCanvas> top_delta(
+                        new DeltaCanvas("Delta between Leptonic and Hadronic tops"));
+                top_delta->draw(*analyzer->topDeltaMonitor());
+
+                root->Run();
+            }
         }
     }
     catch(const exception &error)
