@@ -6,14 +6,16 @@
 # Copyright 2011, All rights reserved
 
 import os
+import re
 import shlex
 import subprocess
 import sys
 
 class AppController:
-    def __init__(self, datasets, executable, max_process = 0):
+    def __init__(self, datasets, executable, max_process = 0, suffix = ""):
         self.datasets = datasets
-        self.executable = executable
+        self.suffix = suffix
+        self.executable = re.sub("SFX", self.suffix, executable)
         self.processes = []
         self.max_process = max_process if 0 <= max_process else 0
 
@@ -22,6 +24,7 @@ class AppController:
         args = shlex.split(self.executable + " input.txt")
 
         f = open(self.datasets, 'r')
+        suffix = ("_" + self.suffix) if self.suffix else ""
         for input in f:
             folder = os.path.splitext(os.path.basename(input))[0]
 
@@ -30,14 +33,22 @@ class AppController:
             else:
                 print("Run {0}".format(folder))
 
-            os.mkdir(folder)
-            os.chdir(folder)
-            os.symlink(input.strip(), "input.txt")
-            os.symlink("../jec", "jec")
-            os.symlink("../lib", "lib")
+            if not os.path.isdir(folder):
+                os.mkdir(folder)
 
-            stdout = open("cout.log", 'w')
-            stderr = open("cerr.log", 'w')
+            os.chdir(folder)
+            
+            if not os.path.islink("input.txt"):
+                os.symlink(input.strip(), "input.txt")
+
+            if not os.path.islink("jec"):
+                os.symlink("../jec", "jec")
+
+            if not os.path.islink("lib"):
+                os.symlink("../lib", "lib")
+
+            stdout = open("cout" + suffix +  ".log", 'w')
+            stderr = open("cerr" + suffix + ".log", 'w')
             self.processes.append(subprocess.Popen(args, stdout = stdout, stderr = stderr))
 
             if self.max_process == len(self.processes):
@@ -56,12 +67,13 @@ class AppController:
 if "__main__" == __name__:
     if 4 > len(sys.argv):
         if sys.version_info < (2, 5):
-            print("Usage: %s datasets.txt max_process executable [exec args]" % (sys.argv[0]))
+            print("Usage: %s datasets.txt max_process suffix executable [exec args]" % (sys.argv[0]))
         else:
-            print("Usage: {0} datasets.txt max_process executable [exec args]".format(sys.argv[0]))
+            print("Usage: {0} datasets.txt max_process suffix executable [exec args]".format(sys.argv[0]))
     else:
         app = AppController(sys.argv[1],
-                " ".join(sys.argv[3:]),
-                max_process = int(sys.argv[2]))
+                " ".join(sys.argv[4:]),
+                max_process = int(sys.argv[2]),
+                suffix = sys.argv[3])
 
         app.run()
