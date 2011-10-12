@@ -1,5 +1,5 @@
 //float luminosity = 1010.922;
-float luminosity = 973.171;
+float luminosity = 247.476;
 
 enum InputType
 {
@@ -81,37 +81,37 @@ void scale(TH1 *hist, const InputType &input_type)
     {
         case QCD_BC_PT20_30:
             {
-                hist->Scale(2.361e8 * luminosity * 5.9e-4 /  2071515);
+                hist->Scale(2.361e8 * luminosity * 5.9e-4 /  2081560);
                 break;
             }
 
         case QCD_BC_PT30_80:
             {
-                hist->Scale(5.944e7 * luminosity * 2.42e-3 /  2009881);
+                hist->Scale(5.944e7 * luminosity * 2.42e-3 /  2030033);
                 break;
             }
 
         case QCD_BC_PT80_170:
             {
-                hist->Scale(8.982e5 * luminosity * 1.05e-2 /  1071954);
+                hist->Scale(8.982e5 * luminosity * 1.05e-2 /  1082691);
                 break;
             }
 
         case QCD_EM_PT20_30:
             {
-                hist->Scale(2.361e8 * luminosity * 1.06e-2 /  35577687);
+                hist->Scale(2.361e8 * luminosity * 1.06e-2 /  35729669);
                 break;
             }
 
         case QCD_EM_PT30_80:
             {
-                hist->Scale(5.944e7 * luminosity * 6.1e-2 /  55173330);
+                hist->Scale(5.944e7 * luminosity * 6.1e-2 /  70392060);
                 break;
             }
 
         case QCD_EM_PT80_170:
             {
-                hist->Scale(8.982e5 * luminosity * 1.59e-1 /  7852884);
+                hist->Scale(8.982e5 * luminosity * 1.59e-1 /  8150672);
                 break;
             }
 
