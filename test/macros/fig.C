@@ -239,6 +239,7 @@ void style(TH1 *hist, const InputType &input_type, const bool &set_fill = true)
 
     hist->SetLineColor(color);
     hist->SetMarkerColor(color);
+    hist->SetMarkerSize(0.5);
 
     if (set_fill)
         hist->SetFillColor(color);
@@ -503,19 +504,22 @@ void plotQCDTemplates()
     canvas->cd(1);
     htlep_s1->SetLineColor(4);
     htlep_s1->SetMarkerColor(4);
+    htlep_s1->SetFillColor(0);
     
     htlep_s2->SetLineColor(2);
     htlep_s2->SetMarkerColor(2);
+    htlep_s2->SetFillColor(0);
 
     htlep_signal->SetLineColor(1);
     htlep_signal->SetMarkerColor(1);
+    htlep_signal->SetFillColor(0);
 
     THStack *stack = new THStack();
     stack->Add(htlep_s1);
     stack->Add(htlep_s2);
     stack->Add(htlep_signal);
 
-    stack->Draw("nostack h");
+    stack->Draw("nostack");
 
     TLegend *legend = createLegend("H_{T}^{lep}");
     legend->Draw();
@@ -671,10 +675,10 @@ void fig()
 
     loadFiles();
 
-    plotCut2DBackground();
-    plotCut2DSignal();
+    //plotCut2DBackground();
+    //plotCut2DSignal();
 
-    //plotQCDTemplates();
+    plotQCDTemplates();
     //plotDataMCComparison();
 
     //plotHtlep50();
