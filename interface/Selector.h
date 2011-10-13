@@ -107,6 +107,30 @@ namespace bsm
             virtual ObjectPtr clone() const;
     };
 
+    class P4Selector : public Selector
+    {
+        public:
+            enum Cut
+            {
+                PT = 0,
+                ETA
+            };
+
+            P4Selector();
+
+            CutPtr cut(const Cut &) const;
+
+            // Test if object passes the selector
+            //
+            virtual bool apply(const LorentzVector &);
+
+            // Object interface
+            //
+            virtual uint32_t id() const;
+
+            virtual ObjectPtr clone() const;
+    };
+
     class MultiplicityCutflow : public Selector
     {
         public:
@@ -216,6 +240,7 @@ namespace bsm
         public:
             LockSelectorEventCounterOnUpdate(ElectronSelector &);
             LockSelectorEventCounterOnUpdate(JetSelector &);
+            LockSelectorEventCounterOnUpdate(P4Selector &);
             LockSelectorEventCounterOnUpdate(MuonSelector &);
             LockSelectorEventCounterOnUpdate(PrimaryVertexSelector &);
             LockSelectorEventCounterOnUpdate(WJetSelector &);

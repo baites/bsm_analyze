@@ -37,6 +37,7 @@ namespace bsm
 
     class ElectronSelector;
     class JetSelector;
+    class P4Selector;
     class MultiplicityCutflow;
     class MuonSelector;
     class PrimaryVertexSelector;

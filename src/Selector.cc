@@ -37,6 +37,7 @@ using bsm::CutPtr;
 using bsm::ElectronSelector;
 using bsm::JetEnergyCorrectionDelegate;
 using bsm::JetSelector;
+using bsm::P4Selector;
 using bsm::MultiplicityCutflow;
 using bsm::MuonSelector;
 using bsm::PrimaryVertexSelector;
@@ -189,6 +190,37 @@ uint32_t JetSelector::id() const
 JetSelector::ObjectPtr JetSelector::clone() const
 {
     return ObjectPtr(new JetSelector(*this));
+}
+
+
+
+// P4Selector
+//
+P4Selector::P4Selector()
+{
+    addCut(PT, CutPtr(new Comparator<>(50, "Pt")));
+    addCut(ETA, CutPtr(new Comparator<less<float> >(2.4, "|eta|")));
+}
+
+CutPtr P4Selector::cut(const Cut &cut_id) const
+{
+    return getCut(cut_id);
+}
+
+bool P4Selector::apply(const LorentzVector &v)
+{
+    return cut(PT)->apply(bsm::pt(v))
+        && cut(ETA)->apply(fabs(bsm::eta(v)));
+}
+
+uint32_t P4Selector::id() const
+{
+    return core::ID<P4Selector>::get();
+}
+
+P4Selector::ObjectPtr P4Selector::clone() const
+{
+    return ObjectPtr(new P4Selector(*this));
 }
 
 
@@ -393,6 +425,15 @@ LockSelectorEventCounterOnUpdate::LockSelectorEventCounterOnUpdate(
                 new LockCounterOnUpdate(selector.cut(JetSelector::PT)->events())));
     _lockers.push_back(Locker(
                 new LockCounterOnUpdate(selector.cut(JetSelector::ETA)->events())));
+}
+
+LockSelectorEventCounterOnUpdate::LockSelectorEventCounterOnUpdate(
+        P4Selector &selector)
+{
+    _lockers.push_back(Locker(
+                new LockCounterOnUpdate(selector.cut(P4Selector::PT)->events())));
+    _lockers.push_back(Locker(
+                new LockCounterOnUpdate(selector.cut(P4Selector::ETA)->events())));
 }
 
 LockSelectorEventCounterOnUpdate::LockSelectorEventCounterOnUpdate(
