@@ -31,8 +31,6 @@ using namespace bsm;
 
 typedef shared_ptr<MonitorAnalyzer> MonitorAnalyzerPtr;
 
-void plot(const MonitorAnalyzerPtr &, char *[]);
-
 int main(int argc, char *argv[])
 {
     GOOGLE_PROTOBUF_VERIFY_VERSION;
@@ -48,7 +46,33 @@ int main(int argc, char *argv[])
         result = app->run(argc, argv);
 
         if (result)
-            plot(analyzer, argv);
+        {
+            // Cheat ROOT with empty args
+            //
+            int empty_argc = 1;
+            char *empty_argv[] = { argv[0] };
+            shared_ptr<TRint> root(new TRint("app", &empty_argc, empty_argv));
+
+            if (app->isInteractive())
+            {
+                shared_ptr<JetCanvas> jet_canvas(new JetCanvas("Jets"));
+                jet_canvas->draw(*analyzer->jets());
+
+                shared_ptr<MuonCanvas> mu_pf_canvas(new MuonCanvas("Particle Flow Muons"));
+                mu_pf_canvas->draw(*analyzer->pfMuons());
+
+                shared_ptr<ElectronCanvas> el_pf_canvas(new ElectronCanvas("Particle Flow Electrons"));
+                el_pf_canvas->draw(*analyzer->pfElectrons());
+
+                shared_ptr<PrimaryVertexCanvas> pv_canvas(new PrimaryVertexCanvas("Primary Vertex"));
+                pv_canvas->draw(*analyzer->primaryVertices());
+
+                shared_ptr<MissingEnergyCanvas> met_canvas(new MissingEnergyCanvas("Missing Energy"));
+                met_canvas->draw(*analyzer->missingEnergy());
+
+                root->Run();
+            }
+        }
     }
     catch(const exception &error)
     {
@@ -70,30 +94,4 @@ int main(int argc, char *argv[])
     return result
         ? 0
         : 1;
-}
-
-void plot(const MonitorAnalyzerPtr &analyzer, char *argv[])
-{
-    // Cheat ROOT with empty args
-    //
-    int empty_argc = 1;
-    char *empty_argv[] = { argv[0] };
-    shared_ptr<TRint> app(new TRint("app", &empty_argc, empty_argv));
-
-    shared_ptr<JetCanvas> jet_canvas(new JetCanvas("Jets"));
-    jet_canvas->draw(*analyzer->jets());
-
-    shared_ptr<MuonCanvas> mu_pf_canvas(new MuonCanvas("Particle Flow Muons"));
-    mu_pf_canvas->draw(*analyzer->pfMuons());
-
-    shared_ptr<ElectronCanvas> el_pf_canvas(new ElectronCanvas("Particle Flow Electrons"));
-    el_pf_canvas->draw(*analyzer->pfElectrons());
-
-    shared_ptr<PrimaryVertexCanvas> pv_canvas(new PrimaryVertexCanvas("Primary Vertex"));
-    pv_canvas->draw(*analyzer->primaryVertices());
-
-    shared_ptr<MissingEnergyCanvas> met_canvas(new MissingEnergyCanvas("Missing Energy"));
-    met_canvas->draw(*analyzer->missingEnergy());
-
-    app->Run();
 }
