@@ -131,41 +131,49 @@ void LorentzVectorCanvas::draw(const LorentzVectorMonitor &monitor)
 
     _canvas->cd(1);
     _energy = convert(*monitor.energy());
+    _energy->SetName("energy");
     _energy->GetXaxis()->SetTitle("E [GeV]");
     _energy->Draw("hist");
 
     _canvas->cd(2);
     _px = convert(*monitor.px());
+    _px->SetName("px");
     _px->GetXaxis()->SetTitle("p_{X} [GeV/c]");
     _px->Draw("hist");
 
     _canvas->cd(3);
     _py = convert(*monitor.py());
+    _py->SetName("py");
     _py->GetXaxis()->SetTitle("p_{Y} [GeV/c]");
     _py->Draw("hist");
 
     _canvas->cd(4);
     _pz = convert(*monitor.pz());
+    _pz->SetName("pz");
     _pz->GetXaxis()->SetTitle("p_{Z} [GeV/c]");
     _pz->Draw("hist");
 
     _canvas->cd(5);
     _pt = convert(*monitor.pt());
+    _pt->SetName("pt");
     _pt->GetXaxis()->SetTitle("p_{T} [GeV/c]");
     _pt->Draw("hist");
 
     _canvas->cd(6);
     _eta = convert(*monitor.eta());
+    _eta->SetName("eta");
     _eta->GetXaxis()->SetTitle("#eta");
     _eta->Draw("hist");
 
     _canvas->cd(7);
     _phi = convert(*monitor.phi());
+    _phi->SetName("phi");
     _phi->GetXaxis()->SetTitle("#phi [rad]");
     _phi->Draw("hist");
 
     _canvas->cd(8);
     _mass = convert(*monitor.mass());
+    _mass->SetName("mass");
     _mass->GetXaxis()->SetTitle("Mass [GeV/c^{2}]");
     _mass->Draw("hist");
 }
@@ -196,34 +204,42 @@ void LorentzVectorCanvas::write(TDirectory *dir, const LorentzVectorMonitor &mon
     subdir->cd();
 
     _energy = convert(*monitor.energy());
+    _energy->SetName("energy");
     _energy->GetXaxis()->SetTitle("E [GeV]");
     _energy->Write();
 
     _px = convert(*monitor.px());
+    _px->SetName("px");
     _px->GetXaxis()->SetTitle("p_{X} [GeV/c]");
     _px->Write();
 
     _py = convert(*monitor.py());
+    _py->SetName("py");
     _py->GetXaxis()->SetTitle("p_{Y} [GeV/c]");
     _py->Write();
 
     _pz = convert(*monitor.pz());
+    _pz->SetName("pz");
     _pz->GetXaxis()->SetTitle("p_{Z} [GeV/c]");
     _pz->Write();
 
     _pt = convert(*monitor.pt());
+    _pt->SetName("pt");
     _pt->GetXaxis()->SetTitle("p_{T} [GeV/c]");
     _pt->Write();
 
     _eta = convert(*monitor.eta());
+    _eta->SetName("eta");
     _eta->GetXaxis()->SetTitle("#eta");
     _eta->Write();
 
     _phi = convert(*monitor.phi());
+    _phi->SetName("phi");
     _phi->GetXaxis()->SetTitle("#phi [rad]");
     _phi->Write();
 
     _mass = convert(*monitor.mass());
+    _mass->SetName("mass");
     _mass->GetXaxis()->SetTitle("Mass [GeV/c^{2}]");
     _mass->Write();
 }
