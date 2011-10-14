@@ -32,8 +32,16 @@ TriggerEfficiencyAnalyzer::TriggerEfficiencyAnalyzer()
     // Initializing bookkeeper (booking histograms)
 
     _bookkeeper.reset(new HistogramBookkeeper());
-    _bookkeeper->book1d("AllEventsHT", 50, 50, 400);
-    _bookkeeper->book1d("TriggerOption1HT", 50, 50, 400);    
+    _bookkeeper->book1d("AllEventsHT", 50, 50, 2000);
+    _bookkeeper->book1d("AllEventsElectronPT", 50, 20, 200);
+    _bookkeeper->book1d("TriggerHT200HT", 50, 50, 2000);
+    _bookkeeper->book1d("TriggerEle8HT", 50, 50, 2000);
+    _bookkeeper->book1d("TriggerCaloIsoHT", 50, 50, 2000);
+    _bookkeeper->book1d("TriggerEle25TriCentralJet30HT", 50, 50, 2000);
+    _bookkeeper->book1d("TriggerEle45HT", 50, 50, 2000);
+    _bookkeeper->book1d("TriggerEle45ElectronPT", 50, 20, 200);
+    _bookkeeper->book1d("TriggerFancyHT", 50, 50, 2000);
+    _bookkeeper->book1d("TriggerFancyElectronPT", 50, 20, 200);
     monitor(_bookkeeper);
 }
 
@@ -115,6 +123,7 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
 
     // Electron id selection
     bool passeid = false;
+    double electronPt = 0.0;
 
     // Loop over the collection (it should be one electron)
     for (std::size_t i = 0; i < electrons.size(); ++i)
@@ -135,7 +144,7 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
             	
             break;
         }
-        
+        electronPt = pt(electron.physics_object().p4());
         break;
     }
 
@@ -163,16 +172,30 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
 
     // Fill the histogram with all the events
     _bookkeeper->get1d("AllEventsHT")->fill(ht);
+    _bookkeeper->get1d("AllEventsElectronPT")->fill(electronPt);
 
     // Loop over the trigger menu to see which trigger is fire
     for(Triggers::const_iterator hlt = event->hlt().trigger().begin();
             event->hlt().trigger().end() != hlt;
             ++hlt)
     {
-        if (_hlt_map[hlt->hash()] == "hlt_ele10_caloidt_caloisovl_trkidt_trkisovl_ht200" && hlt->pass())
+        if (_hlt_map[hlt->hash()] == "hlt_ht200" && hlt->pass())
+            _bookkeeper->get1d("TriggerHT200HT")->fill(ht);
+        if (_hlt_map[hlt->hash()] == "hlt_ele8" && hlt->pass())
+            _bookkeeper->get1d("TriggerEle8HT")->fill(ht);
+        if (_hlt_map[hlt->hash()] == "hlt_ele8_caloidl_caloisovl" && hlt->pass())
+            _bookkeeper->get1d("TriggerCaloIsoHT")->fill(ht);
+        if (_hlt_map[hlt->hash()] == "hlt_ele25_caloidvt_trkidt_centraltrijet30" && hlt->pass())
+            _bookkeeper->get1d("TriggerEle25TriCentralJet30HT")->fill(ht);
+        if (_hlt_map[hlt->hash()] == "hlt_ele45_caloidvt_trkidt" && hlt->pass())
         {
-            _bookkeeper->get1d("TriggerOption1HT")->fill(ht);
-            break;
+            _bookkeeper->get1d("TriggerEle45HT")->fill(ht);
+            _bookkeeper->get1d("TriggerEle45ElectronPT")->fill(electronPt);
+        }
+        if (_hlt_map[hlt->hash()] == "hlt_ele10_caloidt_caloisovl_trkidt_trkisovl_ht200" && hlt->pass())
+        {   
+            _bookkeeper->get1d("TriggerFancyHT")->fill(ht);
+            _bookkeeper->get1d("TriggerFancyElectronPT")->fill(electronPt);
         }
     }
 
