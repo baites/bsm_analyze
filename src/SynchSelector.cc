@@ -145,6 +145,7 @@ SynchSelector::SynchSelector():
     monitor(_primary_vertex_selector);
 
     _electron_selector.reset(new ElectronSelector());
+    _electron_selector->cut(ElectronSelector::PT)->setValue(70);
     _electron_selector->cut(ElectronSelector::PRIMARY_VERTEX)->disable();
     monitor(_electron_selector);
 
