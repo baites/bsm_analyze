@@ -154,7 +154,7 @@ void TemplateAnalyzer::didCounterAdd(const Counter *counter)
         {
             fillHtlep();
 
-            mttbarBeforeHtlep()->fill(mttbar());
+            mttbarBeforeHtlep()->fill(mttbar(),  _pileup_weight);
         }
     }
 }
@@ -171,10 +171,13 @@ void TemplateAnalyzer::onFileOpen(const std::string &filename, const Input *inpu
 void TemplateAnalyzer::process(const Event *event)
 {
     _is_good_lepton = false;
+    _pileup_weight = 0;
 
     if (!event->has_missing_energy())
         return;
 
+    // Test if trigger passed the event (in case any trigger is defined)
+    //
     if (!_triggers.empty()
             && event->hlt().trigger().size())
     {
@@ -206,14 +209,16 @@ void TemplateAnalyzer::process(const Event *event)
     }
 
     _event = event;
+    _pileup_weight = _pileup_corrections.scale(event);
 
     // Process only events, that pass the synch selector
     //
     if (_synch_selector->apply(event)
             && isGoodLepton())
-        mttbarAfterHtlep()->fill(mttbar());
+        mttbarAfterHtlep()->fill(mttbar(), _pileup_weight);
 
     _event = 0;
+    _pileup_weight = 0;
 }
 
 uint32_t TemplateAnalyzer::id() const
@@ -307,17 +312,17 @@ void TemplateAnalyzer::fillDrVsPtrel()
         return;
 
     const float ptrel_value = ptrel(lepton_p4, *closest_jet->corrected_p4);
-    drVsPtrel()->fill(ptrel_value, deltar_min);
+    drVsPtrel()->fill(ptrel_value, deltar_min,  _pileup_weight);
 
     if (5 > ptrel_value)
     {
         if (SynchSelector::ELECTRON == _synch_selector->leptonMode())
         {
-            d0()->fill((*_synch_selector->goodElectrons().begin())->extra().d0());
+            d0()->fill((*_synch_selector->goodElectrons().begin())->extra().d0(),  _pileup_weight);
         }
         else
         {
-            d0()->fill((*_synch_selector->goodMuons().begin())->extra().d0());
+            d0()->fill((*_synch_selector->goodMuons().begin())->extra().d0(),  _pileup_weight);
         }
     }
 }
@@ -338,7 +343,7 @@ void TemplateAnalyzer::fillHtlep()
         ? (*_synch_selector->goodElectrons().begin())->physics_object().p4()
         : (*_synch_selector->goodMuons().begin())->physics_object().p4();
 
-    htlep()->fill(pt(_event->missing_energy().p4()) + pt(lepton_p4));
+    htlep()->fill(pt(_event->missing_energy().p4()) + pt(lepton_p4),  _pileup_weight);
 }
 
 float TemplateAnalyzer::mttbar() const

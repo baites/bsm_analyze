@@ -16,6 +16,7 @@
 #include "bsm_input/interface/bsm_input_fwd.h"
 #include "interface/Analyzer.h"
 #include "interface/Cut.h"
+#include "interface/PileupCorrections.h"
 #include "interface/TriggerAnalyzer.h"
 #include "interface/bsm_fwd.h"
 
@@ -90,6 +91,9 @@ namespace bsm
 
             typedef std::vector<uint64_t> Triggers;
             Triggers _triggers; // hashes of triggers to be passed
+
+            PileupCorrections _pileup_corrections;
+            float _pileup_weight;
     };
 }
 

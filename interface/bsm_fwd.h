@@ -72,6 +72,7 @@ namespace bsm
     class H2Proxy;
 
     class Summary;
+    class PileupCorrections;
 }
 
 #endif
