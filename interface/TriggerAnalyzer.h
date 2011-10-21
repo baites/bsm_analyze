@@ -48,7 +48,9 @@ namespace bsm
             virtual DescriptionPtr description() const;
 
         private:
-            void setTrigger(std::string) const;
+            typedef std::vector<std::string> Triggers;
+
+            void setTrigger(const Triggers &) const;
             void setFilter(std::string) const;
             void setProducer(std::string) const;
 
