@@ -32,7 +32,8 @@ namespace bsm
             {
                 L1 = 0,
                 L2,
-                L3
+                L3,
+                L2L3
             };
 
             virtual ~JetEnergyCorrectionDelegate() {}
