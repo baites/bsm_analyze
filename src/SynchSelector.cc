@@ -614,7 +614,28 @@ void SynchSelector::selectGoodElectrons(const Event *event)
             event->electron().end() != electron;
             ++electron)
     {
-        if (_electron_selector->apply(*electron, pv))
+        if (!_electron_selector->apply(*electron, pv))
+            continue;
+
+        typedef ::google::protobuf::RepeatedPtrField<Electron::ElectronID>
+            ElectronIDs;
+
+        bool is_good_lepton = false;
+        for(ElectronIDs::const_iterator id = electron->id().begin();
+                electron->id().end() != id;
+                ++id)
+        {
+            if (Electron::HyperTight1 != id->name())
+                continue;
+
+            if  (id->identification()
+                    && id->conversion_rejection())
+                is_good_lepton = true;
+
+            break;
+        }
+
+        if (is_good_lepton)
             _good_electrons.push_back(&*electron);
     }
 }
