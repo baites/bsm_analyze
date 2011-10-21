@@ -1,5 +1,4 @@
-//float luminosity = 1010.922;
-float luminosity = 247.476;
+float luminosity = 3393.157;
 
 enum InputType
 {
@@ -16,12 +15,12 @@ string toString(const InputType &input_type)
 {
     switch(input_type)
     {
-        case QCD_BC_PT20_30: return "QCD_BC_pt20to30";
-        case QCD_BC_PT30_80: return "QCD_BC_pt30to80";
-        case QCD_BC_PT80_170: return "QCD_BC_pt80to170";
-        case QCD_EM_PT20_30: return "QCD_EM_pt20to30";
-        case QCD_EM_PT30_80: return "QCD_EM_pt30to80";
-        case QCD_EM_PT80_170: return "QCD_EM_pt80to170";
+        case QCD_BC_PT20_30: return  "QCD BC pt20to30";
+        case QCD_BC_PT30_80: return  "QCD BC pt30to80";
+        case QCD_BC_PT80_170: return "QCD BC pt80to170";
+        case QCD_EM_PT20_30: return  "QCD EM pt20to30";
+        case QCD_EM_PT30_80: return  "QCD EM pt30to80";
+        case QCD_EM_PT80_170: return "QCD EM pt80to170";
         default: return "Unknown";
     }
 }
@@ -48,12 +47,12 @@ void style(TH1 *hist, const InputType &input_type)
             }
         case QCD_EM_PT20_30:
             {
-                color = kOrange - 4;
+                color = kOrange - 3;
                 break;
             }
         case QCD_EM_PT30_80:
             {
-                color = kOrange - 2;
+                color = kOrange - 1;
                 break;
             }
         case QCD_EM_PT80_170:
@@ -71,12 +70,16 @@ void style(TH1 *hist, const InputType &input_type)
     }
 
     hist->SetLineColor(color);
+    hist->SetFillColor(color);
     hist->SetMarkerColor(color);
     hist->SetMarkerSize(0.5);
 }
 
 void scale(TH1 *hist, const InputType &input_type)
 {
+    if (!hist->GetEntries())
+        return;
+
     switch(input_type)
     {
         case QCD_BC_PT20_30:
@@ -132,7 +135,7 @@ void normalize(TH1 *hist)
 
 TLegend *createLegend(const string &text)
 {
-    TLegend *legend = new TLegend( .5, .8, .8, .6);
+    TLegend *legend = new TLegend( .5, .5, .8, .9);
     if (!text.empty())
         legend->SetHeader(text.c_str());
 
@@ -207,9 +210,9 @@ string folder[] =
 
 const int QCD_CHANNELS = 6;
 
-TFile *input_s1_p50[QCD_CHANNELS];
-TFile *input_s2_p50[QCD_CHANNELS];
-TFile *input_signal_p50[QCD_CHANNELS];
+TFile *input_s1[QCD_CHANNELS];
+TFile *input_s2[QCD_CHANNELS];
+TFile *input_signal[QCD_CHANNELS];
 
 TFile *open(const string &filename)
 {
@@ -228,31 +231,31 @@ void loadFiles()
 {
     for(int i = 0; QCD_CHANNELS > i; ++i)
     {
-        TFile *file = open(folder[i] + "/output_s1_p50.root");
+        TFile *file = open(folder[i] + "/output_s1_p250_hlt.root");
         if (!file)
             return;
 
-        input_s1_p50[i] = file;
+        input_s1[i] = file;
 
-        file = open(folder[i] + "/output_s2_p50.root");
+        file = open(folder[i] + "/output_s2_p250_hlt.root");
         if (!file)
             return;
 
-        input_s2_p50[i] = file;
+        input_s2[i] = file;
 
-        file = open(folder[i] + "/output_signal_p50.root");
+        file = open(folder[i] + "/output_signal_p250_hlt.root");
         if (!file)
             return;
 
-        input_signal_p50[i] = file;
+        input_signal[i] = file;
     }
 }
 
 void plotQCDTemplates()
 {
-    TH1 *htlep_s1 = merge(input_s1_p50, "htlep", 0, QCD_CHANNELS);
-    TH1 *htlep_s2 = merge(input_s2_p50, "htlep", 0, QCD_CHANNELS);
-    TH1 *htlep_signal = merge(input_signal_p50, "htlep", 0, QCD_CHANNELS);
+    TH1 *htlep_s1 = merge(input_s1, "htlep", 0, QCD_CHANNELS);
+    TH1 *htlep_s2 = merge(input_s2, "htlep", 0, QCD_CHANNELS);
+    TH1 *htlep_signal = merge(input_signal, "htlep", 0, QCD_CHANNELS);
 
     normalize(htlep_s1);
     normalize(htlep_s2);
@@ -289,11 +292,11 @@ void plotQCDTemplates()
     legend->Draw();
 
     TH1 *mttbar_before_htlep_s1 =
-        merge(input_s1_p50, "mttbar_before_htlep", 0, QCD_CHANNELS);
+        merge(input_s1, "mttbar_before_htlep", 0, QCD_CHANNELS);
     TH1 *mttbar_before_htlep_s2 =
-        merge(input_s2_p50, "mttbar_before_htlep", 0, QCD_CHANNELS);
+        merge(input_s2, "mttbar_before_htlep", 0, QCD_CHANNELS);
     TH1 *mttbar_before_htlep_signal =
-        merge(input_signal_p50, "mttbar_before_htlep", 0, QCD_CHANNELS);
+        merge(input_signal, "mttbar_before_htlep", 0, QCD_CHANNELS);
 
     mttbar_before_htlep_s1->Rebin(20);
     mttbar_before_htlep_s2->Rebin(20);
@@ -328,11 +331,11 @@ void plotQCDTemplates()
     legend->Draw();
 
     TH1 *mttbar_after_htlep_s1 =
-        merge(input_s1_p50, "mttbar_after_htlep", 0, QCD_CHANNELS);
+        merge(input_s1, "mttbar_after_htlep", 0, QCD_CHANNELS);
     TH1 *mttbar_after_htlep_s2 =
-        merge(input_s2_p50, "mttbar_after_htlep", 0, QCD_CHANNELS);
+        merge(input_s2, "mttbar_after_htlep", 0, QCD_CHANNELS);
     TH1 *mttbar_after_htlep_signal =
-        merge(input_signal_p50, "mttbar_after_htlep", 0, QCD_CHANNELS);
+        merge(input_signal, "mttbar_after_htlep", 0, QCD_CHANNELS);
 
     mttbar_after_htlep_s1->Rebin(40);
     mttbar_after_htlep_s2->Rebin(40);
@@ -367,10 +370,78 @@ void plotQCDTemplates()
     legend->Draw();
 }
 
+void plotQCD(TFile **input, const string &hist, const string &axis_title, const string &title, const int rebin = 0)
+{
+    TH1 *qcd_bc_pt20_30 = get(input[QCD_BC_PT20_30], hist, QCD_BC_PT20_30);
+    TH1 *qcd_bc_pt30_80 = get(input[QCD_BC_PT30_80], hist, QCD_BC_PT30_80);
+    TH1 *qcd_bc_pt80_170 = get(input[QCD_BC_PT80_170], hist, QCD_BC_PT80_170);
+    TH1 *qcd_em_pt20_30 = get(input[QCD_EM_PT20_30], hist, QCD_EM_PT20_30);
+    TH1 *qcd_em_pt30_80 = get(input[QCD_EM_PT30_80], hist, QCD_EM_PT30_80);
+    TH1 *qcd_em_pt80_170 = get(input[QCD_EM_PT80_170], hist, QCD_EM_PT80_170);
+
+    if (rebin)
+    {
+        if (qcd_bc_pt20_30->GetEntries()) qcd_bc_pt20_30->Rebin(rebin);
+        if (qcd_bc_pt30_80->GetEntries()) qcd_bc_pt30_80->Rebin(rebin);
+        if (qcd_bc_pt80_170->GetEntries()) qcd_bc_pt80_170->Rebin(rebin);
+        if (qcd_em_pt20_30->GetEntries()) qcd_em_pt20_30->Rebin(rebin);
+        if (qcd_em_pt30_80->GetEntries()) qcd_em_pt30_80->Rebin(rebin);
+        if (qcd_em_pt80_170->GetEntries()) qcd_em_pt80_170->Rebin(rebin);
+    }
+
+    THStack *stack = new THStack();
+    if (qcd_bc_pt20_30->GetEntries()) stack->Add(qcd_bc_pt20_30);
+    if (qcd_bc_pt30_80->GetEntries()) stack->Add(qcd_bc_pt30_80);
+    if (qcd_bc_pt80_170->GetEntries()) stack->Add(qcd_bc_pt80_170);
+    if (qcd_em_pt20_30->GetEntries()) stack->Add(qcd_em_pt20_30);
+    if (qcd_em_pt30_80->GetEntries()) stack->Add(qcd_em_pt30_80);
+    if (qcd_em_pt80_170->GetEntries()) stack->Add(qcd_em_pt80_170);
+
+    stack->Draw("hist");
+    if (stack->GetHistogram())
+        stack->GetHistogram()->GetXaxis()->SetTitle(axis_title.c_str());
+
+    TLegend *legend = createLegend(title);
+    legend->AddEntry(qcd_bc_pt20_30, toString(QCD_BC_PT20_30).c_str(), "fe");
+    legend->AddEntry(qcd_bc_pt30_80, toString(QCD_BC_PT30_80).c_str(), "fe");
+    legend->AddEntry(qcd_bc_pt80_170, toString(QCD_BC_PT80_170).c_str(), "fe");
+    legend->AddEntry(qcd_em_pt20_30, toString(QCD_EM_PT20_30).c_str(), "fe");
+    legend->AddEntry(qcd_em_pt30_80, toString(QCD_EM_PT30_80).c_str(), "fe");
+    legend->AddEntry(qcd_em_pt80_170, toString(QCD_EM_PT80_170).c_str(), "fe");
+    legend->Draw();
+}
+
+void plotQCDComparisonInRegion(TFile **input, const string &title)
+{
+    string canvas_title = "QCD Comparison: " + title;
+    TCanvas *canvas = new TCanvas();
+    canvas->SetTitle(canvas_title.c_str());
+    canvas->SetWindowSize(1200, 680);
+    canvas->Divide(3);
+
+    canvas->cd(1)->SetLogy();
+    plotQCD(input, "htlep", "H_{T}^{lep} [Gev/c^{2}]", "H_{T}^{lep}");
+
+    canvas->cd(2)->SetLogy();
+    plotQCD(input, "mttbar_before_htlep", "M_{t#bar{t}} [GeV/c^{2}]", "m_{t#bar{t}} before H_{T}^{lep}", 20);
+
+    canvas->cd(3)->SetLogy();
+    plotQCD(input, "mttbar_after_htlep", "M_{t#bar{t}} [GeV/c^{2}]", "m_{t#bar{t}} after H_{T}^{lep}", 40);
+}
+
+void plotQCDComparison()
+{
+    plotQCDComparisonInRegion(input_s1, "sideband 1");
+    plotQCDComparisonInRegion(input_s2, "sideband 2");
+    plotQCDComparisonInRegion(input_signal, "signal");
+}
+
 void qcd_templates()
 {
     TGaxis::SetMaxDigits(3);
 
     loadFiles();
+
+    plotQCDComparison();
     plotQCDTemplates();
 }
