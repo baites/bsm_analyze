@@ -20,20 +20,14 @@
 #include "interface/AppController.h"
 #include "interface/Cut2DSelector.h"
 #include "interface/JetEnergyCorrections.h"
+#include "interface/MonitorCanvas.h"
 #include "interface/TemplateAnalyzer.h"
 #include "interface/TriggerAnalyzer.h"
 #include "interface/SynchSelector.h"
 
 using namespace std;
-
-using boost::shared_ptr;
-
-using bsm::AppController;
-using bsm::Cut2DSelectorOptions;
-using bsm::JetEnergyCorrectionOptions;
-using bsm::TemplateAnalyzer;
-using bsm::TriggerOptions;
-using bsm::SynchSelectorOptions;
+using namespace boost;
+using namespace bsm;
 
 int main(int argc, char *argv[])
 {
@@ -104,6 +98,10 @@ int main(int argc, char *argv[])
             dr_vs_ptrel->GetYaxis()->SetTitle("#Delta R");
             dr_vs_ptrel->GetYaxis()->SetTitleSize(0.045);
 
+            shared_ptr<P4Canvas> first_jet(new P4Canvas("First jet"));
+            shared_ptr<P4Canvas> second_jet(new P4Canvas("Second jet"));
+            shared_ptr<P4Canvas> third_jet(new P4Canvas("Third jet"));
+
             if (app->output())
             {
                 d0->Write();
@@ -111,6 +109,10 @@ int main(int argc, char *argv[])
                 mttbar_before_htlep->Write();
                 mttbar_after_htlep->Write();
                 dr_vs_ptrel->Write();
+
+                first_jet->write(app->output().get(), *analyzer->firstJet());
+                second_jet->write(app->output().get(), *analyzer->secondJet());
+                third_jet->write(app->output().get(), *analyzer->thirdJet());
             }
 
             if (app->isInteractive())
@@ -142,11 +144,15 @@ int main(int argc, char *argv[])
                 canvas2->cd(1);
                 d0->Draw("h");
 
+                first_jet->draw(*analyzer->firstJet());
+                second_jet->draw(*analyzer->secondJet());
+                third_jet->draw(*analyzer->thirdJet());
+
                 root->Run();
             }
         }
     }
-    catch(const exception &error)
+    catch(const std::exception &error)
     {
         cerr << error.what() << endl;
 

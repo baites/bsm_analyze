@@ -30,7 +30,7 @@ using boost::shared_ptr;
 using bsm::AppController;
 using bsm::JetEnergyCorrectionOptions;
 using bsm::DeltaCanvas;
-using bsm::LorentzVectorCanvas;
+using bsm::P4Canvas;
 using bsm::MttbarAnalyzer;
 using bsm::MttbarOptions;
 using bsm::SynchSelectorOptions;
@@ -135,20 +135,20 @@ int main(int argc, char *argv[])
 
                 canvas->Update();
 
-                boost::shared_ptr<LorentzVectorCanvas> met(
-                        new LorentzVectorCanvas("Reconstructed Missing Energy"));
+                boost::shared_ptr<P4Canvas> met(
+                        new P4Canvas("Reconstructed Missing Energy"));
                 met->draw(*analyzer->missingEnergyMonitor());
 
-                boost::shared_ptr<LorentzVectorCanvas> lwboson(
-                        new LorentzVectorCanvas("Leptonic W-Boson"));
+                boost::shared_ptr<P4Canvas> lwboson(
+                        new P4Canvas("Leptonic W-Boson"));
                 lwboson->draw(*analyzer->lwbosonMonitor());
 
-                boost::shared_ptr<LorentzVectorCanvas> ltop_p4(
-                        new LorentzVectorCanvas("Leptonic Top"));
+                boost::shared_ptr<P4Canvas> ltop_p4(
+                        new P4Canvas("Leptonic Top"));
                 ltop_p4->draw(*analyzer->ltopMonitor());
 
-                boost::shared_ptr<LorentzVectorCanvas> htop_p4(
-                        new LorentzVectorCanvas("Hadronic Top"));
+                boost::shared_ptr<P4Canvas> htop_p4(
+                        new P4Canvas("Hadronic Top"));
                 htop_p4->draw(*analyzer->htopMonitor());
 
                 boost::shared_ptr<DeltaCanvas> top_delta(

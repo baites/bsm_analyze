@@ -94,10 +94,10 @@ namespace bsm
             std::string _title;
     };
 
-    class LorentzVectorCanvas
+    class P4Canvas
     {
         public:
-            LorentzVectorCanvas(const std::string &title = "");
+            P4Canvas(const std::string &title = "");
 
             void draw(const P4Monitor &);
             void write(TDirectory *, const P4Monitor &);
