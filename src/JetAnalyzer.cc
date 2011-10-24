@@ -30,28 +30,6 @@ using namespace std;
 using namespace boost;
 using namespace bsm;
 
-struct PtLess
-{
-    public:
-        typedef shared_ptr<LorentzVector> P4Ptr;
-
-        bool operator()(const P4Ptr &v1, const P4Ptr &v2)
-        {
-            return pt_less(*v1, *v2);
-        }
-};
-
-struct PtGreater
-{
-    public:
-        typedef shared_ptr<LorentzVector> P4Ptr;
-
-        bool operator()(const P4Ptr &v1, const P4Ptr &v2)
-        {
-            return pt_greater(*v1, *v2);
-        }
-};
-
 // Jet Analyzer
 //
 JetAnalyzer::JetAnalyzer()

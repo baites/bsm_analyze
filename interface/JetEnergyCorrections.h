@@ -20,6 +20,7 @@
 #include "bsm_input/interface/bsm_input_fwd.h"
 #include "JetMETObjects/interface/JetCorrectorParameters.h"
 #include "interface/AppController.h"
+#include "interface/CorrectedJet.h"
 
 class FactorizedJetCorrector;
 
@@ -82,23 +83,6 @@ namespace bsm
 
             JetEnergyCorrections();
             JetEnergyCorrections(const JetEnergyCorrections &);
-
-            struct CorrectedJet
-            {
-                CorrectedJet()
-                {
-                    jet = 0;
-                    correction = 0;
-                }
-
-                const Jet *jet;
-                LorentzVectorPtr corrected_p4;
-                LorentzVectorPtr subtracted_p4;
-
-                Electrons subtracted_electrons;
-                Muons subtracted_muons;
-                float correction;
-            };
 
             // IMPORTANT: Invalid pointer will be returned if Jet Energy
             //            Corrections are not loaded. As such, always check

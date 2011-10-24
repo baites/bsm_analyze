@@ -28,9 +28,7 @@ using namespace std;
 namespace fs = boost::filesystem;
 using boost::dynamic_pointer_cast;
 
-using bsm::JetEnergyCorrectionDelegate;
-using bsm::JetEnergyCorrectionOptions;
-using bsm::JetEnergyCorrections;
+using namespace bsm;
 
 JetEnergyCorrectionOptions::JetEnergyCorrectionOptions()
 {
@@ -150,7 +148,7 @@ JetEnergyCorrections::JetEnergyCorrections(const JetEnergyCorrections &object):
     }
 }
 
-JetEnergyCorrections::CorrectedJet JetEnergyCorrections::correctJet(
+CorrectedJet JetEnergyCorrections::correctJet(
         const Jet *jet,
         const Event *event,
         const Electrons &electrons,

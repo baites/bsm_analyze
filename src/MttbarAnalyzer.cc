@@ -19,6 +19,7 @@
 #include "bsm_stat/interface/H1.h"
 #include "bsm_stat/interface/H2.h"
 #include "interface/Algorithm.h"
+#include "interface/CorrectedJet.h"
 #include "interface/Cut.h"
 #include "interface/DecayGenerator.h"
 #include "interface/Monitor.h"
@@ -289,7 +290,7 @@ void MttbarAnalyzer::process(const Event *event)
         // Prepare generator and loop over all hypotheses of the decay
         // (different jets assignment to leptonic/hadronic legs)
         //
-        typedef DecayGenerator<SynchSelector::CorrectedJet> Generator;
+        typedef DecayGenerator<CorrectedJet> Generator;
         Generator generator;
         generator.init(_synch_selector->goodJets());
 
@@ -334,7 +335,7 @@ void MttbarAnalyzer::process(const Event *event)
             //
             LorentzVector ltop = lepton_p4;
 
-            const SynchSelector::CorrectedJet *hardest_jet = 0;
+            const CorrectedJet *hardest_jet = 0;
             float highest_pt = 0;
 
             // Select the hardest jet (highest pT)

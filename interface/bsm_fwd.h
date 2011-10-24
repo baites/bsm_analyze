@@ -57,6 +57,8 @@ namespace bsm
     class JetEnergyCorrections;
     class JetEnergyCorrectionDelegate;
 
+    class CorrectedJet;
+
     class SynchSelectorOptions;
     class SynchSelector;
     class SynchSelectorDelegate;

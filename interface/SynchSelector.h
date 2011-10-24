@@ -16,6 +16,7 @@
 #include "interface/JetEnergyCorrections.h"
 #include "interface/AppController.h"
 #include "interface/Selector.h"
+#include "interface/CorrectedJet.h"
 
 namespace bsm
 {
@@ -72,7 +73,6 @@ namespace bsm
         public:
             typedef boost::shared_ptr<Cut> CutPtr;
             typedef boost::shared_ptr<LorentzVector> LorentzVectorPtr;
-            typedef JetEnergyCorrections::CorrectedJet CorrectedJet;
 
             typedef boost::shared_ptr<MultiplicityCutflow> CutflowPtr;
 

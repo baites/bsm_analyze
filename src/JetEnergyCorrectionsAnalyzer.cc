@@ -19,6 +19,7 @@
 #include "bsm_input/interface/Utility.h"
 #include "interface/JetEnergyCorrections.h"
 #include "interface/JetEnergyCorrectionsAnalyzer.h"
+#include "interface/CorrectedJet.h"
 #include "interface/Monitor.h"
 #include "interface/Selector.h"
 
@@ -197,7 +198,7 @@ void JetEnergyCorrectionsAnalyzer::jets(const Event *event)
             const LorentzVector &uncorrected_p4 = jet->uncorrected_p4();
             _jet_uncorrected_p4->fill(uncorrected_p4);
 
-            JetEnergyCorrections::CorrectedJet correction =
+            CorrectedJet correction =
                 _jec->correctJet(&*jet, event, electrons, muons);
             if (!correction.corrected_p4)
                 continue;

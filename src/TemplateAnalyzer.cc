@@ -20,8 +20,10 @@
 #include "bsm_stat/interface/H1.h"
 #include "bsm_stat/interface/H2.h"
 #include "interface/Algorithm.h"
+#include "interface/CorrectedJet.h"
 #include "interface/Cut.h"
 #include "interface/DecayGenerator.h"
+#include "interface/Monitor.h"
 #include "interface/StatProxy.h"
 #include "interface/SynchSelector.h"
 #include "interface/TemplateAnalyzer.h"
@@ -63,6 +65,14 @@ TemplateAnalyzer::TemplateAnalyzer():
     monitor(_dr_vs_ptrel);
 
     _event = 0;
+
+    _first_jet.reset(new P4Monitor());
+    _second_jet.reset(new P4Monitor());
+    _third_jet.reset(new P4Monitor());
+
+    monitor(_first_jet);
+    monitor(_second_jet);
+    monitor(_third_jet);
 }
 
 TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
@@ -101,6 +111,19 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
     monitor(_dr_vs_ptrel);
 
     _event = 0;
+
+    _first_jet =
+        dynamic_pointer_cast<P4Monitor>(object._first_jet->clone());
+
+    _second_jet =
+        dynamic_pointer_cast<P4Monitor>(object._second_jet->clone());
+
+    _third_jet =
+        dynamic_pointer_cast<P4Monitor>(object._third_jet->clone());
+
+    monitor(_first_jet);
+    monitor(_second_jet);
+    monitor(_third_jet);
 }
 
 const TemplateAnalyzer::H1Ptr TemplateAnalyzer::d0() const
@@ -126,6 +149,21 @@ const TemplateAnalyzer::H1Ptr TemplateAnalyzer::mttbarAfterHtlep() const
 const TemplateAnalyzer::H2Ptr TemplateAnalyzer::drVsPtrel() const
 {
     return _dr_vs_ptrel->histogram();
+}
+
+const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::firstJet() const
+{
+    return _first_jet;
+}
+
+const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::secondJet() const
+{
+    return _second_jet;
+}
+
+const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::thirdJet() const
+{
+    return _third_jet;
 }
 
 bsm::JetEnergyCorrectionDelegate
@@ -215,7 +253,11 @@ void TemplateAnalyzer::process(const Event *event)
     //
     if (_synch_selector->apply(event)
             && isGoodLepton())
+    {
         mttbarAfterHtlep()->fill(mttbar(), _pileup_weight);
+
+        monitorJets();
+    }
 
     _event = 0;
     _pileup_weight = 0;
@@ -380,7 +422,7 @@ float TemplateAnalyzer::mttbar() const
     // Prepare generator and loop over all hypotheses of the decay
     // (different jets assignment to leptonic/hadronic legs)
     //
-    typedef DecayGenerator<SynchSelector::CorrectedJet> Generator;
+    typedef DecayGenerator<CorrectedJet> Generator;
     Generator generator;
     generator.init(_synch_selector->goodJets());
 
@@ -425,7 +467,7 @@ float TemplateAnalyzer::mttbar() const
         //
         LorentzVector ltop = lepton_p4;
 
-        const SynchSelector::CorrectedJet *hardest_jet = 0;
+        const CorrectedJet *hardest_jet = 0;
         float highest_pt = 0;
 
         // Select the hardest jet (highest pT)
@@ -495,6 +537,20 @@ float TemplateAnalyzer::mttbar() const
     // Best Solution is found
     //
     return mass(best_solution.ltop + best_solution.htop);
+}
+
+void TemplateAnalyzer::monitorJets()
+{
+    typedef SynchSelector::GoodJets GoodJets;
+
+    GoodJets::const_iterator first_jet = _synch_selector->goodJets().end();
+    GoodJets::const_iterator second_jet = _synch_selector->goodJets().end();
+    GoodJets::const_iterator third_jet = _synch_selector->goodJets().end();
+    for(GoodJets::const_iterator jet = _synch_selector->goodJets().begin();
+            _synch_selector->goodJets().end() != jet;
+            ++jet)
+    {
+    }
 }
 
 bool TemplateAnalyzer::isGoodLepton() const

@@ -423,7 +423,7 @@ bool SynchSelector::jets(const Event *event)
             event->jet().end() != jet;
             ++jet)
     {
-        JetEnergyCorrections::CorrectedJet correction = _jec->correctJet(&*jet,
+        CorrectedJet correction = _jec->correctJet(&*jet,
                 event,
                 _good_electrons,
                 _good_muons);
@@ -454,6 +454,11 @@ bool SynchSelector::jets(const Event *event)
 
         _good_jets.push_back(correction);
     }
+
+    // Sort jets by pT
+    //
+    sort(_nice_jets.begin(), _nice_jets.end(), CorrectedPtLess());
+    sort(_good_jets.begin(), _good_jets.end(), CorrectedPtLess());
 
     return 1 < _good_jets.size()
         && (_cutflow->apply(JET), true);

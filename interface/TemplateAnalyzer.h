@@ -29,6 +29,7 @@ namespace bsm
         public:
             typedef boost::shared_ptr<stat::H1> H1Ptr;
             typedef boost::shared_ptr<stat::H2> H2Ptr;
+            typedef boost::shared_ptr<P4Monitor> P4MonitorPtr;
 
             TemplateAnalyzer();
             TemplateAnalyzer(const TemplateAnalyzer &);
@@ -38,6 +39,10 @@ namespace bsm
             const H1Ptr mttbarBeforeHtlep() const;
             const H1Ptr mttbarAfterHtlep() const;
             const H2Ptr drVsPtrel() const;
+
+            const P4MonitorPtr firstJet() const;
+            const P4MonitorPtr secondJet() const;
+            const P4MonitorPtr thirdJet() const;
 
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
             SynchSelectorDelegate *getSynchSelectorDelegate() const;
@@ -71,6 +76,7 @@ namespace bsm
             void fillHtlep();
 
             float mttbar() const;
+            void monitorJets();
 
             bool isGoodLepton() const;
 
@@ -94,6 +100,10 @@ namespace bsm
 
             PileupCorrections _pileup_corrections;
             float _pileup_weight;
+
+            P4MonitorPtr _first_jet;
+            P4MonitorPtr _second_jet;
+            P4MonitorPtr _third_jet;
     };
 }
 
