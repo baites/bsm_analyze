@@ -48,7 +48,7 @@ namespace bsm
     class ElectronsMonitor;
     class GenParticleMonitor;
     class JetsMonitor;
-    class LorentzVectorMonitor;
+    class P4Monitor;
     class MissingEnergyMonitor;
     class MuonsMonitor;
     class PrimaryVerticesMonitor;

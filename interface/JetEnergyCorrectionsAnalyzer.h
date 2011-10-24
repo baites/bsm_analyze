@@ -27,7 +27,7 @@ namespace bsm
     class JetEnergyCorrectionsAnalyzer : public Analyzer
     {
         public:
-            typedef boost::shared_ptr<LorentzVectorMonitor> P4MonitorPtr;
+            typedef boost::shared_ptr<P4Monitor> P4MonitorPtr;
             typedef boost::shared_ptr<LorentzVector> LorentzVectorPtr;
 
             JetEnergyCorrectionsAnalyzer();

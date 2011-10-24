@@ -56,7 +56,7 @@ namespace bsm
             typedef boost::shared_ptr<stat::H1> H1Ptr;
             typedef boost::shared_ptr<stat::H2> H2Ptr;
 
-            typedef boost::shared_ptr<LorentzVectorMonitor> P4MonitorPtr;
+            typedef boost::shared_ptr<P4Monitor> P4MonitorPtr;
             typedef boost::shared_ptr<DeltaMonitor> DeltaMonitorPtr;
 
             MttbarAnalyzer();

@@ -91,10 +91,10 @@ MttbarAnalyzer::MttbarAnalyzer():
     _synch_selector.reset(new SynchSelector());
     monitor(_synch_selector);
 
-    _missing_energy_monitor.reset(new LorentzVectorMonitor());
-    _lwboson_monitor.reset(new LorentzVectorMonitor());
-    _ltop_monitor.reset(new LorentzVectorMonitor());
-    _htop_monitor.reset(new LorentzVectorMonitor());
+    _missing_energy_monitor.reset(new P4Monitor());
+    _lwboson_monitor.reset(new P4Monitor());
+    _ltop_monitor.reset(new P4Monitor());
+    _htop_monitor.reset(new P4Monitor());
 
     _top_delta_monitor.reset(new DeltaMonitor());
 
@@ -131,15 +131,15 @@ MttbarAnalyzer::MttbarAnalyzer(const MttbarAnalyzer &object):
     monitor(_synch_selector);
 
     _missing_energy_monitor =
-        dynamic_pointer_cast<LorentzVectorMonitor>(object._missing_energy_monitor->clone());
+        dynamic_pointer_cast<P4Monitor>(object._missing_energy_monitor->clone());
 
     _lwboson_monitor =
-        dynamic_pointer_cast<LorentzVectorMonitor>(object._lwboson_monitor->clone());
+        dynamic_pointer_cast<P4Monitor>(object._lwboson_monitor->clone());
 
     _ltop_monitor =
-        dynamic_pointer_cast<LorentzVectorMonitor>(object._ltop_monitor->clone());
+        dynamic_pointer_cast<P4Monitor>(object._ltop_monitor->clone());
     _htop_monitor =
-        dynamic_pointer_cast<LorentzVectorMonitor>(object._htop_monitor->clone());
+        dynamic_pointer_cast<P4Monitor>(object._htop_monitor->clone());
 
     _top_delta_monitor =
         dynamic_pointer_cast<DeltaMonitor>(object._top_delta_monitor->clone());

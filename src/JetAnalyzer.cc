@@ -68,9 +68,9 @@ JetAnalyzer::JetAnalyzer()
     _hlt_jet_selector.reset(new P4Selector());
     monitor(_hlt_jet_selector);
 
-    _hlt_leading_jet.reset(new LorentzVectorMonitor());
-    _selected_hlt_leading_jet.reset(new LorentzVectorMonitor());
-    _reco_leading_jet.reset(new LorentzVectorMonitor());
+    _hlt_leading_jet.reset(new P4Monitor());
+    _selected_hlt_leading_jet.reset(new P4Monitor());
+    _reco_leading_jet.reset(new P4Monitor());
 
     //_hlt_leading_jet->pt()->mutable_axis()->init(100, 0, 1000);
     //_selected_hlt_leading_jet->pt()->mutable_axis()->init(100, 0, 1000);
@@ -93,13 +93,13 @@ JetAnalyzer::JetAnalyzer(const JetAnalyzer &object):
     monitor(_hlt_jet_selector);
 
     _hlt_leading_jet =
-        dynamic_pointer_cast<LorentzVectorMonitor>(object._hlt_leading_jet->clone());
+        dynamic_pointer_cast<P4Monitor>(object._hlt_leading_jet->clone());
 
     _selected_hlt_leading_jet =
-        dynamic_pointer_cast<LorentzVectorMonitor>(object._selected_hlt_leading_jet->clone());
+        dynamic_pointer_cast<P4Monitor>(object._selected_hlt_leading_jet->clone());
 
     _reco_leading_jet =
-        dynamic_pointer_cast<LorentzVectorMonitor>(object._reco_leading_jet->clone());
+        dynamic_pointer_cast<P4Monitor>(object._reco_leading_jet->clone());
 
     monitor(_hlt_leading_jet);
     monitor(_selected_hlt_leading_jet);

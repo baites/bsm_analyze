@@ -121,7 +121,7 @@ LorentzVectorCanvas::LorentzVectorCanvas(const string &title)
     _title = title;
 }
 
-void LorentzVectorCanvas::draw(const LorentzVectorMonitor &monitor)
+void LorentzVectorCanvas::draw(const P4Monitor &monitor)
 {
     if (!_canvas)
     {
@@ -178,7 +178,7 @@ void LorentzVectorCanvas::draw(const LorentzVectorMonitor &monitor)
     _mass->Draw("hist");
 }
 
-void LorentzVectorCanvas::write(TDirectory *dir, const LorentzVectorMonitor &monitor)
+void LorentzVectorCanvas::write(TDirectory *dir, const P4Monitor &monitor)
 {
     string subdir_name = _title;
     replace(subdir_name.begin(), subdir_name.end(), ' ', '_');

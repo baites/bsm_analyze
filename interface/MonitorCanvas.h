@@ -99,8 +99,8 @@ namespace bsm
         public:
             LorentzVectorCanvas(const std::string &title = "");
 
-            void draw(const LorentzVectorMonitor &);
-            void write(TDirectory *, const LorentzVectorMonitor &);
+            void draw(const P4Monitor &);
+            void write(TDirectory *, const P4Monitor &);
 
         private:
             typedef boost::shared_ptr<core::IDCounter> IDPtr;

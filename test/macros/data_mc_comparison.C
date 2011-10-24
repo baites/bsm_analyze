@@ -362,6 +362,8 @@ TH1 *get(const TFile *input, const string &path, const InputType &input_type)
         return 0;
     }
 
+    hist->Rebin(10);
+
     style(hist, input_type);
 
     return hist;
@@ -457,20 +459,20 @@ void loadFiles()
 
 void plotComparison(TFile **input, const string &title, const bool &draw_mc_first = false)
 {
-    TH1 *ttjets = get(input[TTJETS], "htlep", TTJETS);
+    TH1 *ttjets = get(input[TTJETS], "mttbar_after_htlep", TTJETS);
     scale(ttjets, TTJETS);
 
-    TH1 *zjets = get(input[ZJETS], "htlep", ZJETS);
+    TH1 *zjets = get(input[ZJETS], "mttbar_after_htlep", ZJETS);
     scale(zjets, ZJETS);
 
-    TH1 *wjets = get(input[WJETS], "htlep", WJETS);
+    TH1 *wjets = get(input[WJETS], "mttbar_after_htlep", WJETS);
     scale(wjets, WJETS);
     
-    TH1 *stop = merge(input, "htlep", STOP_S, STOP_S + STOP_CHANNELS);
-    TH1 *qcd = merge(input, "htlep", 0, QCD_CHANNELS);
+    TH1 *stop = merge(input, "mttbar_after_htlep", STOP_S, STOP_S + STOP_CHANNELS);
+    TH1 *qcd = merge(input, "mttbar_after_htlep", 0, QCD_CHANNELS);
 
-    TH1 *data = merge(input, "htlep", RERECO_2011A_MAY10, RERECO_2011A_MAY10 + SIGNAL_CHANELS);
-    //TH1 *data = merge(input, "htlep", RERECO_2011A_MAY10, RERECO_2011A_MAY10 + 1);
+    TH1 *data = merge(input, "mttbar_after_htlep", RERECO_2011A_MAY10, RERECO_2011A_MAY10 + SIGNAL_CHANELS);
+    //TH1 *data = merge(input, "mttbar_after_htlep", RERECO_2011A_MAY10, RERECO_2011A_MAY10 + 1);
     
     THStack *stack = new THStack();
     stack->Add(ttjets);
@@ -519,11 +521,11 @@ void plotDataMcComparison()
 
 void plotData(TFile **input, const string &title)
 {
-    TH1 *rereco_2011a_may10 = get(input[RERECO_2011A_MAY10], "htlep", RERECO_2011A_MAY10);
-    TH1 *rereco_2011a_aug05 = get(input[RERECO_2011A_AUG05], "htlep", RERECO_2011A_AUG05);
-    TH1 *prompt_2011a_v4 = get(input[PROMPT_2011A_V4], "htlep", PROMPT_2011A_V4);
-    TH1 *prompt_2011a_v6 = get(input[PROMPT_2011A_V6], "htlep", PROMPT_2011A_V6);
-    TH1 *prompt_2011b_v1 = get(input[PROMPT_2011B_V1], "htlep", PROMPT_2011B_V1);
+    TH1 *rereco_2011a_may10 = get(input[RERECO_2011A_MAY10], "mttbar_after_htlep", RERECO_2011A_MAY10);
+    TH1 *rereco_2011a_aug05 = get(input[RERECO_2011A_AUG05], "mttbar_after_htlep", RERECO_2011A_AUG05);
+    TH1 *prompt_2011a_v4 = get(input[PROMPT_2011A_V4], "mttbar_after_htlep", PROMPT_2011A_V4);
+    TH1 *prompt_2011a_v6 = get(input[PROMPT_2011A_V6], "mttbar_after_htlep", PROMPT_2011A_V6);
+    TH1 *prompt_2011b_v1 = get(input[PROMPT_2011B_V1], "mttbar_after_htlep", PROMPT_2011B_V1);
 
     styleData(rereco_2011a_may10, RERECO_2011A_MAY10);
     styleData(rereco_2011a_aug05, RERECO_2011A_AUG05);
@@ -552,17 +554,17 @@ void plotData(TFile **input, const string &title)
 
 void plotMC(TFile **input, const string &title)
 {
-    TH1 *ttjets = get(input[TTJETS], "htlep", TTJETS);
+    TH1 *ttjets = get(input[TTJETS], "mttbar_after_htlep", TTJETS);
     scale(ttjets, TTJETS);
 
-    TH1 *zjets = get(input[ZJETS], "htlep", ZJETS);
+    TH1 *zjets = get(input[ZJETS], "mttbar_after_htlep", ZJETS);
     scale(zjets, ZJETS);
 
-    TH1 *wjets = get(input[WJETS], "htlep", WJETS);
+    TH1 *wjets = get(input[WJETS], "mttbar_after_htlep", WJETS);
     scale(wjets, WJETS);
 
-    TH1 *stop = merge(input, "htlep", STOP_S, STOP_S + STOP_CHANNELS);
-    TH1 *qcd = merge(input, "htlep", 0, QCD_CHANNELS);
+    TH1 *stop = merge(input, "mttbar_after_htlep", STOP_S, STOP_S + STOP_CHANNELS);
+    TH1 *qcd = merge(input, "mttbar_after_htlep", 0, QCD_CHANNELS);
     
     THStack *stack = new THStack();
     stack->Add(ttjets);
@@ -619,7 +621,7 @@ void data_mc_comparison()
     gStyle->SetOptStat(kFALSE);
 
     loadFiles();
-    //plotDataComparison();
-    //plotMCComparison();
+    plotDataComparison();
+    plotMCComparison();
     plotDataMcComparison();
 }
