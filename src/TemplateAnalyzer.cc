@@ -373,15 +373,14 @@ void TemplateAnalyzer::process(const Event *event)
 
         ttbarPt()->fill(pt(resonanse.mttbar), _pileup_weight);
 
-        wlepMt()->fill(mt(resonanse.wlep), _pileup_weight);
-        whadMt()->fill(mt(resonanse.whad), _pileup_weight);
+        const LorentzVector &el_p4 = _synch_selector->goodElectrons()[0]->physics_object().p4();
+        wlepMt()->fill(mt(resonanse.neutrino, el_p4), _pileup_weight);
 
         wlepMass()->fill(mass(resonanse.wlep), _pileup_weight);
         whadMass()->fill(mass(resonanse.whad), _pileup_weight);
 
         monitorJets();
-        _electron->fill(_synch_selector->goodElectrons()[0]->physics_object().p4(),
-                _pileup_weight);
+        _electron->fill(el_p4, _pileup_weight);
         
         npv()->fill(event->primary_vertex().size());
         npvWithPileup()->fill(event->primary_vertex().size(), _pileup_weight);
@@ -671,6 +670,7 @@ TemplateAnalyzer::Mttbar TemplateAnalyzer::mttbar() const
     result.mttbar = best_solution.ltop + best_solution.htop;
     result.wlep = best_solution.missing_energy +
         _synch_selector->goodElectrons()[0]->physics_object().p4();
+    result.neutrino = best_solution.missing_energy;
 
     return result;
 }

@@ -90,6 +90,7 @@ namespace bsm
                 LorentzVector mttbar;
                 LorentzVector wlep;
                 LorentzVector whad;
+                LorentzVector neutrino;
             };
 
             Mttbar mttbar() const;
