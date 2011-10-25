@@ -33,7 +33,7 @@ JetEnergyCorrectionsAnalyzer::JetEnergyCorrectionsAnalyzer()
 {
     // Jet Energy Corrections
     //
-    _jec.reset(new JetEnergyCorrections());
+    _jec.reset(new DeltaRJetEnergyCorrections());
     monitor(_jec);
 
     // Selectrors
@@ -105,6 +105,26 @@ const JetEnergyCorrectionsAnalyzer::P4MonitorPtr
     JetEnergyCorrectionsAnalyzer::jetOfflineCorrectedP4() const
 {
     return _jet_offline_corrected_p4;
+}
+
+void JetEnergyCorrectionsAnalyzer::setCorrection(const Level &level,
+        const string &file_name)
+{
+    _jec->setCorrection(level, file_name);
+}
+
+void JetEnergyCorrectionsAnalyzer::setChildCorrection()
+{
+    // there is not guarantee that --child-corrrection argument is used before
+    // any level of the jet energy corrections file is specified. Therefore,
+    // files should be reloaded with ne object.
+    //
+    shared_ptr<JetEnergyCorrections> jec(new ChildJetEnergyCorrections());
+    jec->setCorrectionFiles(_jec->correctionFiles());
+
+    // Activate new Jet Energy Corrections
+    //
+    _jec = jec;
 }
 
 void JetEnergyCorrectionsAnalyzer::onFileOpen(const std::string &filename, const Input *)

@@ -55,6 +55,8 @@ namespace bsm
 
     class JetEnergyCorrectionOptions;
     class JetEnergyCorrections;
+    class DeltaRJetEnergyCorrections;
+    class ChildJetEnergyCorrections;
     class JetEnergyCorrectionDelegate;
 
     class CorrectedJet;

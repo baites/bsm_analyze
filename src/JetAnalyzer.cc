@@ -86,7 +86,7 @@ JetAnalyzer::JetAnalyzer(const JetAnalyzer &object):
 
 bsm::JetEnergyCorrectionDelegate *JetAnalyzer::getJetEnergyCorrectionDelegate() const
 {
-    return _synch_selector->getJetEnergyCorrectionDelegate();
+    return _synch_selector.get();
 }
 
 bsm::SynchSelectorDelegate *JetAnalyzer::getSynchSelectorDelegate() const

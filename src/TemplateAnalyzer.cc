@@ -257,7 +257,7 @@ const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::electron() const
 bsm::JetEnergyCorrectionDelegate
     *TemplateAnalyzer::getJetEnergyCorrectionDelegate() const
 {
-    return _synch_selector->getJetEnergyCorrectionDelegate();
+    return _synch_selector.get();
 }
 
 bsm::SynchSelectorDelegate *TemplateAnalyzer::getSynchSelectorDelegate() const

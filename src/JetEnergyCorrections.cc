@@ -60,11 +60,11 @@ JetEnergyCorrectionOptions::JetEnergyCorrectionOptions()
                  JetEnergyCorrectionDelegate::L2L3, _1)),
          "Level 2-3 corrections")
 
-        ("dr-correction",
+        ("child-correction",
          po::value<bool>()->implicit_value(true)->notifier(
-             boost::bind(&JetEnergyCorrectionOptions::setDeltaRCorrection,
+             boost::bind(&JetEnergyCorrectionOptions::setChildCorrection,
                  this)),
-         "Use DeltaR-based correction")
+         "Use jet constituents p4 to clean up the jet")
     ;
 }
 
@@ -119,33 +119,25 @@ void JetEnergyCorrectionOptions::setCorrection(
     }
 }
 
-void JetEnergyCorrectionOptions::setDeltaRCorrection()
+void JetEnergyCorrectionOptions::setChildCorrection()
 {
     if (!delegate())
         return;
 
-    delegate()->setDeltaRCorrection();
+    delegate()->setChildCorrection();
 }
 
 
 
 // Jet Energy Corrections
 //
-JetEnergyCorrections::JetEnergyCorrections():
-    _use_dr_correction(false)
+JetEnergyCorrections::JetEnergyCorrections()
 {
 }
 
-JetEnergyCorrections::JetEnergyCorrections(const JetEnergyCorrections &object):
-    _use_dr_correction(object._use_dr_correction)
+JetEnergyCorrections::JetEnergyCorrections(const JetEnergyCorrections &object)
 {
-    for(CorrectionFiles::const_reverse_iterator correction =
-            object._correction_files.rbegin();
-            object._correction_files.rend() != correction;
-            ++correction)
-    {
-        setCorrection(correction->first, correction->second);
-    }
+    setCorrectionFiles(object.correctionFiles());
 }
 
 CorrectedJet JetEnergyCorrections::correctJet(
@@ -183,80 +175,7 @@ CorrectedJet JetEnergyCorrections::correctJet(
     //
     if (!electrons.empty()
             || !muons.empty())
-    {
-        if (_use_dr_correction)
-        {
-            const LorentzVector &jet_p4 = jet->physics_object().p4();
-
-            // Electrons
-            //
-            for(Electrons::const_iterator electron = electrons.begin();
-                    electrons.end() != electron;
-                    ++electron)
-            {
-                const LorentzVector &electron_p4 =
-                    (*electron)->physics_object().p4();
-                if (0.5 > dr(electron_p4, jet_p4))
-                {
-                    *corrected_jet.corrected_p4 -= electron_p4;
-                    corrected_jet.subtracted_electrons.push_back(*electron);
-                }
-            }
-
-            // Muons
-            //
-            for(Muons::const_iterator muon = muons.begin();
-                    muons.end() != muon;
-                    ++muon)
-            {
-                const LorentzVector &muon_p4 = (*muon)->physics_object().p4();
-                if (0.5 > dr(muon_p4, jet_p4))
-                {
-                    *corrected_jet.corrected_p4 -= muon_p4;
-                    corrected_jet.subtracted_muons.push_back(*muon);
-                }
-            }
-        }
-        else
-        {
-            typedef ::google::protobuf::RepeatedPtrField<Jet::Child> Children;
-            for(Children::const_iterator child = jet->child().begin();
-                    jet->child().end() != child;
-                    ++child)
-            {
-                const LorentzVector &child_p4 = child->physics_object().p4();
-
-                // Electrons
-                //
-                for(Electrons::const_iterator electron = electrons.begin();
-                        electrons.end() != electron;
-                        ++electron)
-                {
-                    const LorentzVector &electron_p4 =
-                        (*electron)->physics_object().p4();
-                    if (electron_p4 == child_p4)
-                    {
-                        *corrected_jet.corrected_p4 -= electron_p4;
-                        corrected_jet.subtracted_electrons.push_back(*electron);
-                    }
-                }
-
-                // Muons
-                //
-                for(Muons::const_iterator muon = muons.begin();
-                        muons.end() != muon;
-                        ++muon)
-                {
-                    const LorentzVector &muon_p4 = (*muon)->physics_object().p4();
-                    if (muon_p4 == child_p4)
-                    {
-                        *corrected_jet.corrected_p4 -= muon_p4;
-                        corrected_jet.subtracted_muons.push_back(*muon);
-                    }
-                }
-            }
-        }
-    }
+        cleanJet(corrected_jet, electrons, muons);
 
     corrected_jet.subtracted_p4.reset(new LorentzVector());
     corrected_jet.subtracted_p4->CopyFrom(*corrected_jet.corrected_p4);
@@ -264,6 +183,25 @@ CorrectedJet JetEnergyCorrections::correctJet(
     correct(corrected_jet, event);
 
     return corrected_jet;
+}
+
+const JetEnergyCorrections::CorrectionFiles
+    &JetEnergyCorrections::correctionFiles() const
+{
+    return _correction_files;
+}
+
+void JetEnergyCorrections::setCorrectionFiles(const CorrectionFiles &files)
+{
+    // Load any set Jet Energy correction files
+    //
+    for(CorrectionFiles::const_reverse_iterator correction =
+            files.rbegin();
+            files.rend() != correction;
+            ++correction)
+    {
+        setCorrection(correction->first, correction->second);
+    }
 }
 
 // Jet Energy Correction Delegate interface
@@ -286,23 +224,8 @@ void JetEnergyCorrections::setCorrection(const Level &jec_level,
     }
 }
 
-void JetEnergyCorrections::setDeltaRCorrection()
-{
-    _use_dr_correction = true;
-}
-
 // Object interface
 //
-uint32_t JetEnergyCorrections::id() const
-{
-    return core::ID<JetEnergyCorrections>::get();
-}
-
-JetEnergyCorrections::ObjectPtr JetEnergyCorrections::clone() const
-{
-    return ObjectPtr(new JetEnergyCorrections(*this));
-}
-
 void JetEnergyCorrections::print(std::ostream &out) const
 {
 }
@@ -344,6 +267,114 @@ void JetEnergyCorrections::correct(CorrectedJet &jet,
 
     jet.correction = jec->getCorrection();
     *jet.corrected_p4 *= jet.correction;
+}
+
+
+
+// Delta R Jet Energy corrections
+//
+void DeltaRJetEnergyCorrections::cleanJet(CorrectedJet &corrected_jet,
+        const Electrons &electrons,
+        const Muons &muons)
+{
+    const LorentzVector &jet_p4 = corrected_jet.jet->physics_object().p4();
+
+    // Electrons
+    //
+    for(Electrons::const_iterator electron = electrons.begin();
+            electrons.end() != electron;
+            ++electron)
+    {
+        const LorentzVector &electron_p4 =
+            (*electron)->physics_object().p4();
+        if (0.5 > dr(electron_p4, jet_p4))
+        {
+            *corrected_jet.corrected_p4 -= electron_p4;
+            corrected_jet.subtracted_electrons.push_back(*electron);
+        }
+    }
+
+    // Muons
+    //
+    for(Muons::const_iterator muon = muons.begin();
+            muons.end() != muon;
+            ++muon)
+    {
+        const LorentzVector &muon_p4 = (*muon)->physics_object().p4();
+        if (0.5 > dr(muon_p4, jet_p4))
+        {
+            *corrected_jet.corrected_p4 -= muon_p4;
+            corrected_jet.subtracted_muons.push_back(*muon);
+        }
+    }
+}
+
+uint32_t DeltaRJetEnergyCorrections::id() const
+{
+    return core::ID<DeltaRJetEnergyCorrections>::get();
+}
+
+DeltaRJetEnergyCorrections::ObjectPtr DeltaRJetEnergyCorrections::clone() const
+{
+    return ObjectPtr(new DeltaRJetEnergyCorrections(*this));
+}
+
+
+
+// Constituents based Jet Energy corrections
+//
+void ChildJetEnergyCorrections::cleanJet(CorrectedJet &corrected_jet,
+        const Electrons &electrons,
+        const Muons &muons)
+{
+    const Jet *jet = corrected_jet.jet;
+
+    typedef ::google::protobuf::RepeatedPtrField<Jet::Child> Children;
+    for(Children::const_iterator child = jet->child().begin();
+            jet->child().end() != child;
+            ++child)
+    {
+        const LorentzVector &child_p4 = child->physics_object().p4();
+
+        // Electrons
+        //
+        for(Electrons::const_iterator electron = electrons.begin();
+                electrons.end() != electron;
+                ++electron)
+        {
+            const LorentzVector &electron_p4 =
+                (*electron)->physics_object().p4();
+            if (electron_p4 == child_p4)
+            {
+                *corrected_jet.corrected_p4 -= electron_p4;
+                corrected_jet.subtracted_electrons.push_back(*electron);
+            }
+        }
+
+        // Muons
+        //
+        for(Muons::const_iterator muon = muons.begin();
+                muons.end() != muon;
+                ++muon)
+        {
+            const LorentzVector &muon_p4 = (*muon)->physics_object().p4();
+            if (muon_p4 == child_p4)
+            {
+                *corrected_jet.corrected_p4 -= muon_p4;
+                corrected_jet.subtracted_muons.push_back(*muon);
+            }
+        }
+    }
+}
+
+uint32_t ChildJetEnergyCorrections::id() const
+{
+    return core::ID<ChildJetEnergyCorrections>::get();
+}
+
+ChildJetEnergyCorrections::ObjectPtr ChildJetEnergyCorrections::clone() const
+{
+    return ObjectPtr(new ChildJetEnergyCorrections(*this));
 }
 
 

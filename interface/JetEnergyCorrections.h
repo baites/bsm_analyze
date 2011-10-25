@@ -42,7 +42,7 @@ namespace bsm
             virtual void setCorrection(const Level &,
                     const std::string &file_name) {}
 
-            virtual void setDeltaRCorrection() {}
+            virtual void setChildCorrection() {}
     };
 
     class JetEnergyCorrectionOptions : public Options
@@ -61,7 +61,7 @@ namespace bsm
             void setCorrection(const JetEnergyCorrectionDelegate::Level &,
                     const std::string &file_name); 
             
-            void setDeltaRCorrection();
+            void setChildCorrection();
 
             JetEnergyCorrectionDelegate *_delegate;
 
@@ -76,6 +76,7 @@ namespace bsm
             //
             typedef std::vector<const Electron *> Electrons;
             typedef std::vector<const Muon *> Muons;
+            typedef std::map<Level, std::string> CorrectionFiles;
 
             // Output
             //
@@ -83,6 +84,9 @@ namespace bsm
 
             JetEnergyCorrections();
             JetEnergyCorrections(const JetEnergyCorrections &);
+
+            const CorrectionFiles &correctionFiles() const;
+            void setCorrectionFiles(const CorrectionFiles &);
 
             // IMPORTANT: Invalid pointer will be returned if Jet Energy
             //            Corrections are not loaded. As such, always check
@@ -106,30 +110,55 @@ namespace bsm
             virtual void setCorrection(const Level &,
                     const std::string &file_name);
 
-            virtual void setDeltaRCorrection();
-
             // Object interface
             //
-            virtual uint32_t id() const;
-
-            virtual ObjectPtr clone() const;
-
             virtual void print(std::ostream &) const;
 
         private:
-            typedef std::map<Level, std::string> CorrectionFiles;
             typedef std::map<Level, JetCorrectorParameters> Corrections;
             typedef boost::shared_ptr<FactorizedJetCorrector> CorrectorPtr;
 
             CorrectorPtr corrector();
             void correct(CorrectedJet &, const Event *);
 
+            virtual void cleanJet(CorrectedJet &,
+                    const Electrons &,
+                    const Muons &) = 0;
+
             CorrectorPtr _jec;
 
             Corrections _corrections;
             CorrectionFiles _correction_files;
+    };
 
-            bool _use_dr_correction;
+    class DeltaRJetEnergyCorrections: public JetEnergyCorrections
+    {
+        public:
+            // Object interface
+            //
+            virtual uint32_t id() const;
+
+            virtual ObjectPtr clone() const;
+
+        private:
+            virtual void cleanJet(CorrectedJet &,
+                    const Electrons &,
+                    const Muons &);
+    };
+
+    class ChildJetEnergyCorrections: public JetEnergyCorrections
+    {
+        public:
+            // Object interface
+            //
+            virtual uint32_t id() const;
+
+            virtual ObjectPtr clone() const;
+
+        private:
+            virtual void cleanJet(CorrectedJet &,
+                    const Electrons &,
+                    const Muons &);
     };
 
     // Helpers

@@ -44,7 +44,7 @@ EfficiencyAnalyzer::EfficiencyAnalyzer(const EfficiencyAnalyzer &object)
 
 bsm::JetEnergyCorrectionDelegate *EfficiencyAnalyzer::getJetEnergyCorrectionDelegate() const
 {
-    return _synch_selector->getJetEnergyCorrectionDelegate();
+    return _synch_selector.get();
 }
 
 bsm::SynchSelectorDelegate *EfficiencyAnalyzer::getSynchSelectorDelegate() const

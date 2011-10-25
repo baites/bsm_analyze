@@ -68,7 +68,8 @@ namespace bsm
     };
 
     class SynchSelector : public Selector,
-        public SynchSelectorDelegate
+        public SynchSelectorDelegate,
+        public JetEnergyCorrectionDelegate
     {
         public:
             typedef boost::shared_ptr<Cut> CutPtr;
@@ -125,7 +126,6 @@ namespace bsm
             LeptonMode leptonMode() const;
             CutMode cutMode() const;
 
-            JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
             Cut2DSelectorDelegate *getCut2DSelectorDelegate() const;
 
             // SynchSelectorDelegate interface
@@ -133,6 +133,13 @@ namespace bsm
             virtual void setLeptonMode(const LeptonMode &);
             virtual void setCutMode(const CutMode &);
             virtual void setLeadingJetPt(const float &);
+
+            // Jet Energy Correction Delegate interface
+            //
+            virtual void setCorrection(const Level &,
+                    const std::string &file_name); // proxy to JEC setCorrection
+
+            virtual void setChildCorrection();
 
             // Selector interface
             //

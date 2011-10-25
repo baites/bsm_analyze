@@ -17,19 +17,13 @@
 #include "bsm_input/interface/PrimaryVertex.pb.h"
 #include "bsm_input/interface/Physics.pb.h"
 #include "interface/Cut.h"
-#include "interface/JetEnergyCorrections.h"
 #include "interface/SynchSelector.h"
 #include "interface/Cut2DSelector.h"
 #include "interface/Utility.h"
 
 using namespace std;
-
-using boost::to_lower;
-using boost::dynamic_pointer_cast;
-
-using bsm::SynchSelectorDelegate;
-using bsm::SynchSelectorOptions;
-using bsm::SynchSelector;
+using namespace boost;
+using namespace bsm;
 
 // Synch Selector Options
 //
@@ -171,7 +165,7 @@ SynchSelector::SynchSelector():
 
     // Jet Energy Corrections
     //
-    _jec.reset(new JetEnergyCorrections());
+    _jec.reset(new DeltaRJetEnergyCorrections());
     monitor(_jec);
 
     // Cuts
@@ -326,11 +320,6 @@ SynchSelector::CutMode SynchSelector::cutMode() const
     return _cut_mode;
 }
 
-bsm::JetEnergyCorrectionDelegate *SynchSelector::getJetEnergyCorrectionDelegate() const
-{
-    return _jec.get();
-}
-
 bsm::Cut2DSelectorDelegate *SynchSelector::getCut2DSelectorDelegate() const
 {
     return _cut2d_selector.get();
@@ -351,6 +340,28 @@ void SynchSelector::setCutMode(const CutMode &cut_mode)
 void SynchSelector::setLeadingJetPt(const float &value)
 {
     _leading_jet->setValue(value);
+}
+
+// Jet Energy Correction Delegate interface
+//
+void SynchSelector::setCorrection(const Level &level,
+        const string &file_name)
+{
+    _jec->setCorrection(level, file_name);
+}
+
+void SynchSelector::setChildCorrection()
+{
+    // there is not guarantee that --child-corrrection argument is used before
+    // any level of the jet energy corrections file is specified. Therefore,
+    // files should be reloaded with ne object.
+    //
+    shared_ptr<JetEnergyCorrections> jec(new ChildJetEnergyCorrections());
+    jec->setCorrectionFiles(_jec->correctionFiles());
+
+    // Activate new Jet Energy Corrections
+    //
+    _jec = jec;
 }
 
 // Selector interface
