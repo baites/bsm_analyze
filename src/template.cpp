@@ -76,6 +76,12 @@ int main(int argc, char *argv[])
             npv->GetXaxis()->SetTitleSize(0.045);
             npv->SetMarkerSize(0.1);
 
+            TH1Ptr njets = convert(*analyzer->njets());
+            njets->SetName("njets");
+            njets->GetXaxis()->SetTitle("N_{jet}");
+            njets->GetXaxis()->SetTitleSize(0.045);
+            njets->SetMarkerSize(0.1);
+
             TH1Ptr d0 = convert(*analyzer->d0());
             d0->SetName("d0");
             d0->GetXaxis()->SetTitle("i.p. [cm]");
@@ -142,6 +148,7 @@ int main(int argc, char *argv[])
             if (app->output())
             {
                 npv->Write();
+                njets->Write();
                 d0->Write();
                 htlep->Write();
                 mttbar_before_htlep->Write();
@@ -194,18 +201,21 @@ int main(int argc, char *argv[])
                 npv->Draw("hist");
 
                 canvas2->cd(3);
-                ttbar_pt->Draw("hist");
+                njets->Draw("hist");
 
                 canvas2->cd(4);
-                wlep_mt->Draw("hist");
+                ttbar_pt->Draw("hist");
 
                 canvas2->cd(5);
-                whad_mt->Draw("hist");
+                wlep_mt->Draw("hist");
 
                 canvas2->cd(6);
-                wlep_mass->Draw("hist");
+                whad_mt->Draw("hist");
 
                 canvas2->cd(7);
+                wlep_mass->Draw("hist");
+
+                canvas2->cd(8);
                 whad_mass->Draw("hist");
 
                 first_jet->draw(*analyzer->firstJet());

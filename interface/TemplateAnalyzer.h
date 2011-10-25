@@ -35,6 +35,7 @@ namespace bsm
             TemplateAnalyzer(const TemplateAnalyzer &);
 
             const H1Ptr npv() const;
+            const H1Ptr njets() const;
             const H1Ptr d0() const;
             const H1Ptr htlep() const;
             const H1Ptr mttbarBeforeHtlep() const;
@@ -98,6 +99,7 @@ namespace bsm
             boost::shared_ptr<SynchSelector> _synch_selector;
 
             H1ProxyPtr _npv;
+            H1ProxyPtr _njets;
             H1ProxyPtr _d0;
             H1ProxyPtr _htlep;
             H1ProxyPtr _mttbar_before_htlep;

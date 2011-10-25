@@ -52,6 +52,9 @@ TemplateAnalyzer::TemplateAnalyzer():
     _npv.reset(new H1Proxy(25, 0, 25));
     monitor(_npv);
 
+    _njets.reset(new H1Proxy(15, 0, 15));
+    monitor(_njets);
+
     _d0.reset(new H1Proxy(500, 0, .05));
     monitor(_d0);
 
@@ -116,6 +119,9 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
     _npv = dynamic_pointer_cast<H1Proxy>(object._npv->clone());
     monitor(_npv);
 
+    _njets = dynamic_pointer_cast<H1Proxy>(object._njets->clone());
+    monitor(_njets);
+
     _d0 = dynamic_pointer_cast<H1Proxy>(object._d0->clone());
     monitor(_d0);
 
@@ -171,6 +177,11 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
 const TemplateAnalyzer::H1Ptr TemplateAnalyzer::npv() const
 {
     return _npv->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::njets() const
+{
+    return _njets->histogram();
 }
 
 const TemplateAnalyzer::H1Ptr TemplateAnalyzer::d0() const
@@ -347,6 +358,7 @@ void TemplateAnalyzer::process(const Event *event)
                 _pileup_weight);
         
         npv()->fill(event->primary_vertex().size(), _pileup_weight);
+        njets()->fill(_synch_selector->goodJets().size(), _pileup_weight);
     }
 
     _event = 0;
