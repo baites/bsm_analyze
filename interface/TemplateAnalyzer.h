@@ -41,6 +41,12 @@ namespace bsm
             const H1Ptr mttbarAfterHtlep() const;
             const H2Ptr drVsPtrel() const;
 
+            const H1Ptr ttbarPt() const;
+            const H1Ptr wlepMt() const;
+            const H1Ptr whadMt() const;
+            const H1Ptr wlepMass() const;
+            const H1Ptr whadMass() const;
+
             const P4MonitorPtr firstJet() const;
             const P4MonitorPtr secondJet() const;
             const P4MonitorPtr thirdJet() const;
@@ -77,7 +83,14 @@ namespace bsm
             void fillDrVsPtrel();
             void fillHtlep();
 
-            float mttbar() const;
+            struct Mttbar
+            {
+                LorentzVector mttbar;
+                LorentzVector wlep;
+                LorentzVector whad;
+            };
+
+            Mttbar mttbar() const;
             void monitorJets();
 
             bool isGoodLepton() const;
@@ -90,6 +103,12 @@ namespace bsm
             H1ProxyPtr _mttbar_before_htlep;
             H1ProxyPtr _mttbar_after_htlep;
             H2ProxyPtr _dr_vs_ptrel;
+
+            H1ProxyPtr _ttbar_pt;
+            H1ProxyPtr _wlep_mt;
+            H1ProxyPtr _whad_mt;
+            H1ProxyPtr _wlep_mass;
+            H1ProxyPtr _whad_mass;
 
             const Event *_event;
 

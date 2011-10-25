@@ -184,7 +184,7 @@ namespace bsm
             P4Monitor();
             P4Monitor(const P4Monitor &);
 
-            void fill(const LorentzVector &);
+            void fill(const LorentzVector &, const float &weight = 1);
 
             const H1Ptr energy() const;
             const H1Ptr px() const;

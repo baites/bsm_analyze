@@ -480,18 +480,18 @@ P4Monitor::P4Monitor(const P4Monitor &object)
     _p4.reset(new TLorentzVector());
 }
 
-void P4Monitor::fill(const LorentzVector &p4)
+void P4Monitor::fill(const LorentzVector &p4, const float &weight)
 {
-    energy()->fill(p4.e());
-    px()->fill(p4.px());
-    py()->fill(p4.py());
-    pz()->fill(p4.pz());
+    energy()->fill(p4.e(), weight);
+    px()->fill(p4.px(), weight);
+    py()->fill(p4.py(), weight);
+    pz()->fill(p4.pz(), weight);
 
     utility::set(_p4.get(), &p4);
-    pt()->fill(_p4->Pt());
-    eta()->fill(_p4->Eta());
-    phi()->fill(_p4->Phi());
-    mass()->fill(_p4->M());
+    pt()->fill(_p4->Pt(), weight);
+    eta()->fill(_p4->Eta(), weight);
+    phi()->fill(_p4->Phi(), weight);
+    mass()->fill(_p4->M(), weight);
 }
 
 const H1Ptr P4Monitor::energy() const

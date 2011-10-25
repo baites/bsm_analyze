@@ -55,17 +55,32 @@ TemplateAnalyzer::TemplateAnalyzer():
     _d0.reset(new H1Proxy(500, 0, .05));
     monitor(_d0);
 
-    _htlep.reset(new H1Proxy(50, 0, 500));
+    _htlep.reset(new H1Proxy(500, 0, 500));
     monitor(_htlep);
 
-    _mttbar_before_htlep.reset(new H1Proxy(400, 0, 4000));
+    _mttbar_before_htlep.reset(new H1Proxy(4000, 0, 4000));
     monitor(_mttbar_before_htlep);
 
-    _mttbar_after_htlep.reset(new H1Proxy(400, 0, 4000));
+    _mttbar_after_htlep.reset(new H1Proxy(4000, 0, 4000));
     monitor(_mttbar_after_htlep);
 
     _dr_vs_ptrel.reset(new H2Proxy(100, 0, 100, 15, 0, 1.5));
     monitor(_dr_vs_ptrel);
+
+    _ttbar_pt.reset(new H1Proxy(500, 0, 500));
+    monitor(_ttbar_pt);
+
+    _wlep_mt.reset(new H1Proxy(500, 0, 500));
+    monitor(_wlep_mt);
+
+    _whad_mt.reset(new H1Proxy(500, 0, 500));
+    monitor(_whad_mt);
+
+    _wlep_mass.reset(new H1Proxy(200, 0, 200));
+    monitor(_wlep_mass);
+
+    _whad_mass.reset(new H1Proxy(200, 0, 200));
+    monitor(_whad_mass);
 
     _event = 0;
 
@@ -118,6 +133,21 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
     _dr_vs_ptrel = dynamic_pointer_cast<H2Proxy>(object._dr_vs_ptrel->clone());
     monitor(_dr_vs_ptrel);
 
+    _ttbar_pt = dynamic_pointer_cast<H1Proxy>(object._ttbar_pt->clone());
+    monitor(_ttbar_pt);
+
+    _wlep_mt = dynamic_pointer_cast<H1Proxy>(object._wlep_mt->clone());
+    monitor(_wlep_mt);
+
+    _whad_mt = dynamic_pointer_cast<H1Proxy>(object._whad_mt->clone());
+    monitor(_whad_mt);
+
+    _wlep_mass = dynamic_pointer_cast<H1Proxy>(object._wlep_mass->clone());
+    monitor(_wlep_mass);
+
+    _whad_mass = dynamic_pointer_cast<H1Proxy>(object._whad_mass->clone());
+    monitor(_whad_mass);
+
     _event = 0;
 
     _first_jet =
@@ -168,6 +198,31 @@ const TemplateAnalyzer::H2Ptr TemplateAnalyzer::drVsPtrel() const
     return _dr_vs_ptrel->histogram();
 }
 
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::ttbarPt() const
+{
+    return _ttbar_pt->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::wlepMt() const
+{
+    return _wlep_mt->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::whadMt() const
+{
+    return _whad_mt->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::wlepMass() const
+{
+    return _wlep_mass->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::whadMass() const
+{
+    return _whad_mass->histogram();
+}
+
 const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::firstJet() const
 {
     return _first_jet;
@@ -214,7 +269,7 @@ void TemplateAnalyzer::didCounterAdd(const Counter *counter)
         {
             fillHtlep();
 
-            mttbarBeforeHtlep()->fill(mttbar(),  _pileup_weight);
+            mttbarBeforeHtlep()->fill(mass(mttbar().mttbar),  _pileup_weight);
         }
     }
 }
@@ -276,12 +331,22 @@ void TemplateAnalyzer::process(const Event *event)
     if (_synch_selector->apply(event)
             && isGoodLepton())
     {
-        mttbarAfterHtlep()->fill(mttbar(), _pileup_weight);
+        Mttbar resonanse = mttbar();
+        mttbarAfterHtlep()->fill(mass(resonanse.mttbar), _pileup_weight);
+
+        ttbarPt()->fill(pt(resonanse.mttbar), _pileup_weight);
+
+        wlepMt()->fill(mt(resonanse.wlep), _pileup_weight);
+        whadMt()->fill(mt(resonanse.whad), _pileup_weight);
+
+        wlepMass()->fill(mass(resonanse.wlep), _pileup_weight);
+        whadMass()->fill(mass(resonanse.whad), _pileup_weight);
 
         monitorJets();
-        _electron->fill(_synch_selector->goodElectrons()[0]->physics_object().p4());
+        _electron->fill(_synch_selector->goodElectrons()[0]->physics_object().p4(),
+                _pileup_weight);
         
-        npv()->fill(event->primary_vertex().size());
+        npv()->fill(event->primary_vertex().size(), _pileup_weight);
     }
 
     _event = 0;
@@ -385,11 +450,13 @@ void TemplateAnalyzer::fillDrVsPtrel()
     {
         if (SynchSelector::ELECTRON == _synch_selector->leptonMode())
         {
-            d0()->fill((*_synch_selector->goodElectrons().begin())->extra().d0(),  _pileup_weight);
+            d0()->fill((*_synch_selector->goodElectrons().begin())->extra().d0(),
+                    _pileup_weight);
         }
         else
         {
-            d0()->fill((*_synch_selector->goodMuons().begin())->extra().d0(),  _pileup_weight);
+            d0()->fill((*_synch_selector->goodMuons().begin())->extra().d0(),
+                    _pileup_weight);
         }
     }
 }
@@ -410,16 +477,18 @@ void TemplateAnalyzer::fillHtlep()
         ? (*_synch_selector->goodElectrons().begin())->physics_object().p4()
         : (*_synch_selector->goodMuons().begin())->physics_object().p4();
 
-    htlep()->fill(pt(_event->missing_energy().p4()) + pt(lepton_p4),  _pileup_weight);
+    htlep()->fill(pt(_event->missing_energy().p4()) + pt(lepton_p4),
+            _pileup_weight);
 }
 
-float TemplateAnalyzer::mttbar() const
+TemplateAnalyzer::Mttbar TemplateAnalyzer::mttbar() const
 {
+    Mttbar result;
     if (!_event)
     {
         clog << "event is not available: can not reconstruct mttbar" << endl;
 
-        return 0;
+        return result;
     }
 
     // Note: leptons are kept in a vector of pointers
@@ -434,7 +503,7 @@ float TemplateAnalyzer::mttbar() const
         clog << _synch_selector->goodJets().size()
             << " good jets are found: skip hypothesis generation" << endl;
 
-        return 0;
+        return result;
     }
 
     // Reconstruct the neutrino pZ and keep solutions in vector for later
@@ -561,19 +630,26 @@ float TemplateAnalyzer::mttbar() const
 
     // Best Solution is found
     //
-    return mass(best_solution.ltop + best_solution.htop);
+    result.mttbar = best_solution.ltop + best_solution.htop;
+    result.wlep = best_solution.missing_energy +
+        _synch_selector->goodElectrons()[0]->physics_object().p4();
+
+    return result;
 }
 
 void TemplateAnalyzer::monitorJets()
 {
     if (_synch_selector->goodJets().size())
-        _first_jet->fill(*_synch_selector->goodJets()[0].corrected_p4);
+        _first_jet->fill(*_synch_selector->goodJets()[0].corrected_p4,
+                _pileup_weight);
 
     if (1 < _synch_selector->goodJets().size())
-        _second_jet->fill(*_synch_selector->goodJets()[1].corrected_p4);
+        _second_jet->fill(*_synch_selector->goodJets()[1].corrected_p4,
+                _pileup_weight);
 
     if (2 < _synch_selector->goodJets().size())
-        _third_jet->fill(*_synch_selector->goodJets()[2].corrected_p4);
+        _third_jet->fill(*_synch_selector->goodJets()[2].corrected_p4,
+                _pileup_weight);
 }
 
 bool TemplateAnalyzer::isGoodLepton() const
