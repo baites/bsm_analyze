@@ -63,6 +63,7 @@ NeutrinoReconstruct::Solutions
         LorentzVectorPtr solution(new LorentzVector());
         *solution = neutrino;
         solution->set_pz(-B / A);
+        solution->set_e(magnitude(toVector(*solution)));
 
         solutions.push_back(solution);
     }
@@ -73,12 +74,14 @@ NeutrinoReconstruct::Solutions
         LorentzVectorPtr solution(new LorentzVector());
         *solution = neutrino;
         solution->set_pz((-B - discriminant) / A);
+        solution->set_e(magnitude(toVector(*solution)));
 
         solutions.push_back(solution);
 
         solution.reset(new LorentzVector());
         *solution = neutrino;
         solution->set_pz((-B + discriminant) / A);
+        solution->set_e(magnitude(toVector(*solution)));
 
         solutions.push_back(solution);
     }
