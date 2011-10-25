@@ -98,3 +98,12 @@ bool CorrectedPtLess::operator()(const CorrectedJet &v1, const CorrectedJet &v2)
 {
     return _pt_less(v1.corrected_p4, v2.corrected_p4);
 }
+
+
+
+// Corrected PtGreater
+//
+bool CorrectedPtGreater::operator()(const CorrectedJet &v1, const CorrectedJet &v2)
+{
+    return _pt_greater(v1.corrected_p4, v2.corrected_p4);
+}

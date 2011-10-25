@@ -75,6 +75,12 @@ namespace bsm
 
     class Summary;
     class PileupCorrections;
+
+    class PtLess;
+    class PtGreater;
+
+    class CorrectedPtLess;
+    class CorrectedPtGreater;
 }
 
 #endif

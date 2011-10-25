@@ -131,6 +131,15 @@ namespace bsm
         private:
             PtLess _pt_less;
     };
+
+    struct CorrectedPtGreater
+    {
+        public:
+            virtual bool operator()(const CorrectedJet &v1, const CorrectedJet &v2);
+
+        private:
+            PtGreater _pt_greater;
+    };
 }
 
 template<typename T>
