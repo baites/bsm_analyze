@@ -457,8 +457,8 @@ bool SynchSelector::jets(const Event *event)
 
     // Sort jets by pT
     //
-    sort(_nice_jets.begin(), _nice_jets.end(), CorrectedPtLess());
-    sort(_good_jets.begin(), _good_jets.end(), CorrectedPtLess());
+    sort(_nice_jets.begin(), _nice_jets.end(), CorrectedPtGreater());
+    sort(_good_jets.begin(), _good_jets.end(), CorrectedPtGreater());
 
     return 1 < _good_jets.size()
         && (_cutflow->apply(JET), true);

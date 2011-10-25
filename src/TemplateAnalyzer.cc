@@ -541,16 +541,14 @@ float TemplateAnalyzer::mttbar() const
 
 void TemplateAnalyzer::monitorJets()
 {
-    typedef SynchSelector::GoodJets GoodJets;
+    if (_synch_selector->goodJets().size())
+        _first_jet->fill(*_synch_selector->goodJets()[0].corrected_p4);
 
-    GoodJets::const_iterator first_jet = _synch_selector->goodJets().end();
-    GoodJets::const_iterator second_jet = _synch_selector->goodJets().end();
-    GoodJets::const_iterator third_jet = _synch_selector->goodJets().end();
-    for(GoodJets::const_iterator jet = _synch_selector->goodJets().begin();
-            _synch_selector->goodJets().end() != jet;
-            ++jet)
-    {
-    }
+    if (1 < _synch_selector->goodJets().size())
+        _second_jet->fill(*_synch_selector->goodJets()[1].corrected_p4);
+
+    if (2 < _synch_selector->goodJets().size())
+        _third_jet->fill(*_synch_selector->goodJets()[2].corrected_p4);
 }
 
 bool TemplateAnalyzer::isGoodLepton() const
