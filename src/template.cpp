@@ -76,6 +76,12 @@ int main(int argc, char *argv[])
             npv->GetXaxis()->SetTitleSize(0.045);
             npv->SetMarkerSize(0.1);
 
+            TH1Ptr npv_with_pileup = convert(*analyzer->npvWithPileup());
+            npv_with_pileup->SetName("npv_with_pileup");
+            npv_with_pileup->GetXaxis()->SetTitle("N_{PV}^{with PU}");
+            npv_with_pileup->GetXaxis()->SetTitleSize(0.045);
+            npv_with_pileup->SetMarkerSize(0.1);
+
             TH1Ptr njets = convert(*analyzer->njets());
             njets->SetName("njets");
             njets->GetXaxis()->SetTitle("N_{jet}");
@@ -148,6 +154,7 @@ int main(int argc, char *argv[])
             if (app->output())
             {
                 npv->Write();
+                npv_with_pileup->Write();
                 njets->Write();
                 d0->Write();
                 htlep->Write();
@@ -197,9 +204,6 @@ int main(int argc, char *argv[])
                 canvas2->cd(1);
                 d0->Draw("hist");
 
-                canvas2->cd(2);
-                npv->Draw("hist");
-
                 canvas2->cd(3);
                 njets->Draw("hist");
 
@@ -217,6 +221,17 @@ int main(int argc, char *argv[])
 
                 canvas2->cd(8);
                 whad_mass->Draw("hist");
+
+                shared_ptr<TCanvas> canvas3(new TCanvas());
+                canvas3->SetTitle("Primary Vertices");
+                canvas3->SetWindowSize(640, 400);
+                canvas3->Divide(2, 1);
+
+                canvas3->cd(1);
+                npv->Draw("hist");
+
+                canvas3->cd(2);
+                npv_with_pileup->Draw("hist");
 
                 first_jet->draw(*analyzer->firstJet());
                 second_jet->draw(*analyzer->secondJet());

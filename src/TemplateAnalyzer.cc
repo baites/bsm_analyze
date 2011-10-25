@@ -14,6 +14,7 @@
 #include "bsm_input/interface/Algebra.h"
 #include "bsm_input/interface/Electron.pb.h"
 #include "bsm_input/interface/Event.pb.h"
+#include "bsm_input/interface/Input.pb.h"
 #include "bsm_input/interface/Jet.pb.h"
 #include "bsm_input/interface/Muon.pb.h"
 #include "bsm_input/interface/Physics.pb.h"
@@ -34,7 +35,8 @@ using namespace boost;
 using bsm::TemplateAnalyzer;
 
 TemplateAnalyzer::TemplateAnalyzer():
-    _is_good_lepton(false)
+    _is_good_lepton(false),
+    _use_pileup(false)
 {
     _synch_selector.reset(new SynchSelector());
     monitor(_synch_selector);
@@ -51,6 +53,9 @@ TemplateAnalyzer::TemplateAnalyzer():
 
     _npv.reset(new H1Proxy(25, 0, 25));
     monitor(_npv);
+
+    _npv_with_pileup.reset(new H1Proxy(25, 0, 25));
+    monitor(_npv_with_pileup);
 
     _njets.reset(new H1Proxy(15, 0, 15));
     monitor(_njets);
@@ -100,7 +105,8 @@ TemplateAnalyzer::TemplateAnalyzer():
 
 TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
     _is_good_lepton(object.isGoodLepton()),
-    _triggers(object._triggers.begin(), object._triggers.end())
+    _triggers(object._triggers.begin(), object._triggers.end()),
+    _use_pileup(false)
 {
     _synch_selector = 
         dynamic_pointer_cast<SynchSelector>(object._synch_selector->clone());
@@ -118,6 +124,9 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
 
     _npv = dynamic_pointer_cast<H1Proxy>(object._npv->clone());
     monitor(_npv);
+
+    _npv_with_pileup = dynamic_pointer_cast<H1Proxy>(object._npv_with_pileup->clone());
+    monitor(_npv_with_pileup);
 
     _njets = dynamic_pointer_cast<H1Proxy>(object._njets->clone());
     monitor(_njets);
@@ -177,6 +186,11 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
 const TemplateAnalyzer::H1Ptr TemplateAnalyzer::npv() const
 {
     return _npv->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::npvWithPileup() const
+{
+    return _npv_with_pileup->histogram();
 }
 
 const TemplateAnalyzer::H1Ptr TemplateAnalyzer::njets() const
@@ -292,12 +306,23 @@ void TemplateAnalyzer::setTrigger(const Trigger &trigger)
 
 void TemplateAnalyzer::onFileOpen(const std::string &filename, const Input *input)
 {
+    if (input->has_type())
+    {
+        _use_pileup = Input::DATA != input->type();
+    }
+    else
+    {
+        clog << "Input type is not available: pile-up correction is not applied"
+            << endl;
+
+        _use_pileup = false;
+    }
 }
 
 void TemplateAnalyzer::process(const Event *event)
 {
     _is_good_lepton = false;
-    _pileup_weight = 0;
+    _pileup_weight = _use_pileup ? 0 : 1;
 
     if (!event->has_missing_energy())
         return;
@@ -335,7 +360,8 @@ void TemplateAnalyzer::process(const Event *event)
     }
 
     _event = event;
-    _pileup_weight = _pileup_corrections.scale(event);
+    if (_use_pileup)
+        _pileup_weight = _pileup_corrections.scale(event);
 
     // Process only events, that pass the synch selector
     //
@@ -357,12 +383,12 @@ void TemplateAnalyzer::process(const Event *event)
         _electron->fill(_synch_selector->goodElectrons()[0]->physics_object().p4(),
                 _pileup_weight);
         
-        npv()->fill(event->primary_vertex().size(), _pileup_weight);
+        npv()->fill(event->primary_vertex().size());
+        npvWithPileup()->fill(event->primary_vertex().size(), _pileup_weight);
         njets()->fill(_synch_selector->goodJets().size(), _pileup_weight);
     }
 
     _event = 0;
-    _pileup_weight = 0;
 }
 
 uint32_t TemplateAnalyzer::id() const
