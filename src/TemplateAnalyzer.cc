@@ -49,6 +49,9 @@ TemplateAnalyzer::TemplateAnalyzer():
                 SynchSelector::LEADING_JET)->objects().get();
     _leading_jet_counter->setDelegate(this);
 
+    _npv.reset(new H1Proxy(25, 0, 25));
+    monitor(_npv);
+
     _d0.reset(new H1Proxy(500, 0, .05));
     monitor(_d0);
 
@@ -95,6 +98,9 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
                 SynchSelector::LEADING_JET)->objects().get();
     _leading_jet_counter->setDelegate(this);
 
+    _npv = dynamic_pointer_cast<H1Proxy>(object._npv->clone());
+    monitor(_npv);
+
     _d0 = dynamic_pointer_cast<H1Proxy>(object._d0->clone());
     monitor(_d0);
 
@@ -130,6 +136,11 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
     monitor(_second_jet);
     monitor(_third_jet);
     monitor(_electron);
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::npv() const
+{
+    return _npv->histogram();
 }
 
 const TemplateAnalyzer::H1Ptr TemplateAnalyzer::d0() const
@@ -269,6 +280,8 @@ void TemplateAnalyzer::process(const Event *event)
 
         monitorJets();
         _electron->fill(_synch_selector->goodElectrons()[0]->physics_object().p4());
+        
+        npv()->fill(event->primary_vertex().size());
     }
 
     _event = 0;

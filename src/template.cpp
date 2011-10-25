@@ -70,6 +70,12 @@ int main(int argc, char *argv[])
 
             TGaxis::SetMaxDigits(3);
 
+            TH1Ptr npv = convert(*analyzer->npv());
+            npv->SetName("npv");
+            npv->GetXaxis()->SetTitle("N_{PV}");
+            npv->GetXaxis()->SetTitleSize(0.045);
+            npv->SetMarkerSize(0.1);
+
             TH1Ptr d0 = convert(*analyzer->d0());
             d0->SetName("d0");
             d0->GetXaxis()->SetTitle("i.p. [cm]");
@@ -105,6 +111,7 @@ int main(int argc, char *argv[])
 
             if (app->output())
             {
+                npv->Write();
                 d0->Write();
                 htlep->Write();
                 mttbar_before_htlep->Write();
@@ -145,7 +152,10 @@ int main(int argc, char *argv[])
                 canvas2->Divide(2, 2);
 
                 canvas2->cd(1);
-                d0->Draw("h");
+                d0->Draw("hist");
+
+                canvas2->cd(2);
+                npv->Draw("hist");
 
                 first_jet->draw(*analyzer->firstJet());
                 second_jet->draw(*analyzer->secondJet());
