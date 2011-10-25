@@ -43,6 +43,7 @@ namespace bsm
             const P4MonitorPtr firstJet() const;
             const P4MonitorPtr secondJet() const;
             const P4MonitorPtr thirdJet() const;
+            const P4MonitorPtr electron() const;
 
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
             SynchSelectorDelegate *getSynchSelectorDelegate() const;
@@ -104,6 +105,7 @@ namespace bsm
             P4MonitorPtr _first_jet;
             P4MonitorPtr _second_jet;
             P4MonitorPtr _third_jet;
+            P4MonitorPtr _electron;
     };
 }
 

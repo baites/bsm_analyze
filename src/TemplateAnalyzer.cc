@@ -69,10 +69,12 @@ TemplateAnalyzer::TemplateAnalyzer():
     _first_jet.reset(new P4Monitor());
     _second_jet.reset(new P4Monitor());
     _third_jet.reset(new P4Monitor());
+    _electron.reset(new P4Monitor());
 
     monitor(_first_jet);
     monitor(_second_jet);
     monitor(_third_jet);
+    monitor(_electron);
 }
 
 TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
@@ -121,9 +123,13 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
     _third_jet =
         dynamic_pointer_cast<P4Monitor>(object._third_jet->clone());
 
+    _electron =
+        dynamic_pointer_cast<P4Monitor>(object._electron->clone());
+
     monitor(_first_jet);
     monitor(_second_jet);
     monitor(_third_jet);
+    monitor(_electron);
 }
 
 const TemplateAnalyzer::H1Ptr TemplateAnalyzer::d0() const
@@ -164,6 +170,11 @@ const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::secondJet() const
 const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::thirdJet() const
 {
     return _third_jet;
+}
+
+const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::electron() const
+{
+    return _electron;
 }
 
 bsm::JetEnergyCorrectionDelegate
@@ -257,6 +268,7 @@ void TemplateAnalyzer::process(const Event *event)
         mttbarAfterHtlep()->fill(mttbar(), _pileup_weight);
 
         monitorJets();
+        _electron->fill(_synch_selector->goodElectrons()[0]->physics_object().p4());
     }
 
     _event = 0;

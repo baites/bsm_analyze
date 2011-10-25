@@ -101,6 +101,7 @@ int main(int argc, char *argv[])
             shared_ptr<P4Canvas> first_jet(new P4Canvas("First jet"));
             shared_ptr<P4Canvas> second_jet(new P4Canvas("Second jet"));
             shared_ptr<P4Canvas> third_jet(new P4Canvas("Third jet"));
+            shared_ptr<P4Canvas> electron(new P4Canvas("Electron"));
 
             if (app->output())
             {
@@ -113,6 +114,8 @@ int main(int argc, char *argv[])
                 first_jet->write(app->output().get(), *analyzer->firstJet());
                 second_jet->write(app->output().get(), *analyzer->secondJet());
                 third_jet->write(app->output().get(), *analyzer->thirdJet());
+
+                electron->write(app->output().get(), *analyzer->electron());
             }
 
             if (app->isInteractive())
@@ -147,6 +150,8 @@ int main(int argc, char *argv[])
                 first_jet->draw(*analyzer->firstJet());
                 second_jet->draw(*analyzer->secondJet());
                 third_jet->draw(*analyzer->thirdJet());
+
+                electron->draw(*analyzer->electron());
 
                 root->Run();
             }
