@@ -14,20 +14,7 @@
 #include "bsm_input/interface/Physics.pb.h"
 #include "interface/Algorithm.h"
 
-using bsm::NeutrinoReconstruct;
-using bsm::TTbarDeltaRReconstruct;
-using bsm::JetIterator;
-using bsm::JetsSelector;
-
-/*
-using bsm::algorithm::ClosestJet;
-using bsm::algorithm::NeutrinoReconstruct;
-using bsm::algorithm::HadronicDecay;
-using bsm::algorithm::LeptonicDecay;
-using bsm::algorithm::TTbarDeltaRReconstruct;
-
-using bsm::core::ID;
-*/
+using namespace bsm;
 
 // Neutrino Recontstruct: neglect products masses
 //
@@ -89,7 +76,7 @@ NeutrinoReconstruct::Solutions
 
         solutions.push_back(solution);
 
-        solution = LorentzVectorPtr(new LorentzVector());
+        solution.reset(new LorentzVector());
         *solution = neutrino;
         solution->set_pz((-B + discriminant) / A);
 
@@ -405,7 +392,7 @@ ClosestJet::ClosestJet(const ClosestJet &object)
     _p4.reset(new TLorentzVector());
 }
 
-const bsm::Jet *ClosestJet::find(const Jets &jets,
+const Jet *ClosestJet::find(const Jets &jets,
                                        const Electron &electron)
 {
     if (!jets.size())
@@ -416,7 +403,7 @@ const bsm::Jet *ClosestJet::find(const Jets &jets,
     return find(jets);
 }
 
-const bsm::Jet *ClosestJet::find(const Jets &jets, const Muon &muon)
+const Jet *ClosestJet::find(const Jets &jets, const Muon &muon)
 {
     if (!jets.size())
         return 0;
@@ -443,7 +430,7 @@ void ClosestJet::print(std::ostream &out) const
 
 // Privates
 //
-const bsm::Jet *ClosestJet::find(const Jets &jets)
+const Jet *ClosestJet::find(const Jets &jets)
 {
     TLorentzVector lepton_p4(*_p4);
 
@@ -672,8 +659,8 @@ float HadronicDecay::apply(const LorentzVector &w, const LorentzVector &b)
     *_top += w;
     *_top += b;
 
-    _dr_w_top = bsm::dr(w, *_top);
-    _dr_b_top = bsm::dr(b, *_top);
+    _dr_w_top = dr(w, *_top);
+    _dr_b_top = dr(b, *_top);
     _dr = _dr_w_top + _dr_b_top;
 
     return _dr;
@@ -782,9 +769,9 @@ float LeptonicDecay::apply(const LorentzVector &l,
     *_top += nu;
     *_top += b;
 
-    _dr_l_top = bsm::dr(l, *_top);
-    _dr_nu_top = bsm::dr(nu, *_top);
-    _dr_b_top = bsm::dr(b, *_top);
+    _dr_l_top = dr(l, *_top);
+    _dr_nu_top = dr(nu, *_top);
+    _dr_b_top = dr(b, *_top);
     _dr = _dr_l_top + _dr_nu_top + _dr_b_top;
 
     return _dr;
