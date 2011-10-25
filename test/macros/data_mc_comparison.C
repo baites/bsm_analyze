@@ -1,5 +1,6 @@
 float luminosity = 3393.157;
 //float luminosity = 216.200;
+string plot_name = "njets";
 
 enum InputType
 {
@@ -362,7 +363,7 @@ TH1 *get(const TFile *input, const string &path, const InputType &input_type)
         return 0;
     }
 
-    hist->Rebin(10);
+    //hist->Rebin(20);
 
     style(hist, input_type);
 
@@ -459,20 +460,20 @@ void loadFiles()
 
 void plotComparison(TFile **input, const string &title, const bool &draw_mc_first = false)
 {
-    TH1 *ttjets = get(input[TTJETS], "mttbar_after_htlep", TTJETS);
+    TH1 *ttjets = get(input[TTJETS], plot_name.c_str(), TTJETS);
     scale(ttjets, TTJETS);
 
-    TH1 *zjets = get(input[ZJETS], "mttbar_after_htlep", ZJETS);
+    TH1 *zjets = get(input[ZJETS], plot_name.c_str(), ZJETS);
     scale(zjets, ZJETS);
 
-    TH1 *wjets = get(input[WJETS], "mttbar_after_htlep", WJETS);
+    TH1 *wjets = get(input[WJETS], plot_name.c_str(), WJETS);
     scale(wjets, WJETS);
     
-    TH1 *stop = merge(input, "mttbar_after_htlep", STOP_S, STOP_S + STOP_CHANNELS);
-    TH1 *qcd = merge(input, "mttbar_after_htlep", 0, QCD_CHANNELS);
+    TH1 *stop = merge(input, plot_name.c_str(), STOP_S, STOP_S + STOP_CHANNELS);
+    TH1 *qcd = merge(input, plot_name.c_str(), 0, QCD_CHANNELS);
 
-    TH1 *data = merge(input, "mttbar_after_htlep", RERECO_2011A_MAY10, RERECO_2011A_MAY10 + SIGNAL_CHANELS);
-    //TH1 *data = merge(input, "mttbar_after_htlep", RERECO_2011A_MAY10, RERECO_2011A_MAY10 + 1);
+    TH1 *data = merge(input, plot_name.c_str(), RERECO_2011A_MAY10, RERECO_2011A_MAY10 + SIGNAL_CHANELS);
+    //TH1 *data = merge(input, plot_name.c_str(), RERECO_2011A_MAY10, RERECO_2011A_MAY10 + 1);
     
     THStack *stack = new THStack();
     stack->Add(ttjets);
@@ -492,8 +493,6 @@ void plotComparison(TFile **input, const string &title, const bool &draw_mc_firs
         stack->Draw("hist same");
         data->Draw("same");
     }
-
-    stack->GetHistogram()->GetXaxis()->SetTitle("H_{T}^{lep} [GeV]");
 
     TLegend *legend = createLegend(title);
     legend->AddEntry(ttjets, "t#bar{t}", "fe");
@@ -521,11 +520,11 @@ void plotDataMcComparison()
 
 void plotData(TFile **input, const string &title)
 {
-    TH1 *rereco_2011a_may10 = get(input[RERECO_2011A_MAY10], "mttbar_after_htlep", RERECO_2011A_MAY10);
-    TH1 *rereco_2011a_aug05 = get(input[RERECO_2011A_AUG05], "mttbar_after_htlep", RERECO_2011A_AUG05);
-    TH1 *prompt_2011a_v4 = get(input[PROMPT_2011A_V4], "mttbar_after_htlep", PROMPT_2011A_V4);
-    TH1 *prompt_2011a_v6 = get(input[PROMPT_2011A_V6], "mttbar_after_htlep", PROMPT_2011A_V6);
-    TH1 *prompt_2011b_v1 = get(input[PROMPT_2011B_V1], "mttbar_after_htlep", PROMPT_2011B_V1);
+    TH1 *rereco_2011a_may10 = get(input[RERECO_2011A_MAY10], plot_name.c_str(), RERECO_2011A_MAY10);
+    TH1 *rereco_2011a_aug05 = get(input[RERECO_2011A_AUG05], plot_name.c_str(), RERECO_2011A_AUG05);
+    TH1 *prompt_2011a_v4 = get(input[PROMPT_2011A_V4], plot_name.c_str(), PROMPT_2011A_V4);
+    TH1 *prompt_2011a_v6 = get(input[PROMPT_2011A_V6], plot_name.c_str(), PROMPT_2011A_V6);
+    TH1 *prompt_2011b_v1 = get(input[PROMPT_2011B_V1], plot_name.c_str(), PROMPT_2011B_V1);
 
     styleData(rereco_2011a_may10, RERECO_2011A_MAY10);
     styleData(rereco_2011a_aug05, RERECO_2011A_AUG05);
@@ -541,7 +540,7 @@ void plotData(TFile **input, const string &title)
     stack->Add(prompt_2011b_v1);
 
     stack->Draw("hist");
-    stack->GetHistogram()->GetXaxis()->SetTitle("H_{T}^{lep} [GeV/c^{2}]");
+    stack->GetHistogram()->GetXaxis()->SetTitle(rereco_2011a_may10->GetXaxis()->GetTitle());
 
     TLegend *legend = createLegend(title);
     legend->AddEntry(rereco_2011a_may10, toString(RERECO_2011A_MAY10).c_str(), "fe");
@@ -554,17 +553,17 @@ void plotData(TFile **input, const string &title)
 
 void plotMC(TFile **input, const string &title)
 {
-    TH1 *ttjets = get(input[TTJETS], "mttbar_after_htlep", TTJETS);
+    TH1 *ttjets = get(input[TTJETS], plot_name.c_str(), TTJETS);
     scale(ttjets, TTJETS);
 
-    TH1 *zjets = get(input[ZJETS], "mttbar_after_htlep", ZJETS);
+    TH1 *zjets = get(input[ZJETS], plot_name.c_str(), ZJETS);
     scale(zjets, ZJETS);
 
-    TH1 *wjets = get(input[WJETS], "mttbar_after_htlep", WJETS);
+    TH1 *wjets = get(input[WJETS], plot_name.c_str(), WJETS);
     scale(wjets, WJETS);
 
-    TH1 *stop = merge(input, "mttbar_after_htlep", STOP_S, STOP_S + STOP_CHANNELS);
-    TH1 *qcd = merge(input, "mttbar_after_htlep", 0, QCD_CHANNELS);
+    TH1 *stop = merge(input, plot_name.c_str(), STOP_S, STOP_S + STOP_CHANNELS);
+    TH1 *qcd = merge(input, plot_name.c_str(), 0, QCD_CHANNELS);
     
     THStack *stack = new THStack();
     stack->Add(ttjets);
@@ -574,7 +573,7 @@ void plotMC(TFile **input, const string &title)
     stack->Add(qcd);
 
     stack->Draw("hist");
-    stack->GetHistogram()->GetXaxis()->SetTitle("H_{T}^{lep} [GeV/c^{2}]");
+    stack->GetHistogram()->GetXaxis()->SetTitle(ttjets->GetXaxis()->GetTitle());
 
     TLegend *legend = createLegend(title);
     legend->AddEntry(ttjets, "t#bar{t}", "fe");
@@ -621,7 +620,7 @@ void data_mc_comparison()
     gStyle->SetOptStat(kFALSE);
 
     loadFiles();
-    plotDataComparison();
-    plotMCComparison();
+    //plotDataComparison();
+    //plotMCComparison();
     plotDataMcComparison();
 }
