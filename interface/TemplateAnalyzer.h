@@ -97,6 +97,7 @@ namespace bsm
             void monitorJets();
 
             bool isGoodLepton() const;
+            bool isBtagJet() const;
 
             boost::shared_ptr<SynchSelector> _synch_selector;
 

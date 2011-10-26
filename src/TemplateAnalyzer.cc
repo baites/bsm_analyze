@@ -366,8 +366,10 @@ void TemplateAnalyzer::process(const Event *event)
     // Process only events, that pass the synch selector
     //
     if (_synch_selector->apply(event)
-            && isGoodLepton())
+            && isGoodLepton()
+            && isBtagJet())
     {
+        
         Mttbar resonanse = mttbar();
         mttbarAfterHtlep()->fill(mass(resonanse.mttbar), _pileup_weight);
 
@@ -693,4 +695,30 @@ void TemplateAnalyzer::monitorJets()
 bool TemplateAnalyzer::isGoodLepton() const
 {
     return _is_good_lepton;
+}
+
+bool TemplateAnalyzer::isBtagJet() const
+{
+    typedef ::google::protobuf::RepeatedPtrField<Jet::BTag> BTags;
+
+    // require at least one jet to be b-Tagged
+    //
+    for(SynchSelector::GoodJets::const_iterator jet =
+            _synch_selector->goodJets().begin();
+            _synch_selector->goodJets().end() != jet;
+            ++jet)
+    {
+        for(BTags::const_iterator btag = jet->jet->btag().begin();
+                jet->jet->btag().end() != btag;
+                ++btag)
+        {
+            if (Jet::BTag::TCHE == btag->type()
+                    && 3.3 <= btag->discriminator())
+            {
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
