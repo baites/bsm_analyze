@@ -136,13 +136,13 @@ int main(int argc, char *argv[])
 
             TH1Ptr wlep_mass = convert(*analyzer->wlepMass());
             wlep_mass->SetName("wlep_mass");
-            wlep_mass->GetXaxis()->SetTitle("M_{T}^{W,lep} [GeV/c^{2}]");
+            wlep_mass->GetXaxis()->SetTitle("M^{W,lep} [GeV/c^{2}]");
             wlep_mass->GetXaxis()->SetTitleSize(0.045);
             wlep_mass->SetMarkerSize(0.1);
 
             TH1Ptr whad_mass = convert(*analyzer->whadMass());
             whad_mass->SetName("whad_mass");
-            whad_mass->GetXaxis()->SetTitle("M_{T}^{W,had} [GeV/c^{2}]");
+            whad_mass->GetXaxis()->SetTitle("M^{W,had} [GeV/c^{2}]");
             whad_mass->GetXaxis()->SetTitleSize(0.045);
             whad_mass->SetMarkerSize(0.1);
 
