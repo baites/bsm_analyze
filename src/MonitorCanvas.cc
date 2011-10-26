@@ -24,7 +24,7 @@ using namespace std;
 using bsm::DeltaCanvas;
 using bsm::ElectronCanvas;
 using bsm::JetCanvas;
-using bsm::LorentzVectorCanvas;
+using bsm::P4Canvas;
 using bsm::MissingEnergyCanvas;
 using bsm::MuonCanvas;
 using bsm::PrimaryVertexCanvas;
@@ -110,18 +110,18 @@ void ElectronCanvas::draw(const ElectronsMonitor &monitor)
 
 // LorentzVector Canvas
 //
-LorentzVectorCanvas::IDPtr LorentzVectorCanvas::_id(new core::IDCounter());
+P4Canvas::IDPtr P4Canvas::_id(new core::IDCounter());
 
-LorentzVectorCanvas::LorentzVectorCanvas(const string &title)
+P4Canvas::P4Canvas(const string &title)
 {
     ostringstream name;
-    name << "lorentz_vector_canvas_" << LorentzVectorCanvas::_id->add();
+    name << "lorentz_vector_canvas_" << P4Canvas::_id->add();
 
     _name = name.str();
     _title = title;
 }
 
-void LorentzVectorCanvas::draw(const LorentzVectorMonitor &monitor)
+void P4Canvas::draw(const P4Monitor &monitor)
 {
     if (!_canvas)
     {
@@ -178,7 +178,7 @@ void LorentzVectorCanvas::draw(const LorentzVectorMonitor &monitor)
     _mass->Draw("hist");
 }
 
-void LorentzVectorCanvas::write(TDirectory *dir, const LorentzVectorMonitor &monitor)
+void P4Canvas::write(TDirectory *dir, const P4Monitor &monitor)
 {
     string subdir_name = _title;
     replace(subdir_name.begin(), subdir_name.end(), ' ', '_');

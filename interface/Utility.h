@@ -11,6 +11,11 @@
 #include <ostream>
 #include <functional>
 
+#include <boost/shared_ptr.hpp>
+
+#include "bsm_input/interface/bsm_input_fwd.h"
+#include "interface/bsm_fwd.h"
+
 class TLorentzVector;
 
 namespace bsm
@@ -101,6 +106,40 @@ namespace bsm
 
     template<typename T>
         std::ostream &operator <<(std::ostream &, const std::logical_or<T> &);
+
+    struct PtLess
+    {
+        public:
+            typedef boost::shared_ptr<LorentzVector> P4Ptr;
+
+            virtual bool operator()(const P4Ptr &v1, const P4Ptr &v2);
+    };
+
+    struct PtGreater
+    {
+        public:
+            typedef boost::shared_ptr<LorentzVector> P4Ptr;
+
+            bool operator()(const P4Ptr &v1, const P4Ptr &v2);
+    };
+
+    struct CorrectedPtLess
+    {
+        public:
+            virtual bool operator()(const CorrectedJet &v1, const CorrectedJet &v2);
+
+        private:
+            PtLess _pt_less;
+    };
+
+    struct CorrectedPtGreater
+    {
+        public:
+            virtual bool operator()(const CorrectedJet &v1, const CorrectedJet &v2);
+
+        private:
+            PtGreater _pt_greater;
+    };
 }
 
 template<typename T>

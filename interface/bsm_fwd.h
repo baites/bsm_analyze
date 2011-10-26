@@ -48,7 +48,7 @@ namespace bsm
     class ElectronsMonitor;
     class GenParticleMonitor;
     class JetsMonitor;
-    class LorentzVectorMonitor;
+    class P4Monitor;
     class MissingEnergyMonitor;
     class MuonsMonitor;
     class PrimaryVerticesMonitor;
@@ -56,6 +56,8 @@ namespace bsm
     class JetEnergyCorrectionOptions;
     class JetEnergyCorrections;
     class JetEnergyCorrectionDelegate;
+
+    class CorrectedJet;
 
     class SynchSelectorOptions;
     class SynchSelector;
@@ -72,6 +74,13 @@ namespace bsm
     class H2Proxy;
 
     class Summary;
+    class PileupCorrections;
+
+    class PtLess;
+    class PtGreater;
+
+    class CorrectedPtLess;
+    class CorrectedPtGreater;
 }
 
 #endif

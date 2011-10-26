@@ -23,6 +23,7 @@
 #include "interface/EventDump.h"
 #include "interface/bsm_fwd.h"
 #include "interface/SynchSelector.h"
+#include "interface/TriggerAnalyzer.h"
 
 class FactorizedJetCorrector;
 
@@ -75,7 +76,8 @@ namespace bsm
     class SynchAnalyzer : public Analyzer,
         public SynchAnalyzerDelegate,
         public CounterDelegate,
-        public EventDumpDelegate
+        public EventDumpDelegate,
+        public TriggerDelegate
     {
         public:
             SynchAnalyzer();
@@ -104,6 +106,10 @@ namespace bsm
             //
             virtual void setEventNumber(const Event::Extra &);
 
+            // Trigger Delegate inteface
+            //
+            virtual void setTrigger(const Trigger &);
+
             // Object interface
             //
             virtual uint32_t id() const;
@@ -127,6 +133,9 @@ namespace bsm
             const Event *_event;
 
             std::vector<Event::Extra> _events_to_dump;
+
+            typedef std::vector<uint64_t> Triggers;
+            Triggers _triggers; // hashes of triggers to be passed
     };
 
     std::ostream &operator <<(std::ostream &, const SynchMode &);

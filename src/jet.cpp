@@ -31,7 +31,7 @@ using boost::shared_ptr;
 using bsm::AppController;
 using bsm::JetEnergyCorrectionOptions;
 using bsm::DeltaCanvas;
-using bsm::LorentzVectorCanvas;
+using bsm::P4Canvas;
 using bsm::JetAnalyzer;
 using bsm::SynchSelectorOptions;
 
@@ -68,14 +68,14 @@ int main(int argc, char *argv[])
 
             TGaxis::SetMaxDigits(3);
 
-            shared_ptr<LorentzVectorCanvas> reco_leading_jet_canvas(
-                    new LorentzVectorCanvas("Reco Leading Jet"));
+            shared_ptr<P4Canvas> reco_leading_jet_canvas(
+                    new P4Canvas("Reco Leading Jet"));
 
-            shared_ptr<LorentzVectorCanvas> hlt_leading_jet_canvas(
-                    new LorentzVectorCanvas("HLT Leading Jet"));
+            shared_ptr<P4Canvas> hlt_leading_jet_canvas(
+                    new P4Canvas("HLT Leading Jet"));
 
-            shared_ptr<LorentzVectorCanvas> selected_hlt_leading_jet_canvas(
-                    new LorentzVectorCanvas("Selected HLT Leading Jet"));
+            shared_ptr<P4Canvas> selected_hlt_leading_jet_canvas(
+                    new P4Canvas("Selected HLT Leading Jet"));
 
             if (app->output())
             {

@@ -26,6 +26,7 @@ using bsm::JetEnergyCorrectionOptions;
 using bsm::SynchAnalyzer;
 using bsm::SynchAnalyzerOptions;
 using bsm::SynchSelectorOptions;
+using bsm::TriggerOptions;
 
 int main(int argc, char *argv[])
 {
@@ -41,18 +42,21 @@ int main(int argc, char *argv[])
         boost::shared_ptr<SynchAnalyzerOptions> synch_analyzer_options(new SynchAnalyzerOptions());
         boost::shared_ptr<EventDumpOptions> event_dump_options(new EventDumpOptions());
         boost::shared_ptr<Cut2DSelectorOptions> cut_2d_selector_options(new Cut2DSelectorOptions());
+        boost::shared_ptr<TriggerOptions> trigger_options(new TriggerOptions());
 
         jec_options->setDelegate(analyzer->getJetEnergyCorrectionDelegate());
         synch_selector_options->setDelegate(analyzer->getSynchSelectorDelegate());
         synch_analyzer_options->setDelegate(analyzer.get());
         event_dump_options->setDelegate(analyzer.get());
         cut_2d_selector_options->setDelegate(analyzer->getCut2DSelectorDelegate());
+        trigger_options->setDelegate(analyzer.get());
 
         app->addOptions(*jec_options);
         app->addOptions(*synch_selector_options);
         app->addOptions(*synch_analyzer_options);
         app->addOptions(*event_dump_options);
         app->addOptions(*cut_2d_selector_options);
+        app->addOptions(*trigger_options);
 
         app->setAnalyzer(analyzer);
 

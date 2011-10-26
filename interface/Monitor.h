@@ -178,13 +178,13 @@ namespace bsm
             H1ProxyPtr _children;
     };
 
-    class LorentzVectorMonitor : public core::Object
+    class P4Monitor : public core::Object
     {
         public:
-            LorentzVectorMonitor();
-            LorentzVectorMonitor(const LorentzVectorMonitor &);
+            P4Monitor();
+            P4Monitor(const P4Monitor &);
 
-            void fill(const LorentzVector &);
+            void fill(const LorentzVector &, const float &weight = 1);
 
             const H1Ptr energy() const;
             const H1Ptr px() const;
@@ -208,7 +208,7 @@ namespace bsm
         private:
             // Prevent copying
             //
-            LorentzVectorMonitor &operator =(const LorentzVectorMonitor &);
+            P4Monitor &operator =(const P4Monitor &);
 
             typedef boost::shared_ptr<TLorentzVector> P4;
 

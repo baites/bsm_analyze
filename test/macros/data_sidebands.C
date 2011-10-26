@@ -1,7 +1,10 @@
 enum InputType
 {
-    RERECO = 0,
-    PROMPT,
+    RERECO_2011A_MAY10 = 0,
+    RERECO_2011A_AUG05,
+    PROMPT_2011A_V4,
+    PROMPT_2011A_V6,
+    PROMPT_2011B_V1,
     UNKNOWN
 };
 
@@ -9,8 +12,11 @@ string toString(const InputType &input_type)
 {
     switch(input_type)
     {
-        case RERECO: return "Re-Reco";
-        case PROMPT: return "Prompt";
+        case RERECO_2011A_MAY10: return "Re-reco 2011A May10";
+        case RERECO_2011A_AUG05: return "Re-reco 2011A Aug05";
+        case PROMPT_2011A_V4: return "Prompt 2011A v4";
+        case PROMPT_2011A_V6: return "Prompt 2011A v6";
+        case PROMPT_2011B_V1: return "Prompt 2011B v1";
         default: return "Unknown";
     }
 }
@@ -20,12 +26,27 @@ void style(TH1 *hist, const InputType &input_type)
     int color = 1;
     switch(input_type)
     {
-        case RERECO:
+        case RERECO_2011A_MAY10:
+            {
+                color = kGray;
+                break;
+            }
+        case RERECO_2011A_AUG05:
+            {
+                color = kGray + 1;
+                break;
+            }
+        case PROMPT_2011A_V4:
             {
                 color = kGray + 2;
                 break;
             }
-        case PROMPT:
+        case PROMPT_2011A_V6:
+            {
+                color = kGray + 3;
+                break;
+            }
+        case PROMPT_2011B_V1:
             {
                 color = kBlack;
                 break;
@@ -114,11 +135,14 @@ TH1 *merge(TFile **input, const string &path, const int &from, const int &to)
 
 string folder[] =
 {
-    "rereco",
-    "prompt"
+    "golden_single_el_2011a_aug5_rereco_v1",
+    "golden_single_el_2011a_may10_rereco",
+    "golden_single_el_2011a_prompt_v4",
+    "golden_single_el_2011a_prompt_v6",
+    "golden_single_el_2011b_prompt_v1"
 };
 
-const int DATA_CHANNELS = 2;
+const int DATA_CHANNELS = 5;
 
 TFile *input_s1_p50[DATA_CHANNELS];
 TFile *input_s2_p50[DATA_CHANNELS];

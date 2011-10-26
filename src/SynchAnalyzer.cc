@@ -113,7 +113,8 @@ SynchAnalyzer::SynchAnalyzer():
 
 SynchAnalyzer::SynchAnalyzer(const SynchAnalyzer &object):
     _selection(SynchSelector::SELECTIONS),
-    _events_to_dump(object._events_to_dump.begin(), object._events_to_dump.end())
+    _events_to_dump(object._events_to_dump.begin(), object._events_to_dump.end()),
+    _triggers(object._triggers.begin(), object._triggers.end())
 {
     _synch_selector = 
         dynamic_pointer_cast<SynchSelector>(object._synch_selector->clone());
@@ -173,6 +174,11 @@ void SynchAnalyzer::setEventNumber(const Event::Extra &event)
         _events_to_dump.push_back(event);
 }
 
+void SynchAnalyzer::setTrigger(const Trigger &trigger)
+{
+    _triggers.push_back(trigger.hash());
+}
+
 void SynchAnalyzer::onFileOpen(const std::string &filename, const Input *)
 {
 }
@@ -180,6 +186,36 @@ void SynchAnalyzer::onFileOpen(const std::string &filename, const Input *)
 void SynchAnalyzer::process(const Event *event)
 {
     _event = event;
+
+    if (!_triggers.empty()
+            && event->hlt().trigger().size())
+    {
+        // OR triggers
+        //
+        typedef ::google::protobuf::RepeatedPtrField<Trigger> PBTriggers;
+        bool is_trigger_pass = false;
+        for(Triggers::const_iterator trigger = _triggers.begin();
+                _triggers.end() != trigger
+                    && !is_trigger_pass;
+                ++trigger)
+        {
+            for(PBTriggers::const_iterator hlt = event->hlt().trigger().begin();
+                    event->hlt().trigger().end() != hlt;
+                    ++hlt)
+            {
+                if (hlt->hash() == *trigger)
+                {
+                    if (hlt->pass())
+                        is_trigger_pass = true;
+
+                    break;
+                }
+            }
+        }
+
+        if (!is_trigger_pass)
+            return;
+    }
 
     _synch_selector->apply(event);
 

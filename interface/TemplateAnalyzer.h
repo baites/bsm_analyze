@@ -16,6 +16,7 @@
 #include "bsm_input/interface/bsm_input_fwd.h"
 #include "interface/Analyzer.h"
 #include "interface/Cut.h"
+#include "interface/PileupCorrections.h"
 #include "interface/TriggerAnalyzer.h"
 #include "interface/bsm_fwd.h"
 
@@ -28,15 +29,29 @@ namespace bsm
         public:
             typedef boost::shared_ptr<stat::H1> H1Ptr;
             typedef boost::shared_ptr<stat::H2> H2Ptr;
+            typedef boost::shared_ptr<P4Monitor> P4MonitorPtr;
 
             TemplateAnalyzer();
             TemplateAnalyzer(const TemplateAnalyzer &);
 
+            const H1Ptr npv() const;
+            const H1Ptr njets() const;
             const H1Ptr d0() const;
             const H1Ptr htlep() const;
             const H1Ptr mttbarBeforeHtlep() const;
             const H1Ptr mttbarAfterHtlep() const;
             const H2Ptr drVsPtrel() const;
+
+            const H1Ptr ttbarPt() const;
+            const H1Ptr wlepMt() const;
+            const H1Ptr whadMt() const;
+            const H1Ptr wlepMass() const;
+            const H1Ptr whadMass() const;
+
+            const P4MonitorPtr firstJet() const;
+            const P4MonitorPtr secondJet() const;
+            const P4MonitorPtr thirdJet() const;
+            const P4MonitorPtr electron() const;
 
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
             SynchSelectorDelegate *getSynchSelectorDelegate() const;
@@ -69,17 +84,33 @@ namespace bsm
             void fillDrVsPtrel();
             void fillHtlep();
 
-            float mttbar() const;
+            struct Mttbar
+            {
+                LorentzVector mttbar;
+                LorentzVector wlep;
+                LorentzVector whad;
+            };
+
+            Mttbar mttbar() const;
+            void monitorJets();
 
             bool isGoodLepton() const;
 
             boost::shared_ptr<SynchSelector> _synch_selector;
 
+            H1ProxyPtr _npv;
+            H1ProxyPtr _njets;
             H1ProxyPtr _d0;
             H1ProxyPtr _htlep;
             H1ProxyPtr _mttbar_before_htlep;
             H1ProxyPtr _mttbar_after_htlep;
             H2ProxyPtr _dr_vs_ptrel;
+
+            H1ProxyPtr _ttbar_pt;
+            H1ProxyPtr _wlep_mt;
+            H1ProxyPtr _whad_mt;
+            H1ProxyPtr _wlep_mass;
+            H1ProxyPtr _whad_mass;
 
             const Event *_event;
 
@@ -90,6 +121,14 @@ namespace bsm
 
             typedef std::vector<uint64_t> Triggers;
             Triggers _triggers; // hashes of triggers to be passed
+
+            PileupCorrections _pileup_corrections;
+            float _pileup_weight;
+
+            P4MonitorPtr _first_jet;
+            P4MonitorPtr _second_jet;
+            P4MonitorPtr _third_jet;
+            P4MonitorPtr _electron;
     };
 }
 

@@ -30,28 +30,6 @@ using namespace std;
 using namespace boost;
 using namespace bsm;
 
-struct PtLess
-{
-    public:
-        typedef shared_ptr<LorentzVector> P4Ptr;
-
-        bool operator()(const P4Ptr &v1, const P4Ptr &v2)
-        {
-            return pt_less(*v1, *v2);
-        }
-};
-
-struct PtGreater
-{
-    public:
-        typedef shared_ptr<LorentzVector> P4Ptr;
-
-        bool operator()(const P4Ptr &v1, const P4Ptr &v2)
-        {
-            return pt_greater(*v1, *v2);
-        }
-};
-
 // Jet Analyzer
 //
 JetAnalyzer::JetAnalyzer()
@@ -68,9 +46,9 @@ JetAnalyzer::JetAnalyzer()
     _hlt_jet_selector.reset(new P4Selector());
     monitor(_hlt_jet_selector);
 
-    _hlt_leading_jet.reset(new LorentzVectorMonitor());
-    _selected_hlt_leading_jet.reset(new LorentzVectorMonitor());
-    _reco_leading_jet.reset(new LorentzVectorMonitor());
+    _hlt_leading_jet.reset(new P4Monitor());
+    _selected_hlt_leading_jet.reset(new P4Monitor());
+    _reco_leading_jet.reset(new P4Monitor());
 
     //_hlt_leading_jet->pt()->mutable_axis()->init(100, 0, 1000);
     //_selected_hlt_leading_jet->pt()->mutable_axis()->init(100, 0, 1000);
@@ -93,13 +71,13 @@ JetAnalyzer::JetAnalyzer(const JetAnalyzer &object):
     monitor(_hlt_jet_selector);
 
     _hlt_leading_jet =
-        dynamic_pointer_cast<LorentzVectorMonitor>(object._hlt_leading_jet->clone());
+        dynamic_pointer_cast<P4Monitor>(object._hlt_leading_jet->clone());
 
     _selected_hlt_leading_jet =
-        dynamic_pointer_cast<LorentzVectorMonitor>(object._selected_hlt_leading_jet->clone());
+        dynamic_pointer_cast<P4Monitor>(object._selected_hlt_leading_jet->clone());
 
     _reco_leading_jet =
-        dynamic_pointer_cast<LorentzVectorMonitor>(object._reco_leading_jet->clone());
+        dynamic_pointer_cast<P4Monitor>(object._reco_leading_jet->clone());
 
     monitor(_hlt_leading_jet);
     monitor(_selected_hlt_leading_jet);

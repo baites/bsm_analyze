@@ -34,7 +34,7 @@ TriggerOptions::TriggerOptions()
     _description.reset(new po::options_description("Trigger Options"));
     _description->add_options()
         ("trigger",
-         po::value<string>()->notifier(
+         po::value<Triggers>()->notifier(
              boost::bind(&TriggerOptions::setTrigger, this, _1)),
          "Use trigger")
 
@@ -71,18 +71,24 @@ TriggerOptions::DescriptionPtr
 
 // Private
 //
-void TriggerOptions::setTrigger(std::string trigger_name) const
+void TriggerOptions::setTrigger(const Triggers &trigger_names) const
 {
     if (!delegate())
         return;
 
-    hash<std::string> make_hash;
+    for(Triggers::const_iterator name = trigger_names.begin();
+            trigger_names.end() != name;
+            ++name)
+    {
+        hash<std::string> make_hash;
 
-    to_lower(trigger_name);
-    Trigger trigger;
-    trigger.set_hash(make_hash(trigger_name));
+        string trigger_name = *name;
+        to_lower(trigger_name);
+        Trigger trigger;
+        trigger.set_hash(make_hash(trigger_name));
 
-    delegate()->setTrigger(trigger);
+        delegate()->setTrigger(trigger);
+    }
 }
 
 void TriggerOptions::setFilter(string filter) const

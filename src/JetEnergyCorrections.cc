@@ -28,9 +28,7 @@ using namespace std;
 namespace fs = boost::filesystem;
 using boost::dynamic_pointer_cast;
 
-using bsm::JetEnergyCorrectionDelegate;
-using bsm::JetEnergyCorrectionOptions;
-using bsm::JetEnergyCorrections;
+using namespace bsm;
 
 JetEnergyCorrectionOptions::JetEnergyCorrectionOptions()
 {
@@ -55,6 +53,12 @@ JetEnergyCorrectionOptions::JetEnergyCorrectionOptions()
              boost::bind(&JetEnergyCorrectionOptions::setCorrection, this,
                  JetEnergyCorrectionDelegate::L3, _1)),
          "Level 3 corrections")
+
+        ("l2l3",
+         po::value<string>()->notifier(
+             boost::bind(&JetEnergyCorrectionOptions::setCorrection, this,
+                 JetEnergyCorrectionDelegate::L2L3, _1)),
+         "Level 2-3 corrections")
 
         ("dr-correction",
          po::value<bool>()->implicit_value(true)->notifier(
@@ -98,7 +102,8 @@ void JetEnergyCorrectionOptions::setCorrection(
     {
         case JetEnergyCorrectionDelegate::L1: // Fall through
         case JetEnergyCorrectionDelegate::L2: // Fall through
-        case JetEnergyCorrectionDelegate::L3: 
+        case JetEnergyCorrectionDelegate::L3: // Fall through
+        case JetEnergyCorrectionDelegate::L2L3: 
             {
                 if (!fs::exists(file_name))
                     cerr << jec_level
@@ -143,7 +148,7 @@ JetEnergyCorrections::JetEnergyCorrections(const JetEnergyCorrections &object):
     }
 }
 
-JetEnergyCorrections::CorrectedJet JetEnergyCorrections::correctJet(
+CorrectedJet JetEnergyCorrections::correctJet(
         const Jet *jet,
         const Event *event,
         const Electrons &electrons,
@@ -358,6 +363,9 @@ std::ostream &bsm::operator <<(std::ostream &out,
 
         case JetEnergyCorrectionDelegate::L3: out << "L3";
                                               break;
+
+        case JetEnergyCorrectionDelegate::L2L3: out << "L2L3";
+                                                break;
 
         default: out << "unknown";
                  break;

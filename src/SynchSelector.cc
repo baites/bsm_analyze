@@ -145,6 +145,7 @@ SynchSelector::SynchSelector():
     monitor(_primary_vertex_selector);
 
     _electron_selector.reset(new ElectronSelector());
+    _electron_selector->cut(ElectronSelector::PT)->setValue(70);
     _electron_selector->cut(ElectronSelector::PRIMARY_VERTEX)->disable();
     monitor(_electron_selector);
 
@@ -422,7 +423,7 @@ bool SynchSelector::jets(const Event *event)
             event->jet().end() != jet;
             ++jet)
     {
-        JetEnergyCorrections::CorrectedJet correction = _jec->correctJet(&*jet,
+        CorrectedJet correction = _jec->correctJet(&*jet,
                 event,
                 _good_electrons,
                 _good_muons);
@@ -453,6 +454,11 @@ bool SynchSelector::jets(const Event *event)
 
         _good_jets.push_back(correction);
     }
+
+    // Sort jets by pT
+    //
+    sort(_nice_jets.begin(), _nice_jets.end(), CorrectedPtGreater());
+    sort(_good_jets.begin(), _good_jets.end(), CorrectedPtGreater());
 
     return 1 < _good_jets.size()
         && (_cutflow->apply(JET), true);
@@ -613,7 +619,28 @@ void SynchSelector::selectGoodElectrons(const Event *event)
             event->electron().end() != electron;
             ++electron)
     {
-        if (_electron_selector->apply(*electron, pv))
+        if (!_electron_selector->apply(*electron, pv))
+            continue;
+
+        typedef ::google::protobuf::RepeatedPtrField<Electron::ElectronID>
+            ElectronIDs;
+
+        bool is_good_lepton = false;
+        for(ElectronIDs::const_iterator id = electron->id().begin();
+                electron->id().end() != id;
+                ++id)
+        {
+            if (Electron::HyperTight1 != id->name())
+                continue;
+
+            if  (id->identification()
+                    && id->conversion_rejection())
+                is_good_lepton = true;
+
+            break;
+        }
+
+        if (is_good_lepton)
             _good_electrons.push_back(&*electron);
     }
 }

@@ -32,7 +32,7 @@ using bsm::DeltaMonitor;
 using bsm::ElectronsMonitor;
 using bsm::GenParticleMonitor;
 using bsm::JetsMonitor;
-using bsm::LorentzVectorMonitor;
+using bsm::P4Monitor;
 using bsm::MissingEnergyMonitor;
 using bsm::MuonsMonitor;
 using bsm::PrimaryVerticesMonitor;
@@ -434,7 +434,7 @@ void JetsMonitor::print(std::ostream &out) const
 
 // Lorentz Vector Monitor
 //
-LorentzVectorMonitor::LorentzVectorMonitor()
+P4Monitor::P4Monitor()
 {
     _energy.reset(new H1Proxy(100, 0, 100));
     _px.reset(new H1Proxy(100, 0, 100));
@@ -457,7 +457,7 @@ LorentzVectorMonitor::LorentzVectorMonitor()
     _p4.reset(new TLorentzVector());
 }
 
-LorentzVectorMonitor::LorentzVectorMonitor(const LorentzVectorMonitor &object)
+P4Monitor::P4Monitor(const P4Monitor &object)
 {
     _energy.reset(new H1Proxy(*object._energy));
     _px.reset(new H1Proxy(*object._px));
@@ -480,71 +480,71 @@ LorentzVectorMonitor::LorentzVectorMonitor(const LorentzVectorMonitor &object)
     _p4.reset(new TLorentzVector());
 }
 
-void LorentzVectorMonitor::fill(const LorentzVector &p4)
+void P4Monitor::fill(const LorentzVector &p4, const float &weight)
 {
-    energy()->fill(p4.e());
-    px()->fill(p4.px());
-    py()->fill(p4.py());
-    pz()->fill(p4.pz());
+    energy()->fill(p4.e(), weight);
+    px()->fill(p4.px(), weight);
+    py()->fill(p4.py(), weight);
+    pz()->fill(p4.pz(), weight);
 
     utility::set(_p4.get(), &p4);
-    pt()->fill(_p4->Pt());
-    eta()->fill(_p4->Eta());
-    phi()->fill(_p4->Phi());
-    mass()->fill(_p4->M());
+    pt()->fill(_p4->Pt(), weight);
+    eta()->fill(_p4->Eta(), weight);
+    phi()->fill(_p4->Phi(), weight);
+    mass()->fill(_p4->M(), weight);
 }
 
-const H1Ptr LorentzVectorMonitor::energy() const
+const H1Ptr P4Monitor::energy() const
 {
     return _energy->histogram();
 }
 
-const H1Ptr LorentzVectorMonitor::px() const
+const H1Ptr P4Monitor::px() const
 {
     return _px->histogram();
 }
 
-const H1Ptr LorentzVectorMonitor::py() const
+const H1Ptr P4Monitor::py() const
 {
     return _py->histogram();
 }
  
-const H1Ptr LorentzVectorMonitor::pz() const
+const H1Ptr P4Monitor::pz() const
 {
     return _pz->histogram();
 }
 
-const H1Ptr LorentzVectorMonitor::pt() const
+const H1Ptr P4Monitor::pt() const
 {
     return _pt->histogram();
 }
 
-const H1Ptr LorentzVectorMonitor::eta() const
+const H1Ptr P4Monitor::eta() const
 {
     return _eta->histogram();
 }
 
-const H1Ptr LorentzVectorMonitor::phi() const
+const H1Ptr P4Monitor::phi() const
 {
     return _phi->histogram();
 }
 
-const H1Ptr LorentzVectorMonitor::mass() const
+const H1Ptr P4Monitor::mass() const
 {
     return _mass->histogram();
 }
 
-uint32_t LorentzVectorMonitor::id() const
+uint32_t P4Monitor::id() const
 {
-    return core::ID<LorentzVectorMonitor>::get();
+    return core::ID<P4Monitor>::get();
 }
 
-LorentzVectorMonitor::ObjectPtr LorentzVectorMonitor::clone() const
+P4Monitor::ObjectPtr P4Monitor::clone() const
 {
-    return ObjectPtr(new LorentzVectorMonitor(*this));
+    return ObjectPtr(new P4Monitor(*this));
 }
 
-void LorentzVectorMonitor::print(std::ostream &out) const
+void P4Monitor::print(std::ostream &out) const
 {
     out << setw(16) << left << " [e]" << *energy() << endl;
     out << setw(16) << left << " [px]" << *px() << endl;

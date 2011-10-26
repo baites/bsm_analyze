@@ -19,6 +19,7 @@
 #include "bsm_input/interface/Utility.h"
 #include "interface/JetEnergyCorrections.h"
 #include "interface/JetEnergyCorrectionsAnalyzer.h"
+#include "interface/CorrectedJet.h"
 #include "interface/Monitor.h"
 #include "interface/Selector.h"
 
@@ -42,9 +43,9 @@ JetEnergyCorrectionsAnalyzer::JetEnergyCorrectionsAnalyzer()
 
     // Monitors
     //
-    _jet_cmssw_corrected_p4.reset(new LorentzVectorMonitor());
-    _jet_uncorrected_p4.reset(new LorentzVectorMonitor());
-    _jet_offline_corrected_p4.reset(new LorentzVectorMonitor());
+    _jet_cmssw_corrected_p4.reset(new P4Monitor());
+    _jet_uncorrected_p4.reset(new P4Monitor());
+    _jet_offline_corrected_p4.reset(new P4Monitor());
 
     monitor(_jet_cmssw_corrected_p4);
     monitor(_jet_uncorrected_p4);
@@ -70,13 +71,13 @@ JetEnergyCorrectionsAnalyzer::JetEnergyCorrectionsAnalyzer(const JetEnergyCorrec
     // Monitors
     //
     _jet_cmssw_corrected_p4 =
-        dynamic_pointer_cast<LorentzVectorMonitor>(object._jet_cmssw_corrected_p4->clone());
+        dynamic_pointer_cast<P4Monitor>(object._jet_cmssw_corrected_p4->clone());
 
     _jet_uncorrected_p4 =
-        dynamic_pointer_cast<LorentzVectorMonitor>(object._jet_uncorrected_p4->clone());
+        dynamic_pointer_cast<P4Monitor>(object._jet_uncorrected_p4->clone());
 
     _jet_offline_corrected_p4 =
-        dynamic_pointer_cast<LorentzVectorMonitor>(object._jet_offline_corrected_p4->clone());
+        dynamic_pointer_cast<P4Monitor>(object._jet_offline_corrected_p4->clone());
 
     monitor(_jet_cmssw_corrected_p4);
     monitor(_jet_uncorrected_p4);
@@ -197,7 +198,7 @@ void JetEnergyCorrectionsAnalyzer::jets(const Event *event)
             const LorentzVector &uncorrected_p4 = jet->uncorrected_p4();
             _jet_uncorrected_p4->fill(uncorrected_p4);
 
-            JetEnergyCorrections::CorrectedJet correction =
+            CorrectedJet correction =
                 _jec->correctJet(&*jet, event, electrons, muons);
             if (!correction.corrected_p4)
                 continue;
