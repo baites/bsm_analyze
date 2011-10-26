@@ -1,6 +1,7 @@
 float luminosity = 3393.157;
-//float luminosity = 216.200;
-string plot_name = "njets";
+//float luminosity = 1354.108;
+string plot_name = "mttbar_after_htlep";
+int rebin = 100;
 
 enum InputType
 {
@@ -24,7 +25,50 @@ enum InputType
     PROMPT_2011A_V4,
     PROMPT_2011A_V6,
     PROMPT_2011B_V1,
+    ZPRIME1000,
+    ZPRIME1500,
+    ZPRIME2000,
+    ZPRIME3000,
+    ZPRIME4000,
     UNKNOWN
+};
+
+string folder(const InputType &input)
+{
+    switch(input)
+    {
+        case QCD_BC_PT20_30: return "qcd_bc_pt20to30";
+        case QCD_BC_PT30_80: return "qcd_bc_pt30to80";
+        case QCD_BC_PT80_170: return "qcd_bc_pt80to170";
+        case QCD_EM_PT20_30: return "qcd_em_pt20to30";
+        case QCD_EM_PT30_80: return "qcd_em_pt30to80";
+        case QCD_EM_PT80_170: return "qcd_em_pt80to170";
+        case TTJETS: return "ttjets";
+        case ZJETS: return "zjets";
+        case WJETS: return "wjets";
+        case STOP_S: return "stop_s";
+        case STOP_T: return "stop_t";
+        case STOP_TW: return "stop_tw";
+        case SATOP_S: return "satop_s";
+        case SATOP_T: return "satop_t";
+        case SATOP_TW: return "satop_tw";
+        case RERECO_2011A_MAY10: return "golden_single_el_2011a_may10_rereco";
+        case RERECO_2011A_AUG05: return "golden_single_el_2011a_aug5_rereco_v1";
+        case PROMPT_2011A_V4: return "golden_single_el_2011a_prompt_v4";
+        case PROMPT_2011A_V6: return "golden_single_el_2011a_prompt_v6";
+        case PROMPT_2011B_V1: return "golden_single_el_2011b_prompt_v1";
+        case ZPRIME1000: return "zprime_m1000_w10";
+        case ZPRIME1500: return "zprime_m1500_w15";
+        case ZPRIME2000: return "zprime_m2000_w20";
+        case ZPRIME3000: return "zprime_m3000_w30";
+        case ZPRIME4000: return "zprime_m4000_w40";
+        default:
+        {
+            cerr << "unsupported input" << endl;
+
+            return "";
+        }
+    }
 };
 
 string toString(const InputType &input_type)
@@ -204,7 +248,11 @@ void styleData(TH1 *hist, const InputType &input_type)
 void scale(TH1 *hist, const InputType &input_type)
 {
     if (!hist->GetEntries())
+    {
+        cout << "skip scale " << toString(input_type) << ": no entries" << endl;
+
         return;
+    }
 
     float scale = 1;
     switch(input_type)
@@ -310,11 +358,12 @@ void scale(TH1 *hist, const InputType &input_type)
         case PROMPT_2011A_V4: // Fall through
         case PROMPT_2011A_V6: // Fall through
         case PROMPT_2011B_V1: // Do nothing
-            break;
+            return;
 
         default:
             {
                 cerr << "unknown type: can not scale the plot" << endl;
+
                 break;
             }
     }
@@ -329,7 +378,7 @@ void scale(TH1 *hist, const InputType &input_type)
 
 TLegend *createLegend(const string &text)
 {
-    TLegend *legend = new TLegend( .6, .85, .85, .5);
+    TLegend *legend = new TLegend( .6, .4, .8, .75);
     if (!text.empty())
         legend->SetHeader(text.c_str());
 
@@ -339,6 +388,19 @@ TLegend *createLegend(const string &text)
     legend->SetBorderSize(0);
 
     return legend;
+}
+
+void cmsLabel()
+{
+    TLegend *legend = new TLegend(.35, .78, .85, .88);
+    legend->SetHeader("#splitline{CMS Preliminary 2011}{3.4 fb-1 at #sqrt{s}=7 TeV/c^{2}, e+jets}");
+
+    legend->SetMargin(0.12);
+    legend->SetTextSize(0.04);
+    legend->SetFillColor(10);
+    legend->SetBorderSize(0);
+    
+    legend->Draw();
 }
 
 //
@@ -363,7 +425,7 @@ TH1 *get(const TFile *input, const string &path, const InputType &input_type)
         return 0;
     }
 
-    //hist->Rebin(20);
+    hist->Rebin(rebin);
 
     style(hist, input_type);
 
@@ -373,6 +435,7 @@ TH1 *get(const TFile *input, const string &path, const InputType &input_type)
 TH1 *merge(TFile **input, const string &path, const int &from, const int &to)
 {
     TH1 *result = 0;
+    cout << "--- merge from: " << toString(from) << " till " << toString(to) << endl;
     for(int i = from; to > i; ++i)
     {
         TH1 *hist = get(input[i], path, i);
@@ -385,43 +448,20 @@ TH1 *merge(TFile **input, const string &path, const int &from, const int &to)
 
         scale(hist, i);
 
-        if (!result)
-            result = dynamic_cast<TH1 *>(hist->Clone());
-        else
+        if (result)
             result->Add(hist);
+        else
+            result = dynamic_cast<TH1 *>(hist->Clone());
     }
+    cout << "--- done ---" << endl;
 
     return result;
 }
 
-string folder[] =
-{
-    "qcd_bc_pt20to30",
-    "qcd_bc_pt30to80",
-    "qcd_bc_pt80to170",
-    "qcd_em_pt20to30",
-    "qcd_em_pt30to80",
-    "qcd_em_pt80to170",
-    "ttjets",
-    "zjets",
-    "wjets",
-    "stop_s",
-    "stop_t",
-    "stop_tw",
-    "satop_s",
-    "satop_t",
-    "satop_tw",
-    "golden_single_el_2011a_may10_rereco",
-    "golden_single_el_2011a_aug5_rereco_v1",
-    "golden_single_el_2011a_prompt_v4",
-    "golden_single_el_2011a_prompt_v6",
-    "golden_single_el_2011b_prompt_v1"
-};
-
-const int SIGNAL_CHANELS = 4;
 const int QCD_CHANNELS = 6;
 const int STOP_CHANNELS = 6;
-const int BG_CHANNELS = UNKNOWN - SIGNAL_CHANELS;
+const int SIGNAL_CHANNELS = 5;
+const int ZPRIME_CHANNELS = 5;
 const int CHANNELS = UNKNOWN;
 
 TFile *input_s1s2_p50[CHANNELS];
@@ -444,13 +484,13 @@ void loadFiles()
 {
     for(int i = 0; CHANNELS > i; ++i)
     {
-        TFile *file = open(folder[i] + "/output_signal_p50_hlt.root");
+        TFile *file = open(folder(i) + "/output_signal_p50_hlt.root");
         if (!file)
             return;
 
         input_s1s2_p50[i] = file;
 
-        file = open(folder[i] + "/output_signal_p250_hlt.root");
+        file = open(folder(i) + "/output_signal_p250_hlt.root");
         if (!file)
             return;
 
@@ -472,8 +512,24 @@ void plotComparison(TFile **input, const string &title, const bool &draw_mc_firs
     TH1 *stop = merge(input, plot_name.c_str(), STOP_S, STOP_S + STOP_CHANNELS);
     TH1 *qcd = merge(input, plot_name.c_str(), 0, QCD_CHANNELS);
 
-    TH1 *data = merge(input, plot_name.c_str(), RERECO_2011A_MAY10, RERECO_2011A_MAY10 + SIGNAL_CHANELS);
-    //TH1 *data = merge(input, plot_name.c_str(), RERECO_2011A_MAY10, RERECO_2011A_MAY10 + 1);
+    TH1 *data = merge(input,
+            plot_name.c_str(),
+            RERECO_2011A_MAY10,
+            RERECO_2011A_MAY10 + SIGNAL_CHANNELS);
+    /*
+    TH1 *data = merge(input,
+            plot_name.c_str(),
+            RERECO_2011A_MAY10,
+            RERECO_2011A_MAY10 + 1);
+            */
+    /*
+    TH1 *data = merge(input,
+            plot_name.c_str(),
+            PROMPT_2011B_V1,
+            PROMPT_2011B_V1 + 1);
+            */
+
+    //TH1 *zprime_m1000 = get(input[ZPRIME
     
     THStack *stack = new THStack();
     stack->Add(ttjets);
@@ -485,11 +541,14 @@ void plotComparison(TFile **input, const string &title, const bool &draw_mc_firs
     if (draw_mc_first)
     {
         stack->Draw("hist");
+        stack->GetHistogram()->GetXaxis()->SetTitle(data->GetXaxis()->GetTitle());
+        stack->GetHistogram()->GetYaxis()->SetTitle("a.u.");
         data->Draw("same");
     }
     else
     {
         data->Draw("");
+        data->GetYaxis()->SetTitle("a.u.");
         stack->Draw("hist same");
         data->Draw("same");
     }
@@ -500,54 +559,50 @@ void plotComparison(TFile **input, const string &title, const bool &draw_mc_firs
     legend->AddEntry(zjets, "Z/#gamma*#rightarrowl^{+}l^{-}", "fe");
     legend->AddEntry(stop, "Single-Top", "fe");
     legend->AddEntry(qcd, "QCD", "fe");
-    legend->AddEntry(data, "CMS data 2011", "lpe");
+    legend->AddEntry(data, "Data 2011", "lpe");
     legend->Draw();
 }
 
 void plotDataMcComparison()
 {
     string canvas_title = "Data/MC Comparison";
-    TCanvas *canvas = new TCanvas(canvas_title.c_str(), canvas_title.c_str());
-    canvas->SetWindowSize(800, 480);
+    TCanvas *canvas = new TCanvas();
+    canvas->SetTitle(canvas_title.c_str());
+    canvas->SetWindowSize(1200, 600);
     canvas->Divide(2);
 
-    canvas->cd(1);
-    plotComparison(input_s1s2_p250, "p_{T}^{jet} > 250");
+    canvas->cd(1)->SetRightMargin(10);
+    canvas->cd(1)->SetTopMargin(10);
+    plotComparison(input_s1s2_p250, "p_{T}^{jet} > 250 GeV/c^{2}");
 
-    canvas->cd(2);
-    plotComparison(input_s1s2_p50, "p_{T}^{jet} > 50");
+    cmsLabel();
+
+    canvas->cd(2)->SetRightMargin(10);
+    canvas->cd(2)->SetTopMargin(10);
+    plotComparison(input_s1s2_p50, "p_{T}^{jet} > 50 GeV/c^{2}");
+
+    cmsLabel();
 }
 
 void plotData(TFile **input, const string &title)
 {
-    TH1 *rereco_2011a_may10 = get(input[RERECO_2011A_MAY10], plot_name.c_str(), RERECO_2011A_MAY10);
-    TH1 *rereco_2011a_aug05 = get(input[RERECO_2011A_AUG05], plot_name.c_str(), RERECO_2011A_AUG05);
-    TH1 *prompt_2011a_v4 = get(input[PROMPT_2011A_V4], plot_name.c_str(), PROMPT_2011A_V4);
-    TH1 *prompt_2011a_v6 = get(input[PROMPT_2011A_V6], plot_name.c_str(), PROMPT_2011A_V6);
-    TH1 *prompt_2011b_v1 = get(input[PROMPT_2011B_V1], plot_name.c_str(), PROMPT_2011B_V1);
-
-    styleData(rereco_2011a_may10, RERECO_2011A_MAY10);
-    styleData(rereco_2011a_aug05, RERECO_2011A_AUG05);
-    styleData(prompt_2011a_v4, PROMPT_2011A_V4);
-    styleData(prompt_2011a_v6, PROMPT_2011A_V6);
-    styleData(prompt_2011b_v1, PROMPT_2011B_V1);
-    
     THStack *stack = new THStack();
-    stack->Add(rereco_2011a_may10);
-    stack->Add(rereco_2011a_aug05);
-    stack->Add(prompt_2011a_v4);
-    stack->Add(prompt_2011a_v6);
-    stack->Add(prompt_2011b_v1);
+    TLegend *legend = createLegend(title);
+    TH1 *hist = 0;
+    for(int i = RERECO_2011A_MAY10, max = RERECO_2011A_MAY10 + SIGNAL_CHANNELS;
+            max > i;
+            ++i)
+    {
+        hist = get(input[i], plot_name.c_str(), i);
+        styleData(hist, i);
+        stack->Add(hist);
+
+        legend->AddEntry(hist, toString(i).c_str(), "fe");
+    }
 
     stack->Draw("hist");
-    stack->GetHistogram()->GetXaxis()->SetTitle(rereco_2011a_may10->GetXaxis()->GetTitle());
+    stack->GetHistogram()->GetXaxis()->SetTitle(hist->GetXaxis()->GetTitle());
 
-    TLegend *legend = createLegend(title);
-    legend->AddEntry(rereco_2011a_may10, toString(RERECO_2011A_MAY10).c_str(), "fe");
-    legend->AddEntry(rereco_2011a_aug05, toString(RERECO_2011A_AUG05).c_str(), "fe");
-    legend->AddEntry(prompt_2011a_v4, toString(PROMPT_2011A_V4).c_str(), "fe");
-    legend->AddEntry(prompt_2011a_v6, toString(PROMPT_2011A_V6).c_str(), "fe");
-    legend->AddEntry(prompt_2011b_v1, toString(PROMPT_2011B_V1).c_str(), "fe");
     legend->Draw();
 }
 
@@ -620,7 +675,40 @@ void data_mc_comparison()
     gStyle->SetOptStat(kFALSE);
 
     loadFiles();
-    //plotDataComparison();
-    //plotMCComparison();
-    plotDataMcComparison();
+
+    string plots[] = {
+        "mttbar_after_htlep",
+        "htlep",
+        "npv",
+        "npv_with_pileup",
+        "njets",
+        "ttbar_pt",
+        "wlep_mt",
+        "wlep_mass"
+    };
+
+    int rebins[] = {
+        100,
+        20,
+        1,
+        1,
+        1,
+        20,
+        10,
+        10
+    };
+
+    int plots_num = 8;
+
+    for(int i = 0; plots_num > i; ++i)
+    //for(int i = 0; 1 > i; ++i)
+    //for(int i = 1; false && 2 > i; ++i)
+    {
+        plot_name = plots[i];
+        rebin = rebins[i];
+        plotDataMcComparison();
+        plotDataComparison();
+    }
+
+    //plotDataMcComparison();
 }
