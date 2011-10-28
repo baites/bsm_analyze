@@ -101,12 +101,12 @@ int main(int argc, char *argv[])
 
             TH1Ptr mttbar_before_htlep = convert(*analyzer->mttbarBeforeHtlep());
             mttbar_before_htlep->SetName("mttbar_before_htlep");
-            mttbar_before_htlep->GetXaxis()->SetTitle("m_{t#bar{t}}^{reco} [GeV/c^{2}]");
+            mttbar_before_htlep->GetXaxis()->SetTitle("m_{t#bar{t}} [TeV/c^{2}]");
             mttbar_before_htlep->GetXaxis()->SetTitleSize(0.045);
 
             TH1Ptr mttbar_after_htlep = convert(*analyzer->mttbarAfterHtlep());
             mttbar_after_htlep->SetName("mttbar_after_htlep");
-            mttbar_after_htlep->GetXaxis()->SetTitle("m_{t#bar{t}}^{reco} [GeV/c^{2}]");
+            mttbar_after_htlep->GetXaxis()->SetTitle("m_{t#bar{t}} [TeV/c^{2}]");
             mttbar_after_htlep->GetXaxis()->SetTitleSize(0.045);
 
             TH2Ptr dr_vs_ptrel = convert(*analyzer->drVsPtrel());
