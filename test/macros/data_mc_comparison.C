@@ -1,4 +1,7 @@
-float luminosity = 3393.157;
+#include <iomanip>
+
+//float luminosity = 3393.157;
+float luminosity = 2039.049;
 //float luminosity = 1354.108;
 string plot_name = "mttbar_after_htlep";
 int rebin = 100;
@@ -102,6 +105,7 @@ string toString(const InputType &input_type)
 void style(TH1 *hist, const InputType &input_type)
 {
     int color = 1;
+    bool is_fill = true;
     switch(input_type)
     {
         case QCD_BC_PT20_30:
@@ -179,6 +183,40 @@ void style(TH1 *hist, const InputType &input_type)
                 color = kGreen + 1;
                 break;
             }
+        case ZPRIME1000:
+            {
+                color = kAzure - 1;
+                hist->SetLineWidth(2);
+                is_fill = false;
+                break;
+            }
+        case ZPRIME1500:
+            {
+                color = kViolet + 2;
+                is_fill = false;
+                break;
+            }
+        case ZPRIME2000:
+            {
+                color = kAzure - 2;
+                hist->SetLineWidth(2);
+                is_fill = false;
+                break;
+            }
+        case ZPRIME3000:
+            {
+                color = kAzure - 4;
+                hist->SetLineWidth(2);
+                is_fill = false;
+                break;
+            }
+        case ZPRIME4000:
+            {
+                color = kViolet + 2;
+                hist->SetLineWidth(2);
+                is_fill = false;
+                break;
+            }
         case RERECO_2011A_MAY10:
         case RERECO_2011A_AUG05:
         case PROMPT_2011A_V4:
@@ -197,7 +235,7 @@ void style(TH1 *hist, const InputType &input_type)
     hist->SetMarkerColor(color);
     hist->SetMarkerSize(0.5);
 
-    if (1 != color)
+    if (is_fill)
         hist->SetFillColor(color);
 }
 
@@ -259,37 +297,37 @@ void scale(TH1 *hist, const InputType &input_type)
     {
         case QCD_BC_PT20_30:
             {
-                scale = 2.361e8 * luminosity * 5.9e-4 / 2081560;
+                scale = 2.361e8 * 5.9e-4 / 2081560;
                 break;
             }
 
         case QCD_BC_PT30_80:
             {
-                scale = 5.944e7 * luminosity * 2.42e-3 / 2030033;
+                scale = 5.944e7 * 2.42e-3 / 2030033;
                 break;
             }
 
         case QCD_BC_PT80_170:
             {
-                scale = 8.982e5 * luminosity * 1.05e-2 / 1082691;
+                scale = 8.982e5 * 1.05e-2 / 1082691;
                 break;
             }
 
         case QCD_EM_PT20_30:
             {
-                scale = 2.361e8 * luminosity * 1.06e-2 / 35729669;
+                scale = 2.361e8 * 1.06e-2 / 35729669;
                 break;
             }
 
         case QCD_EM_PT30_80:
             {
-                scale = 5.944e7 * luminosity * 6.1e-2 / 70392060;
+                scale = 5.944e7 * 6.1e-2 / 70392060;
                 break;
             }
 
         case QCD_EM_PT80_170:
             {
-                scale = 8.982e5 * luminosity * 1.59e-1 / 8150672;
+                scale = 8.982e5 * 1.59e-1 / 8150672;
                 break;
             }
 
@@ -297,7 +335,7 @@ void scale(TH1 *hist, const InputType &input_type)
             {
                 // Use NLO x-section: 157.5 instead of LO: 94.76
                 //
-                scale = 157.5 * luminosity * 1.0 / 3701947;
+                scale = 157.5 * 1.0 / 3701947;
                 break;
             }
 
@@ -305,7 +343,7 @@ void scale(TH1 *hist, const InputType &input_type)
             {
                 // Use NLO x-section: 3048 instead of LO: 2475
                 //
-                scale = 3048 * luminosity * 1.0 / 36277961;
+                scale = 3048 * 1.0 / 36277961;
                 break;
             }
 
@@ -313,43 +351,43 @@ void scale(TH1 *hist, const InputType &input_type)
             {
                 // Use NLO x-section: 31314 instead of LO: 27770
                 //
-                scale = 31314 * luminosity * 1.0 / 77105816;
+                scale = 31314 * 1.0 / 77105816;
                 break;
             }
 
         case STOP_S:
             {
-                scale = 3.19 * luminosity * 1.0 / 259971;
+                scale = 3.19 * 1.0 / 259971;
                 break;
             }
 
         case STOP_T:
             {
-                scale = 41.92 * luminosity * 1.0 / 3900171;
+                scale = 41.92 * 1.0 / 3900171;
                 break;
             }
 
         case STOP_TW:
             {
-                scale = 7.87 * luminosity * 1.0 / 814390;
+                scale = 7.87 * 1.0 / 814390;
                 break;
             }
 
         case SATOP_S:
             {
-                scale = 1.44 * luminosity * 1.0 / 137980;
+                scale = 1.44 * 1.0 / 137980;
                 break;
             }
 
         case SATOP_T:
             {
-                scale = 22.65 * luminosity * 1.0 / 1944826;
+                scale = 22.65 * 1.0 / 1944826;
                 break;
             }
 
         case SATOP_TW:
             {
-                scale = 7.87 * luminosity * 1.0 / 809984;
+                scale = 7.87 * 1.0 / 809984;
                 break;
             }
 
@@ -364,16 +402,17 @@ void scale(TH1 *hist, const InputType &input_type)
             {
                 cerr << "unknown type: can not scale the plot" << endl;
 
-                break;
+                return;
             }
     }
 
-    if (1 != scale)
-    {
-        cout << "scale " << toString(input_type) << " by " << scale << endl;
-    
-        hist->Scale(scale);
-    }
+    float scale_with_luminosity = scale * luminosity;
+
+    cout << "scale " << toString(input_type)
+        << " raw: " << scale
+        << " with lumi: " << scale_with_luminosity << endl;
+
+    hist->Scale(scale_with_luminosity);
 }
 
 TLegend *createLegend(const string &text)
@@ -383,7 +422,7 @@ TLegend *createLegend(const string &text)
         legend->SetHeader(text.c_str());
 
     legend->SetMargin(0.12);
-    legend->SetTextSize(0.04);
+    legend->SetTextSize(0.03);
     legend->SetFillColor(10);
     legend->SetBorderSize(0);
 
@@ -393,7 +432,11 @@ TLegend *createLegend(const string &text)
 void cmsLabel()
 {
     TLegend *legend = new TLegend(.35, .78, .85, .88);
-    legend->SetHeader("#splitline{CMS Preliminary 2011}{3.4 fb-1 at #sqrt{s}=7 TeV/c^{2}, e+jets}");
+    ostringstream title;
+    title << "#splitline{CMS Preliminary 2011}{"
+        << std::setprecision(2) << fixed << luminosity / 1000
+        << " fb-1 at #sqrt{s}=7 TeV/c^{2}, e+jets}";
+    legend->SetHeader(title.str().c_str());
 
     legend->SetMargin(0.12);
     legend->SetTextSize(0.04);
@@ -460,7 +503,7 @@ TH1 *merge(TFile **input, const string &path, const int &from, const int &to)
 
 const int QCD_CHANNELS = 6;
 const int STOP_CHANNELS = 6;
-const int SIGNAL_CHANNELS = 5;
+const int SIGNAL_CHANNELS = 4;
 const int ZPRIME_CHANNELS = 5;
 const int CHANNELS = UNKNOWN;
 
@@ -516,20 +559,35 @@ void plotComparison(TFile **input, const string &title, const bool &draw_mc_firs
             plot_name.c_str(),
             RERECO_2011A_MAY10,
             RERECO_2011A_MAY10 + SIGNAL_CHANNELS);
-    /*
-    TH1 *data = merge(input,
-            plot_name.c_str(),
-            RERECO_2011A_MAY10,
-            RERECO_2011A_MAY10 + 1);
-            */
-    /*
-    TH1 *data = merge(input,
-            plot_name.c_str(),
-            PROMPT_2011B_V1,
-            PROMPT_2011B_V1 + 1);
-            */
 
-    //TH1 *zprime_m1000 = get(input[ZPRIME
+    // Scale MC to data
+    //
+    TH1 *mc = merge(input, plot_name.c_str(), 0, RERECO_2011A_MAY10);
+    scale_factor = data->Integral() / mc->Integral();
+
+    /*
+    ttjets->Scale(scale_factor);
+    zjets->Scale(scale_factor);
+    wjets->Scale(scale_factor);
+    stop->Scale(scale_factor);
+    qcd->Scale(scale_factor);
+    */
+
+    TH1 *zprime_m1000 = get(input[ZPRIME1000], plot_name.c_str(), ZPRIME1000);
+    zprime_m1000->Scale(0.5 * data->Integral() / zprime_m1000->Integral());
+    style(zprime_m1000, ZPRIME1000);
+
+    TH1 *zprime_m2000 = get(input[ZPRIME2000], plot_name.c_str(), ZPRIME2000);
+    zprime_m2000->Scale(0.5 * data->Integral() / zprime_m2000->Integral());
+    style(zprime_m2000, ZPRIME2000);
+
+    TH1 *zprime_m3000 = get(input[ZPRIME3000], plot_name.c_str(), ZPRIME3000);
+    zprime_m3000->Scale(0.5 * data->Integral() / zprime_m3000->Integral());
+    style(zprime_m3000, ZPRIME3000);
+
+    TH1 *zprime_m4000 = get(input[ZPRIME4000], plot_name.c_str(), ZPRIME4000);
+    zprime_m4000->Scale(0.5 * data->Integral() / zprime_m4000->Integral());
+    style(zprime_m4000, ZPRIME4000);
     
     THStack *stack = new THStack();
     stack->Add(ttjets);
@@ -542,7 +600,11 @@ void plotComparison(TFile **input, const string &title, const bool &draw_mc_firs
     {
         stack->Draw("hist");
         stack->GetHistogram()->GetXaxis()->SetTitle(data->GetXaxis()->GetTitle());
-        stack->GetHistogram()->GetYaxis()->SetTitle("a.u.");
+        stack->GetHistogram()->GetYaxis()->SetTitle("Events");
+        zprime_m1000->Draw("hist same");
+        zprime_m2000->Draw("hist same");
+        zprime_m3000->Draw("hist same");
+        //zprime_m4000->Draw("hist same");
         data->Draw("same");
     }
     else
@@ -550,6 +612,10 @@ void plotComparison(TFile **input, const string &title, const bool &draw_mc_firs
         data->Draw("");
         data->GetYaxis()->SetTitle("a.u.");
         stack->Draw("hist same");
+        zprime_m1000->Draw("hist same");
+        zprime_m2000->Draw("hist same");
+        zprime_m3000->Draw("hist same");
+        //zprime_m4000->Draw("hist same");
         data->Draw("same");
     }
 
@@ -560,6 +626,10 @@ void plotComparison(TFile **input, const string &title, const bool &draw_mc_firs
     legend->AddEntry(stop, "Single-Top", "fe");
     legend->AddEntry(qcd, "QCD", "fe");
     legend->AddEntry(data, "Data 2011", "lpe");
+    legend->AddEntry(zprime_m1000, "Z' (m = 1 TeV, w 10%)", "lpe");
+    legend->AddEntry(zprime_m2000, "Z' (m = 2 TeV, w 10%)", "lpe");
+    legend->AddEntry(zprime_m3000, "Z' (m = 3 TeV, w 10%)", "lpe");
+    //legend->AddEntry(zprime_m4000, "Z' (m = 4 TeV, w 10%)", "lpe");
     legend->Draw();
 }
 
@@ -707,7 +777,7 @@ void data_mc_comparison()
         plot_name = plots[i];
         rebin = rebins[i];
         plotDataMcComparison();
-        plotDataComparison();
+        //plotDataComparison();
     }
 
     //plotDataMcComparison();
