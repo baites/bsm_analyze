@@ -2,9 +2,9 @@
 
 //float luminosity = 3393.157;
 float luminosity = 2039.049;
-//float luminosity = 1354.108;
 string plot_name = "mttbar_after_htlep";
 int rebin = 100;
+bool plot_zprime = false;
 
 enum InputType
 {
@@ -468,7 +468,8 @@ TH1 *get(const TFile *input, const string &path, const InputType &input_type)
         return 0;
     }
 
-    hist->Rebin(rebin);
+    if (1 != rebin)
+        hist->Rebin(rebin);
 
     style(hist, input_type);
 
@@ -601,10 +602,15 @@ void plotComparison(TFile **input, const string &title, const bool &draw_mc_firs
         stack->Draw("hist");
         stack->GetHistogram()->GetXaxis()->SetTitle(data->GetXaxis()->GetTitle());
         stack->GetHistogram()->GetYaxis()->SetTitle("Events");
-        zprime_m1000->Draw("hist same");
-        zprime_m2000->Draw("hist same");
-        zprime_m3000->Draw("hist same");
-        //zprime_m4000->Draw("hist same");
+
+        if (plot_zprime)
+        {
+            zprime_m1000->Draw("hist same");
+            zprime_m2000->Draw("hist same");
+            zprime_m3000->Draw("hist same");
+            //zprime_m4000->Draw("hist same");
+        }
+
         data->Draw("same");
     }
     else
@@ -612,10 +618,15 @@ void plotComparison(TFile **input, const string &title, const bool &draw_mc_firs
         data->Draw("");
         data->GetYaxis()->SetTitle("a.u.");
         stack->Draw("hist same");
-        zprime_m1000->Draw("hist same");
-        zprime_m2000->Draw("hist same");
-        zprime_m3000->Draw("hist same");
-        //zprime_m4000->Draw("hist same");
+
+        if (plot_zprime)
+        {
+            zprime_m1000->Draw("hist same");
+            zprime_m2000->Draw("hist same");
+            zprime_m3000->Draw("hist same");
+            //zprime_m4000->Draw("hist same");
+        }
+
         data->Draw("same");
     }
 
@@ -626,10 +637,15 @@ void plotComparison(TFile **input, const string &title, const bool &draw_mc_firs
     legend->AddEntry(stop, "Single-Top", "fe");
     legend->AddEntry(qcd, "QCD", "fe");
     legend->AddEntry(data, "Data 2011", "lpe");
-    legend->AddEntry(zprime_m1000, "Z' (m = 1 TeV, w 10%)", "lpe");
-    legend->AddEntry(zprime_m2000, "Z' (m = 2 TeV, w 10%)", "lpe");
-    legend->AddEntry(zprime_m3000, "Z' (m = 3 TeV, w 10%)", "lpe");
-    //legend->AddEntry(zprime_m4000, "Z' (m = 4 TeV, w 10%)", "lpe");
+
+    if (plot_zprime)
+    {
+        legend->AddEntry(zprime_m1000, "Z' (m = 1 TeV, w 10%)", "lpe");
+        legend->AddEntry(zprime_m2000, "Z' (m = 2 TeV, w 10%)", "lpe");
+        legend->AddEntry(zprime_m3000, "Z' (m = 3 TeV, w 10%)", "lpe");
+        //legend->AddEntry(zprime_m4000, "Z' (m = 4 TeV, w 10%)", "lpe");
+    }
+
     legend->Draw();
 }
 
@@ -739,6 +755,83 @@ void plotMCComparison()
     plotMC(input_s1s2_p50, "p_{T}^{jet} > 50");
 }
 
+void plotDrvsPtrel(TFile **input, const string &pt)
+{
+    string canvas_title = "2D Cut: leading jet pT > " + pt;
+    TCanvas *canvas = new TCanvas();
+    canvas->SetTitle(canvas_title.c_str());
+    canvas->SetWindowSize(1200, 600);
+    canvas->Divide(5, 2);
+
+    string plot_name = "dr_vs_ptrel";
+
+    canvas->cd(1);
+    TH1 *ttjets = get(input[TTJETS], plot_name.c_str(), TTJETS);
+    scale(ttjets, TTJETS);
+    ttjets->Draw("scat");
+
+    canvas->cd(2);
+    TH1 *zjets = get(input[ZJETS], plot_name.c_str(), ZJETS);
+    scale(zjets, ZJETS);
+    zjets->Draw("scat");
+
+    canvas->cd(3);
+    TH1 *wjets = get(input[WJETS], plot_name.c_str(), WJETS);
+    scale(wjets, WJETS);
+    wjets->Draw("scat");
+
+    canvas->cd(4);
+    TH1 *stop = merge(input, plot_name.c_str(), STOP_S, STOP_S + STOP_CHANNELS);
+    stop->Draw("scat");
+
+    canvas->cd(5);
+    TH1 *qcd = merge(input, plot_name.c_str(), 0, QCD_CHANNELS);
+    qcd->Draw("scat");
+    
+    canvas->cd(6);
+    TH1 *zprime_m1000 = get(input[ZPRIME1000], plot_name.c_str(), ZPRIME1000);
+    style(zprime_m1000, ZPRIME1000);
+    zprime_m1000->Draw("scat");
+
+    canvas->cd(7);
+    TH1 *zprime_m1500 = get(input[ZPRIME1500], plot_name.c_str(), ZPRIME1500);
+    style(zprime_m1500, ZPRIME1500);
+    zprime_m1500->Draw("scat");
+
+    canvas->cd(8);
+    TH1 *zprime_m2000 = get(input[ZPRIME2000], plot_name.c_str(), ZPRIME2000);
+    style(zprime_m2000, ZPRIME2000);
+    zprime_m2000->Draw("scat");
+
+    canvas->cd(9);
+    TH1 *zprime_m3000 = get(input[ZPRIME3000], plot_name.c_str(), ZPRIME3000);
+    style(zprime_m3000, ZPRIME3000);
+    zprime_m3000->Draw("scat");
+
+    canvas->cd(10);
+    TH1 *zprime_m4000 = get(input[ZPRIME4000], plot_name.c_str(), ZPRIME4000);
+    style(zprime_m4000, ZPRIME4000);
+    zprime_m4000->Draw("scat");
+
+    /*
+    TLegend *legend = createLegend(title);
+    legend->AddEntry(ttjets, "t#bar{t}", "fe");
+    legend->AddEntry(wjets, "W#rightarrowl#nu", "fe");
+    legend->AddEntry(zjets, "Z/#gamma*#rightarrowl^{+}l^{-}", "fe");
+    legend->AddEntry(stop, "Single-Top", "fe");
+    legend->AddEntry(qcd, "QCD", "fe");
+    legend->Draw();
+    */
+}
+
+void plot2DCut()
+{
+    rebin = 1;
+
+    plotDrvsPtrel(input_s1s2_p50, "50");
+    plotDrvsPtrel(input_s1s2_p250, "250");
+}
+
 void data_mc_comparison()
 {
     TGaxis::SetMaxDigits(3);
@@ -770,15 +863,17 @@ void data_mc_comparison()
 
     int plots_num = 8;
 
-    for(int i = 0; plots_num > i; ++i)
+    //for(int i = 0; plots_num > i; ++i)
     //for(int i = 0; 1 > i; ++i)
-    //for(int i = 1; false && 2 > i; ++i)
+    for(int i = 1; false && 2 > i; ++i)
     {
         plot_name = plots[i];
         rebin = rebins[i];
         plotDataMcComparison();
         //plotDataComparison();
     }
+
+    plot2DCut();
 
     //plotDataMcComparison();
 }
