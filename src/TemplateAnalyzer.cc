@@ -66,10 +66,10 @@ TemplateAnalyzer::TemplateAnalyzer():
     _htlep.reset(new H1Proxy(500, 0, 500));
     monitor(_htlep);
 
-    _mttbar_before_htlep.reset(new H1Proxy(4000, 0, 4000));
+    _mttbar_before_htlep.reset(new H1Proxy(4000, 0, 4));
     monitor(_mttbar_before_htlep);
 
-    _mttbar_after_htlep.reset(new H1Proxy(4000, 0, 4000));
+    _mttbar_after_htlep.reset(new H1Proxy(4000, 0, 4));
     monitor(_mttbar_after_htlep);
 
     _dr_vs_ptrel.reset(new H2Proxy(100, 0, 100, 15, 0, 1.5));
@@ -294,7 +294,7 @@ void TemplateAnalyzer::didCounterAdd(const Counter *counter)
         {
             fillHtlep();
 
-            mttbarBeforeHtlep()->fill(mass(mttbar().mttbar),  _pileup_weight);
+            mttbarBeforeHtlep()->fill(mass(mttbar().mttbar) / 1000,  _pileup_weight);
         }
     }
 }
@@ -371,7 +371,7 @@ void TemplateAnalyzer::process(const Event *event)
     {
         
         Mttbar resonanse = mttbar();
-        mttbarAfterHtlep()->fill(mass(resonanse.mttbar), _pileup_weight);
+        mttbarAfterHtlep()->fill(mass(resonanse.mttbar) / 1000, _pileup_weight);
 
         ttbarPt()->fill(pt(resonanse.mttbar), _pileup_weight);
 
