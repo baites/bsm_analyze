@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
 
             TH2Ptr dr_vs_ptrel = convert(*analyzer->drVsPtrel());
             dr_vs_ptrel->SetName("dr_vs_ptrel");
-            dr_vs_ptrel->GetXaxis()->SetTitle("p_{T}^{rel} [GeV/c^{2}]");
+            dr_vs_ptrel->GetXaxis()->SetTitle("p_{T}^{rel} [GeV/c]");
             dr_vs_ptrel->GetXaxis()->SetTitleSize(0.045);
             dr_vs_ptrel->GetYaxis()->SetTitle("#Delta R");
             dr_vs_ptrel->GetYaxis()->SetTitleSize(0.045);
