@@ -366,8 +366,7 @@ void TemplateAnalyzer::process(const Event *event)
     // Process only events, that pass the synch selector
     //
     if (_synch_selector->apply(event)
-            && isGoodLepton()
-            && isBtagJet())
+            && isGoodLepton())
     {
         
         Mttbar resonanse = mttbar();
