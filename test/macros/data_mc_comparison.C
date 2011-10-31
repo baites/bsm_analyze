@@ -3,6 +3,7 @@
 //float luminosity = 3393.157;
 float luminosity = 2039.049;
 string plot_name = "mttbar_after_htlep";
+string subtitle = "";
 int rebin = 100;
 bool plot_zprime = false;
 
@@ -651,7 +652,7 @@ void plotComparison(TFile **input, const string &title, const bool &draw_mc_firs
 
 void plotDataMcComparison()
 {
-    string canvas_title = "Data/MC Comparison";
+    string canvas_title = "Data/MC Comparison " + subtitle;
     TCanvas *canvas = new TCanvas();
     canvas->SetTitle(canvas_title.c_str());
     canvas->SetWindowSize(1200, 600);
@@ -847,7 +848,23 @@ void data_mc_comparison()
         "njets",
         "ttbar_pt",
         "wlep_mt",
-        "wlep_mass"
+        "wlep_mass",
+        "First_jet/pt",
+        "First_jet/eta",
+        "Second_jet/pt",
+        "Second_jet/eta",
+        "Third_jet/pt",
+        "Third_jet/eta",
+        "Electron/pt",
+        "Electron/eta",
+        "ltop/pt",
+        "ltop/eta",
+        "ltop/mass",
+        "ltop/mt",
+        "htop/pt",
+        "htop/eta",
+        "htop/mass",
+        "htop/mt",
     };
 
     int rebins[] = {
@@ -858,22 +875,67 @@ void data_mc_comparison()
         1,
         20,
         10,
+        10,
+        5,
+        2,
+        5,
+        2,
+        5,
+        2,
+        5,
+        2,
+        5,
+        2,
+        10,
+        10,
+        5,
+        2,
+        10,
         10
     };
 
-    int plots_num = 8;
+    string subtitles[] = {
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "First Jet",
+        "First Jet",
+        "Second Jet",
+        "Second Jet",
+        "Third Jet",
+        "Third Jet",
+        "Electron",
+        "Electron",
+        "Leptonic Top",
+        "Leptonic Top",
+        "Leptonic Top",
+        "Leptonic Top",
+        "Hadronic Top",
+        "Hadronic Top",
+        "Hadronic Top",
+        "Hadronic Top"
+    };
 
-    //for(int i = 0; plots_num > i; ++i)
+    int plots_num = 24;
+
+    for(int i = 0; plots_num > i; ++i)
+    //for(int i = 20; plots_num > i; ++i)
     //for(int i = 0; 1 > i; ++i)
-    for(int i = 1; false && 2 > i; ++i)
+    //for(int i = 1; false && 2 > i; ++i)
     {
         plot_name = plots[i];
         rebin = rebins[i];
+        subtitle = subtitles[i];
         plotDataMcComparison();
         //plotDataComparison();
     }
 
-    plot2DCut();
+    //plot2DCut();
 
     //plotDataMcComparison();
 }
