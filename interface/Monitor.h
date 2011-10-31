@@ -22,8 +22,6 @@
 #include "bsm_stat/interface/bsm_stat_fwd.h"
 #include "interface/bsm_fwd.h"
 
-class TLorentzVector;
-
 namespace bsm
 {
     typedef boost::shared_ptr<H1Proxy> H1ProxyPtr;
@@ -60,17 +58,11 @@ namespace bsm
             //
             DeltaMonitor &operator =(const DeltaMonitor &);
 
-            typedef boost::shared_ptr<TLorentzVector> P4;
-
             H1ProxyPtr _r;
             H1ProxyPtr _eta;
             H1ProxyPtr _phi;
             H1ProxyPtr _ptrel;
             H2ProxyPtr _ptrel_vs_r;
-
-            // Convert bsm::LorentzVector to TLorentzVector
-            P4 _p4_1;
-            P4 _p4_2;
     };
 
     class ElectronsMonitor : public core::Object
@@ -196,6 +188,8 @@ namespace bsm
             const H1Ptr phi() const;
             const H1Ptr mass() const;
 
+            const H1Ptr mt() const;
+
             // Object interface
             //
             virtual uint32_t id() const;
@@ -210,8 +204,6 @@ namespace bsm
             //
             P4Monitor &operator =(const P4Monitor &);
 
-            typedef boost::shared_ptr<TLorentzVector> P4;
-
             H1ProxyPtr _energy;
             H1ProxyPtr _px;
             H1ProxyPtr _py;
@@ -222,8 +214,7 @@ namespace bsm
             H1ProxyPtr _phi;
             H1ProxyPtr _mass;
 
-            // Convert bsm::LorentzVector to TLorentzVector
-            P4 _p4;
+            H1ProxyPtr _mt;
     };
 
     class MissingEnergyMonitor : public core::Object
@@ -252,8 +243,6 @@ namespace bsm
             // Prevent copying
             //
             MissingEnergyMonitor &operator =(const MissingEnergyMonitor &);
-
-            typedef boost::shared_ptr<TLorentzVector> P4;
 
             H1ProxyPtr _pt;
             H1ProxyPtr _x;

@@ -9,8 +9,6 @@
 #include <iomanip>
 #include <ostream>
 
-#include <TLorentzVector.h>
-
 #include "bsm_core/interface/ID.h"
 #include "bsm_input/interface/Algebra.h"
 #include "bsm_input/interface/GenParticle.pb.h"
@@ -58,9 +56,6 @@ DeltaMonitor::DeltaMonitor()
     monitor(_phi);
     monitor(_ptrel);
     monitor(_ptrel_vs_r);
-
-    _p4_1.reset(new TLorentzVector());
-    _p4_2.reset(new TLorentzVector());
 }
 
 DeltaMonitor::DeltaMonitor(const DeltaMonitor &object)
@@ -76,34 +71,16 @@ DeltaMonitor::DeltaMonitor(const DeltaMonitor &object)
     monitor(_phi);
     monitor(_ptrel);
     monitor(_ptrel_vs_r);
-
-    _p4_1.reset(new TLorentzVector());
-    _p4_2.reset(new TLorentzVector());
 }
 
-DeltaMonitor &DeltaMonitor::operator =(const DeltaMonitor &monitor)
+void DeltaMonitor::fill(const LorentzVector &p1, const LorentzVector &p2)
 {
-    *r() = *monitor.r();
-    *eta() = *monitor.eta();
-    *phi() = *monitor.phi();
-    *ptrel() = *monitor.ptrel();
-    *ptrel_vs_r() = *monitor.ptrel_vs_r();
+    r()->fill(dr(p1, p2));
+    eta()->fill(bsm::eta(p1) - bsm::eta(p2));
+    phi()->fill(dphi(p1, p2));
+    ptrel()->fill(bsm::ptrel(p1, p2));
 
-    return *this;
-}
-
-void DeltaMonitor::fill(const LorentzVector &p4_1, const LorentzVector &p4_2)
-{
-    utility::set(_p4_1.get(), &p4_1);
-    utility::set(_p4_2.get(), &p4_2);
-
-    r()->fill(_p4_1->DeltaR(*_p4_2));
-    eta()->fill(_p4_1->Eta() - _p4_2->Eta());
-    phi()->fill(_p4_1->Phi() - _p4_2->Phi());
-    ptrel()->fill(_p4_1->Vect().Perp(_p4_2->Vect()));
-
-    ptrel_vs_r()->fill(_p4_1->Vect().Perp(_p4_2->Vect()),
-            _p4_1->DeltaR(*_p4_2));
+    ptrel_vs_r()->fill(bsm::ptrel(p1, p2), dr(p1, p2));
 }
 
 const H1Ptr DeltaMonitor::r() const
@@ -443,7 +420,8 @@ P4Monitor::P4Monitor()
     _pt.reset(new H1Proxy(100, 0, 500));
     _eta.reset(new H1Proxy(100, -5, 5));
     _phi.reset(new H1Proxy(80, -4, 4));
-    _mass.reset(new H1Proxy(60, 0, 300));
+    _mass.reset(new H1Proxy(300, 0, 300));
+    _mt.reset(new H1Proxy(300, 0, 300));
 
     monitor(_energy);
     monitor(_px);
@@ -453,8 +431,7 @@ P4Monitor::P4Monitor()
     monitor(_eta);
     monitor(_phi);
     monitor(_mass);
-
-    _p4.reset(new TLorentzVector());
+    monitor(_mt);
 }
 
 P4Monitor::P4Monitor(const P4Monitor &object)
@@ -467,6 +444,7 @@ P4Monitor::P4Monitor(const P4Monitor &object)
     _eta.reset(new H1Proxy(*object._eta));
     _phi.reset(new H1Proxy(*object._phi));
     _mass.reset(new H1Proxy(*object._mass));
+    _mt.reset(new H1Proxy(*object._mt));
 
     monitor(_energy);
     monitor(_px);
@@ -476,8 +454,7 @@ P4Monitor::P4Monitor(const P4Monitor &object)
     monitor(_eta);
     monitor(_phi);
     monitor(_mass);
-
-    _p4.reset(new TLorentzVector());
+    monitor(_mt);
 }
 
 void P4Monitor::fill(const LorentzVector &p4, const float &weight)
@@ -487,11 +464,11 @@ void P4Monitor::fill(const LorentzVector &p4, const float &weight)
     py()->fill(p4.py(), weight);
     pz()->fill(p4.pz(), weight);
 
-    utility::set(_p4.get(), &p4);
-    pt()->fill(_p4->Pt(), weight);
-    eta()->fill(_p4->Eta(), weight);
-    phi()->fill(_p4->Phi(), weight);
-    mass()->fill(_p4->M(), weight);
+    pt()->fill(bsm::pt(p4), weight);
+    eta()->fill(bsm::eta(p4), weight);
+    phi()->fill(bsm::phi(p4), weight);
+    mass()->fill(bsm::mass(p4), weight);
+    mt()->fill(bsm::mt(p4), weight);
 }
 
 const H1Ptr P4Monitor::energy() const
@@ -534,6 +511,11 @@ const H1Ptr P4Monitor::mass() const
     return _mass->histogram();
 }
 
+const H1Ptr P4Monitor::mt() const
+{
+    return _mt->histogram();
+}
+
 uint32_t P4Monitor::id() const
 {
     return core::ID<P4Monitor>::get();
@@ -553,7 +535,8 @@ void P4Monitor::print(std::ostream &out) const
     out << setw(16) << left << " [pt]" << *pt() << endl;
     out << setw(16) << left << " [eta]" << *eta() << endl;
     out << setw(16) << left << " [phi]" << *phi() << endl;
-    out << setw(16) << left << " [mass]" << *mass();
+    out << setw(16) << left << " [mass]" << *mass() << endl;
+    out << setw(16) << left << " [mt]" << *mt();
 }
 
 
