@@ -125,56 +125,38 @@ void P4Canvas::draw(const P4Monitor &monitor)
 {
     if (!_canvas)
     {
-        _canvas.reset(new TCanvas(_name.c_str(), _title.c_str(), 1024, 480));
-        _canvas->Divide(4, 2);
+        _canvas.reset(new TCanvas(_name.c_str(), _title.c_str(), 800, 480));
+        _canvas->Divide(3, 2);
     }
 
     _canvas->cd(1);
-    _energy = convert(*monitor.energy());
-    _energy->SetName("energy");
-    _energy->GetXaxis()->SetTitle("E [GeV]");
-    _energy->Draw("hist");
-
-    _canvas->cd(2);
-    _px = convert(*monitor.px());
-    _px->SetName("px");
-    _px->GetXaxis()->SetTitle("p_{X} [GeV/c]");
-    _px->Draw("hist");
-
-    _canvas->cd(3);
-    _py = convert(*monitor.py());
-    _py->SetName("py");
-    _py->GetXaxis()->SetTitle("p_{Y} [GeV/c]");
-    _py->Draw("hist");
-
-    _canvas->cd(4);
-    _pz = convert(*monitor.pz());
-    _pz->SetName("pz");
-    _pz->GetXaxis()->SetTitle("p_{Z} [GeV/c]");
-    _pz->Draw("hist");
-
-    _canvas->cd(5);
     _pt = convert(*monitor.pt());
     _pt->SetName("pt");
     _pt->GetXaxis()->SetTitle("p_{T} [GeV/c]");
     _pt->Draw("hist");
 
-    _canvas->cd(6);
+    _canvas->cd(2);
     _eta = convert(*monitor.eta());
     _eta->SetName("eta");
     _eta->GetXaxis()->SetTitle("#eta");
     _eta->Draw("hist");
 
-    _canvas->cd(7);
+    _canvas->cd(3);
     _phi = convert(*monitor.phi());
     _phi->SetName("phi");
     _phi->GetXaxis()->SetTitle("#phi [rad]");
     _phi->Draw("hist");
 
-    _canvas->cd(8);
+    _canvas->cd(4);
     _mass = convert(*monitor.mass());
     _mass->SetName("mass");
     _mass->GetXaxis()->SetTitle("Mass [GeV/c^{2}]");
+    _mass->Draw("hist");
+
+    _canvas->cd(5);
+    _mass = convert(*monitor.mt());
+    _mass->SetName("mt");
+    _mass->GetXaxis()->SetTitle("M_{T} [GeV/c^{2}]");
     _mass->Draw("hist");
 }
 
@@ -242,6 +224,11 @@ void P4Canvas::write(TDirectory *dir, const P4Monitor &monitor)
     _mass->SetName("mass");
     _mass->GetXaxis()->SetTitle("Mass [GeV/c^{2}]");
     _mass->Write();
+
+    _mt = convert(*monitor.mt());
+    _mt->SetName("mt");
+    _mt->GetXaxis()->SetTitle("M_{T} [GeV/c^{2}]");
+    _mt->Write();
 }
 
 

@@ -121,6 +121,8 @@ namespace bsm
             TH1Ptr _phi;
             TH1Ptr _mass;
 
+            TH1Ptr _mt;
+
             std::string _name;
             std::string _title;
     };
