@@ -54,6 +54,9 @@ namespace bsm
             const P4MonitorPtr thirdJet() const;
             const P4MonitorPtr electron() const;
 
+            const P4MonitorPtr ltop() const;
+            const P4MonitorPtr htop() const;
+
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
             SynchSelectorDelegate *getSynchSelectorDelegate() const;
             Cut2DSelectorDelegate *getCut2DSelectorDelegate() const;
@@ -91,6 +94,8 @@ namespace bsm
                 LorentzVector wlep;
                 LorentzVector whad;
                 LorentzVector neutrino;
+                LorentzVector ltop;
+                LorentzVector htop;
             };
 
             Mttbar mttbar() const;
@@ -134,6 +139,9 @@ namespace bsm
             P4MonitorPtr _second_jet;
             P4MonitorPtr _third_jet;
             P4MonitorPtr _electron;
+
+            P4MonitorPtr _ltop;
+            P4MonitorPtr _htop;
     };
 }
 

@@ -151,6 +151,9 @@ int main(int argc, char *argv[])
             shared_ptr<P4Canvas> third_jet(new P4Canvas("Third jet"));
             shared_ptr<P4Canvas> electron(new P4Canvas("Electron"));
 
+            shared_ptr<P4Canvas> ltop(new P4Canvas("ltop"));
+            shared_ptr<P4Canvas> htop(new P4Canvas("htop"));
+
             if (app->output())
             {
                 npv->Write();
@@ -173,6 +176,9 @@ int main(int argc, char *argv[])
                 third_jet->write(app->output().get(), *analyzer->thirdJet());
 
                 electron->write(app->output().get(), *analyzer->electron());
+
+                ltop->write(app->output().get(), *analyzer->ltop());
+                htop->write(app->output().get(), *analyzer->htop());
             }
 
             if (app->isInteractive())
@@ -238,6 +244,9 @@ int main(int argc, char *argv[])
                 third_jet->draw(*analyzer->thirdJet());
 
                 electron->draw(*analyzer->electron());
+
+                ltop->draw(*analyzer->ltop());
+                htop->draw(*analyzer->htop());
 
                 root->Run();
             }

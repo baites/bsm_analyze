@@ -97,10 +97,16 @@ TemplateAnalyzer::TemplateAnalyzer():
     _third_jet.reset(new P4Monitor());
     _electron.reset(new P4Monitor());
 
+    _ltop.reset(new P4Monitor());
+    _htop.reset(new P4Monitor());
+
     monitor(_first_jet);
     monitor(_second_jet);
     monitor(_third_jet);
     monitor(_electron);
+
+    monitor(_ltop);
+    monitor(_htop);
 }
 
 TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
@@ -177,10 +183,19 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
     _electron =
         dynamic_pointer_cast<P4Monitor>(object._electron->clone());
 
+    _ltop =
+        dynamic_pointer_cast<P4Monitor>(object._ltop->clone());
+
+    _htop =
+        dynamic_pointer_cast<P4Monitor>(object._htop->clone());
+
     monitor(_first_jet);
     monitor(_second_jet);
     monitor(_third_jet);
     monitor(_electron);
+
+    monitor(_ltop);
+    monitor(_htop);
 }
 
 const TemplateAnalyzer::H1Ptr TemplateAnalyzer::npv() const
@@ -266,6 +281,16 @@ const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::thirdJet() const
 const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::electron() const
 {
     return _electron;
+}
+
+const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::ltop() const
+{
+    return _ltop;
+}
+
+const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::htop() const
+{
+    return _htop;
 }
 
 bsm::JetEnergyCorrectionDelegate
@@ -382,6 +407,9 @@ void TemplateAnalyzer::process(const Event *event)
 
         monitorJets();
         _electron->fill(el_p4, _pileup_weight);
+
+        _ltop->fill(resonanse.ltop, _pileup_weight);
+        _htop->fill(resonanse.htop, _pileup_weight);
         
         npv()->fill(event->primary_vertex().size());
         npvWithPileup()->fill(event->primary_vertex().size(), _pileup_weight);
@@ -672,6 +700,8 @@ TemplateAnalyzer::Mttbar TemplateAnalyzer::mttbar() const
     result.wlep = best_solution.missing_energy +
         _synch_selector->goodElectrons()[0]->physics_object().p4();
     result.neutrino = best_solution.missing_energy;
+    result.ltop = best_solution.ltop;
+    result.htop = best_solution.htop;
 
     return result;
 }
