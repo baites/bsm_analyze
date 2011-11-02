@@ -132,8 +132,6 @@ namespace bsm
             Counter *_secondary_lepton_counter;
             Counter *_leading_jet_counter;
 
-            bool _is_good_lepton;
-
             typedef std::vector<uint64_t> Triggers;
             Triggers _triggers; // hashes of triggers to be passed
 

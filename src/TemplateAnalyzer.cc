@@ -35,7 +35,6 @@ using namespace boost;
 using bsm::TemplateAnalyzer;
 
 TemplateAnalyzer::TemplateAnalyzer():
-    _is_good_lepton(false),
     _use_pileup(false)
 {
     _synch_selector.reset(new SynchSelector());
@@ -121,7 +120,6 @@ TemplateAnalyzer::TemplateAnalyzer():
 }
 
 TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
-    _is_good_lepton(object.isGoodLepton()),
     _triggers(object._triggers.begin(), object._triggers.end()),
     _use_pileup(false)
 {
@@ -344,10 +342,7 @@ void TemplateAnalyzer::didCounterAdd(const Counter *counter)
         fillDrVsPtrel();
     else if (counter == _leading_jet_counter)
     {
-        if (isGoodLepton())
-        {
-            mttbarBeforeHtlep()->fill(mass(mttbar().mttbar) / 1000,  _pileup_weight);
-        }
+        mttbarBeforeHtlep()->fill(mass(mttbar().mttbar) / 1000,  _pileup_weight);
     }
 }
 
@@ -373,7 +368,6 @@ void TemplateAnalyzer::onFileOpen(const std::string &filename, const Input *inpu
 
 void TemplateAnalyzer::process(const Event *event)
 {
-    _is_good_lepton = false;
     _pileup_weight = _use_pileup ? 0 : 1;
 
     if (!event->has_missing_energy())
@@ -417,10 +411,8 @@ void TemplateAnalyzer::process(const Event *event)
 
     // Process only events, that pass the synch selector
     //
-    if (_synch_selector->apply(event)
-            && isGoodLepton())
+    if (_synch_selector->apply(event))
     {
-        
         Mttbar resonanse = mttbar();
         mttbarAfterHtlep()->fill(mass(resonanse.mttbar) / 1000, _pileup_weight);
 
@@ -490,32 +482,6 @@ void TemplateAnalyzer::print(std::ostream &out) const
 //
 void TemplateAnalyzer::fillDrVsPtrel()
 {
-    if (SynchSelector::ELECTRON == _synch_selector->leptonMode())
-    {
-        typedef ::google::protobuf::RepeatedPtrField<Electron::ElectronID>
-            ElectronIDs;
-
-        const Electron *electron = (*_synch_selector->goodElectrons().begin());
-        for(ElectronIDs::const_iterator id = electron->id().begin();
-                electron->id().end() != id;
-                ++id)
-        {
-            if (Electron::HyperTight1 != id->name())
-                continue;
-
-            if  (id->identification()
-                    && id->conversion_rejection())
-                _is_good_lepton = true;
-
-            break;
-        }
-    }
-    else
-        _is_good_lepton = true;
-
-    if (!isGoodLepton())
-        return;
-
     // Secondary lepton veto cut passed: find closest jet to the lepton
     //
     const LorentzVector &lepton_p4 =
@@ -754,11 +720,6 @@ void TemplateAnalyzer::monitorJets()
     if (2 < _synch_selector->goodJets().size())
         _third_jet->fill(*_synch_selector->goodJets()[2].corrected_p4,
                 _pileup_weight);
-}
-
-bool TemplateAnalyzer::isGoodLepton() const
-{
-    return _is_good_lepton;
 }
 
 bool TemplateAnalyzer::isBtagJet() const
