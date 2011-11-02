@@ -346,8 +346,6 @@ void TemplateAnalyzer::didCounterAdd(const Counter *counter)
     {
         if (isGoodLepton())
         {
-            fillHtlep();
-
             mttbarBeforeHtlep()->fill(mass(mttbar().mttbar) / 1000,  _pileup_weight);
         }
     }
@@ -449,6 +447,8 @@ void TemplateAnalyzer::process(const Event *event)
                 fabs(dphi(*_synch_selector->goodJets()[0].corrected_p4, met)));
 
         leptonMetDphivsMet()->fill(pt(met), fabs(dphi(el_p4, met)));
+
+        fillHtlep();
     }
 
     _event = 0;
