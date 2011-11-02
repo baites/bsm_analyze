@@ -178,6 +178,14 @@ SynchSelector::SynchSelector():
 
     _htlep.reset(new Comparator<>(150));
     monitor(_htlep);
+
+    // The cut value does not matter as it is not used
+    //
+    _tricut.reset(new Comparator<>(0));
+    monitor(_tricut);
+
+    _met.reset(new Comparator<>(50));
+    monitor(_met);
 }
 
 SynchSelector::SynchSelector(const SynchSelector &object):
@@ -233,6 +241,12 @@ SynchSelector::SynchSelector(const SynchSelector &object):
 
     _htlep = dynamic_pointer_cast<Cut>(object.htlep()->clone());
     monitor(_htlep);
+
+    _tricut = dynamic_pointer_cast<Cut>(object.tricut()->clone());
+    monitor(_tricut);
+
+    _met = dynamic_pointer_cast<Cut>(object.met()->clone());
+    monitor(_met);
 }
 
 SynchSelector::~SynchSelector()
@@ -254,6 +268,16 @@ SynchSelector::CutPtr SynchSelector::htlep() const
     return _htlep;
 }
 
+SynchSelector::CutPtr SynchSelector::tricut() const
+{
+    return _tricut;
+}
+
+SynchSelector::CutPtr SynchSelector::met() const
+{
+    return _met;
+}
+
 bool SynchSelector::apply(const Event *event)
 {
     _cutflow->apply(PRESELECTION);
@@ -271,7 +295,9 @@ bool SynchSelector::apply(const Event *event)
         && secondaryLeptonVeto()
         && isolationAnd2DCut()
         && leadingJetCut()
-        && htlepCut(event);
+        && htlepCut(event)
+        && triangularCut(event)
+        && missingEnergy(event);
 }
 
 SynchSelector::CutflowPtr SynchSelector::cutflow() const
@@ -405,6 +431,8 @@ void SynchSelector::print(std::ostream &out) const
 
     _cutflow->cut(LEADING_JET)->setName("Leading Jet");
     _cutflow->cut(HTLEP)->setName("hTlep");
+    _cutflow->cut(TRICUT)->setName("tri-cut");
+    _cutflow->cut(MET)->setName("MET");
 
     out << "Cutflow [" << _lepton_mode << ": " << _cut_mode << "]" << endl;
     out << *_cutflow << endl;
@@ -567,6 +595,43 @@ bool SynchSelector::htlepCut(const Event *event)
     return event->has_missing_energy()
         && htlep()->apply(pt(event->missing_energy().p4()) + pt(lepton_p4))
         && (_cutflow->apply(HTLEP), true);
+}
+
+bool SynchSelector::triangularCut(const Event *event)
+{
+    if (tricut()->isDisabled())
+        return true;
+
+    if (!event->has_missing_energy())
+        return false;
+
+    const LorentzVector &met = event->missing_energy().p4();
+
+    const float met_pt = pt(met);
+
+    const float dphi_el_met =
+        fabs(dphi(goodElectrons()[0]->physics_object().p4(), met));
+
+    const float dphi_ljet_met =
+        fabs(dphi(*goodJets()[0].corrected_p4, met));
+
+    const float slope = 1.5 / 75;
+
+    return  dphi_el_met < (slope * met_pt + 1.5)
+        && dphi_el_met > (-slope * met_pt + 1.5)
+        && dphi_ljet_met < (slope * met_pt + 1.5)
+        && dphi_ljet_met > (-slope * met_pt + 1.5)
+        && (_cutflow->apply(TRICUT), true);
+}
+
+bool SynchSelector::missingEnergy(const Event *event)
+{
+    if (met()->isDisabled())
+        return true;
+
+    return event->has_missing_energy()
+        && met()->apply(pt(event->missing_energy().p4()))
+        && (_cutflow->apply(MET), true);
 }
 
 bool SynchSelector::cut2D(const LorentzVector *lepton_p4)
