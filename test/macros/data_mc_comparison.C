@@ -5,7 +5,10 @@ float luminosity = 2039.049;
 string plot_name = "mttbar_after_htlep";
 string subtitle = "";
 int rebin = 100;
-bool plot_zprime = false;
+bool plot_zprime = true;
+
+const float rebin_x = 5;
+const float rebin_y = 2;
 
 enum InputType
 {
@@ -186,8 +189,9 @@ void style(TH1 *hist, const InputType &input_type)
             }
         case ZPRIME1000:
             {
-                color = kAzure - 1;
+                color = kBlack;
                 hist->SetLineWidth(2);
+                hist->SetLineStyle(2);
                 is_fill = false;
                 break;
             }
@@ -199,22 +203,24 @@ void style(TH1 *hist, const InputType &input_type)
             }
         case ZPRIME2000:
             {
-                color = kAzure - 2;
+                color = kBlack;
                 hist->SetLineWidth(2);
+                hist->SetLineStyle(9);
                 is_fill = false;
                 break;
             }
         case ZPRIME3000:
             {
-                color = kAzure - 4;
+                color = kBlack;
                 hist->SetLineWidth(2);
                 is_fill = false;
                 break;
             }
         case ZPRIME4000:
             {
-                color = kViolet + 2;
+                color = kOrange;
                 hist->SetLineWidth(2);
+                hist->SetLineStyle(9);
                 is_fill = false;
                 break;
             }
@@ -392,6 +398,36 @@ void scale(TH1 *hist, const InputType &input_type)
                 break;
             }
 
+        case ZPRIME1000:
+            {
+                scale = 0.1 / 207992;
+                break;
+            }
+
+        case ZPRIME1500:
+            {
+                scale = 0.1 / 168383;
+                break;
+            }
+
+        case ZPRIME2000:
+            {
+                scale = 0.1 / 179315;
+                break;
+            }
+
+        case ZPRIME3000:
+            {
+                scale = 0.1 / 195410;
+                break;
+            }
+
+        case ZPRIME4000:
+            {
+                scale = 0.1 / 180381;
+                break;
+            }
+
         case RERECO_2011A_MAY10: // Fall through
         case RERECO_2011A_AUG05: // Fall through
         case PROMPT_2011A_V4: // Fall through
@@ -477,6 +513,32 @@ TH1 *get(const TFile *input, const string &path, const InputType &input_type)
     return hist;
 }
 
+TH2 *get2D(const TFile *input, const string &path, const InputType &input_type)
+{   
+    TObject *object = input->Get(path.c_str());
+    if (!object)
+    {
+        cerr << "failed to get: " << path << endl;
+
+        return 0;
+    }
+
+    TH2 *hist = dynamic_cast<TH2 *>(object->Clone());
+    if (!hist)
+    {
+        cerr << "object does not seem to be TH2" << endl;
+
+        return 0;
+    }
+
+    if (1 != rebin)
+        hist->Rebin(rebin);
+
+    style(hist, input_type);
+
+    return hist;
+}
+
 TH1 *merge(TFile **input, const string &path, const int &from, const int &to)
 {
     TH1 *result = 0;
@@ -497,6 +559,32 @@ TH1 *merge(TFile **input, const string &path, const int &from, const int &to)
             result->Add(hist);
         else
             result = dynamic_cast<TH1 *>(hist->Clone());
+    }
+    cout << "--- done ---" << endl;
+
+    return result;
+}
+
+TH2 *merge2D(TFile **input, const string &path, const int &from, const int &to)
+{
+    TH2 *result = 0;
+    cout << "--- merge from: " << toString(from) << " till " << toString(to) << endl;
+    for(int i = from; to > i; ++i)
+    {
+        TH2 *hist = get(input[i], path, i);
+        if (!hist)
+        {
+            cerr << "failed to extract: " << path << endl;
+
+            continue;
+        }
+
+        scale(hist, i);
+
+        if (result)
+            result->Add(hist);
+        else
+            result = dynamic_cast<TH2 *>(hist->Clone());
     }
     cout << "--- done ---" << endl;
 
@@ -562,19 +650,6 @@ void plotComparison(TFile **input, const string &title, const bool &draw_mc_firs
             RERECO_2011A_MAY10,
             RERECO_2011A_MAY10 + SIGNAL_CHANNELS);
 
-    // Scale MC to data
-    //
-    TH1 *mc = merge(input, plot_name.c_str(), 0, RERECO_2011A_MAY10);
-    scale_factor = data->Integral() / mc->Integral();
-
-    /*
-    ttjets->Scale(scale_factor);
-    zjets->Scale(scale_factor);
-    wjets->Scale(scale_factor);
-    stop->Scale(scale_factor);
-    qcd->Scale(scale_factor);
-    */
-
     TH1 *zprime_m1000 = get(input[ZPRIME1000], plot_name.c_str(), ZPRIME1000);
     zprime_m1000->Scale(0.5 * data->Integral() / zprime_m1000->Integral());
     style(zprime_m1000, ZPRIME1000);
@@ -617,7 +692,7 @@ void plotComparison(TFile **input, const string &title, const bool &draw_mc_firs
     else
     {
         data->Draw("");
-        data->GetYaxis()->SetTitle("a.u.");
+        data->GetYaxis()->SetTitle("Events");
         stack->Draw("hist same");
 
         if (plot_zprime)
@@ -641,10 +716,10 @@ void plotComparison(TFile **input, const string &title, const bool &draw_mc_firs
 
     if (plot_zprime)
     {
-        legend->AddEntry(zprime_m1000, "Z' (m = 1 TeV, w 10%)", "lpe");
-        legend->AddEntry(zprime_m2000, "Z' (m = 2 TeV, w 10%)", "lpe");
-        legend->AddEntry(zprime_m3000, "Z' (m = 3 TeV, w 10%)", "lpe");
-        //legend->AddEntry(zprime_m4000, "Z' (m = 4 TeV, w 10%)", "lpe");
+        legend->AddEntry(zprime_m1000, "Z' (m = 1 TeV, w 1%)", "lpe");
+        legend->AddEntry(zprime_m2000, "Z' (m = 2 TeV, w 1%)", "lpe");
+        legend->AddEntry(zprime_m3000, "Z' (m = 3 TeV, w 1%)", "lpe");
+        //legend->AddEntry(zprime_m4000, "Z' (m = 4 TeV, w 1%)", "lpe");
     }
 
     legend->Draw();
@@ -655,8 +730,11 @@ void plotDataMcComparison()
     string canvas_title = "Data/MC Comparison " + subtitle;
     TCanvas *canvas = new TCanvas();
     canvas->SetTitle(canvas_title.c_str());
+    /*
     canvas->SetWindowSize(1200, 600);
     canvas->Divide(2);
+    */
+    canvas->SetWindowSize(800, 600);
 
     canvas->cd(1)->SetRightMargin(10);
     canvas->cd(1)->SetTopMargin(10);
@@ -664,11 +742,13 @@ void plotDataMcComparison()
 
     cmsLabel();
 
+    /*
     canvas->cd(2)->SetRightMargin(10);
     canvas->cd(2)->SetTopMargin(10);
     plotComparison(input_s1s2_p50, "p_{T}^{jet} > 50 GeV/c^{2}");
 
     cmsLabel();
+    */
 }
 
 void plotData(TFile **input, const string &title)
@@ -731,14 +811,19 @@ void plotDataComparison()
     string canvas_title = "Data Comparison";
     TCanvas *canvas = new TCanvas();
     canvas->SetTitle(canvas_title.c_str());
+    canvas->SetWindowSize(800, 600);
+    /*
     canvas->SetWindowSize(800, 480);
     canvas->Divide(2);
 
     canvas->cd(1);
+    */
     plotData(input_s1s2_p250, "p_{T}^{jet} > 250");
 
+    /*
     canvas->cd(2);
     plotData(input_s1s2_p50, "p_{T}^{jet} > 50");
+    */
 }
 
 void plotMCComparison()
@@ -746,14 +831,19 @@ void plotMCComparison()
     string canvas_title = "MC Comparison";
     TCanvas *canvas = new TCanvas();
     canvas->SetTitle(canvas_title.c_str());
+    canvas->SetWindowSize(800, 600);
+    /*
     canvas->SetWindowSize(800, 480);
     canvas->Divide(2);
 
     canvas->cd(1);
+    */
     plotMC(input_s1s2_p250, "p_{T}^{jet} > 250");
+    /*
 
     canvas->cd(2);
     plotMC(input_s1s2_p50, "p_{T}^{jet} > 50");
+    */
 }
 
 void plotDrvsPtrel(TFile **input, const string &pt)
@@ -767,70 +857,201 @@ void plotDrvsPtrel(TFile **input, const string &pt)
     string plot_name = "dr_vs_ptrel";
 
     canvas->cd(1);
-    TH1 *ttjets = get(input[TTJETS], plot_name.c_str(), TTJETS);
+    TH2 *ttjets = get2D(input[TTJETS], plot_name.c_str(), TTJETS);
     scale(ttjets, TTJETS);
-    ttjets->Draw("scat");
+    ttjets->Rebin2D(5, 1);
+    ttjets->Draw("colz");
 
     canvas->cd(2);
-    TH1 *zjets = get(input[ZJETS], plot_name.c_str(), ZJETS);
+    TH2 *zjets = get2D(input[ZJETS], plot_name.c_str(), ZJETS);
     scale(zjets, ZJETS);
-    zjets->Draw("scat");
+    zjets->Rebin2D(5, 1);
+    zjets->Draw("colz");
 
     canvas->cd(3);
-    TH1 *wjets = get(input[WJETS], plot_name.c_str(), WJETS);
+    TH2 *wjets = get2D(input[WJETS], plot_name.c_str(), WJETS);
     scale(wjets, WJETS);
-    wjets->Draw("scat");
+    wjets->Rebin2D(5, 1);
+    wjets->Draw("colz");
 
     canvas->cd(4);
-    TH1 *stop = merge(input, plot_name.c_str(), STOP_S, STOP_S + STOP_CHANNELS);
-    stop->Draw("scat");
+    TH2 *stop = merge2D(input, plot_name.c_str(), STOP_S, STOP_S + STOP_CHANNELS);
+    stop->Rebin2D(5, 1);
+    stop->Draw("colz");
 
     canvas->cd(5);
-    TH1 *qcd = merge(input, plot_name.c_str(), 0, QCD_CHANNELS);
-    qcd->Draw("scat");
+    TH2 *qcd = merge2D(input, plot_name.c_str(), 0, QCD_CHANNELS);
+    qcd->Rebin2D(5, 1);
+    qcd->Draw("colz");
     
     canvas->cd(6);
-    TH1 *zprime_m1000 = get(input[ZPRIME1000], plot_name.c_str(), ZPRIME1000);
+    TH2 *zprime_m1000 = get2D(input[ZPRIME1000], plot_name.c_str(), ZPRIME1000);
     style(zprime_m1000, ZPRIME1000);
-    zprime_m1000->Draw("scat");
+    zprime_m1000->Rebin2D(5, 1);
+    zprime_m1000->Draw("colz");
 
     canvas->cd(7);
-    TH1 *zprime_m1500 = get(input[ZPRIME1500], plot_name.c_str(), ZPRIME1500);
+    TH2 *zprime_m1500 = get2D(input[ZPRIME1500], plot_name.c_str(), ZPRIME1500);
     style(zprime_m1500, ZPRIME1500);
-    zprime_m1500->Draw("scat");
+    zprime_m1500->Rebin2D(5, 1);
+    zprime_m1500->Draw("colz");
 
     canvas->cd(8);
-    TH1 *zprime_m2000 = get(input[ZPRIME2000], plot_name.c_str(), ZPRIME2000);
+    TH2 *zprime_m2000 = get2D(input[ZPRIME2000], plot_name.c_str(), ZPRIME2000);
     style(zprime_m2000, ZPRIME2000);
-    zprime_m2000->Draw("scat");
+    zprime_m2000->Rebin2D(5, 1);
+    zprime_m2000->Draw("colz");
 
     canvas->cd(9);
-    TH1 *zprime_m3000 = get(input[ZPRIME3000], plot_name.c_str(), ZPRIME3000);
+    TH2 *zprime_m3000 = get2D(input[ZPRIME3000], plot_name.c_str(), ZPRIME3000);
     style(zprime_m3000, ZPRIME3000);
-    zprime_m3000->Draw("scat");
+    zprime_m3000->Rebin2D(5, 1);
+    zprime_m3000->Draw("colz");
 
     canvas->cd(10);
-    TH1 *zprime_m4000 = get(input[ZPRIME4000], plot_name.c_str(), ZPRIME4000);
+    TH2 *zprime_m4000 = get2D(input[ZPRIME4000], plot_name.c_str(), ZPRIME4000);
     style(zprime_m4000, ZPRIME4000);
-    zprime_m4000->Draw("scat");
-
-    /*
-    TLegend *legend = createLegend(title);
-    legend->AddEntry(ttjets, "t#bar{t}", "fe");
-    legend->AddEntry(wjets, "W#rightarrowl#nu", "fe");
-    legend->AddEntry(zjets, "Z/#gamma*#rightarrowl^{+}l^{-}", "fe");
-    legend->AddEntry(stop, "Single-Top", "fe");
-    legend->AddEntry(qcd, "QCD", "fe");
-    legend->Draw();
-    */
+    zprime_m4000->Rebin2D(5, 1);
+    zprime_m4000->Draw("colz");
 }
 
 void plot2DCut()
 {
     rebin = 1;
 
-    plotDrvsPtrel(input_s1s2_p50, "50");
+    //plotDrvsPtrel(input_s1s2_p50, "50");
     plotDrvsPtrel(input_s1s2_p250, "250");
+}
+
+void plotPhivsMet(TFile **input, TCanvas *canvas, const string &plot_name)
+{
+    canvas->cd(1);
+    TH2 *ttjets = get2D(input[TTJETS], plot_name.c_str(), TTJETS);
+    scale(ttjets, TTJETS);
+    ttjets->Rebin2D(rebin_x, rebin_y);
+    ttjets->Draw("colz");
+
+    canvas->cd(2);
+    TH2 *zjets = get2D(input[ZJETS], plot_name.c_str(), ZJETS);
+    scale(zjets, ZJETS);
+    zjets->Rebin2D(rebin_x, rebin_y);
+    zjets->Draw("colz");
+
+    canvas->cd(3);
+    TH2 *wjets = get2D(input[WJETS], plot_name.c_str(), WJETS);
+    scale(wjets, WJETS);
+    wjets->Rebin2D(rebin_x, rebin_y);
+    wjets->Draw("colz");
+
+    canvas->cd(4);
+    TH2 *stop = merge2D(input, plot_name.c_str(), STOP_S, STOP_S + STOP_CHANNELS);
+    stop->Rebin2D(rebin_x, rebin_y);
+    stop->Draw("colz");
+
+    canvas->cd(5);
+    TH2 *qcd = merge2D(input, plot_name.c_str(), 0, QCD_CHANNELS);
+    qcd->Rebin2D(rebin_x, rebin_y);
+    qcd->Draw("colz");
+    
+    canvas->cd(6);
+    TH2 *zprime_m1000 = get2D(input[ZPRIME1000], plot_name.c_str(), ZPRIME1000);
+    style(zprime_m1000, ZPRIME1000);
+    zprime_m1000->Rebin2D(rebin_x, rebin_y);
+    zprime_m1000->Draw("colz");
+
+    canvas->cd(7);
+    TH2 *zprime_m1500 = get2D(input[ZPRIME1500], plot_name.c_str(), ZPRIME1500);
+    style(zprime_m1500, ZPRIME1500);
+    zprime_m1500->Rebin2D(rebin_x, rebin_y);
+    zprime_m1500->Draw("colz");
+
+    canvas->cd(8);
+    TH2 *zprime_m2000 = get2D(input[ZPRIME2000], plot_name.c_str(), ZPRIME2000);
+    style(zprime_m2000, ZPRIME2000);
+    zprime_m2000->Rebin2D(rebin_x, rebin_y);
+    zprime_m2000->Draw("colz");
+
+    canvas->cd(9);
+    TH2 *zprime_m3000 = get2D(input[ZPRIME3000], plot_name.c_str(), ZPRIME3000);
+    style(zprime_m3000, ZPRIME3000);
+    zprime_m3000->Rebin2D(rebin_x, rebin_y);
+    zprime_m3000->Draw("colz");
+
+    canvas->cd(10);
+    TH2 *zprime_m4000 = get2D(input[ZPRIME4000], plot_name.c_str(), ZPRIME4000);
+    style(zprime_m4000, ZPRIME4000);
+    zprime_m4000->Rebin2D(rebin_x, rebin_y);
+    zprime_m4000->Draw("colz");
+}
+
+void plotLjetDphivsMet(TFile **input, const string &pt)
+{
+    string canvas_title = "Dphi(Leading Jet, MET) vs MET: leading jet pT > " + pt;
+    TCanvas *canvas = new TCanvas();
+    canvas->SetTitle(canvas_title.c_str());
+    canvas->SetWindowSize(1200, 600);
+    canvas->Divide(5, 2);
+
+    string plot_name = "ljet_met_dphi_vs_met";
+
+    plotPhivsMet(input, canvas, plot_name);
+
+    canvas_title += " (data)";
+    TCanvas *canvas = new TCanvas();
+    canvas->SetTitle(canvas_title.c_str());
+    canvas->SetWindowSize(640, 400);
+
+    TH2 *data = merge2D(input, plot_name.c_str(), STOP_S, STOP_S + STOP_CHANNELS);
+    TH2 *data = merge2D(input,
+            plot_name.c_str(),
+            RERECO_2011A_MAY10,
+            RERECO_2011A_MAY10 + SIGNAL_CHANNELS);
+    data->Rebin2D(rebin_x, rebin_y);
+    data->SetMarkerSize(0.2);
+    data->Draw("colz");
+}
+
+void plotLjetMetDphivsMet()
+{
+    rebin = 1;
+
+    //plotLjetDphivsMet(input_s1s2_p50, "50");
+    plotLjetDphivsMet(input_s1s2_p250, "250");
+}
+
+void plotLeptonDphivsMet(TFile **input, const string &pt)
+{
+    string canvas_title = "Dphi(Lepton, MET) vs MET: leading jet pT > " + pt;
+    TCanvas *canvas = new TCanvas();
+    canvas->SetTitle(canvas_title.c_str());
+    canvas->SetWindowSize(1200, 600);
+    canvas->Divide(5, 2);
+
+    string plot_name = "lepton_met_dphi_vs_met";
+
+    plotPhivsMet(input, canvas, plot_name);
+
+    canvas_title += " (data)";
+    TCanvas *canvas = new TCanvas();
+    canvas->SetTitle(canvas_title.c_str());
+    canvas->SetWindowSize(640, 400);
+
+    TH2 *data = merge2D(input, plot_name.c_str(), STOP_S, STOP_S + STOP_CHANNELS);
+    TH2 *data = merge2D(input,
+            plot_name.c_str(),
+            RERECO_2011A_MAY10,
+            RERECO_2011A_MAY10 + SIGNAL_CHANNELS);
+    data->Rebin2D(rebin_x, rebin_y);
+    data->SetMarkerSize(0.2);
+    data->Draw("colz");
+}
+
+void plotLeptonMetDphivsMet()
+{
+    rebin = 1;
+
+    //plotLeptonDphivsMet(input_s1s2_p50, "50");
+    plotLeptonDphivsMet(input_s1s2_p250, "250");
 }
 
 void data_mc_comparison()
@@ -868,30 +1089,30 @@ void data_mc_comparison()
     };
 
     int rebins[] = {
-        100,
+        100,    // mttbar
+        20,     // htlep
+        1,      // npv
+        1,      // npv_with_pu
+        1,      // njets
+        20,     // ttbar_pt
+        10,     // wlep_mt
+        10,     // wlep_mass
+        5,      // First Jet
+        2,
+        5,      // second jet
+        2,
+        5,      // third jet
+        2,
+        5,      // electron
+        2,
+        20,      // ltop
+        2,
+        10,
         20,
-        1,
-        1,
-        1,
-        20,
-        10,
-        10,
-        5,
-        2,
-        5,
-        2,
-        5,
-        2,
-        5,
-        2,
-        5,
+        20,      // htop
         2,
         10,
-        10,
-        5,
-        2,
-        10,
-        10
+        20
     };
 
     string subtitles[] = {
@@ -923,9 +1144,8 @@ void data_mc_comparison()
 
     int plots_num = 24;
 
+    //for(int i = 0; 2 > i; ++i)
     for(int i = 0; plots_num > i; ++i)
-    //for(int i = 20; plots_num > i; ++i)
-    //for(int i = 0; 1 > i; ++i)
     //for(int i = 1; false && 2 > i; ++i)
     {
         plot_name = plots[i];
@@ -935,7 +1155,10 @@ void data_mc_comparison()
         //plotDataComparison();
     }
 
-    //plot2DCut();
+    /*
+    plot2DCut();
+    */
 
-    //plotDataMcComparison();
+    plotLjetMetDphivsMet();
+    plotLeptonMetDphivsMet();
 }
