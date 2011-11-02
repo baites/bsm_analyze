@@ -134,7 +134,7 @@ SynchAnalyzer::~SynchAnalyzer()
 
 bsm::JetEnergyCorrectionDelegate *SynchAnalyzer::getJetEnergyCorrectionDelegate() const
 {
-    return _synch_selector->getJetEnergyCorrectionDelegate();
+    return _synch_selector.get();
 }
 
 bsm::SynchSelectorDelegate *SynchAnalyzer::getSynchSelectorDelegate() const

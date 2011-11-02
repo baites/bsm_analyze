@@ -68,7 +68,8 @@ namespace bsm
     };
 
     class SynchSelector : public Selector,
-        public SynchSelectorDelegate
+        public SynchSelectorDelegate,
+        public JetEnergyCorrectionDelegate
     {
         public:
             typedef boost::shared_ptr<Cut> CutPtr;
@@ -93,6 +94,8 @@ namespace bsm
                 CUT_LEPTON,
                 LEADING_JET,
                 HTLEP,
+                TRICUT,
+                MET,
 
                 SELECTIONS // this item should always be the last one
             };
@@ -107,6 +110,8 @@ namespace bsm
             CutPtr cut() const;
             CutPtr leadingJet() const;
             CutPtr htlep() const;
+            CutPtr tricut() const;
+            CutPtr met() const;
 
             // Test if muon passes the selector
             //
@@ -125,7 +130,6 @@ namespace bsm
             LeptonMode leptonMode() const;
             CutMode cutMode() const;
 
-            JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
             Cut2DSelectorDelegate *getCut2DSelectorDelegate() const;
 
             // SynchSelectorDelegate interface
@@ -133,6 +137,13 @@ namespace bsm
             virtual void setLeptonMode(const LeptonMode &);
             virtual void setCutMode(const CutMode &);
             virtual void setLeadingJetPt(const float &);
+
+            // Jet Energy Correction Delegate interface
+            //
+            virtual void setCorrection(const Level &,
+                    const std::string &file_name); // proxy to JEC setCorrection
+
+            virtual void setChildCorrection();
 
             // Selector interface
             //
@@ -158,6 +169,8 @@ namespace bsm
             bool isolationAnd2DCut();
             bool leadingJetCut();
             bool htlepCut(const Event *);
+            bool triangularCut(const Event *);
+            bool missingEnergy(const Event *);
 
             void selectGoodPrimaryVertices(const Event *);
             void selectGoodElectrons(const Event *);
@@ -192,6 +205,8 @@ namespace bsm
             CutPtr _cut;
             CutPtr _leading_jet;
             CutPtr _htlep;
+            CutPtr _tricut;
+            CutPtr _met;
     };
 
     // Helpers

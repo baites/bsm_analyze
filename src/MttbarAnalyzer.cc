@@ -178,7 +178,7 @@ MttbarAnalyzer::MttbarAnalyzer(const MttbarAnalyzer &object):
 
 bsm::JetEnergyCorrectionDelegate *MttbarAnalyzer::getJetEnergyCorrectionDelegate() const
 {
-    return _synch_selector->getJetEnergyCorrectionDelegate();
+    return _synch_selector.get();
 }
 
 bsm::SynchSelectorDelegate *MttbarAnalyzer::getSynchSelectorDelegate() const

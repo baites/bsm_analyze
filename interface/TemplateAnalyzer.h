@@ -35,6 +35,7 @@ namespace bsm
             TemplateAnalyzer(const TemplateAnalyzer &);
 
             const H1Ptr npv() const;
+            const H1Ptr npvWithPileup() const;
             const H1Ptr njets() const;
             const H1Ptr d0() const;
             const H1Ptr htlep() const;
@@ -48,10 +49,16 @@ namespace bsm
             const H1Ptr wlepMass() const;
             const H1Ptr whadMass() const;
 
+            const H2Ptr ljetMetDphivsMet() const;
+            const H2Ptr leptonMetDphivsMet() const;
+
             const P4MonitorPtr firstJet() const;
             const P4MonitorPtr secondJet() const;
             const P4MonitorPtr thirdJet() const;
             const P4MonitorPtr electron() const;
+
+            const P4MonitorPtr ltop() const;
+            const P4MonitorPtr htop() const;
 
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
             SynchSelectorDelegate *getSynchSelectorDelegate() const;
@@ -89,16 +96,21 @@ namespace bsm
                 LorentzVector mttbar;
                 LorentzVector wlep;
                 LorentzVector whad;
+                LorentzVector neutrino;
+                LorentzVector ltop;
+                LorentzVector htop;
             };
 
             Mttbar mttbar() const;
             void monitorJets();
 
             bool isGoodLepton() const;
+            bool isBtagJet() const;
 
             boost::shared_ptr<SynchSelector> _synch_selector;
 
             H1ProxyPtr _npv;
+            H1ProxyPtr _npv_with_pileup;
             H1ProxyPtr _njets;
             H1ProxyPtr _d0;
             H1ProxyPtr _htlep;
@@ -112,23 +124,28 @@ namespace bsm
             H1ProxyPtr _wlep_mass;
             H1ProxyPtr _whad_mass;
 
+            H2ProxyPtr _ljet_met_dphi_vs_met;
+            H2ProxyPtr _lepton_met_dphi_vs_met;
+
             const Event *_event;
 
             Counter *_secondary_lepton_counter;
             Counter *_leading_jet_counter;
 
-            bool _is_good_lepton;
-
             typedef std::vector<uint64_t> Triggers;
             Triggers _triggers; // hashes of triggers to be passed
 
             PileupCorrections _pileup_corrections;
+            bool _use_pileup;
             float _pileup_weight;
 
             P4MonitorPtr _first_jet;
             P4MonitorPtr _second_jet;
             P4MonitorPtr _third_jet;
             P4MonitorPtr _electron;
+
+            P4MonitorPtr _ltop;
+            P4MonitorPtr _htop;
     };
 }
 

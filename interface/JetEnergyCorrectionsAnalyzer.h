@@ -19,12 +19,14 @@
 #include "JetMETObjects/interface/JetCorrectorParameters.h"
 #include "interface/Analyzer.h"
 #include "interface/bsm_fwd.h"
+#include "interface/JetEnergyCorrections.h"
 
 class JetCorrectorParameters;
 
 namespace bsm
 {
-    class JetEnergyCorrectionsAnalyzer : public Analyzer
+    class JetEnergyCorrectionsAnalyzer : public Analyzer,
+        public JetEnergyCorrectionDelegate
     {
         public:
             typedef boost::shared_ptr<P4Monitor> P4MonitorPtr;
@@ -38,6 +40,13 @@ namespace bsm
             const P4MonitorPtr jetCmsswCorrectedP4() const;
             const P4MonitorPtr jetUncorrectedP4() const;
             const P4MonitorPtr jetOfflineCorrectedP4() const;
+
+            // Jet Energy Correction Delegate interface
+            //
+            virtual void setCorrection(const Level &,
+                    const std::string &file_name); // proxy to JEC setCorrection
+
+            virtual void setChildCorrection();
 
             // Anlayzer interface
             //

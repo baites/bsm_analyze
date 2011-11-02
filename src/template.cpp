@@ -76,6 +76,12 @@ int main(int argc, char *argv[])
             npv->GetXaxis()->SetTitleSize(0.045);
             npv->SetMarkerSize(0.1);
 
+            TH1Ptr npv_with_pileup = convert(*analyzer->npvWithPileup());
+            npv_with_pileup->SetName("npv_with_pileup");
+            npv_with_pileup->GetXaxis()->SetTitle("N_{PV}^{with PU}");
+            npv_with_pileup->GetXaxis()->SetTitleSize(0.045);
+            npv_with_pileup->SetMarkerSize(0.1);
+
             TH1Ptr njets = convert(*analyzer->njets());
             njets->SetName("njets");
             njets->GetXaxis()->SetTitle("N_{jet}");
@@ -95,17 +101,17 @@ int main(int argc, char *argv[])
 
             TH1Ptr mttbar_before_htlep = convert(*analyzer->mttbarBeforeHtlep());
             mttbar_before_htlep->SetName("mttbar_before_htlep");
-            mttbar_before_htlep->GetXaxis()->SetTitle("m_{t#bar{t}}^{reco} [GeV/c^{2}]");
+            mttbar_before_htlep->GetXaxis()->SetTitle("m_{t#bar{t}} [TeV/c^{2}]");
             mttbar_before_htlep->GetXaxis()->SetTitleSize(0.045);
 
             TH1Ptr mttbar_after_htlep = convert(*analyzer->mttbarAfterHtlep());
             mttbar_after_htlep->SetName("mttbar_after_htlep");
-            mttbar_after_htlep->GetXaxis()->SetTitle("m_{t#bar{t}}^{reco} [GeV/c^{2}]");
+            mttbar_after_htlep->GetXaxis()->SetTitle("m_{t#bar{t}} [TeV/c^{2}]");
             mttbar_after_htlep->GetXaxis()->SetTitleSize(0.045);
 
             TH2Ptr dr_vs_ptrel = convert(*analyzer->drVsPtrel());
             dr_vs_ptrel->SetName("dr_vs_ptrel");
-            dr_vs_ptrel->GetXaxis()->SetTitle("p_{T}^{rel} [GeV/c^{2}]");
+            dr_vs_ptrel->GetXaxis()->SetTitle("p_{T}^{rel} [GeV/c]");
             dr_vs_ptrel->GetXaxis()->SetTitleSize(0.045);
             dr_vs_ptrel->GetYaxis()->SetTitle("#Delta R");
             dr_vs_ptrel->GetYaxis()->SetTitleSize(0.045);
@@ -130,24 +136,42 @@ int main(int argc, char *argv[])
 
             TH1Ptr wlep_mass = convert(*analyzer->wlepMass());
             wlep_mass->SetName("wlep_mass");
-            wlep_mass->GetXaxis()->SetTitle("M_{T}^{W,lep} [GeV/c^{2}]");
+            wlep_mass->GetXaxis()->SetTitle("M^{W,lep} [GeV/c^{2}]");
             wlep_mass->GetXaxis()->SetTitleSize(0.045);
             wlep_mass->SetMarkerSize(0.1);
 
             TH1Ptr whad_mass = convert(*analyzer->whadMass());
             whad_mass->SetName("whad_mass");
-            whad_mass->GetXaxis()->SetTitle("M_{T}^{W,had} [GeV/c^{2}]");
+            whad_mass->GetXaxis()->SetTitle("M^{W,had} [GeV/c^{2}]");
             whad_mass->GetXaxis()->SetTitleSize(0.045);
             whad_mass->SetMarkerSize(0.1);
+
+            TH2Ptr ljet_met_dphi_vs_met = convert(*analyzer->ljetMetDphivsMet());
+            ljet_met_dphi_vs_met->SetName("ljet_met_dphi_vs_met");
+            ljet_met_dphi_vs_met->GetXaxis()->SetTitle("MET [GeV/c]");
+            ljet_met_dphi_vs_met->GetXaxis()->SetTitleSize(0.045);
+            ljet_met_dphi_vs_met->GetYaxis()->SetTitle("#Delta #phi(leading jet, MET)) [rad]");
+            ljet_met_dphi_vs_met->GetYaxis()->SetTitleSize(0.045);
+
+            TH2Ptr lepton_met_dphi_vs_met = convert(*analyzer->leptonMetDphivsMet());
+            lepton_met_dphi_vs_met->SetName("lepton_met_dphi_vs_met");
+            lepton_met_dphi_vs_met->GetXaxis()->SetTitle("MET [GeV/c]");
+            lepton_met_dphi_vs_met->GetXaxis()->SetTitleSize(0.045);
+            lepton_met_dphi_vs_met->GetYaxis()->SetTitle("#Delta #phi(lepton, MET)) [rad]");
+            lepton_met_dphi_vs_met->GetYaxis()->SetTitleSize(0.045);
 
             shared_ptr<P4Canvas> first_jet(new P4Canvas("First jet"));
             shared_ptr<P4Canvas> second_jet(new P4Canvas("Second jet"));
             shared_ptr<P4Canvas> third_jet(new P4Canvas("Third jet"));
             shared_ptr<P4Canvas> electron(new P4Canvas("Electron"));
 
+            shared_ptr<P4Canvas> ltop(new P4Canvas("ltop"));
+            shared_ptr<P4Canvas> htop(new P4Canvas("htop"));
+
             if (app->output())
             {
                 npv->Write();
+                npv_with_pileup->Write();
                 njets->Write();
                 d0->Write();
                 htlep->Write();
@@ -161,11 +185,17 @@ int main(int argc, char *argv[])
                 wlep_mass->Write();
                 whad_mass->Write();
 
+                ljet_met_dphi_vs_met->Write();
+                lepton_met_dphi_vs_met->Write();
+
                 first_jet->write(app->output().get(), *analyzer->firstJet());
                 second_jet->write(app->output().get(), *analyzer->secondJet());
                 third_jet->write(app->output().get(), *analyzer->thirdJet());
 
                 electron->write(app->output().get(), *analyzer->electron());
+
+                ltop->write(app->output().get(), *analyzer->ltop());
+                htop->write(app->output().get(), *analyzer->htop());
             }
 
             if (app->isInteractive())
@@ -197,9 +227,6 @@ int main(int argc, char *argv[])
                 canvas2->cd(1);
                 d0->Draw("hist");
 
-                canvas2->cd(2);
-                npv->Draw("hist");
-
                 canvas2->cd(3);
                 njets->Draw("hist");
 
@@ -218,11 +245,25 @@ int main(int argc, char *argv[])
                 canvas2->cd(8);
                 whad_mass->Draw("hist");
 
+                shared_ptr<TCanvas> canvas3(new TCanvas());
+                canvas3->SetTitle("Primary Vertices");
+                canvas3->SetWindowSize(640, 400);
+                canvas3->Divide(2, 1);
+
+                canvas3->cd(1);
+                npv->Draw("hist");
+
+                canvas3->cd(2);
+                npv_with_pileup->Draw("hist");
+
                 first_jet->draw(*analyzer->firstJet());
                 second_jet->draw(*analyzer->secondJet());
                 third_jet->draw(*analyzer->thirdJet());
 
                 electron->draw(*analyzer->electron());
+
+                ltop->draw(*analyzer->ltop());
+                htop->draw(*analyzer->htop());
 
                 root->Run();
             }
