@@ -49,6 +49,9 @@ namespace bsm
             const H1Ptr wlepMass() const;
             const H1Ptr whadMass() const;
 
+            const H2Ptr ljetMetDphivsMet() const;
+            const H2Ptr leptonMetDphivsMet() const;
+
             const P4MonitorPtr firstJet() const;
             const P4MonitorPtr secondJet() const;
             const P4MonitorPtr thirdJet() const;
@@ -120,6 +123,9 @@ namespace bsm
             H1ProxyPtr _whad_mt;
             H1ProxyPtr _wlep_mass;
             H1ProxyPtr _whad_mass;
+
+            H2ProxyPtr _ljet_met_dphi_vs_met;
+            H2ProxyPtr _lepton_met_dphi_vs_met;
 
             const Event *_event;
 

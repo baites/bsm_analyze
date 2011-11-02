@@ -146,6 +146,20 @@ int main(int argc, char *argv[])
             whad_mass->GetXaxis()->SetTitleSize(0.045);
             whad_mass->SetMarkerSize(0.1);
 
+            TH2Ptr ljet_met_dphi_vs_met = convert(*analyzer->ljetMetDphivsMet());
+            ljet_met_dphi_vs_met->SetName("ljet_met_dphi_vs_met");
+            ljet_met_dphi_vs_met->GetXaxis()->SetTitle("MET [GeV/c]");
+            ljet_met_dphi_vs_met->GetXaxis()->SetTitleSize(0.045);
+            ljet_met_dphi_vs_met->GetYaxis()->SetTitle("#Delta #phi(leading jet, MET)) [rad]");
+            ljet_met_dphi_vs_met->GetYaxis()->SetTitleSize(0.045);
+
+            TH2Ptr lepton_met_dphi_vs_met = convert(*analyzer->leptonMetDphivsMet());
+            lepton_met_dphi_vs_met->SetName("lepton_met_dphi_vs_met");
+            lepton_met_dphi_vs_met->GetXaxis()->SetTitle("MET [GeV/c]");
+            lepton_met_dphi_vs_met->GetXaxis()->SetTitleSize(0.045);
+            lepton_met_dphi_vs_met->GetYaxis()->SetTitle("#Delta #phi(lepton, MET)) [rad]");
+            lepton_met_dphi_vs_met->GetYaxis()->SetTitleSize(0.045);
+
             shared_ptr<P4Canvas> first_jet(new P4Canvas("First jet"));
             shared_ptr<P4Canvas> second_jet(new P4Canvas("Second jet"));
             shared_ptr<P4Canvas> third_jet(new P4Canvas("Third jet"));
@@ -170,6 +184,9 @@ int main(int argc, char *argv[])
                 whad_mt->Write();
                 wlep_mass->Write();
                 whad_mass->Write();
+
+                ljet_met_dphi_vs_met->Write();
+                lepton_met_dphi_vs_met->Write();
 
                 first_jet->write(app->output().get(), *analyzer->firstJet());
                 second_jet->write(app->output().get(), *analyzer->secondJet());

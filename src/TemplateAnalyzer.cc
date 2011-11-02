@@ -90,6 +90,12 @@ TemplateAnalyzer::TemplateAnalyzer():
     _whad_mass.reset(new H1Proxy(200, 0, 200));
     monitor(_whad_mass);
 
+    _ljet_met_dphi_vs_met.reset(new H2Proxy(500, 0, 500, 40, 0, 4));
+    monitor(_ljet_met_dphi_vs_met);
+
+    _lepton_met_dphi_vs_met.reset(new H2Proxy(500, 0, 500, 40, 0, 4));
+    monitor(_lepton_met_dphi_vs_met);
+
     _event = 0;
 
     _first_jet.reset(new P4Monitor());
@@ -98,7 +104,12 @@ TemplateAnalyzer::TemplateAnalyzer():
     _electron.reset(new P4Monitor());
 
     _ltop.reset(new P4Monitor());
+    _ltop->mt()->mutable_axis()->init(1000, 0, 1000);
+    _ltop->pt()->mutable_axis()->init(1000, 0, 1000);
+
     _htop.reset(new P4Monitor());
+    _htop->mt()->mutable_axis()->init(1000, 0, 1000);
+    _htop->pt()->mutable_axis()->init(1000, 0, 1000);
 
     monitor(_first_jet);
     monitor(_second_jet);
@@ -168,6 +179,14 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
 
     _whad_mass = dynamic_pointer_cast<H1Proxy>(object._whad_mass->clone());
     monitor(_whad_mass);
+
+    _ljet_met_dphi_vs_met = dynamic_pointer_cast<H2Proxy>(
+            object._ljet_met_dphi_vs_met->clone());
+    monitor(_ljet_met_dphi_vs_met);
+
+    _lepton_met_dphi_vs_met = dynamic_pointer_cast<H2Proxy>(
+            object._lepton_met_dphi_vs_met->clone());
+    monitor(_lepton_met_dphi_vs_met);
 
     _event = 0;
 
@@ -261,6 +280,16 @@ const TemplateAnalyzer::H1Ptr TemplateAnalyzer::wlepMass() const
 const TemplateAnalyzer::H1Ptr TemplateAnalyzer::whadMass() const
 {
     return _whad_mass->histogram();
+}
+
+const TemplateAnalyzer::H2Ptr TemplateAnalyzer::ljetMetDphivsMet() const
+{
+    return _ljet_met_dphi_vs_met->histogram();
+}
+
+const TemplateAnalyzer::H2Ptr TemplateAnalyzer::leptonMetDphivsMet() const
+{
+    return _lepton_met_dphi_vs_met->histogram();
 }
 
 const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::firstJet() const
@@ -414,6 +443,12 @@ void TemplateAnalyzer::process(const Event *event)
         npv()->fill(event->primary_vertex().size());
         npvWithPileup()->fill(event->primary_vertex().size(), _pileup_weight);
         njets()->fill(_synch_selector->goodJets().size(), _pileup_weight);
+
+        const LorentzVector &met = event->missing_energy().p4();
+        ljetMetDphivsMet()->fill(pt(met),
+                fabs(dphi(*_synch_selector->goodJets()[0].corrected_p4, met)));
+
+        leptonMetDphivsMet()->fill(pt(met), fabs(dphi(el_p4, met)));
     }
 
     _event = 0;
