@@ -1,4 +1,4 @@
-// BookkeeperAnalyzer 
+// BookkeeperAnalyzer
 //
 // Example of how to general purpose histograms
 //
@@ -18,7 +18,7 @@ BookkeeperAnalyzer::BookkeeperAnalyzer()
 {
     // Initializing selector by reseting the pointer
     _synch_selector.reset(new SynchSelector());
-    // Monitor the selector 
+    // Monitor the selector
     monitor(_synch_selector);
 
     // Initializing bookkeeper
@@ -28,7 +28,7 @@ BookkeeperAnalyzer::BookkeeperAnalyzer()
     _bookkeeper->book1d("EIDLooseEta", 50, -2.5, 2.5);
     // Monitor the bookkeeper
     monitor(_bookkeeper);
-    
+
     // Note: All the monitored object will be copy and merge (if needed) when using multithreading.
 }
 
@@ -39,11 +39,11 @@ BookkeeperAnalyzer::BookkeeperAnalyzer(const BookkeeperAnalyzer & object)
     _synch_selector.reset(new SynchSelector(*object._synch_selector));
     // Monitor the new selector
     monitor(_synch_selector);
-	// Initialize the bookkeeper by copy the one in object
+    // Initialize the bookkeeper by copy the one in object
     _bookkeeper.reset(new HistogramBookkeeper(*object._bookkeeper));
     // Monitor the new bookkeeper
     monitor(_bookkeeper);
-    
+
     // Note: the order of to declare monitor object has to be the same as in the default constructor
 }
 
@@ -70,10 +70,10 @@ void BookkeeperAnalyzer::process(const Event *event)
             // Check if the electron has the identification bit for the category tight
             if (electronid.name() == bsm::Electron::Loose && electronid.identification())
             {
-            	// Fill the corresponding histograms
+                // Fill the corresponding histograms
                 _bookkeeper->get1d("EIDLoosePt")->fill(pt(electron.physics_object().p4()));
                 _bookkeeper->get1d("EIDLooseEta")->fill(eta(electron.physics_object().p4()));
-           }
+            }
         }
     }
 }

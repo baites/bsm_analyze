@@ -23,25 +23,25 @@ Jets jets;
 
 namespace bsm
 {
-    class Jet
+class Jet
+{
+public:
+    explicit Jet(const int &id): _id(id)
     {
-        public:
-            explicit Jet(const int &id): _id(id)
-            {
-            }
+    }
 
-            void setId(const int &id)
-            {
-                _id = id;
-            }
+    void setId(const int &id)
+    {
+        _id = id;
+    }
 
-            int id() const
-            {
-                return _id;
-            }
-        private:
-            int _id;
-    };
+    int id() const
+    {
+        return _id;
+    }
+private:
+    int _id;
+};
 }
 
 using bsm::Jet;

@@ -50,8 +50,8 @@ try
         for(int i = 1; argc > i; ++i)
         {
             ElSelectorPtr selector = i % 2
-                ? el_selector_clone2
-                : el_selector_clone3;
+                                     ? el_selector_clone2
+                                     : el_selector_clone3;
 
             shared_ptr<Reader> reader(new Reader(argv[i]));
             reader->open();

@@ -1,4 +1,4 @@
-// BookkeeperAnalyzer 
+// BookkeeperAnalyzer
 //
 // Example of how to general purpose histograms
 //
@@ -57,7 +57,19 @@ public:
     // Return the JES delegate with the options used by the synch selector
     bsm::JetEnergyCorrectionDelegate * getJetEnergyCorrectionDelegate() const
     {
-        return _synch_selector->getJetEnergyCorrectionDelegate();
+        return _synch_selector.get();
+    }
+
+    // Return the synch delegate with the options used by the synch selector
+    bsm::SynchSelectorDelegate * getSynchSelectorDelegate() const
+    {
+        return _synch_selector.get();
+    } 
+
+    // Return the 2dCut delegate with the options used by the synch selector
+    bsm::Cut2DSelectorDelegate * getCut2DSelectorDelegate() const
+    {
+        return _synch_selector->getCut2DSelectorDelegate();
     }
 
     // What follows needs to be defined by all the analyzers

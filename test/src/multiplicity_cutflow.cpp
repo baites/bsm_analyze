@@ -47,8 +47,8 @@ try
         for(int i = 1; argc > i; ++i)
         {
             MultiplicityPtr clone = i % 2
-                ? clone1
-                : clone2;
+                                    ? clone1
+                                    : clone2;
 
             shared_ptr<Reader> reader(new Reader(argv[i]));
             reader->open();

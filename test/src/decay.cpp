@@ -77,10 +77,10 @@ int main(int argc, char *argv[])
             char *empty_argv[] = { argv[0] };
 
             boost::shared_ptr<TRint>
-                app(new TRint("app", &empty_argc, empty_argv));
+            app(new TRint("app", &empty_argc, empty_argv));
 
             boost::shared_ptr<TCanvas> canvas(new TCanvas("decays",
-                        "Decays L1, L2", 1024, 480));
+                                              "Decays L1, L2", 1024, 480));
             canvas->Divide(2, 1);
 
             typedef stat::TH1Ptr TH1Ptr;
@@ -95,8 +95,8 @@ int main(int argc, char *argv[])
             LatexPtr label1 = createLabel();
             label1->Draw();
 
-            LatexPtr label1_2(new TLatex(3.570061, 23.08044, 
-                "Decay L1"));
+            LatexPtr label1_2(new TLatex(3.570061, 23.08044,
+                                         "Decay L1"));
             label1_2->SetNDC();
             label1_2->SetTextAlign(13);
             label1_2->SetX(0.3);
@@ -113,8 +113,8 @@ int main(int argc, char *argv[])
             LatexPtr label2 = createLabel();
             label2->Draw();
 
-            LatexPtr label2_2(new TLatex(3.570061, 23.08044, 
-                "Decay L2"));
+            LatexPtr label2_2(new TLatex(3.570061, 23.08044,
+                                         "Decay L2"));
             label2_2->SetNDC();
             label2_2->SetTextAlign(13);
             label2_2->SetX(0.3);
@@ -140,8 +140,8 @@ int main(int argc, char *argv[])
 
 LatexPtr createLabel()
 {
-    LatexPtr label(new TLatex(3.570061, 23.08044, 
-        "#splitline{CMS: Work in Progress}{230 pb^{-1} at #sqrt{s} = 7 TeV}"));
+    LatexPtr label(new TLatex(3.570061, 23.08044,
+                              "#splitline{CMS: Work in Progress}{230 pb^{-1} at #sqrt{s} = 7 TeV}"));
     label->SetNDC();
     label->SetTextAlign(13);
     label->SetX(0.3);

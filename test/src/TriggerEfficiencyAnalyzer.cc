@@ -1,4 +1,4 @@
- 
+
 // HistogramProducer: TriggerEfficiencyAnalyzer
 //
 // Produce histograms trigger turnon curves.
@@ -22,26 +22,29 @@ namespace bsm
 using namespace std;
 
 TriggerEfficiencyAnalyzer::TriggerEfficiencyAnalyzer()
-{	
+{
     // Initializing selector (desabling htlep)
 
     _synch_selector.reset(new SynchSelector());
-    _synch_selector->htlep()->disable();
+    //_synch_selector->htlep()->disable();
     monitor(_synch_selector);
 
     // Initializing bookkeeper (booking histograms)
 
     _bookkeeper.reset(new HistogramBookkeeper());
-    _bookkeeper->book1d("AllEventsHT", 50, 50, 2000);
-    _bookkeeper->book1d("AllEventsElectronPT", 50, 20, 200);
-    _bookkeeper->book1d("TriggerHT200HT", 50, 50, 2000);
-    _bookkeeper->book1d("TriggerEle8HT", 50, 50, 2000);
-    _bookkeeper->book1d("TriggerCaloIsoHT", 50, 50, 2000);
-    _bookkeeper->book1d("TriggerEle25TriCentralJet30HT", 50, 50, 2000);
-    _bookkeeper->book1d("TriggerEle45HT", 50, 50, 2000);
-    _bookkeeper->book1d("TriggerEle45ElectronPT", 50, 20, 200);
-    _bookkeeper->book1d("TriggerFancyHT", 50, 50, 2000);
-    _bookkeeper->book1d("TriggerFancyElectronPT", 50, 20, 200);
+    _bookkeeper->book1d("AllEventsHT", 50, 400, 800);
+    _bookkeeper->book1d("AllEventsElectronPT", 50, 100, 250);
+    _bookkeeper->book1d("TriggerHT200HT", 50, 400, 800);
+    _bookkeeper->book1d("TriggerEle8HT", 50, 400, 800);
+    _bookkeeper->book1d("TriggerCaloIsoHT", 50, 400, 800);
+    _bookkeeper->book1d("TriggerEle25TriCentralJet30HT", 50, 400, 800);
+    _bookkeeper->book1d("TriggerEleXHT", 50, 400, 800);
+    _bookkeeper->book1d("TriggerEleXElectronPT", 50, 100, 250);
+    _bookkeeper->book1d("TriggerEle90HT", 50, 400, 800);
+    _bookkeeper->book1d("TriggerEle90ElectronPT", 50, 100, 250);
+    _bookkeeper->book1d("TriggerFancyHT", 50, 400, 800);
+    _bookkeeper->book1d("TriggerFancyElectronPT", 50, 100, 250);
+
     monitor(_bookkeeper);
 }
 
@@ -95,7 +98,7 @@ void TriggerEfficiencyAnalyzer::merge(const ObjectPtr & pointer)
 
     for (HLTMap::const_iterator hlt = object->_hlt_map.begin(); hlt != object->_hlt_map.end(); ++hlt)
         _hlt_map[hlt->first] = hlt->second;
-        
+
     Object::merge(pointer);
 }
 
@@ -115,7 +118,7 @@ void TriggerEfficiencyAnalyzer::print(std::ostream & os) const
 
 void TriggerEfficiencyAnalyzer::process(const Event *event)
 {
-	// Check if the event pass the selection
+    // Check if the event pass the selection
     if (!_synch_selector->apply(event)) return;
 
     // Get the collection of good electron from the synch selection
@@ -130,18 +133,21 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
     {
         bsm::Electron const & electron = *electrons[i];
 
-        // Loop over the possible electron ids 
+        // Loop over the possible electron ids
         for (int j = 0; j < electron.id_size(); ++j)
         {
             const bsm::Electron::ElectronID & electronid = electron.id(j);
-     
+
             // Keep looping if the electron id is not HyperTight1
-            if (electronid.name() != bsm::Electron::HyperTight1) continue; 
-     
+            if (electronid.name() != bsm::Electron::HyperTight1) continue;
+
             // Check if HyperTight1 minimal condition
-            if (electronid.identification() && electronid.conversion_rejection())
-            	passeid = true;
-            	
+            if (
+                electronid.identification() &&
+                electronid.conversion_rejection()
+            )
+                passeid = true;
+
             break;
         }
         electronPt = pt(electron.physics_object().p4());
@@ -167,12 +173,19 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
         _synch_selector->niceJets().begin();
         _synch_selector->niceJets().end() != jet;
         ++jet
-    )   
+    )
         ht += pt(*jet->corrected_p4);
+    // Adding also the pt of the electron
+    ht += electronPt;
+
+    // Cuting in ht
+    if (electronPt < 100) return;
 
     // Fill the histogram with all the events
     _bookkeeper->get1d("AllEventsHT")->fill(ht);
     _bookkeeper->get1d("AllEventsElectronPT")->fill(electronPt);
+
+    bool elexflag = false;
 
     // Loop over the trigger menu to see which trigger is fire
     for(Triggers::const_iterator hlt = event->hlt().trigger().begin();
@@ -187,16 +200,28 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
             _bookkeeper->get1d("TriggerCaloIsoHT")->fill(ht);
         if (_hlt_map[hlt->hash()] == "hlt_ele25_caloidvt_trkidt_centraltrijet30" && hlt->pass())
             _bookkeeper->get1d("TriggerEle25TriCentralJet30HT")->fill(ht);
-        if (_hlt_map[hlt->hash()] == "hlt_ele45_caloidvt_trkidt" && hlt->pass())
-        {
-            _bookkeeper->get1d("TriggerEle45HT")->fill(ht);
-            _bookkeeper->get1d("TriggerEle45ElectronPT")->fill(electronPt);
-        }
         if (_hlt_map[hlt->hash()] == "hlt_ele10_caloidt_caloisovl_trkidt_trkisovl_ht200" && hlt->pass())
-        {   
+        {
             _bookkeeper->get1d("TriggerFancyHT")->fill(ht);
             _bookkeeper->get1d("TriggerFancyElectronPT")->fill(electronPt);
         }
+        if (_hlt_map[hlt->hash()] == "hlt_ele90_nospikefilter" && hlt->pass())
+        {
+            _bookkeeper->get1d("TriggerEle90HT")->fill(ht);
+            _bookkeeper->get1d("TriggerEle90ElectronPT")->fill(electronPt);
+        }        
+        if (
+            (_hlt_map[hlt->hash()] == "hlt_ele45_caloidvt_trkidt" && hlt->pass()) ||
+            (_hlt_map[hlt->hash()] == "hlt_ele52_caloidvt_trkidt" && hlt->pass()) ||
+            (_hlt_map[hlt->hash()] == "hlt_ele65_caloidvt_trkidt" && hlt->pass())
+        )
+            elexflag = true;
+    }
+
+    if (elexflag)
+    {
+        _bookkeeper->get1d("TriggerEleXHT")->fill(ht);
+        _bookkeeper->get1d("TriggerEleXElectronPT")->fill(electronPt);
     }
 
     return;

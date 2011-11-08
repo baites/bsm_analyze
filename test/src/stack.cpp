@@ -27,8 +27,8 @@ int main(int argc, char *argv[])
     if (5 != argc)
     {
         cerr << "Usage: " << argv[0]
-            << " data.root zprime.root ttjets.root wjets.root"
-            << endl;
+             << " data.root zprime.root ttjets.root wjets.root"
+             << endl;
 
         return 1;
     }
@@ -127,7 +127,7 @@ int main(int argc, char *argv[])
         char *empty_argv[] = { argv[0] };
 
         boost::shared_ptr<TRint>
-            app(new TRint("app", &empty_argc, empty_argv));
+        app(new TRint("app", &empty_argc, empty_argv));
 
         boost::shared_ptr<THStack> stack(new THStack("mttbar_bg", "Mttbar"));
         stack->Add(h_ttjets);

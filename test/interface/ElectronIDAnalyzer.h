@@ -45,19 +45,22 @@ public:
         return _bookkeeper;
     }
 
-    JetEnergyCorrectionDelegate * getJetEnergyCorrectionDelegate() const
-    {
-        return _synch_selector->getJetEnergyCorrectionDelegate();
-    }
-
-    Cut2DSelectorDelegate * getCut2DSelectorDelegate() const
-    {
-        return _synch_selector->getCut2DSelectorDelegate();
-    }
-
-    SynchSelectorDelegate * getSynchSelectorDelegate() const
+    // Return the JES delegate with the options used by the synch selector
+    bsm::JetEnergyCorrectionDelegate * getJetEnergyCorrectionDelegate() const
     {
         return _synch_selector.get();
+    }
+
+    // Return the synch delegate with the options used by the synch selector
+    bsm::SynchSelectorDelegate * getSynchSelectorDelegate() const
+    {
+        return _synch_selector.get();
+    }
+
+    // Return the 2dCut delegate with the options used by the synch selector
+    bsm::Cut2DSelectorDelegate * getCut2DSelectorDelegate() const
+    {
+        return _synch_selector->getCut2DSelectorDelegate();
     }
 
     virtual uint32_t id() const

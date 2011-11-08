@@ -55,7 +55,7 @@ try
     google::protobuf::ShutdownProtobufLibrary();
 
     return 0;
- }
+}
 catch(...)
 {
     // Clean Up any memory allocated by libprotobuf

@@ -23,8 +23,8 @@ int main(int argc, char *argv[])
     {
         cout << argc << endl;
         cerr << "Usage: " << argv[0]
-            << " lumi x-section events eff_filter file.root:/path/to/histogram"
-            << endl;
+             << " lumi x-section events eff_filter file.root:/path/to/histogram"
+             << endl;
 
         return 1;
     }

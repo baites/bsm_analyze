@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
         jec_options->setDelegate(analyzer->getJetEnergyCorrectionDelegate());
         synch_selector_options->setDelegate(analyzer->getSynchSelectorDelegate());
         cut_2d_selector_options->setDelegate(analyzer->getCut2DSelectorDelegate());
-                
+
         // Set the options into the controller
         app->addOptions(*jec_options);
         app->addOptions(*synch_selector_options);

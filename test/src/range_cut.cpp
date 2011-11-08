@@ -20,35 +20,35 @@ int main(int argc, char *argv[])
 {
     shared_ptr<Cut> range1(new RangeComparator<>(2, 6, "Exclusive Range"));
     shared_ptr<Cut> range2(new RangeComparator<less<float>,
-            greater<float> >(2, 6, "Outside Range"));
+                           greater<float> >(2, 6, "Outside Range"));
     shared_ptr<Cut> range3(new RangeComparator<less<float>,
-            greater<float> >(6, 2, "Inverse Exclusive"));
+                           greater<float> >(6, 2, "Inverse Exclusive"));
     shared_ptr<Cut> range4(new RangeComparator<greater_equal<float>,
-            less_equal<float> >(2, 6, "Inclusive"));
+                           less_equal<float> >(2, 6, "Inclusive"));
 
     shared_ptr<Cut> range5(new RangeComparator<less<float>,
-            greater<float>,
-            logical_or<bool> >(2, 6, "Exclusive Outside (OR)"));
+                           greater<float>,
+                           logical_or<bool> >(2, 6, "Exclusive Outside (OR)"));
 
     shared_ptr<Cut> range6(new RangeComparator<less_equal<float>,
-            greater_equal<float>,
-            logical_or<bool> >(2, 6, "Inclusive Outside (OR)"));
+                           greater_equal<float>,
+                           logical_or<bool> >(2, 6, "Inclusive Outside (OR)"));
 
     for(uint32_t i = 0; 11 > i; ++i)
     {
         cout << setw(2) << i << ": "
-            << (range1->apply(i) ? "o" : "x")
-            << " " 
-            << (range2->apply(i) ? "o" : "x")
-            << " " 
-            << (range3->apply(i) ? "o" : "x")
-            << " " 
-            << (range4->apply(i) ? "o" : "x")
-            << " " 
-            << (range5->apply(i) ? "o" : "x")
-            << " " 
-            << (range6->apply(i) ? "o" : "x")
-            << endl;
+             << (range1->apply(i) ? "o" : "x")
+             << " "
+             << (range2->apply(i) ? "o" : "x")
+             << " "
+             << (range3->apply(i) ? "o" : "x")
+             << " "
+             << (range4->apply(i) ? "o" : "x")
+             << " "
+             << (range5->apply(i) ? "o" : "x")
+             << " "
+             << (range6->apply(i) ? "o" : "x")
+             << endl;
     }
 
     cout << *range1 << endl;

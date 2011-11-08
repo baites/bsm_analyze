@@ -34,11 +34,11 @@ public:
 
     // Function called when open a file (use to read metadata about the trigger options)
     virtual void onFileOpen(const std::string &filename, const Input *);
-    
+
     // Function that process each event
     virtual void process(const Event *);
 
-    // Print service     
+    // Print service
     virtual void print(std::ostream & os) const;
 
     // Return the bookkeeper
@@ -47,22 +47,22 @@ public:
         return _bookkeeper;
     }
 
-    // Return the delegate with the options use for JEC
-    JetEnergyCorrectionDelegate * getJetEnergyCorrectionDelegate() const
-    {
-        return _synch_selector->getJetEnergyCorrectionDelegate();
-    }
-
-    // Return the delegate with the options use for cut 2d selection
-    Cut2DSelectorDelegate * getCut2DSelectorDelegate() const
-    {
-        return _synch_selector->getCut2DSelectorDelegate();
-    }
-
-    // Return the delegate with the options use by the synch selector
-    SynchSelectorDelegate * getSynchSelectorDelegate() const
+    // Return the JES delegate with the options used by the synch selector
+    bsm::JetEnergyCorrectionDelegate * getJetEnergyCorrectionDelegate() const
     {
         return _synch_selector.get();
+    }
+
+    // Return the synch delegate with the options used by the synch selector
+    bsm::SynchSelectorDelegate * getSynchSelectorDelegate() const
+    {
+        return _synch_selector.get();
+    }
+
+    // Return the 2dCut delegate with the options used by the synch selector
+    bsm::Cut2DSelectorDelegate * getCut2DSelectorDelegate() const
+    {
+        return _synch_selector->getCut2DSelectorDelegate();
     }
 
     // Minimal object interface (used by the AppController)
@@ -85,7 +85,7 @@ private:
     SynchSelectorPtr _synch_selector;
     // Pointer to the book keepper
     HistogramBookkeeperPtr _bookkeeper;
-    
+
     // HLT map with all the trugger options
     typedef std::map<std::size_t, std::string> HLTMap;
     HLTMap _hlt_map;

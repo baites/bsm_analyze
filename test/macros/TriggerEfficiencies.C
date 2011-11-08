@@ -31,16 +31,16 @@ void TriggerEfficiencies(TString filename, TString ref, TString id, TString vari
    RefEff->SetMarkerStyle(kFullSquare);
    RefEff->SetMarkerColor(kBlack);
    RefEff->SetLineColor(kBlack);
-   RefEff->Draw("samep");
+   // RefEff->Draw("samep");
    if (ngroup > 10) cout << "Efficiency for Reference " << id << ": " << VeryLooseEff->GetEfficiency(1) << std::endl;
    
    TEfficiency * TriggerEff = new TEfficiency();
-   TriggerEff->SetTotalHistogram(*All, "f");
+   TriggerEff->SetTotalHistogram(*Ref, "f");
    TriggerEff->SetPassedHistogram(*Trigger, "f");
    TriggerEff->SetMarkerStyle(kFullCircle);
    TriggerEff->SetMarkerColor(kRed);
    TriggerEff->SetLineColor(kRed);
-   //TriggerEff->Draw("samep");
+   TriggerEff->Draw("samep");
    if (ngroup > 10) cout << "Efficiency for Trigger " << id << ": " << VeryLooseEff->GetEfficiency(1) << std::endl;
 
    /*TLegend * leg = new TLegend(0.60,0.15,0.86,0.50);
