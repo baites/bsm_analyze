@@ -41,6 +41,20 @@ enum InputType
     UNKNOWN
 };
 
+string getOutputFilename(string filename)
+{
+    for(;;)
+    {
+        size_t pos = filename.find("/");
+        if (string::npos == pos)
+            break;
+        else
+            filename = filename.substr(0, pos) + "_" + filename.substr(pos + 1);
+    }
+
+    return filename;
+}
+
 string folder(const InputType &input)
 {
     switch(input)
@@ -451,9 +465,11 @@ void scale(TH1 *hist, const InputType &input_type)
 
     float scale_with_luminosity = scale * luminosity;
 
+    /*
     cout << "scale " << toString(input_type)
         << " raw: " << scale
         << " with lumi: " << scale_with_luminosity << endl;
+        */
 
     hist->Scale(scale_with_luminosity);
 }
@@ -548,7 +564,7 @@ TH2 *get2D(const TFile *input, const string &path, const InputType &input_type)
 TH1 *merge(TFile **input, const string &path, const int &from, const int &to)
 {
     TH1 *result = 0;
-    cout << "--- merge from: " << toString(from) << " till " << toString(to) << endl;
+    //cout << "--- merge from: " << toString(from) << " till " << toString(to) << endl;
     for(int i = from; to > i; ++i)
     {
         TH1 *hist = get(input[i], path, i);
@@ -566,7 +582,7 @@ TH1 *merge(TFile **input, const string &path, const int &from, const int &to)
         else
             result = dynamic_cast<TH1 *>(hist->Clone());
     }
-    cout << "--- done ---" << endl;
+    //cout << "--- done ---" << endl;
 
     return result;
 }
@@ -574,7 +590,7 @@ TH1 *merge(TFile **input, const string &path, const int &from, const int &to)
 TH2 *merge2D(TFile **input, const string &path, const int &from, const int &to)
 {
     TH2 *result = 0;
-    cout << "--- merge from: " << toString(from) << " till " << toString(to) << endl;
+    //cout << "--- merge from: " << toString(from) << " till " << toString(to) << endl;
     for(int i = from; to > i; ++i)
     {
         TH2 *hist = get(input[i], path, i);
@@ -592,7 +608,7 @@ TH2 *merge2D(TFile **input, const string &path, const int &from, const int &to)
         else
             result = dynamic_cast<TH2 *>(hist->Clone());
     }
-    cout << "--- done ---" << endl;
+    //cout << "--- done ---" << endl;
 
     return result;
 }
@@ -678,7 +694,7 @@ void plotComparison(TFile **input, const string &title, const bool &draw_mc_firs
     stack->Add(wjets);
     stack->Add(zjets);
     stack->Add(stop);
-    stack->Add(qcd);
+    //stack->Add(qcd);
 
     if (draw_mc_first)
     {
@@ -724,7 +740,7 @@ void plotComparison(TFile **input, const string &title, const bool &draw_mc_firs
     legend->AddEntry(wjets, "W#rightarrowl#nu", "fe");
     legend->AddEntry(zjets, "Z/#gamma*#rightarrowl^{+}l^{-}", "fe");
     legend->AddEntry(stop, "Single-Top", "fe");
-    legend->AddEntry(qcd, "QCD", "fe");
+    //legend->AddEntry(qcd, "QCD", "fe");
     legend->AddEntry(data, "Data 2011", "lpe");
 
     if (plot_zprime)
@@ -750,6 +766,11 @@ void plotDataMcComparison()
     plotComparison(input_s1s2_p250, "p_{T}^{jet} > 250 GeV/c^{2}", data_first);
 
     cmsLabel();
+
+    string output = getOutputFilename(plot_name) + "_data_mc.pdf";
+
+    cout << "save canvas: " << output << endl;
+    canvas->SaveAs(output.c_str());
 
     /*
     canvas->cd(2)->SetRightMargin(10);
@@ -794,14 +815,14 @@ void plotMC(TFile **input, const string &title)
     scale(wjets, WJETS);
 
     TH1 *stop = merge(input, plot_name.c_str(), STOP_S, STOP_S + STOP_CHANNELS);
-    TH1 *qcd = merge(input, plot_name.c_str(), 0, QCD_CHANNELS);
+    //TH1 *qcd = merge(input, plot_name.c_str(), 0, QCD_CHANNELS);
     
     THStack *stack = new THStack();
     stack->Add(ttjets);
     stack->Add(wjets);
     stack->Add(zjets);
     stack->Add(stop);
-    stack->Add(qcd);
+    //stack->Add(qcd);
 
     stack->Draw("hist");
     stack->GetHistogram()->GetXaxis()->SetTitle(ttjets->GetXaxis()->GetTitle());
@@ -811,7 +832,7 @@ void plotMC(TFile **input, const string &title)
     legend->AddEntry(wjets, "W#rightarrowl#nu", "fe");
     legend->AddEntry(zjets, "Z/#gamma*#rightarrowl^{+}l^{-}", "fe");
     legend->AddEntry(stop, "Single-Top", "fe");
-    legend->AddEntry(qcd, "QCD", "fe");
+    //legend->AddEntry(qcd, "QCD", "fe");
     legend->Draw();
 }
 
@@ -828,6 +849,11 @@ void plotDataComparison()
     canvas->cd(1);
     */
     plotData(input_s1s2_p250, "p_{T}^{jet} > 250");
+
+    string output = getOutputFilename(plot_name) + "_data.pdf";
+
+    cout << "save canvas: " << output << endl;
+    canvas->SaveAs(output.c_str());
 
     /*
     canvas->cd(2);
@@ -848,6 +874,11 @@ void plotMCComparison()
     canvas->cd(1);
     */
     plotMC(input_s1s2_p250, "p_{T}^{jet} > 250");
+
+    string output = getOutputFilename(plot_name) + "_mc.pdf";
+
+    cout << "save canvas: " << output << endl;
+    canvas->SaveAs(output.c_str());
     /*
 
     canvas->cd(2);
@@ -922,6 +953,11 @@ void plotDrvsPtrel(TFile **input, const string &pt)
     style(zprime_m4000, ZPRIME4000);
     zprime_m4000->Rebin2D(5, 1);
     zprime_m4000->Draw("colz");
+
+    string output = getOutputFilename(plot_name) + ".pdf";
+
+    cout << "save canvas: " << output << endl;
+    canvas->SaveAs(output.c_str());
 }
 
 void plot2DCut()
@@ -1021,6 +1057,11 @@ void plotPhivsMet(TFile **input, TCanvas *canvas, const string &plot_name)
     zprime_m4000->GetXaxis()->SetTitleOffset(1.15);
     zprime_m4000->GetXaxis()->SetNdivisions(5);
     zprime_m4000->Draw("colz");
+
+    string output = getOutputFilename(plot_name) + ".pdf";
+
+    cout << "save canvas: " << output << endl;
+    canvas->SaveAs(output.c_str());
 }
 
 void plotLjetDphivsMet(TFile **input, const string &pt)
@@ -1050,6 +1091,11 @@ void plotLjetDphivsMet(TFile **input, const string &pt)
     data->GetXaxis()->SetTitleOffset(1.15);
     data->GetXaxis()->SetNdivisions(5);
     data->Draw("colz");
+
+    string output = getOutputFilename(plot_name) + ".pdf";
+
+    cout << "save canvas: " << output << endl;
+    canvas->SaveAs(output.c_str());
 }
 
 void plotLjetMetDphivsMet()
@@ -1087,6 +1133,11 @@ void plotLeptonDphivsMet(TFile **input, const string &pt)
     data->GetXaxis()->SetTitleOffset(1.15);
     data->GetXaxis()->SetNdivisions(5);
     data->Draw("colz");
+
+    string output = getOutputFilename(plot_name) + ".pdf";
+
+    cout << "save canvas: " << output << endl;
+    canvas->SaveAs(output.c_str());
 }
 
 void plotLeptonMetDphivsMet()
