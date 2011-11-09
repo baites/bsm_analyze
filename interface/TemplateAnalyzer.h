@@ -16,7 +16,7 @@
 #include "bsm_input/interface/bsm_input_fwd.h"
 #include "interface/Analyzer.h"
 #include "interface/Cut.h"
-#include "interface/PileupCorrections.h"
+#include "interface/Pileup.h"
 #include "interface/TriggerAnalyzer.h"
 #include "interface/bsm_fwd.h"
 
@@ -64,6 +64,7 @@ namespace bsm
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
             SynchSelectorDelegate *getSynchSelectorDelegate() const;
             Cut2DSelectorDelegate *getCut2DSelectorDelegate() const;
+            PileupDelegate *getPileupDelegate() const;
 
             // Counter Delegate interface
             //
@@ -137,7 +138,7 @@ namespace bsm
             typedef std::vector<uint64_t> Triggers;
             Triggers _triggers; // hashes of triggers to be passed
 
-            PileupCorrections _pileup_corrections;
+            boost::shared_ptr<Pileup> _pileup;
             bool _use_pileup;
             float _pileup_weight;
 

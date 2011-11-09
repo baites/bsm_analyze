@@ -21,6 +21,7 @@
 #include "interface/Cut2DSelector.h"
 #include "interface/JetEnergyCorrections.h"
 #include "interface/MonitorCanvas.h"
+#include "interface/Pileup.h"
 #include "interface/TemplateAnalyzer.h"
 #include "interface/TriggerAnalyzer.h"
 #include "interface/SynchSelector.h"
@@ -43,16 +44,19 @@ int main(int argc, char *argv[])
         boost::shared_ptr<SynchSelectorOptions> synch_selector_options(new SynchSelectorOptions());
         boost::shared_ptr<Cut2DSelectorOptions> cut_2d_selector_options(new Cut2DSelectorOptions());
         boost::shared_ptr<TriggerOptions> trigger_options(new TriggerOptions());
+        boost::shared_ptr<PileupOptions> pileup_options(new PileupOptions());
 
         jec_options->setDelegate(analyzer->getJetEnergyCorrectionDelegate());
         synch_selector_options->setDelegate(analyzer->getSynchSelectorDelegate());
         cut_2d_selector_options->setDelegate(analyzer->getCut2DSelectorDelegate());
         trigger_options->setDelegate(analyzer.get());
+        pileup_options->setDelegate(analyzer->getPileupDelegate());
 
         app->addOptions(*jec_options);
         app->addOptions(*synch_selector_options);
         app->addOptions(*cut_2d_selector_options);
         app->addOptions(*trigger_options);
+        app->addOptions(*pileup_options);
 
         app->setAnalyzer(analyzer);
 

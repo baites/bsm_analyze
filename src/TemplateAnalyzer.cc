@@ -120,6 +120,9 @@ TemplateAnalyzer::TemplateAnalyzer():
 
     monitor(_ltop);
     monitor(_htop);
+
+    _pileup.reset(new Pileup());
+    monitor(_pileup);
 }
 
 TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
@@ -219,6 +222,10 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
 
     monitor(_ltop);
     monitor(_htop);
+
+    _pileup =
+        dynamic_pointer_cast<Pileup>(object._pileup->clone());
+    monitor(_pileup);
 }
 
 const TemplateAnalyzer::H1Ptr TemplateAnalyzer::npv() const
@@ -347,6 +354,11 @@ bsm::Cut2DSelectorDelegate *TemplateAnalyzer::getCut2DSelectorDelegate() const
     return _synch_selector->getCut2DSelectorDelegate();
 }
 
+bsm::PileupDelegate *TemplateAnalyzer::getPileupDelegate() const
+{
+    return _pileup.get();
+}
+
 void TemplateAnalyzer::didCounterAdd(const Counter *counter)
 {
     if (counter == _secondary_lepton_counter)
@@ -428,7 +440,7 @@ void TemplateAnalyzer::process(const Event *event)
 
     _event = event;
     if (_use_pileup)
-        _pileup_weight = _pileup_corrections.scale(event);
+        _pileup_weight = _pileup->scale(event);
 
     // Process only events, that pass the synch selector
     //
