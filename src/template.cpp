@@ -99,19 +99,24 @@ int main(int argc, char *argv[])
             htlep->GetXaxis()->SetTitle("H_{T}^{lep} [GeV/c]");
             htlep->GetXaxis()->SetTitleSize(0.045);
 
+            TH1Ptr htlep_before_htlep = convert(*analyzer->htlepBeforeCut());
+            htlep_before_htlep->SetName("htlep_before_htlep");
+            htlep_before_htlep->GetXaxis()->SetTitle("H_{T}^{lep} [GeV/c]");
+            htlep_before_htlep->GetXaxis()->SetTitleSize(0.045);
+
             TH1Ptr mttbar_before_htlep = convert(*analyzer->mttbarBeforeHtlep());
             mttbar_before_htlep->SetName("mttbar_before_htlep");
-            mttbar_before_htlep->GetXaxis()->SetTitle("m_{t#bar{t}} [TeV/c^{2}]");
+            mttbar_before_htlep->GetXaxis()->SetTitle("M_{t#bar{t}} [TeV/c^{2}]");
             mttbar_before_htlep->GetXaxis()->SetTitleSize(0.045);
 
             TH1Ptr mttbar_after_htlep = convert(*analyzer->mttbarAfterHtlep());
             mttbar_after_htlep->SetName("mttbar_after_htlep");
-            mttbar_after_htlep->GetXaxis()->SetTitle("m_{t#bar{t}} [TeV/c^{2}]");
+            mttbar_after_htlep->GetXaxis()->SetTitle("M_{t#bar{t}} [TeV/c^{2}]");
             mttbar_after_htlep->GetXaxis()->SetTitleSize(0.045);
 
             TH2Ptr dr_vs_ptrel = convert(*analyzer->drVsPtrel());
             dr_vs_ptrel->SetName("dr_vs_ptrel");
-            dr_vs_ptrel->GetXaxis()->SetTitle("p_{T}^{rel} [GeV/c]");
+            dr_vs_ptrel->GetXaxis()->SetTitle("p_{T}^{rel}(jet,e) [GeV/c]");
             dr_vs_ptrel->GetXaxis()->SetTitleSize(0.045);
             dr_vs_ptrel->GetYaxis()->SetTitle("#Delta R");
             dr_vs_ptrel->GetYaxis()->SetTitleSize(0.045);
@@ -150,23 +155,23 @@ int main(int argc, char *argv[])
             ljet_met_dphi_vs_met->SetName("ljet_met_dphi_vs_met");
             ljet_met_dphi_vs_met->GetXaxis()->SetTitle("MET [GeV/c]");
             ljet_met_dphi_vs_met->GetXaxis()->SetTitleSize(0.045);
-            ljet_met_dphi_vs_met->GetYaxis()->SetTitle("#Delta #phi(leading jet, MET)) [rad]");
+            ljet_met_dphi_vs_met->GetYaxis()->SetTitle("#Delta #phi(jet1, MET)) [rad]");
             ljet_met_dphi_vs_met->GetYaxis()->SetTitleSize(0.045);
 
             TH2Ptr lepton_met_dphi_vs_met = convert(*analyzer->leptonMetDphivsMet());
             lepton_met_dphi_vs_met->SetName("lepton_met_dphi_vs_met");
             lepton_met_dphi_vs_met->GetXaxis()->SetTitle("MET [GeV/c]");
             lepton_met_dphi_vs_met->GetXaxis()->SetTitleSize(0.045);
-            lepton_met_dphi_vs_met->GetYaxis()->SetTitle("#Delta #phi(lepton, MET)) [rad]");
+            lepton_met_dphi_vs_met->GetYaxis()->SetTitle("#Delta #phi(e, MET)) [rad]");
             lepton_met_dphi_vs_met->GetYaxis()->SetTitleSize(0.045);
 
-            shared_ptr<P4Canvas> first_jet(new P4Canvas("First jet"));
-            shared_ptr<P4Canvas> second_jet(new P4Canvas("Second jet"));
-            shared_ptr<P4Canvas> third_jet(new P4Canvas("Third jet"));
-            shared_ptr<P4Canvas> electron(new P4Canvas("Electron"));
+            shared_ptr<P4Canvas> first_jet(new P4Canvas("First jet", "jet1"));
+            shared_ptr<P4Canvas> second_jet(new P4Canvas("Second jet", "jet2"));
+            shared_ptr<P4Canvas> third_jet(new P4Canvas("Third jet", "jet3"));
+            shared_ptr<P4Canvas> electron(new P4Canvas("Electron", "e"));
 
-            shared_ptr<P4Canvas> ltop(new P4Canvas("ltop"));
-            shared_ptr<P4Canvas> htop(new P4Canvas("htop"));
+            shared_ptr<P4Canvas> ltop(new P4Canvas("ltop", "ltop"));
+            shared_ptr<P4Canvas> htop(new P4Canvas("htop", "htop"));
 
             if (app->output())
             {
@@ -175,6 +180,7 @@ int main(int argc, char *argv[])
                 njets->Write();
                 d0->Write();
                 htlep->Write();
+                htlep_before_htlep->Write();
                 mttbar_before_htlep->Write();
                 mttbar_after_htlep->Write();
                 dr_vs_ptrel->Write();

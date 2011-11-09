@@ -39,6 +39,7 @@ namespace bsm
             const H1Ptr njets() const;
             const H1Ptr d0() const;
             const H1Ptr htlep() const;
+            const H1Ptr htlepBeforeCut() const; // htlep before its cut is applied
             const H1Ptr mttbarBeforeHtlep() const;
             const H1Ptr mttbarAfterHtlep() const;
             const H2Ptr drVsPtrel() const;
@@ -114,6 +115,7 @@ namespace bsm
             H1ProxyPtr _njets;
             H1ProxyPtr _d0;
             H1ProxyPtr _htlep;
+            H1ProxyPtr _htlep_before_htlep;
             H1ProxyPtr _mttbar_before_htlep;
             H1ProxyPtr _mttbar_after_htlep;
             H2ProxyPtr _dr_vs_ptrel;
