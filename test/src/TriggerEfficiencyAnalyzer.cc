@@ -32,18 +32,18 @@ TriggerEfficiencyAnalyzer::TriggerEfficiencyAnalyzer()
     // Initializing bookkeeper (booking histograms)
 
     _bookkeeper.reset(new HistogramBookkeeper());
-    _bookkeeper->book1d("AllEventsHT", 50, 400, 800);
-    _bookkeeper->book1d("AllEventsElectronPT", 50, 100, 250);
-    _bookkeeper->book1d("TriggerHT200HT", 50, 400, 800);
-    _bookkeeper->book1d("TriggerEle8HT", 50, 400, 800);
-    _bookkeeper->book1d("TriggerCaloIsoHT", 50, 400, 800);
-    _bookkeeper->book1d("TriggerEle25TriCentralJet30HT", 50, 400, 800);
-    _bookkeeper->book1d("TriggerEleXHT", 50, 400, 800);
-    _bookkeeper->book1d("TriggerEleXElectronPT", 50, 100, 250);
-    _bookkeeper->book1d("TriggerEle90HT", 50, 400, 800);
-    _bookkeeper->book1d("TriggerEle90ElectronPT", 50, 100, 250);
-    _bookkeeper->book1d("TriggerFancyHT", 50, 400, 800);
-    _bookkeeper->book1d("TriggerFancyElectronPT", 50, 100, 250);
+    _bookkeeper->book1d("AllEventsHT", 50, 400, 1000);
+    _bookkeeper->book1d("AllEventsElectronPT", 50, 100, 400);
+    _bookkeeper->book1d("TriggerHT200HT", 50, 400, 1000);
+    _bookkeeper->book1d("TriggerEle8HT", 50, 400, 1000);
+    _bookkeeper->book1d("TriggerCaloIsoHT", 50, 400, 1000);
+    _bookkeeper->book1d("TriggerEle25TriCentralJet30HT", 50, 400, 1000);
+    _bookkeeper->book1d("TriggerEleXHT", 50, 400, 1000);
+    _bookkeeper->book1d("TriggerEleXElectronPT", 50, 100, 400);
+    _bookkeeper->book1d("TriggerEle90HT", 50, 400, 1000);
+    _bookkeeper->book1d("TriggerEle90ElectronPT", 50, 100, 400);
+    _bookkeeper->book1d("TriggerFancyHT", 50, 400, 1000);
+    _bookkeeper->book1d("TriggerFancyElectronPT", 50, 100, 400);
 
     monitor(_bookkeeper);
 }
