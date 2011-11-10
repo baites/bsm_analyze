@@ -186,6 +186,7 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
     _bookkeeper->get1d("AllEventsElectronPT")->fill(electronPt);
 
     bool elexflag = false;
+    bool ele90flag = false;
 
     // Loop over the trigger menu to see which trigger is fire
     for(Triggers::const_iterator hlt = event->hlt().trigger().begin();
@@ -209,6 +210,7 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
         {
             _bookkeeper->get1d("TriggerEle90HT")->fill(ht);
             _bookkeeper->get1d("TriggerEle90ElectronPT")->fill(electronPt);
+            ele90flag = true;
         }        
         if (
             (_hlt_map[hlt->hash()] == "hlt_ele45_caloidvt_trkidt" && hlt->pass()) ||
@@ -218,7 +220,7 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
             elexflag = true;
     }
 
-    if (elexflag)
+    if (elexflag && ele90flag)
     {
         _bookkeeper->get1d("TriggerEleXHT")->fill(ht);
         _bookkeeper->get1d("TriggerEleXElectronPT")->fill(electronPt);
