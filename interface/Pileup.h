@@ -18,9 +18,17 @@ namespace bsm
     class PileupDelegate
     {
         public:
+            enum Systematic
+            {
+                DOWN = 0,
+                UP,
+                NONE
+            };
+
             virtual ~PileupDelegate() {}
 
-            virtual void setPileup(const std::string &filename) {}
+            virtual void setPileup(const std::string &filename,
+                    const Systematic &) {}
     };
 
     class PileupOptions : public Options
@@ -36,7 +44,8 @@ namespace bsm
             virtual DescriptionPtr description() const;
 
         private:
-            void setPileup(const std::string &filename);
+            void setPileup(const std::string &filename,
+                    const PileupDelegate::Systematic & = PileupDelegate::NONE);
 
             PileupDelegate *_delegate;
 
@@ -50,7 +59,8 @@ namespace bsm
             Pileup();
             Pileup(const Pileup &);
 
-            virtual void setPileup(const std::string &filename);
+            virtual void setPileup(const std::string &filename,
+                    const Systematic &systematic);
 
             const float scale(const Event *) const;
 

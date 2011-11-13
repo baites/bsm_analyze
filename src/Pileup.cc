@@ -32,8 +32,21 @@ PileupOptions::PileupOptions()
     _description->add_options()
         ("pileup",
          po::value<string>()->notifier(
-             boost::bind(&PileupOptions::setPileup, this, _1)),
+             boost::bind(&PileupOptions::setPileup, this, _1,
+                 PileupDelegate::NONE)),
          "Pile-up correction(s) file")
+
+        ("pileup-up",
+         po::value<string>()->notifier(
+             boost::bind(&PileupOptions::setPileup, this, _1,
+                 PileupDelegate::UP)),
+         "Pile-up correction(s) file: pu is scaled up")
+
+        ("pileup-down",
+         po::value<string>()->notifier(
+             boost::bind(&PileupOptions::setPileup, this, _1,
+                 PileupDelegate::DOWN)),
+         "Pile-up correction(s) file: pu is scaled down")
     ;
 }
 
@@ -57,13 +70,14 @@ PileupOptions::DescriptionPtr PileupOptions::description() const
 
 // Private
 //
-void PileupOptions::setPileup(const string &filename)
+void PileupOptions::setPileup(const string &filename,
+        const PileupDelegate::Systematic &systematic)
 {
     if (!delegate())
         return;
 
     if (fs::exists(filename))
-        delegate()->setPileup(filename);
+        delegate()->setPileup(filename, systematic);
     else
         cerr << "pileup correction(s) file does not exist: "
             << filename << endl;
@@ -82,7 +96,7 @@ Pileup::Pileup(const Pileup &obj):
 {
 }
 
-void Pileup::setPileup(const string &filename)
+void Pileup::setPileup(const string &filename, const Systematic &systematic)
 {
     shared_ptr<TFile> in(new TFile(filename.c_str(), "readonly"));
     if (!in->IsOpen())
@@ -92,7 +106,28 @@ void Pileup::setPileup(const string &filename)
         return;
     }
 
-    TH3D *weights = dynamic_cast<TH3D *>(in->Get("WHist"));
+    string histogram;
+
+    switch(systematic)
+    {
+        case UP:
+            histogram = "WHistUp";
+            break;
+
+        case DOWN:
+            histogram = "WHistDown";
+            break;
+
+        case NONE:
+            histogram = "WHist";
+            break;
+
+        default:
+            cerr << "unsupported pileup systematic" << endl;
+            return;
+    }
+
+    TH3D *weights = dynamic_cast<TH3D *>(in->Get(histogram.c_str()));
 
     // Translate weights into local array
     //
