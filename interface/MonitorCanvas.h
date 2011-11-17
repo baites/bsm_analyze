@@ -97,7 +97,8 @@ namespace bsm
     class P4Canvas
     {
         public:
-            P4Canvas(const std::string &title = "");
+            P4Canvas(const std::string &title = "",
+                    const std::string &axis_subtitle = "");
 
             void draw(const P4Monitor &);
             void write(TDirectory *, const P4Monitor &);
@@ -125,6 +126,7 @@ namespace bsm
 
             std::string _name;
             std::string _title;
+            std::string _axis_subtitle;
     };
 
     class MissingEnergyCanvas

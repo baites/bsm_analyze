@@ -65,6 +65,9 @@ TemplateAnalyzer::TemplateAnalyzer():
     _htlep.reset(new H1Proxy(500, 0, 500));
     monitor(_htlep);
 
+    _htlep_before_htlep.reset(new H1Proxy(150, 0, 150));
+    monitor(_htlep_before_htlep);
+
     _mttbar_before_htlep.reset(new H1Proxy(4000, 0, 4));
     monitor(_mttbar_before_htlep);
 
@@ -117,6 +120,9 @@ TemplateAnalyzer::TemplateAnalyzer():
 
     monitor(_ltop);
     monitor(_htop);
+
+    _pileup.reset(new Pileup());
+    monitor(_pileup);
 }
 
 TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
@@ -151,6 +157,9 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
 
     _htlep = dynamic_pointer_cast<H1Proxy>(object._htlep->clone());
     monitor(_htlep);
+
+    _htlep_before_htlep = dynamic_pointer_cast<H1Proxy>(object._htlep_before_htlep->clone());
+    monitor(_htlep_before_htlep);
 
     _mttbar_before_htlep =
         dynamic_pointer_cast<H1Proxy>(object._mttbar_before_htlep->clone());
@@ -213,6 +222,10 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
 
     monitor(_ltop);
     monitor(_htop);
+
+    _pileup =
+        dynamic_pointer_cast<Pileup>(object._pileup->clone());
+    monitor(_pileup);
 }
 
 const TemplateAnalyzer::H1Ptr TemplateAnalyzer::npv() const
@@ -238,6 +251,11 @@ const TemplateAnalyzer::H1Ptr TemplateAnalyzer::d0() const
 const TemplateAnalyzer::H1Ptr TemplateAnalyzer::htlep() const
 {
     return _htlep->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::htlepBeforeCut() const
+{
+    return _htlep_before_htlep->histogram();
 }
 
 const TemplateAnalyzer::H1Ptr TemplateAnalyzer::mttbarBeforeHtlep() const
@@ -336,12 +354,27 @@ bsm::Cut2DSelectorDelegate *TemplateAnalyzer::getCut2DSelectorDelegate() const
     return _synch_selector->getCut2DSelectorDelegate();
 }
 
+bsm::PileupDelegate *TemplateAnalyzer::getPileupDelegate() const
+{
+    return _pileup.get();
+}
+
 void TemplateAnalyzer::didCounterAdd(const Counter *counter)
 {
     if (counter == _secondary_lepton_counter)
         fillDrVsPtrel();
     else if (counter == _leading_jet_counter)
     {
+        // Note: leptons are kept in a vector of pointers
+        //
+        const LorentzVector &lepton_p4 =
+            SynchSelector::ELECTRON == _synch_selector->leptonMode()
+            ? (*_synch_selector->goodElectrons().begin())->physics_object().p4()
+            : (*_synch_selector->goodMuons().begin())->physics_object().p4();
+
+        htlepBeforeCut()->fill(pt(_event->missing_energy().p4()) + pt(lepton_p4),
+                _pileup_weight);
+
         mttbarBeforeHtlep()->fill(mass(mttbar().mttbar) / 1000,  _pileup_weight);
     }
 }
@@ -407,7 +440,7 @@ void TemplateAnalyzer::process(const Event *event)
 
     _event = event;
     if (_use_pileup)
-        _pileup_weight = _pileup_corrections.scale(event);
+        _pileup_weight = _pileup->scale(event);
 
     // Process only events, that pass the synch selector
     //

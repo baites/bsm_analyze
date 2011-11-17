@@ -47,6 +47,9 @@ class AppController:
             if not os.path.islink("lib"):
                 os.symlink("../lib", "lib")
 
+            if not os.path.islink("pileup"):
+                os.symlink("../pileup", "pileup")
+
             stdout = open("cout" + suffix +  ".log", 'w')
             stderr = open("cerr" + suffix + ".log", 'w')
             self.processes.append(subprocess.Popen(args, stdout = stdout, stderr = stderr))

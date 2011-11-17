@@ -9,6 +9,7 @@
 #include <iostream>
 #include <ostream>
 
+#include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/pointer_cast.hpp>
@@ -21,9 +22,11 @@
 #include "bsm_input/interface/Muon.pb.h"
 #include "bsm_input/interface/Physics.pb.h"
 #include "JetMETObjects/interface/FactorizedJetCorrector.h"
+#include "JetMETObjects/interface/JetCorrectionUncertainty.h"
 #include "interface/JetEnergyCorrections.h"
 
 using namespace std;
+using namespace boost;
 
 namespace fs = boost::filesystem;
 using boost::dynamic_pointer_cast;
@@ -59,6 +62,18 @@ JetEnergyCorrectionOptions::JetEnergyCorrectionOptions()
              boost::bind(&JetEnergyCorrectionOptions::setCorrection, this,
                  JetEnergyCorrectionDelegate::L2L3, _1)),
          "Level 2-3 corrections")
+
+        ("jec-up",
+         po::value<string>()->notifier(
+             boost::bind(&JetEnergyCorrectionOptions::setSystematic, this,
+                 JetEnergyCorrectionDelegate::UP, _1)),
+         "Change jec one sigma up")
+
+        ("jec-down",
+         po::value<string>()->notifier(
+             boost::bind(&JetEnergyCorrectionOptions::setSystematic, this,
+                 JetEnergyCorrectionDelegate::DOWN, _1)),
+         "Change jec one sigma down")
 
         ("child-correction",
          po::value<bool>()->implicit_value(true)->notifier(
@@ -119,6 +134,34 @@ void JetEnergyCorrectionOptions::setCorrection(
     }
 }
 
+void JetEnergyCorrectionOptions::setSystematic(
+        const JetEnergyCorrectionDelegate::Systematic &systematic,
+        const string &filename)
+{
+    if (!delegate())
+        return;
+
+    // Check validity of flag
+    //
+    switch(systematic)
+    {
+        case JetEnergyCorrectionDelegate::UP: // Fall through
+        case JetEnergyCorrectionDelegate::DOWN: // Fall through
+            {
+                if (!fs::exists(filename))
+                    cerr << "systematic jet energy correction file does not"
+                        << " exist: "
+                        << filename << endl;
+                else
+                    delegate()->setSystematic(systematic, filename);
+
+                break;
+            }
+
+        default: cerr << "unsupported Jet Energy Correction systematic" << endl;
+    }
+}
+
 void JetEnergyCorrectionOptions::setChildCorrection()
 {
     if (!delegate())
@@ -138,6 +181,10 @@ JetEnergyCorrections::JetEnergyCorrections()
 JetEnergyCorrections::JetEnergyCorrections(const JetEnergyCorrections &object)
 {
     setCorrectionFiles(object.correctionFiles());
+
+    if (!object._systematic_file.empty())
+        setSystematic(0 < object._systematic_direction ? UP : DOWN,
+                object._systematic_file);
 }
 
 CorrectedJet JetEnergyCorrections::correctJet(
@@ -224,6 +271,25 @@ void JetEnergyCorrections::setCorrection(const Level &jec_level,
     }
 }
 
+void JetEnergyCorrections::setSystematic(const Systematic &systematic,
+        const string &filename)
+{
+    if (_systematic_file == filename)
+        cerr << "systematic jet energy correction file is already loaded" << endl;
+    else
+    {
+        _systematic_file = filename;
+        _systematic.reset(new JetCorrectionUncertainty(filename));
+
+        clog << "systematic jet energy correction loaded " << filename << endl;
+
+        if (UP == systematic)
+            _systematic_direction = 1;
+        else 
+            _systematic_direction = -1;
+    }
+}
+
 // Object interface
 //
 void JetEnergyCorrections::print(std::ostream &out) const
@@ -266,7 +332,19 @@ void JetEnergyCorrections::correct(CorrectedJet &jet,
     jec->setRho(event->extra().rho());
 
     jet.correction = jec->getCorrection();
+
     *jet.corrected_p4 *= jet.correction;
+
+    // Apply systematics if any
+    //
+    if (_systematic)
+    {
+        _systematic->setJetPt(pt(*jet.corrected_p4));
+        _systematic->setJetEta(eta(*jet.corrected_p4));
+
+        *jet.corrected_p4 *= 1.
+            + _systematic_direction * _systematic->getUncertainty(true);
+    }
 }
 
 

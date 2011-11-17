@@ -112,7 +112,8 @@ void ElectronCanvas::draw(const ElectronsMonitor &monitor)
 //
 P4Canvas::IDPtr P4Canvas::_id(new core::IDCounter());
 
-P4Canvas::P4Canvas(const string &title)
+P4Canvas::P4Canvas(const string &title, const string &axis_subtitle):
+    _axis_subtitle(axis_subtitle)
 {
     ostringstream name;
     name << "lorentz_vector_canvas_" << P4Canvas::_id->add();
@@ -132,31 +133,51 @@ void P4Canvas::draw(const P4Monitor &monitor)
     _canvas->cd(1);
     _pt = convert(*monitor.pt());
     _pt->SetName("pt");
-    _pt->GetXaxis()->SetTitle("p_{T} [GeV/c]");
+    string title = "p_{T}";
+    if (!_axis_subtitle.empty())
+        title += "^{" + _axis_subtitle + "}";
+    title += " [GeV/c]";
+    _pt->GetXaxis()->SetTitle(title.c_str());
     _pt->Draw("hist");
 
     _canvas->cd(2);
     _eta = convert(*monitor.eta());
     _eta->SetName("eta");
-    _eta->GetXaxis()->SetTitle("#eta");
+    title = "#eta";
+    if (!_axis_subtitle.empty())
+        title += "^{" + _axis_subtitle + "}";
+    _eta->GetXaxis()->SetTitle(title.c_str());
     _eta->Draw("hist");
 
     _canvas->cd(3);
     _phi = convert(*monitor.phi());
     _phi->SetName("phi");
-    _phi->GetXaxis()->SetTitle("#phi [rad]");
+    title = "#phi";
+    if (!_axis_subtitle.empty())
+        title += "^{" + _axis_subtitle + "}";
+    title += " [rad]";
+    _phi->GetXaxis()->SetTitle(title.c_str());
     _phi->Draw("hist");
 
     _canvas->cd(4);
     _mass = convert(*monitor.mass());
     _mass->SetName("mass");
-    _mass->GetXaxis()->SetTitle("Mass [GeV/c^{2}]");
+    title = "M";
+    if (!_axis_subtitle.empty())
+        title += "^{" + _axis_subtitle + "}";
+    title += " [GeV/c^{2}]";
+    _mass->GetXaxis()->SetTitle(title.c_str());
     _mass->Draw("hist");
 
     _canvas->cd(5);
     _mass = convert(*monitor.mt());
     _mass->SetName("mt");
-    _mass->GetXaxis()->SetTitle("M_{T} [GeV/c^{2}]");
+    _mass->SetName("mass");
+    title = "M_{T}";
+    if (!_axis_subtitle.empty())
+        title += "^{" + _axis_subtitle + "}";
+    title += " [GeV/c^{2}]";
+    _mass->GetXaxis()->SetTitle(title.c_str());
     _mass->Draw("hist");
 }
 
@@ -187,47 +208,82 @@ void P4Canvas::write(TDirectory *dir, const P4Monitor &monitor)
 
     _energy = convert(*monitor.energy());
     _energy->SetName("energy");
-    _energy->GetXaxis()->SetTitle("E [GeV]");
+    string title = "E";
+    if (!_axis_subtitle.empty())
+        title += "^{" + _axis_subtitle + "}";
+    title += " [GeV]";
+    _energy->GetXaxis()->SetTitle(title.c_str());
     _energy->Write();
 
     _px = convert(*monitor.px());
     _px->SetName("px");
-    _px->GetXaxis()->SetTitle("p_{X} [GeV/c]");
+    title = "p_{X}";
+    if (!_axis_subtitle.empty())
+        title += "^{" + _axis_subtitle + "}";
+    title += " [GeV/c]";
+    _px->GetXaxis()->SetTitle(title.c_str());
     _px->Write();
 
     _py = convert(*monitor.py());
     _py->SetName("py");
-    _py->GetXaxis()->SetTitle("p_{Y} [GeV/c]");
+    title = "p_{Y}";
+    if (!_axis_subtitle.empty())
+        title += "^{" + _axis_subtitle + "}";
+    title += " [GeV/c]";
+    _py->GetXaxis()->SetTitle(title.c_str());
     _py->Write();
 
     _pz = convert(*monitor.pz());
     _pz->SetName("pz");
-    _pz->GetXaxis()->SetTitle("p_{Z} [GeV/c]");
+    title = "p_{Z}";
+    if (!_axis_subtitle.empty())
+        title += "^{" + _axis_subtitle + "}";
+    title += " [GeV/c]";
+    _pz->GetXaxis()->SetTitle(title.c_str());
     _pz->Write();
 
     _pt = convert(*monitor.pt());
     _pt->SetName("pt");
-    _pt->GetXaxis()->SetTitle("p_{T} [GeV/c]");
+    title = "p_{T}";
+    if (!_axis_subtitle.empty())
+        title += "^{" + _axis_subtitle + "}";
+    title += " [GeV/c]";
+    _pt->GetXaxis()->SetTitle(title.c_str());
     _pt->Write();
 
     _eta = convert(*monitor.eta());
     _eta->SetName("eta");
-    _eta->GetXaxis()->SetTitle("#eta");
+    title = "#eta";
+    if (!_axis_subtitle.empty())
+        title += "^{" + _axis_subtitle + "}";
+    _eta->GetXaxis()->SetTitle(title.c_str());
     _eta->Write();
 
     _phi = convert(*monitor.phi());
     _phi->SetName("phi");
-    _phi->GetXaxis()->SetTitle("#phi [rad]");
+    title = "#phi";
+    if (!_axis_subtitle.empty())
+        title += "^{" + _axis_subtitle + "}";
+    title += " [rad]";
+    _phi->GetXaxis()->SetTitle(title.c_str());
     _phi->Write();
 
     _mass = convert(*monitor.mass());
     _mass->SetName("mass");
-    _mass->GetXaxis()->SetTitle("Mass [GeV/c^{2}]");
+    title = "M";
+    if (!_axis_subtitle.empty())
+        title += "^{" + _axis_subtitle + "}";
+    title += " [GeV/c^{2}]";
+    _mass->GetXaxis()->SetTitle(title.c_str());
     _mass->Write();
 
     _mt = convert(*monitor.mt());
     _mt->SetName("mt");
-    _mt->GetXaxis()->SetTitle("M_{T} [GeV/c^{2}]");
+    title = "M_{T}";
+    if (!_axis_subtitle.empty())
+        title += "^{" + _axis_subtitle + "}";
+    title += " [GeV/c^{2}]";
+    _mt->GetXaxis()->SetTitle(title.c_str());
     _mt->Write();
 }
 

@@ -76,7 +76,9 @@ namespace bsm
     class H2Proxy;
 
     class Summary;
-    class PileupCorrections;
+    class Pileup;
+    class PileupOptions;
+    class PileupDelegate;
 
     class PtLess;
     class PtGreater;

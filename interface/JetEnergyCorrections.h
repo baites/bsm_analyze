@@ -23,6 +23,7 @@
 #include "interface/CorrectedJet.h"
 
 class FactorizedJetCorrector;
+class JetCorrectionUncertainty;
 
 namespace bsm
 {
@@ -37,10 +38,19 @@ namespace bsm
                 L2L3
             };
 
+            enum Systematic
+            {
+                DOWN = 0,
+                UP = 1,
+            };
+
             virtual ~JetEnergyCorrectionDelegate() {}
 
             virtual void setCorrection(const Level &,
                     const std::string &file_name) {}
+
+            virtual void setSystematic(const Systematic &,
+                    const std::string &filename) {}
 
             virtual void setChildCorrection() {}
     };
@@ -60,6 +70,9 @@ namespace bsm
         private:
             void setCorrection(const JetEnergyCorrectionDelegate::Level &,
                     const std::string &file_name); 
+
+            void setSystematic(const JetEnergyCorrectionDelegate::Systematic &,
+                    const std::string &filename);
             
             void setChildCorrection();
 
@@ -110,6 +123,9 @@ namespace bsm
             virtual void setCorrection(const Level &,
                     const std::string &file_name);
 
+            virtual void setSystematic(const Systematic &,
+                    const std::string &filename);
+
             // Object interface
             //
             virtual void print(std::ostream &) const;
@@ -117,6 +133,7 @@ namespace bsm
         private:
             typedef std::map<Level, JetCorrectorParameters> Corrections;
             typedef boost::shared_ptr<FactorizedJetCorrector> CorrectorPtr;
+            typedef boost::shared_ptr<JetCorrectionUncertainty> SystematicPtr;
 
             CorrectorPtr corrector();
             void correct(CorrectedJet &, const Event *);
@@ -129,6 +146,10 @@ namespace bsm
 
             Corrections _corrections;
             CorrectionFiles _correction_files;
+
+            SystematicPtr _systematic;
+            std::string _systematic_file;
+            int _systematic_direction;
     };
 
     class DeltaRJetEnergyCorrections: public JetEnergyCorrections
