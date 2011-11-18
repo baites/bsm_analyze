@@ -4,18 +4,13 @@
 #include <map>
 #include <string>
 
-#include <boost/shared_ptr.hpp>
-
-#include <TCanvas.h>
-#include <TFile.h>
-#include <TH1.h>
-#include <TLegend.h>
-#include <TSystem.h>
-
 #include "interface/Input.h"
 #include "interface/ROOTUtil.h"
+#include "interface/Systematic.h"
 
-class PileupSystematic
+class TH1;
+
+class PileupSystematic: public Systematic
 {
     public:
         PileupSystematic(): _plotname("mttbar_after_htlep")
@@ -47,15 +42,11 @@ class PileupSystematic
 
         void style(TH1 *, const int &);
 
-        TLegend *createLegend(const std::string &);
-
         Plots _pileup_none;
         Plots _pileup_plus;
         Plots _pileup_minus;
 
         std::string _plotname;
-
-        boost::shared_ptr<TCanvas> _canvas;
 };
 
 #endif

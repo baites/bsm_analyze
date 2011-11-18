@@ -1,5 +1,3 @@
-#include <sstream>
-
 #include <TCanvas.h>
 #include <TFile.h>
 #include <TH1.h>

@@ -1,40 +1,25 @@
-#include "interface/PileupSystematic.h"
+#include <TCanvas.h>
+#include <TFile.h>
+#include <TH1.h>
+#include <TObject.h>
+#include <TSystem.h>
 
-using namespace boost;
+#include "interface/PileupSystematic.h"
 
 using namespace std;
 
 void PileupSystematic::draw()
 {
-    _canvas.reset(new TCanvas());
-    _canvas->SetWindowSize(1200, 800);
-    _canvas->Divide(4, 2);
-
-    _canvas->cd(1);
     plot(Input::TTJETS);
-
-    _canvas->cd(2);
     plot(Input::WJETS);
-
-    _canvas->cd(3);
     plot(Input::ZJETS);
 
     // canvas 4 is reserved for single-top(s)
     //
-
-    _canvas->cd(5);
     plot(Input::ZPRIME1000);
-
-    _canvas->cd(6);
     plot(Input::ZPRIME1500);
-
-    _canvas->cd(7);
     plot(Input::ZPRIME2000);
-
-    _canvas->cd(8);
     plot(Input::ZPRIME3000);
-
-    _canvas->Update();
 }
 
 void PileupSystematic::load(Plots &plots,
@@ -101,19 +86,13 @@ void PileupSystematic::plot(const Input::Type &type)
             && _pileup_plus.end() != _pileup_plus.find(type)
             && _pileup_minus.end() != _pileup_minus.find(type))
     {
-        _pileup_plus[type]->SetFillStyle(30004);
-        _pileup_plus[type]->Draw("hist");
+        Input input(type);
+        TCanvas *canvas = Systematic::draw(input,
+                _pileup_none[type],
+                _pileup_plus[type],
+                _pileup_minus[type]);
 
-        _pileup_none[type]->Draw("hist same");
-
-        _pileup_minus[type]->SetFillStyle(3005);
-        _pileup_minus[type]->Draw("hist same");
-
-        TLegend *legend = createLegend(static_cast<string>(Input(type)));
-        legend->AddEntry(_pileup_plus[type], "PLUS", "fe");
-        legend->AddEntry(_pileup_none[type], "nominal", "fe");
-        legend->AddEntry(_pileup_minus[type], "MINUS", "fe");
-        legend->Draw();
+        canvas->SaveAs(("pileup_" + input.repr() + ".pdf").c_str());
     }
     else
     {
@@ -142,18 +121,4 @@ void PileupSystematic::style(TH1 *hist, const int &systematic)
     hist->SetMarkerColor(color);
     hist->SetMarkerSize(0.5);
     hist->SetLineWidth(2);
-}
-
-TLegend *PileupSystematic::createLegend(const string &text)
-{
-    TLegend *legend = new TLegend( .68, .53, .88, .88);
-    if (!text.empty())
-        legend->SetHeader(text.c_str());
-
-    legend->SetMargin(0.12);
-    legend->SetTextSize(0.03);
-    legend->SetFillColor(10);
-    legend->SetBorderSize(0);
-
-    return legend;
 }
