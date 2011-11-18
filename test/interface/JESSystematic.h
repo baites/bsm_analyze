@@ -4,25 +4,18 @@
 #include <map>
 #include <string>
 
-#include <boost/shared_ptr.hpp>
-
-#include <TFile.h>
-#include <TH1.h>
-#include <TLegend.h>
-#include <TObject.h>
-#include <TSystem.h>
-
 #include "interface/Input.h"
 #include "interface/ROOTUtil.h"
+#include "interface/Systematic.h"
 
-class JESSystematic
+class TH1;
+
+class JESSystematic: public Systematic
 {
     public:
         JESSystematic(): _plotname("mttbar_after_htlep")
         {
         }
-
-        ~JESSystematic();
 
         std::string plotname() const
         {
@@ -49,15 +42,11 @@ class JESSystematic
 
         void style(TH1 *, const int &);
 
-        TLegend *createLegend(const std::string &);
-
         Plots _jes_none;
         Plots _jes_plus;
         Plots _jes_minus;
 
         std::string _plotname;
-
-        std::vector<TObject *> _heap;
 };
 
 #endif
