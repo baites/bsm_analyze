@@ -50,7 +50,7 @@ public:
     // Return the delegate with the options use for JEC
     JetEnergyCorrectionDelegate * getJetEnergyCorrectionDelegate() const
     {
-        return _synch_selector->getJetEnergyCorrectionDelegate();
+        return _synch_selector.get();
     }
 
     // Return the delegate with the options use for cut 2d selection

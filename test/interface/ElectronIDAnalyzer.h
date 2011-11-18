@@ -47,7 +47,7 @@ public:
 
     JetEnergyCorrectionDelegate * getJetEnergyCorrectionDelegate() const
     {
-        return _synch_selector->getJetEnergyCorrectionDelegate();
+        return _synch_selector.get();
     }
 
     Cut2DSelectorDelegate * getCut2DSelectorDelegate() const

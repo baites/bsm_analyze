@@ -57,7 +57,7 @@ public:
     // Return the JES delegate with the options used by the synch selector
     bsm::JetEnergyCorrectionDelegate * getJetEnergyCorrectionDelegate() const
     {
-        return _synch_selector->getJetEnergyCorrectionDelegate();
+        return _synch_selector.get();
     }
 
     // What follows needs to be defined by all the analyzers
