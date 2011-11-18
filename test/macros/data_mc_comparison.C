@@ -1,6 +1,7 @@
 #include <iomanip>
 
-float luminosity = 3393.157;
+float luminosity = 4061.545;
+//float luminosity = 3393.157;
 //float luminosity = 2039.049;
 string plot_name = "mttbar_after_htlep";
 string subtitle = "";
@@ -640,13 +641,15 @@ void loadFiles()
 {
     for(int i = 0; CHANNELS > i; ++i)
     {
+        /*
         TFile *file = open(folder(i) + "/output_signal_p50_hlt.root");
         if (!file)
             return;
 
         input_s1s2_p50[i] = file;
+        */
 
-        file = open(folder(i) + "/output_signal_p250_hlt.root");
+        TFile *file = open(folder(i) + "/output_signal_p250_hlt.root");
         if (!file)
             return;
 
@@ -1211,7 +1214,7 @@ void data_mc_comparison()
 
     bool data_mc_first[] = {
         true,    // mttbar
-        false,     // htlep
+        true,     // htlep
         false,      // npv
         true,      // npv_with_pu
         true,      // njets
