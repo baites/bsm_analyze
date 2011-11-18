@@ -4,6 +4,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <TRint.h>
+#include <TStyle.h>
 
 #include "interface/PileupSystematic.h"
 
@@ -19,6 +20,8 @@ try
 
     shared_ptr<PileupSystematic> systematic(new PileupSystematic());
     systematic->load();
+
+    gStyle->SetOptStat(kFALSE);
 
     systematic->draw();
 

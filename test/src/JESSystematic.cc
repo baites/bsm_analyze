@@ -84,7 +84,8 @@ void JESSystematic::load(Plots &plots,
         }
 
         scale(histogram, input);
-        style(histogram, input, systematic);
+
+        style(histogram, systematic);
 
         histogram->Rebin(100);
 
@@ -107,9 +108,52 @@ void JESSystematic::plot(const Input::Type &type)
 
         _jes_minus[type]->SetFillStyle(3005);
         _jes_minus[type]->Draw("hist same");
+
+        TLegend *legend = createLegend(static_cast<string>(Input(type)));
+        legend->AddEntry(_jes_plus[type], "PLUS", "fe");
+        legend->AddEntry(_jes_none[type], "nominal", "fe");
+        legend->AddEntry(_jes_minus[type], "MINUS", "fe");
+        legend->Draw();
     }
     else
     {
         cerr << "can not plot input: " << Input(type) << endl;
     }
+}
+
+void JESSystematic::style(TH1 *hist, const int &systematic)
+{
+    int color = 1;
+    switch(systematic)
+    {
+        case 1:
+            color = 2;
+            break;
+
+        case -1:
+            color = 8;
+            break;
+
+        default:
+            break;
+    }
+
+    hist->SetLineColor(color);
+    hist->SetMarkerColor(color);
+    hist->SetMarkerSize(0.5);
+    hist->SetLineWidth(2);
+}
+
+TLegend *JESSystematic::createLegend(const string &text)
+{
+    TLegend *legend = new TLegend( .68, .53, .88, .88);
+    if (!text.empty())
+        legend->SetHeader(text.c_str());
+
+    legend->SetMargin(0.12);
+    legend->SetTextSize(0.03);
+    legend->SetFillColor(10);
+    legend->SetBorderSize(0);
+
+    return legend;
 }

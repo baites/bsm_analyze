@@ -4,6 +4,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <TRint.h>
+#include <TStyle.h>
 
 #include "interface/JESSystematic.h"
 
@@ -19,6 +20,8 @@ try
 
     shared_ptr<JESSystematic> systematic(new JESSystematic());
     systematic->load();
+
+    gStyle->SetOptStat(kFALSE);
 
     systematic->draw();
 

@@ -9,6 +9,7 @@
 #include <TCanvas.h>
 #include <TFile.h>
 #include <TH1.h>
+#include <TLegend.h>
 #include <TSystem.h>
 
 #include "interface/Input.h"
@@ -43,6 +44,10 @@ class JESSystematic
                 const int &systematic = 0);
 
         void plot(const Input::Type &);
+
+        void style(TH1 *, const int &);
+
+        TLegend *createLegend(const std::string &);
 
         Plots _jes_none;
         Plots _jes_plus;
