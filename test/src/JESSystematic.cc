@@ -1,3 +1,8 @@
+#include <sstream>
+
+#include <TCanvas.h>
+#include <TPad.h>
+
 #include "interface/JESSystematic.h"
 
 using namespace boost;
@@ -6,35 +11,26 @@ using namespace std;
 
 void JESSystematic::draw()
 {
-    _canvas.reset(new TCanvas());
-    _canvas->SetWindowSize(1200, 800);
-    _canvas->Divide(4, 2);
-
-    _canvas->cd(1);
     plot(Input::TTJETS);
-
-    _canvas->cd(2);
     plot(Input::WJETS);
-
-    _canvas->cd(3);
     plot(Input::ZJETS);
 
     // canvas 4 is reserved for single-top(s)
     //
-
-    _canvas->cd(5);
     plot(Input::ZPRIME1000);
-
-    _canvas->cd(6);
     plot(Input::ZPRIME1500);
-
-    _canvas->cd(7);
     plot(Input::ZPRIME2000);
-
-    _canvas->cd(8);
     plot(Input::ZPRIME3000);
+}
 
-    _canvas->Update();
+JESSystematic::~JESSystematic()
+{
+    for(vector<TObject *>::iterator obj = _heap.begin();
+            _heap.end() != obj;
+            ++obj)
+    {
+        delete *obj;
+    }
 }
 
 void JESSystematic::load(Plots &plots,
@@ -101,19 +97,63 @@ void JESSystematic::plot(const Input::Type &type)
             && _jes_plus.end() != _jes_plus.find(type)
             && _jes_minus.end() != _jes_minus.find(type))
     {
-        _jes_plus[type]->SetFillStyle(30004);
-        _jes_plus[type]->Draw("hist");
+        ostringstream name;
+        name << "canvas" << _heap.size();
+        TCanvas *canvas = new TCanvas(name.str().c_str(), "JES", 600, 700);
+        _heap.push_back(canvas);
 
-        _jes_none[type]->Draw("hist same");
+        name.str("");
+        name << "pad" << _heap.size();
+        TPad *plot = new TPad(name.str().c_str(), "pad", 0, 0.3, 1, 1);
+        _heap.push_back(plot);
 
-        _jes_minus[type]->SetFillStyle(3005);
-        _jes_minus[type]->Draw("hist same");
+        plot->SetBottomMargin(3);
+        plot->Draw();
+        plot->cd();
 
-        TLegend *legend = createLegend(static_cast<string>(Input(type)));
-        legend->AddEntry(_jes_plus[type], "PLUS", "fe");
-        legend->AddEntry(_jes_none[type], "nominal", "fe");
-        legend->AddEntry(_jes_minus[type], "MINUS", "fe");
+        TH1 *plus = _jes_plus[type];
+        plus->Draw("hist");
+
+        TH1 *none = _jes_none[type];
+        none->Draw("hist same");
+
+        TH1 *minus = _jes_minus[type];
+        minus->Draw("hist same");
+
+        string input_name = static_cast<string>(Input(type));
+        TLegend *legend = createLegend(input_name);
+        legend->AddEntry(plus, "PLUS", "fe");
+        legend->AddEntry(none, "nominal", "fe");
+        legend->AddEntry(minus, "MINUS", "fe");
         legend->Draw();
+
+        canvas->cd();
+
+        name.str("");
+        name << "pad" << _heap.size();
+        TPad *ratio = new TPad(name.str().c_str(), "pad", 0, 0, 1, 0.3);
+        _heap.push_back(ratio);
+
+        ratio->SetTopMargin(3);
+        ratio->Draw();
+        ratio->cd();
+
+        TH1 *plus_ratio = dynamic_cast<TH1 *>(plus->Clone());
+        plus_ratio->Divide(none);
+        plus_ratio->Draw("hist");
+
+        TH1 *none_ratio = dynamic_cast<TH1 *>(none->Clone());
+        none_ratio->Divide(none);
+        none_ratio->Draw("hist same");
+
+        TH1 *minus_ratio = dynamic_cast<TH1 *>(minus->Clone());
+        minus_ratio->Divide(none);
+        minus_ratio->Draw("hist same");
+
+        canvas->cd();
+        canvas->Update();
+
+        canvas->SaveAs(("jes_" + Input(type).repr() + ".pdf").c_str());
     }
     else
     {
@@ -147,6 +187,7 @@ void JESSystematic::style(TH1 *hist, const int &systematic)
 TLegend *JESSystematic::createLegend(const string &text)
 {
     TLegend *legend = new TLegend( .68, .53, .88, .88);
+    _heap.push_back(legend);
     if (!text.empty())
         legend->SetHeader(text.c_str());
 

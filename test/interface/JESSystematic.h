@@ -6,10 +6,10 @@
 
 #include <boost/shared_ptr.hpp>
 
-#include <TCanvas.h>
 #include <TFile.h>
 #include <TH1.h>
 #include <TLegend.h>
+#include <TObject.h>
 #include <TSystem.h>
 
 #include "interface/Input.h"
@@ -21,6 +21,8 @@ class JESSystematic
         JESSystematic(): _plotname("mttbar_after_htlep")
         {
         }
+
+        ~JESSystematic();
 
         std::string plotname() const
         {
@@ -55,7 +57,7 @@ class JESSystematic
 
         std::string _plotname;
 
-        boost::shared_ptr<TCanvas> _canvas;
+        std::vector<TObject *> _heap;
 };
 
 #endif
