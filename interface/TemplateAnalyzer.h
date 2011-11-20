@@ -52,6 +52,8 @@ namespace bsm
 
             const H2Ptr ljetMetDphivsMet() const;
             const H2Ptr leptonMetDphivsMet() const;
+            const H2Ptr htopNjetvsM() const;
+            const H2Ptr htopPtvsM() const;
 
             const P4MonitorPtr firstJet() const;
             const P4MonitorPtr secondJet() const;
@@ -101,6 +103,8 @@ namespace bsm
                 LorentzVector neutrino;
                 LorentzVector ltop;
                 LorentzVector htop;
+
+                int htop_njets;
             };
 
             Mttbar mttbar() const;
@@ -129,6 +133,8 @@ namespace bsm
 
             H2ProxyPtr _ljet_met_dphi_vs_met;
             H2ProxyPtr _lepton_met_dphi_vs_met;
+            H2ProxyPtr _htop_njet_vs_m;
+            H2ProxyPtr _htop_pt_vs_m;
 
             const Event *_event;
 

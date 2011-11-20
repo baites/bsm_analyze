@@ -98,6 +98,12 @@ TemplateAnalyzer::TemplateAnalyzer():
     _lepton_met_dphi_vs_met.reset(new H2Proxy(500, 0, 500, 40, 0, 4));
     monitor(_lepton_met_dphi_vs_met);
 
+    _htop_njet_vs_m.reset(new H2Proxy(1000, 0, 1000, 10, 0, 10));
+    monitor(_htop_njet_vs_m);
+
+    _htop_pt_vs_m.reset(new H2Proxy(1000, 0, 1000, 10, 0, 10));
+    monitor(_htop_pt_vs_m);
+
     _event = 0;
 
     _first_jet.reset(new P4Monitor());
@@ -194,6 +200,14 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
     _lepton_met_dphi_vs_met = dynamic_pointer_cast<H2Proxy>(
             object._lepton_met_dphi_vs_met->clone());
     monitor(_lepton_met_dphi_vs_met);
+
+    _htop_njet_vs_m = dynamic_pointer_cast<H2Proxy>(
+            object._htop_njet_vs_m->clone());
+    monitor(_htop_njet_vs_m);
+
+    _htop_pt_vs_m = dynamic_pointer_cast<H2Proxy>(
+            object._htop_pt_vs_m->clone());
+    monitor(_htop_pt_vs_m);
 
     _event = 0;
 
@@ -306,6 +320,16 @@ const TemplateAnalyzer::H2Ptr TemplateAnalyzer::ljetMetDphivsMet() const
 const TemplateAnalyzer::H2Ptr TemplateAnalyzer::leptonMetDphivsMet() const
 {
     return _lepton_met_dphi_vs_met->histogram();
+}
+
+const TemplateAnalyzer::H2Ptr TemplateAnalyzer::htopNjetvsM() const
+{
+    return _htop_njet_vs_m->histogram();
+}
+
+const TemplateAnalyzer::H2Ptr TemplateAnalyzer::htopPtvsM() const
+{
+    return _htop_pt_vs_m->histogram();
 }
 
 const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::firstJet() const
@@ -446,22 +470,22 @@ void TemplateAnalyzer::process(const Event *event)
     //
     if (_synch_selector->apply(event))
     {
-        Mttbar resonanse = mttbar();
-        mttbarAfterHtlep()->fill(mass(resonanse.mttbar) / 1000, _pileup_weight);
+        Mttbar resonance = mttbar();
+        mttbarAfterHtlep()->fill(mass(resonance.mttbar) / 1000, _pileup_weight);
 
-        ttbarPt()->fill(pt(resonanse.mttbar), _pileup_weight);
+        ttbarPt()->fill(pt(resonance.mttbar), _pileup_weight);
 
         const LorentzVector &el_p4 = _synch_selector->goodElectrons()[0]->physics_object().p4();
-        wlepMt()->fill(mt(resonanse.neutrino, el_p4), _pileup_weight);
+        wlepMt()->fill(mt(resonance.neutrino, el_p4), _pileup_weight);
 
-        wlepMass()->fill(mass(resonanse.wlep), _pileup_weight);
-        whadMass()->fill(mass(resonanse.whad), _pileup_weight);
+        wlepMass()->fill(mass(resonance.wlep), _pileup_weight);
+        whadMass()->fill(mass(resonance.whad), _pileup_weight);
 
         monitorJets();
         _electron->fill(el_p4, _pileup_weight);
 
-        _ltop->fill(resonanse.ltop, _pileup_weight);
-        _htop->fill(resonanse.htop, _pileup_weight);
+        _ltop->fill(resonance.ltop, _pileup_weight);
+        _htop->fill(resonance.htop, _pileup_weight);
         
         npv()->fill(event->primary_vertex().size());
         npvWithPileup()->fill(event->primary_vertex().size(), _pileup_weight);
@@ -470,6 +494,9 @@ void TemplateAnalyzer::process(const Event *event)
         const LorentzVector &met = event->missing_energy().p4();
         ljetMetDphivsMet()->fill(pt(met),
                 fabs(dphi(*_synch_selector->goodJets()[0].corrected_p4, met)));
+
+        htopNjetvsM()->fill(mass(resonance.htop), resonance.htop_njets, _pileup_weight);
+        htopPtvsM()->fill(mass(resonance.htop), pt(resonance.htop), _pileup_weight);
 
         leptonMetDphivsMet()->fill(pt(met), fabs(dphi(el_p4, met)));
 
@@ -631,7 +658,7 @@ TemplateAnalyzer::Mttbar TemplateAnalyzer::mttbar() const
     //
     struct Solution
     {
-        Solution(): deltaRmin(FLT_MAX), deltaRlh(0)
+        Solution(): deltaRmin(FLT_MAX), deltaRlh(0), htop_njets(0)
         {
         }
 
@@ -641,6 +668,7 @@ TemplateAnalyzer::Mttbar TemplateAnalyzer::mttbar() const
 
         float deltaRmin;
         float deltaRlh;
+        int htop_njets;
     } best_solution;
 
     // Loop over all possible hypotheses and pick the best one
@@ -723,6 +751,7 @@ TemplateAnalyzer::Mttbar TemplateAnalyzer::mttbar() const
                 best_solution.ltop = ltop_tmp;
                 best_solution.htop = htop;
                 best_solution.missing_energy = neutrino_p4;
+                best_solution.htop_njets = hypothesis.hadronic.size();
             }
         }
     }
@@ -736,6 +765,7 @@ TemplateAnalyzer::Mttbar TemplateAnalyzer::mttbar() const
     result.neutrino = best_solution.missing_energy;
     result.ltop = best_solution.ltop;
     result.htop = best_solution.htop;
+    result.htop_njets = best_solution.htop_njets;
 
     return result;
 }
