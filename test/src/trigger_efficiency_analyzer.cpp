@@ -10,18 +10,14 @@
 
 #include "interface/AppController.h"
 #include "interface/Cut2DSelector.h"
-#include "interface/TriggerEfficiencyAnalyzer.h"
 #include "interface/JetEnergyCorrections.h"
+#include "interface/Pileup.h"
 #include "interface/SynchSelector.h"
+#include "interface/TriggerEfficiencyAnalyzer.h"
 
 using namespace std;
-
-using boost::shared_ptr;
-using bsm::Cut2DSelectorOptions;
-using bsm::AppController;
-using bsm::TriggerEfficiencyAnalyzer;
-using bsm::JetEnergyCorrectionOptions;
-using bsm::SynchSelectorOptions;
+using namespace boost;
+using namespace bsm;
 
 int main(int argc, char *argv[])
 {
@@ -34,6 +30,7 @@ int main(int argc, char *argv[])
         boost::shared_ptr<JetEnergyCorrectionOptions> jec_options(new JetEnergyCorrectionOptions());
         boost::shared_ptr<SynchSelectorOptions> synch_selector_options(new SynchSelectorOptions());
         boost::shared_ptr<Cut2DSelectorOptions> cut_2d_selector_options(new Cut2DSelectorOptions());
+        boost::shared_ptr<PileupOptions> pileup_options(new PileupOptions());
         boost::shared_ptr<TriggerEfficiencyAnalyzer> analyzer(new TriggerEfficiencyAnalyzer());
         boost::shared_ptr<AppController> app(new AppController());
 
@@ -41,11 +38,13 @@ int main(int argc, char *argv[])
         jec_options->setDelegate(analyzer->getJetEnergyCorrectionDelegate());
         synch_selector_options->setDelegate(analyzer->getSynchSelectorDelegate());
         cut_2d_selector_options->setDelegate(analyzer->getCut2DSelectorDelegate());
+        pileup_options->setDelegate(analyzer->getPileupDelegate());
 
         // Set the options into the controller
         app->addOptions(*jec_options);
         app->addOptions(*synch_selector_options);
         app->addOptions(*cut_2d_selector_options);
+        app->addOptions(*pileup_options);
 
         // Set the analyzer into the controller
         app->setAnalyzer(analyzer);
@@ -54,7 +53,7 @@ int main(int argc, char *argv[])
         // Save the histograms once the job is done
         analyzer->bookkeeper()->write("histograms.root");
     }
-    catch(const exception &error)
+    catch(const std::exception &error)
     {
         cerr << error.what() << endl;
 

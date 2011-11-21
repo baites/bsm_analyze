@@ -21,13 +21,17 @@ namespace bsm
 
 using namespace std;
 
-TriggerEfficiencyAnalyzer::TriggerEfficiencyAnalyzer()
+TriggerEfficiencyAnalyzer::TriggerEfficiencyAnalyzer():
+    _use_pileup(false)
 {
     // Initializing selector (desabling htlep)
 
     _synch_selector.reset(new SynchSelector());
     //_synch_selector->htlep()->disable();
     monitor(_synch_selector);
+
+    _pileup.reset(new Pileup());
+    monitor(_pileup);
 
     // Initializing bookkeeper (booking histograms)
 
@@ -49,10 +53,13 @@ TriggerEfficiencyAnalyzer::TriggerEfficiencyAnalyzer()
 }
 
 
-TriggerEfficiencyAnalyzer::TriggerEfficiencyAnalyzer(const TriggerEfficiencyAnalyzer & object)
+TriggerEfficiencyAnalyzer::TriggerEfficiencyAnalyzer(const TriggerEfficiencyAnalyzer & object):
+    _use_pileup(false)
 {
     _synch_selector.reset(new SynchSelector(*object._synch_selector));
     monitor(_synch_selector);
+    _pileup.reset(new Pileup(*object._pileup));
+    monitor(_pileup);
     _bookkeeper.reset(new HistogramBookkeeper(*object._bookkeeper));
     monitor(_bookkeeper);
 }
@@ -70,6 +77,16 @@ void TriggerEfficiencyAnalyzer::onFileOpen(const std::string &filename, const In
     {
         clog << "Trigger menu is not available" << endl;
         return;
+    }
+
+    if (input->has_type())
+    {
+        _use_pileup = Input::DATA != input->type();
+    }
+    else
+    {
+        clog << "Input type is not available: pile-up correction is not applied" << endl;
+        _use_pileup = false;
     }
 
     typedef ::google::protobuf::RepeatedPtrField<TriggerItem> TriggerItems;
@@ -121,6 +138,10 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
     // Check if the event pass the selection
     if (!_synch_selector->apply(event)) return;
 
+    // Reading pile weight
+    double pileup_weight;
+    if (_use_pileup) pileup_weight = _pileup->scale(event);
+
     // Get the collection of good electron from the synch selection
     SynchSelector::GoodElectrons const & electrons = _synch_selector->goodElectrons();
 
@@ -144,7 +165,9 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
             // Check if HyperTight1 minimal condition
             if (
                 electronid.identification() &&
-                electronid.conversion_rejection()
+                electronid.conversion_rejection() &&
+                electronid.isolation() &&
+                electronid.impact_parameter()
             )
                 passeid = true;
 

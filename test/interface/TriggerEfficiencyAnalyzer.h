@@ -13,12 +13,12 @@
 #include "interface/Analyzer.h"
 #include "interface/Cut2DSelector.h"
 #include "interface/HistogramBookkeeper.h"
+#include "interface/Pileup.h"
 #include "interface/SynchSelector.h"
 #include "JetMETObjects/interface/JetCorrectorParameters.h"
 
 namespace bsm
 {
-
 class TriggerEfficiencyAnalyzer : public Analyzer
 {
 public:
@@ -59,6 +59,12 @@ public:
         return _synch_selector.get();
     }
 
+    // Return the pileup selegate with the options used by the pileup reweighting
+    bsm::PileupDelegate * getPileupDelegate() const
+    {
+        return _pileup.get();
+    }
+
     // Return the 2dCut delegate with the options used by the synch selector
     bsm::Cut2DSelectorDelegate * getCut2DSelectorDelegate() const
     {
@@ -85,6 +91,10 @@ private:
     SynchSelectorPtr _synch_selector;
     // Pointer to the book keepper
     HistogramBookkeeperPtr _bookkeeper;
+
+    // Use of pileup reweighting
+    boost::shared_ptr<Pileup> _pileup;
+    bool _use_pileup;
 
     // HLT map with all the trugger options
     typedef std::map<std::size_t, std::string> HLTMap;
