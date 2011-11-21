@@ -376,6 +376,12 @@ void SynchSelector::setCorrection(const Level &level,
     _jec->setCorrection(level, file_name);
 }
 
+void SynchSelector::setSystematic(const Systematic &systematic,
+        const std::string &filename)
+{
+    _jec->setSystematic(systematic, filename);
+}
+
 void SynchSelector::setChildCorrection()
 {
     // there is not guarantee that --child-corrrection argument is used before

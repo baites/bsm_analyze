@@ -1,7 +1,19 @@
-#include <iomanip>
+float luminosity = 4061.545;
 
-float luminosity = 3393.157;
-//float luminosity = 2039.049;
+enum Systematic
+{
+    PILEUP_PLUS = 0,
+    PILEUP_MINUS,
+    JES_PLUS,
+    JES_MINUS,
+    MATCHING_PLUS,
+    MATCHING_MINUS,
+    SCALING_PLUS,
+    SCALING_MINUS,
+    NONE
+};
+
+Systematic systematic = MATCHING_MINUS;
 
 enum InputType
 {
@@ -12,8 +24,16 @@ enum InputType
     QCD_EM_PT30_80,
     QCD_EM_PT80_170,
     TTJETS,
+    TTJETS_SCALE_UP,
+    TTJETS_SCALE_DOWN,
+    TTJETS_MATCHING_UP,
+    TTJETS_MATCHING_DOWN,
     ZJETS,
     WJETS,
+    WJETS_SCALE_UP,
+    WJETS_SCALE_DOWN,
+    WJETS_MATCHING_UP,
+    WJETS_MATCHING_DOWN,
     STOP_S,
     STOP_T,
     STOP_TW,
@@ -44,8 +64,16 @@ string folder(const InputType &input)
         case QCD_EM_PT30_80: return "qcd_em_pt30to80";
         case QCD_EM_PT80_170: return "qcd_em_pt80to170";
         case TTJETS: return "ttjets";
+        case TTJETS_MATCHING_UP: return "ttjets_matchingup";
+        case TTJETS_MATCHING_DOWN: return "ttjets_matchingdown";
+        case TTJETS_SCALE_UP: return "ttjets_scaleup";
+        case TTJETS_SCALE_DOWN: return "ttjets_scaledown";
         case ZJETS: return "zjets";
         case WJETS: return "wjets";
+        case WJETS_MATCHING_UP: return "wjets_matchingup";
+        case WJETS_MATCHING_DOWN: return "wjets_matchingdown";
+        case WJETS_SCALE_UP: return "wjets_scaleup";
+        case WJETS_SCALE_DOWN: return "wjets_scaledown";
         case STOP_S: return "stop_s";
         case STOP_T: return "stop_t";
         case STOP_TW: return "stop_tw";
@@ -71,6 +99,62 @@ string folder(const InputType &input)
     }
 };
 
+string filename()
+{
+    string name = "/output_signal_p250_hlt";
+    switch(systematic)
+    {
+        case PILEUP_PLUS:
+            name += "_pileup_plus";
+            break;
+        case PILEUP_MINUS:
+            name += "_pileup_minus";
+            break;
+        case JES_PLUS:
+            name += "_jes_plus";
+            break;
+        case JES_MINUS:
+            name += "_jes_minus";
+            break;
+        case SCALING_PLUS:
+            name += "_scaling_plus";
+            break;
+        case SCALING_MINUS:
+            name += "_scaling_minus";
+            break;
+        case MATCHING_PLUS:
+            name += "_matching_plus";
+            break;
+        case MATCHING_MINUS:
+            name += "_matching_minus";
+            break;
+        case NONE: // fall through
+        default:
+            break;
+    };
+    name += ".root";
+
+    return name;
+}
+
+string systematicSuffix()
+{
+    switch(systematic)
+    {
+        case PILEUP_PLUS: return "__pileup__plus";
+        case PILEUP_MINUS: return "__pileup__minus";
+        case JES_PLUS: return "__jes__plus";
+        case JES_MINUS: return "__jes__minus";
+        case MATCHING_PLUS: return "__matching__plus";
+        case MATCHING_MINUS: return "__matching__minus";
+        case SCALING_PLUS: return "__scaling__plus";
+        case SCALING_MINUS: return "__scaling__minus";
+        case NONE: // fall through
+        default:
+            return "";
+    };
+}
+
 string toString(const InputType &input_type)
 {
     switch(input_type)
@@ -82,8 +166,16 @@ string toString(const InputType &input_type)
         case QCD_EM_PT30_80: return  "QCD EM pt30to80";
         case QCD_EM_PT80_170: return "QCD EM pt80to170";
         case TTJETS: return "TTjets";
+        case TTJETS_MATCHING_UP: return "TTjets matching up";
+        case TTJETS_MATCHING_DOWN: return "TTjets matching down";
+        case TTJETS_SCALE_UP: return "TTjets scale up";
+        case TTJETS_SCALE_DOWN: return "TTjets scale down";
         case ZJETS: return "Zjets";
         case WJETS: return "Wjets";
+        case WJETS_MATCHING_UP: return "Wjets matching up";
+        case WJETS_MATCHING_DOWN: return "Wjets matching down";
+        case WJETS_SCALE_UP: return "Wjets scale up";
+        case WJETS_SCALE_DOWN: return "Wjets scale down";
         case STOP_S: return "Single-Top S";
         case STOP_T: return "Single-Top T";
         case STOP_TW: return "Single-Top TW";
@@ -95,192 +187,13 @@ string toString(const InputType &input_type)
         case PROMPT_2011A_V4: return "Prompt 2011A v4";
         case PROMPT_2011A_V6: return "Prompt 2011A v6";
         case PROMPT_2011B_V1: return "Prompt 2011B v1";
+        case ZPRIME1000: return "Z' m1000 w10";
+        case ZPRIME1500: return "Z' m1500 w15";
+        case ZPRIME2000: return "Z' m2000 w20";
+        case ZPRIME3000: return "Z' m3000 w30";
+        case ZPRIME4000: return "Z' m4000 w40";
         default: return "Unknown";
     }
-}
-
-void style(TH1 *hist, const InputType &input_type)
-{
-    int color = 1;
-    bool is_fill = true;
-    switch(input_type)
-    {
-        case QCD_BC_PT20_30:
-            {
-                color = kYellow + 1;
-                break;
-            }
-        case QCD_BC_PT30_80:
-            {
-                color = kYellow + 2;
-                break;
-            }
-        case QCD_BC_PT80_170:
-            {
-                color = kYellow + 3;
-                break;
-            }
-        case QCD_EM_PT20_30:
-            {
-                color = kOrange - 3;
-                break;
-            }
-        case QCD_EM_PT30_80:
-            {
-                color = kOrange - 1;
-                break;
-            }
-        case QCD_EM_PT80_170:
-            {
-                color = kOrange;
-                break;
-            }
-        case STOP_S:
-            {
-                color = kMagenta + 1;
-                break;
-            }
-        case STOP_T:
-            {
-                color = kMagenta + 2;
-                break;
-            }
-        case STOP_TW:
-            {
-                color = kMagenta + 3;
-                break;
-            }
-        case SATOP_S:
-            {
-                color = kMagenta - 4;
-                break;
-            }
-        case SATOP_T:
-            {
-                color = kMagenta - 3;
-                break;
-            }
-        case SATOP_TW:
-            {
-                color = kMagenta - 2;
-                break;
-            }
-        case TTJETS:
-            {
-                color = kRed + 1;
-                break;
-            }
-        case ZJETS:
-            {
-                color = kBlue - 4;
-                break;
-            }
-        case WJETS:
-            {
-                color = kGreen + 1;
-                break;
-            }
-        case ZPRIME1000:
-            {
-                color = kBlack;
-                hist->SetLineWidth(2);
-                hist->SetLineStyle(2);
-                is_fill = false;
-                break;
-            }
-        case ZPRIME1500:
-            {
-                color = kViolet + 2;
-                is_fill = false;
-                break;
-            }
-        case ZPRIME2000:
-            {
-                color = kBlack;
-                hist->SetLineWidth(2);
-                hist->SetLineStyle(9);
-                is_fill = false;
-                break;
-            }
-        case ZPRIME3000:
-            {
-                color = kBlack;
-                hist->SetLineWidth(2);
-                is_fill = false;
-                break;
-            }
-        case ZPRIME4000:
-            {
-                color = kOrange;
-                hist->SetLineWidth(2);
-                hist->SetLineStyle(9);
-                is_fill = false;
-                break;
-            }
-        case RERECO_2011A_MAY10:
-        case RERECO_2011A_AUG05:
-        case PROMPT_2011A_V4:
-        case PROMPT_2011A_V6:
-        case PROMPT_2011B_V1:
-            break;
-        default:
-            {
-                cerr << "unknown type: can not style the plot" << endl;
-
-                return;
-            }
-    }
-
-    hist->SetLineColor(color);
-    hist->SetMarkerColor(color);
-    hist->SetMarkerSize(0.5);
-
-    if (is_fill)
-        hist->SetFillColor(color);
-}
-
-void styleData(TH1 *hist, const InputType &input_type)
-{
-    int color = 1;
-    switch(input_type)
-    {
-        case RERECO_2011A_MAY10:
-            {
-                color = kGray;
-                break;
-            }
-        case RERECO_2011A_AUG05:
-            {
-                color = kGray + 1;
-                break;
-            }
-        case PROMPT_2011A_V4:
-            {
-                color = kGray + 2;
-                break;
-            }
-        case PROMPT_2011A_V6:
-            {
-                color = kGray + 3;
-                break;
-            }
-        case PROMPT_2011B_V1:
-            {
-                color = kBlack;
-                break;
-            }
-        default:
-            {
-                cerr << "unknown type: can not style the plot" << endl;
-
-                return;
-            }
-    }
-
-    hist->SetLineColor(color);
-    hist->SetFillColor(color);
-    hist->SetMarkerColor(color);
-    hist->SetMarkerSize(0.5);
 }
 
 void scale(TH1 *hist, const InputType &input_type)
@@ -331,6 +244,34 @@ void scale(TH1 *hist, const InputType &input_type)
                 break;
             }
 
+        case TTJETS_SCALE_UP:
+            {
+                // Use NLO x-section: 157.5 instead of LO: 94.76
+                //
+                scale = 157.5 * 1.0 / 930483;
+                break;
+            }
+        case TTJETS_SCALE_DOWN:
+            {
+                // Use NLO x-section: 157.5 instead of LO: 94.76
+                //
+                scale = 157.5 * 1.0 / 967055;
+                break;
+            }
+        case TTJETS_MATCHING_UP:
+            {
+                // Use NLO x-section: 157.5 instead of LO: 94.76
+                //
+                scale = 157.5 * 1.0 / 1057479;
+                break;
+            }
+        case TTJETS_MATCHING_DOWN:
+            {
+                // Use NLO x-section: 157.5 instead of LO: 94.76
+                //
+                scale = 157.5 * 1.0 / 1065323;
+                break;
+            }
         case TTJETS:
             {
                 // Use NLO x-section: 157.5 instead of LO: 94.76
@@ -347,6 +288,34 @@ void scale(TH1 *hist, const InputType &input_type)
                 break;
             }
 
+        case WJETS_SCALE_UP: // fall through
+            {
+                // Use NLO x-section: 31314 instead of LO: 27770
+                //
+                scale = 31314 * 1.0 / 9784907;
+                break;
+            }
+        case WJETS_SCALE_DOWN: // fall through
+            {
+                // Use NLO x-section: 31314 instead of LO: 27770
+                //
+                scale = 31314 * 1.0 / 10022324;
+                break;
+            }
+        case WJETS_MATCHING_UP: // fall through
+            {
+                // Use NLO x-section: 31314 instead of LO: 27770
+                //
+                scale = 31314 * 1.0 / 10461655;
+                break;
+            }
+        case WJETS_MATCHING_DOWN: // fall through
+            {
+                // Use NLO x-section: 31314 instead of LO: 27770
+                //
+                scale = 31314 * 1.0 / 9956679;
+                break;
+            }
         case WJETS:
             {
                 // Use NLO x-section: 31314 instead of LO: 27770
@@ -393,31 +362,31 @@ void scale(TH1 *hist, const InputType &input_type)
 
         case ZPRIME1000:
             {
-                scale = 0.1 / 207992;
+                scale = 10.0 / 207992;
                 break;
             }
 
         case ZPRIME1500:
             {
-                scale = 0.1 / 168383;
+                scale = 10.0 / 168383;
                 break;
             }
 
         case ZPRIME2000:
             {
-                scale = 0.1 / 179315;
+                scale = 10.0 / 179315;
                 break;
             }
 
         case ZPRIME3000:
             {
-                scale = 0.1 / 195410;
+                scale = 10.0 / 195410;
                 break;
             }
 
         case ZPRIME4000:
             {
-                scale = 0.1 / 180381;
+                scale = 10.0 / 180381;
                 break;
             }
 
@@ -441,37 +410,6 @@ void scale(TH1 *hist, const InputType &input_type)
     hist->Scale(scale_with_luminosity);
 }
 
-TLegend *createLegend(const string &text)
-{
-    TLegend *legend = new TLegend( .6, .4, .8, .75);
-    if (!text.empty())
-        legend->SetHeader(text.c_str());
-
-    legend->SetMargin(0.12);
-    legend->SetTextSize(0.03);
-    legend->SetFillColor(10);
-    legend->SetBorderSize(0);
-
-    return legend;
-}
-
-void cmsLabel()
-{
-    TLegend *legend = new TLegend(.35, .78, .85, .88);
-    ostringstream title;
-    title << "#splitline{CMS Preliminary 2011}{"
-        << std::setprecision(2) << fixed << luminosity / 1000
-        << " fb-1 at #sqrt{s}=7 TeV/c^{2}, e+jets}";
-    legend->SetHeader(title.str().c_str());
-
-    legend->SetMargin(0.12);
-    legend->SetTextSize(0.04);
-    legend->SetFillColor(10);
-    legend->SetBorderSize(0);
-    
-    legend->Draw();
-}
-
 //
 // Histograms will be scaled by x-section, Nevents, Luminosity,
 // filter-efficiency if InputType is supplied
@@ -493,8 +431,6 @@ TH1 *get(const TFile *input, const string &path, const InputType &input_type)
 
         return 0;
     }
-
-    style(hist, input_type);
 
     return hist;
 }
@@ -548,9 +484,18 @@ TFile *open(const string &filename)
 
 void loadFiles()
 {
+    FileStat_t buf;
+
     for(int i = 0; CHANNELS > i; ++i)
     {
-        TFile *file = open(folder(i) + "/output_signal_p250_hlt.root");
+        string file_name = folder(i) + filename();
+        if (gSystem->GetPathInfo(file_name.c_str(), buf))
+        {
+            cout << "file : " << file_name << " is not available" << endl;
+            continue;
+        }
+
+        TFile *file = open(file_name);
         if (!file)
             return;
 
@@ -562,7 +507,7 @@ void save(const string &plot_name, const string &destination)
 {
     TH1 *hist = get(input[TTJETS], plot_name.c_str(), TTJETS);
     scale(hist, TTJETS);
-    hist->Write(("el_" + destination + "__ttjets").c_str());
+    hist->Write(("el_" + destination + "__ttbar").c_str());
 
     hist = get(input[ZJETS], plot_name.c_str(), ZJETS);
     scale(hist, ZJETS);
@@ -605,6 +550,92 @@ void save(const string &plot_name, const string &destination)
     hist->Write(("el_" + destination + "__zp4000").c_str());
 }
 
+void saveSystematics(const string &plot_name, const string &destination)
+{
+    string suffix = systematicSuffix();
+
+    if (MATCHING_PLUS == systematic)
+    {
+        TH1 *hist = get(input[TTJETS_MATCHING_UP], plot_name.c_str(), TTJETS_SCALE_UP);
+        scale(hist, TTJETS_MATCHING_UP);
+        hist->Write(("el_" + destination + "__ttbar"+ suffix).c_str());
+
+        hist = get(input[WJETS_MATCHING_UP], plot_name.c_str(), WJETS_SCALE_UP);
+        scale(hist, WJETS_MATCHING_UP);
+        hist->Write(("el_" + destination + "__wjets"+ suffix).c_str());
+    }
+    else if (MATCHING_MINUS == systematic)
+    {
+        TH1 *hist = get(input[TTJETS_MATCHING_DOWN], plot_name.c_str(), TTJETS_SCALE_DOWN);
+        scale(hist, TTJETS_MATCHING_DOWN);
+        hist->Write(("el_" + destination + "__ttbar"+ suffix).c_str());
+
+        hist = get(input[WJETS_MATCHING_DOWN], plot_name.c_str(), WJETS_SCALE_DOWN);
+        scale(hist, WJETS_MATCHING_DOWN);
+        hist->Write(("el_" + destination + "__wjets"+ suffix).c_str());
+    }
+    else if (SCALING_PLUS == systematic)
+    {
+        TH1 *hist = get(input[TTJETS_SCALE_UP], plot_name.c_str(), TTJETS_SCALE_UP);
+        scale(hist, TTJETS_SCALE_UP);
+        hist->Write(("el_" + destination + "__ttbar"+ suffix).c_str());
+
+        hist = get(input[WJETS_SCALE_UP], plot_name.c_str(), WJETS_SCALE_UP);
+        scale(hist, WJETS_SCALE_UP);
+        hist->Write(("el_" + destination + "__wjets"+ suffix).c_str());
+    }
+    else if (SCALING_MINUS == systematic)
+    {
+        TH1 *hist = get(input[TTJETS_SCALE_DOWN], plot_name.c_str(), TTJETS_SCALE_DOWN);
+        scale(hist, TTJETS_SCALE_DOWN);
+        hist->Write(("el_" + destination + "__ttbar"+ suffix).c_str());
+
+        hist = get(input[WJETS_SCALE_DOWN], plot_name.c_str(), WJETS_SCALE_DOWN);
+        scale(hist, WJETS_SCALE_DOWN);
+        hist->Write(("el_" + destination + "__wjets"+ suffix).c_str());
+    }
+    else
+    {
+        TH1 *hist = get(input[TTJETS], plot_name.c_str(), TTJETS);
+        scale(hist, TTJETS);
+        hist->Write(("el_" + destination + "__ttbar"+ suffix).c_str());
+
+        hist = get(input[ZJETS], plot_name.c_str(), ZJETS);
+        scale(hist, ZJETS);
+        hist->Write(("el_" + destination + "__zjets"+ suffix).c_str());
+
+        hist = get(input[WJETS], plot_name.c_str(), WJETS);
+        scale(hist, WJETS);
+        hist->Write(("el_" + destination + "__wjets"+ suffix).c_str());
+        
+        hist = merge(input, plot_name.c_str(), STOP_S, STOP_S + STOP_CHANNELS);
+        hist->Write(("el_" + destination + "__singletop"+ suffix).c_str());
+
+        hist = merge(input, plot_name.c_str(), 0, QCD_CHANNELS);
+        hist->Write(("el_" + destination + "__eleqcd"+ suffix).c_str());
+
+        hist = get(input[ZPRIME1000], plot_name.c_str(), ZPRIME1000);
+        scale(hist, ZPRIME1000);
+        hist->Write(("el_" + destination + "__zp1000"+ suffix).c_str());
+
+        hist = get(input[ZPRIME1500], plot_name.c_str(), ZPRIME1500);
+        scale(hist, ZPRIME1500);
+        hist->Write(("el_" + destination + "__zp1500"+ suffix).c_str());
+
+        hist = get(input[ZPRIME2000], plot_name.c_str(), ZPRIME2000);
+        scale(hist, ZPRIME2000);
+        hist->Write(("el_" + destination + "__zp2000"+ suffix).c_str());
+
+        hist = get(input[ZPRIME3000], plot_name.c_str(), ZPRIME3000);
+        scale(hist, ZPRIME3000);
+        hist->Write(("el_" + destination + "__zp3000"+ suffix).c_str());
+
+        hist = get(input[ZPRIME4000], plot_name.c_str(), ZPRIME4000);
+        scale(hist, ZPRIME4000);
+        hist->Write(("el_" + destination + "__zp4000"+ suffix).c_str());
+    }
+}
+
 void theta_input()
 {
     TGaxis::SetMaxDigits(3);
@@ -612,7 +643,7 @@ void theta_input()
 
     loadFiles();
 
-    TFile *output = TFile::Open("theta_input.root", "recreate");
+    TFile *output = TFile::Open("theta_input.root", "update");
     if (!output
             || !output->IsOpen())
     {
@@ -621,8 +652,15 @@ void theta_input()
         return;
     }
 
-    save("htlep_before_htlep", "htlep");
-    save("mttbar_after_htlep", "mttbar");
+    if (NONE == systematic)
+    {
+        save("htlep_before_htlep", "htlep");
+        save("mttbar_after_htlep", "mttbar");
+    }
+    else
+    {
+        saveSystematics("mttbar_after_htlep", "mttbar");
+    }
 
     output->Close();
 }

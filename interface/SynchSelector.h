@@ -143,6 +143,9 @@ namespace bsm
             virtual void setCorrection(const Level &,
                     const std::string &file_name); // proxy to JEC setCorrection
 
+            virtual void setSystematic(const Systematic &,
+                    const std::string &filename);
+
             virtual void setChildCorrection();
 
             // Selector interface
