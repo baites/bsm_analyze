@@ -21,8 +21,8 @@ void TriggerEfficienciesMC(TString filename, TString ref, TString id, TString va
    // canvas->SetLogy();
 
    All->GetXaxis()->SetTitle(xtitle);
-   All->GetYaxis()->SetTitle("Efficiency respect to synch selection");
-   All->GetYaxis()->SetRangeUser(0.0,1.0);
+   All->GetYaxis()->SetTitle("Trigger efficiency");
+   All->GetYaxis()->SetRangeUser(0.0,1.1);
    All->Draw("axis");
 
    TEfficiency * RefEff = new TEfficiency();

@@ -10,7 +10,7 @@ void TriggerEfficienciesData(TString filename, TString ref, TString id, TString 
    TH1D * Ref = (TH1D*) file->Get("Trigger"+ref+variable)->Clone();
    TH1D * Trigger = (TH1D*) file->Get("Trigger"+id+variable)->Clone();
 
-   Int_t ngroup = 5;
+   Int_t ngroup = 2;
 
    All->Rebin(ngroup);
    Ref->Rebin(ngroup);
@@ -21,7 +21,7 @@ void TriggerEfficienciesData(TString filename, TString ref, TString id, TString 
    // canvas->SetLogy();
 
    All->GetXaxis()->SetTitle(xtitle);
-   All->GetYaxis()->SetTitle("Efficiency respect to synch selection");
+   All->GetYaxis()->SetTitle("Trigger efficiency");
    All->GetYaxis()->SetRangeUser(0.0,1.1);
    All->Draw("axis");
    

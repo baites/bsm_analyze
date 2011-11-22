@@ -139,8 +139,8 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
     if (!_synch_selector->apply(event)) return;
 
     // Reading pile weight
-    double pileup_weight;
-    if (_use_pileup) pileup_weight = _pileup->scale(event);
+    double weight = 1.0;
+    if (_use_pileup) weight = _pileup->scale(event);
 
     // Get the collection of good electron from the synch selection
     SynchSelector::GoodElectrons const & electrons = _synch_selector->goodElectrons();
@@ -165,9 +165,9 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
             // Check if HyperTight1 minimal condition
             if (
                 electronid.identification() &&
-                electronid.conversion_rejection() &&
-                electronid.isolation() &&
-                electronid.impact_parameter()
+                electronid.conversion_rejection() // &&
+                // electronid.isolation() &&
+                // electronid.impact_parameter()
             )
                 passeid = true;
 
@@ -205,8 +205,8 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
     if (electronPt < 100) return;
 
     // Fill the histogram with all the events
-    _bookkeeper->get1d("AllEventsHT")->fill(ht);
-    _bookkeeper->get1d("AllEventsElectronPT")->fill(electronPt);
+    _bookkeeper->get1d("AllEventsHT")->fill(ht,weight);
+    _bookkeeper->get1d("AllEventsElectronPT")->fill(electronPt,weight);
 
     bool elexflag = false;
     bool ele90flag = false;
@@ -217,22 +217,22 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
             ++hlt)
     {
         if (_hlt_map[hlt->hash()] == "hlt_ht200" && hlt->pass())
-            _bookkeeper->get1d("TriggerHT200HT")->fill(ht);
+            _bookkeeper->get1d("TriggerHT200HT")->fill(ht,weight);
         if (_hlt_map[hlt->hash()] == "hlt_ele8" && hlt->pass())
-            _bookkeeper->get1d("TriggerEle8HT")->fill(ht);
+            _bookkeeper->get1d("TriggerEle8HT")->fill(ht,weight);
         if (_hlt_map[hlt->hash()] == "hlt_ele8_caloidl_caloisovl" && hlt->pass())
-            _bookkeeper->get1d("TriggerCaloIsoHT")->fill(ht);
+            _bookkeeper->get1d("TriggerCaloIsoHT")->fill(ht,weight);
         if (_hlt_map[hlt->hash()] == "hlt_ele25_caloidvt_trkidt_centraltrijet30" && hlt->pass())
-            _bookkeeper->get1d("TriggerEle25TriCentralJet30HT")->fill(ht);
+            _bookkeeper->get1d("TriggerEle25TriCentralJet30HT")->fill(ht,weight);
         if (_hlt_map[hlt->hash()] == "hlt_ele10_caloidt_caloisovl_trkidt_trkisovl_ht200" && hlt->pass())
         {
-            _bookkeeper->get1d("TriggerFancyHT")->fill(ht);
-            _bookkeeper->get1d("TriggerFancyElectronPT")->fill(electronPt);
+            _bookkeeper->get1d("TriggerFancyHT")->fill(ht,weight);
+            _bookkeeper->get1d("TriggerFancyElectronPT")->fill(electronPt,weight);
         }
         if (_hlt_map[hlt->hash()] == "hlt_ele90_nospikefilter" && hlt->pass())
         {
-            _bookkeeper->get1d("TriggerEle90HT")->fill(ht);
-            _bookkeeper->get1d("TriggerEle90ElectronPT")->fill(electronPt);
+            _bookkeeper->get1d("TriggerEle90HT")->fill(ht,weight);
+            _bookkeeper->get1d("TriggerEle90ElectronPT")->fill(electronPt,weight);
             ele90flag = true;
         }        
         if (
@@ -245,8 +245,8 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
 
     if (elexflag && ele90flag)
     {
-        _bookkeeper->get1d("TriggerEleXHT")->fill(ht);
-        _bookkeeper->get1d("TriggerEleXElectronPT")->fill(electronPt);
+        _bookkeeper->get1d("TriggerEleXHT")->fill(ht,weight);
+        _bookkeeper->get1d("TriggerEleXElectronPT")->fill(electronPt,weight);
     }
 
     return;
