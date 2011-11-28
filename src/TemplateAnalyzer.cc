@@ -396,7 +396,7 @@ void TemplateAnalyzer::didCounterAdd(const Counter *counter)
             ? (*_synch_selector->goodElectrons().begin())->physics_object().p4()
             : (*_synch_selector->goodMuons().begin())->physics_object().p4();
 
-        htlepBeforeCut()->fill(pt(_event->missing_energy().p4()) + pt(lepton_p4),
+        htlepBeforeCut()->fill(pt(*_synch_selector->goodMET()) + pt(lepton_p4),
                 _pileup_weight);
 
         mttbarBeforeHtlep()->fill(mass(mttbar().mttbar) / 1000,  _pileup_weight);
@@ -491,7 +491,7 @@ void TemplateAnalyzer::process(const Event *event)
         npvWithPileup()->fill(event->primary_vertex().size(), _pileup_weight);
         njets()->fill(_synch_selector->goodJets().size(), _pileup_weight);
 
-        const LorentzVector &met = event->missing_energy().p4();
+        const LorentzVector &met = *_synch_selector->goodMET();
         ljetMetDphivsMet()->fill(pt(met),
                 fabs(dphi(*_synch_selector->goodJets()[0].corrected_p4, met)));
 
@@ -604,7 +604,7 @@ void TemplateAnalyzer::fillHtlep()
         ? (*_synch_selector->goodElectrons().begin())->physics_object().p4()
         : (*_synch_selector->goodMuons().begin())->physics_object().p4();
 
-    htlep()->fill(pt(_event->missing_energy().p4()) + pt(lepton_p4),
+    htlep()->fill(pt(*_synch_selector->goodMET()) + pt(lepton_p4),
             _pileup_weight);
 }
 
@@ -638,7 +638,7 @@ TemplateAnalyzer::Mttbar TemplateAnalyzer::mttbar() const
     //
     NeutrinoReconstruct neutrinoReconstruct;
     NeutrinoReconstruct::Solutions neutrinos =
-        neutrinoReconstruct(lepton_p4, _event->missing_energy().p4());
+        neutrinoReconstruct(lepton_p4, *_synch_selector->goodMET());
 
     // Prepare generator and loop over all hypotheses of the decay
     // (different jets assignment to leptonic/hadronic legs)
