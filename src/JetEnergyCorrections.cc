@@ -229,6 +229,11 @@ CorrectedJet JetEnergyCorrections::correctJet(
 
     correct(corrected_jet, event);
 
+    corrected_jet.corrected_met.reset(new LorentzVector());
+    corrected_jet.corrected_met->CopyFrom(event->missing_energy().p4());
+    *corrected_jet.corrected_met += corrected_jet.jet->physics_object().p4();
+    *corrected_jet.corrected_met -= *corrected_jet.corrected_p4;
+
     return corrected_jet;
 }
 

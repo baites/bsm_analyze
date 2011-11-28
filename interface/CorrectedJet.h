@@ -36,6 +36,10 @@ namespace bsm
         //
         LorentzVectorPtr corrected_p4;
 
+        // Corrected MET p4
+        //
+        LorentzVectorPtr corrected_met;
+
         // jet uncorrected p4 aftre leptons subtraction
         //
         LorentzVectorPtr subtracted_p4;
