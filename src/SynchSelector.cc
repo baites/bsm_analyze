@@ -287,6 +287,7 @@ bool SynchSelector::apply(const Event *event)
     _good_muons.clear();
     _nice_jets.clear();
     _good_jets.clear();
+    _good_met.reset();
     _closest_jet = _nice_jets.end();
 
     return primaryVertices(event)
@@ -329,6 +330,11 @@ const SynchSelector::GoodJets &SynchSelector::niceJets() const
 const SynchSelector::GoodJets &SynchSelector::goodJets() const
 {
     return _good_jets;
+}
+
+const SynchSelector::GoodMET &SynchSelector::goodMET() const
+{
+    return _good_met;
 }
 
 SynchSelector::GoodJets::const_iterator SynchSelector::closestJet() const
@@ -460,6 +466,8 @@ bool SynchSelector::jets(const Event *event)
     selectGoodElectrons(event);
     selectGoodMuons(event);
 
+    // Correct all jets
+    //
     typedef ::google::protobuf::RepeatedPtrField<Jet> Jets;
 
     LockSelectorEventCounterOnUpdate lock_nice_jets(*_nice_jet_selector);
@@ -477,6 +485,8 @@ bool SynchSelector::jets(const Event *event)
         //
         if (!correction.corrected_p4)
             continue;
+
+        _good_met = correction.corrected_met;
 
         // Original jet in the event can not be modified and Jet Selector can
         // only be applied to jet: therefore copy jet, set corrected p4 and
@@ -598,8 +608,8 @@ bool SynchSelector::htlepCut(const Event *event)
         ? (*_good_electrons.begin())->physics_object().p4()
         : (*_good_muons.begin())->physics_object().p4());
 
-    return event->has_missing_energy()
-        && htlep()->apply(pt(event->missing_energy().p4()) + pt(lepton_p4))
+    return goodMET()
+        && htlep()->apply(pt(*goodMET()) + pt(lepton_p4))
         && (_cutflow->apply(HTLEP), true);
 }
 
@@ -608,10 +618,10 @@ bool SynchSelector::triangularCut(const Event *event)
     if (tricut()->isDisabled())
         return true;
 
-    if (!event->has_missing_energy())
+    if (!goodMET())
         return false;
 
-    const LorentzVector &met = event->missing_energy().p4();
+    const LorentzVector &met = *goodMET();
 
     const float met_pt = pt(met);
 
@@ -635,8 +645,8 @@ bool SynchSelector::missingEnergy(const Event *event)
     if (met()->isDisabled())
         return true;
 
-    return event->has_missing_energy()
-        && met()->apply(pt(event->missing_energy().p4()))
+    return goodMET()
+        && met()->apply(pt(*goodMET()))
         && (_cutflow->apply(MET), true);
 }
 
