@@ -337,6 +337,9 @@ void JetEnergyCorrections::correct(CorrectedJet &jet,
 
     *jet.corrected_p4 *= jet.correction;
 
+    jet.corrected_met.reset(new LorentzVector());
+    jet.corrected_met->CopyFrom(*met);
+
     // Apply systematics if any
     //
     if (_systematic)
@@ -344,25 +347,27 @@ void JetEnergyCorrections::correct(CorrectedJet &jet,
         _systematic->setJetPt(pt(*jet.corrected_p4));
         _systematic->setJetEta(eta(*jet.corrected_p4));
 
-        *jet.corrected_p4 *= 1.
+        const float jes = 1.
             + _systematic_direction * _systematic->getUncertainty(true);
+
+        *jet.corrected_p4 *= jes;
+
+        // Propagate JES to Missing EnergyMET
+        //
+        // Correct MET px, py components
+        //
+        LorentzVector p4;
+        p4.CopyFrom(jet.jet->uncorrected_p4());
+        p4.set_e(0);
+        p4.set_pz(0);
+        *jet.corrected_met += p4;
+
+        p4.CopyFrom(jet.jet->uncorrected_p4());
+        p4 *= jes;
+        p4.set_e(0);
+        p4.set_pz(0);
+        *jet.corrected_met -= p4;
     }
-
-    jet.corrected_met.reset(new LorentzVector());
-    jet.corrected_met->CopyFrom(*met);
-
-    // Correct MET px, py components
-    //
-    LorentzVector p4;
-    p4.CopyFrom(jet.jet->uncorrected_p4());
-    p4.set_e(0);
-    p4.set_pz(0);
-    *jet.corrected_met += p4;
-
-    p4.CopyFrom(*jet.subtracted_p4);
-    p4.set_e(0);
-    p4.set_pz(0);
-    *jet.corrected_met -= p4;
 }
 
 
