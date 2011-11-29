@@ -203,6 +203,7 @@ void JetEnergyCorrectionsAnalyzer::jets(const Event *event)
 
     LockSelectorEventCounterOnUpdate lock(*_jet_selector);
     uint32_t id = 1;
+    const LorentzVector *met = &(event->missing_energy().p4());
     for(Jets::const_iterator jet = event->jet().begin();
             event->jet().end() != jet;
             ++jet, ++id)
@@ -219,9 +220,11 @@ void JetEnergyCorrectionsAnalyzer::jets(const Event *event)
             _jet_uncorrected_p4->fill(uncorrected_p4);
 
             CorrectedJet correction =
-                _jec->correctJet(&*jet, event, electrons, muons);
+                _jec->correctJet(&*jet, event, electrons, muons, met);
             if (!correction.corrected_p4)
                 continue;
+
+            met = correction.corrected_met.get();
 
             LorentzVectorPtr corrected_p4 = correction.corrected_p4;
             LorentzVectorPtr subtracted_p4 = correction.subtracted_p4;

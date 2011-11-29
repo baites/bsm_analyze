@@ -472,6 +472,7 @@ bool SynchSelector::jets(const Event *event)
 
     LockSelectorEventCounterOnUpdate lock_nice_jets(*_nice_jet_selector);
     LockSelectorEventCounterOnUpdate lock_good_jets(*_good_jet_selector);
+    const LorentzVector *met = &(event->missing_energy().p4());
     for(Jets::const_iterator jet = event->jet().begin();
             event->jet().end() != jet;
             ++jet)
@@ -479,13 +480,15 @@ bool SynchSelector::jets(const Event *event)
         CorrectedJet correction = _jec->correctJet(&*jet,
                 event,
                 _good_electrons,
-                _good_muons);
+                _good_muons,
+                met);
 
         // Skip jet if energy corrections failed
         //
         if (!correction.corrected_p4)
             continue;
 
+        met = correction.corrected_met.get();
         _good_met = correction.corrected_met;
 
         // Original jet in the event can not be modified and Jet Selector can

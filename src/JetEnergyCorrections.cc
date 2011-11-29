@@ -191,7 +191,8 @@ CorrectedJet JetEnergyCorrections::correctJet(
         const Jet *jet,
         const Event *event,
         const Electrons &electrons,
-        const Muons &muons)
+        const Muons &muons,
+        const LorentzVector *met)
 {
     CorrectedJet corrected_jet;
     corrected_jet.jet = jet;
@@ -227,12 +228,7 @@ CorrectedJet JetEnergyCorrections::correctJet(
     corrected_jet.subtracted_p4.reset(new LorentzVector());
     corrected_jet.subtracted_p4->CopyFrom(*corrected_jet.corrected_p4);
 
-    correct(corrected_jet, event);
-
-    corrected_jet.corrected_met.reset(new LorentzVector());
-    corrected_jet.corrected_met->CopyFrom(event->missing_energy().p4());
-    *corrected_jet.corrected_met += corrected_jet.jet->physics_object().p4();
-    *corrected_jet.corrected_met -= *corrected_jet.corrected_p4;
+    correct(corrected_jet, event, met);
 
     return corrected_jet;
 }
@@ -323,7 +319,8 @@ JetEnergyCorrections::CorrectorPtr JetEnergyCorrections::corrector()
 }
 
 void JetEnergyCorrections::correct(CorrectedJet &jet,
-        const Event *event)
+        const Event *event,
+        const LorentzVector *met)
 {
     CorrectorPtr jec = corrector();
 
@@ -350,6 +347,22 @@ void JetEnergyCorrections::correct(CorrectedJet &jet,
         *jet.corrected_p4 *= 1.
             + _systematic_direction * _systematic->getUncertainty(true);
     }
+
+    jet.corrected_met.reset(new LorentzVector());
+    jet.corrected_met->CopyFrom(*met);
+
+    // Correct MET px, py components
+    //
+    LorentzVector p4;
+    p4.CopyFrom(jet.jet->uncorrected_p4());
+    p4.set_e(0);
+    p4.set_pz(0);
+    *jet.corrected_met += p4;
+
+    p4.CopyFrom(*jet.subtracted_p4);
+    p4.set_e(0);
+    p4.set_pz(0);
+    *jet.corrected_met -= p4;
 }
 
 
