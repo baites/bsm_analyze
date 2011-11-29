@@ -1159,6 +1159,7 @@ void data_mc_comparison()
     loadFiles();
 
     string plots[] = {
+        "met",
         "mttbar_after_htlep",
         "htlep",
         "npv",
@@ -1186,6 +1187,7 @@ void data_mc_comparison()
     };
 
     int rebins[] = {
+        10,
         100,    // mttbar
         20,     // htlep
         1,      // npv
@@ -1213,6 +1215,7 @@ void data_mc_comparison()
     };
 
     bool data_mc_first[] = {
+        false, // met
         true,    // mttbar
         true,     // htlep
         false,      // npv
@@ -1248,6 +1251,7 @@ void data_mc_comparison()
         "",
         "",
         "",
+        "",
         "First Jet",
         "First Jet",
         "Second Jet",
@@ -1266,7 +1270,7 @@ void data_mc_comparison()
         "Hadronic Top"
     };
 
-    int plots_num = 24;
+    int plots_num = 25;
 
     //for(int i = 0; 2 > i; ++i)
     for(int i = 0; plots_num > i; ++i)

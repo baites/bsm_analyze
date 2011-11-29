@@ -92,6 +92,9 @@ TemplateAnalyzer::TemplateAnalyzer():
     _whad_mass.reset(new H1Proxy(200, 0, 200));
     monitor(_whad_mass);
 
+    _met.reset(new H1Proxy(200, 0, 200));
+    monitor(_met);
+
     _ljet_met_dphi_vs_met.reset(new H2Proxy(500, 0, 500, 40, 0, 4));
     monitor(_ljet_met_dphi_vs_met);
 
@@ -192,6 +195,9 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
 
     _whad_mass = dynamic_pointer_cast<H1Proxy>(object._whad_mass->clone());
     monitor(_whad_mass);
+
+    _met = dynamic_pointer_cast<H1Proxy>(object._met->clone());
+    monitor(_met);
 
     _ljet_met_dphi_vs_met = dynamic_pointer_cast<H2Proxy>(
             object._ljet_met_dphi_vs_met->clone());
@@ -310,6 +316,11 @@ const TemplateAnalyzer::H1Ptr TemplateAnalyzer::wlepMass() const
 const TemplateAnalyzer::H1Ptr TemplateAnalyzer::whadMass() const
 {
     return _whad_mass->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::met() const
+{
+    return _met->histogram();
 }
 
 const TemplateAnalyzer::H2Ptr TemplateAnalyzer::ljetMetDphivsMet() const
@@ -491,14 +502,16 @@ void TemplateAnalyzer::process(const Event *event)
         npvWithPileup()->fill(event->primary_vertex().size(), _pileup_weight);
         njets()->fill(_synch_selector->goodJets().size(), _pileup_weight);
 
-        const LorentzVector &met = *_synch_selector->goodMET();
-        ljetMetDphivsMet()->fill(pt(met),
-                fabs(dphi(*_synch_selector->goodJets()[0].corrected_p4, met)));
+        const LorentzVector &missing_energy = *_synch_selector->goodMET();
+        ljetMetDphivsMet()->fill(pt(missing_energy),
+                fabs(dphi(*_synch_selector->goodJets()[0].corrected_p4, missing_energy)));
+
+        met()->fill(pt(missing_energy), _pileup_weight);
 
         htopNjetvsM()->fill(mass(resonance.htop), resonance.htop_njets, _pileup_weight);
         htopPtvsM()->fill(mass(resonance.htop), pt(resonance.htop), _pileup_weight);
 
-        leptonMetDphivsMet()->fill(pt(met), fabs(dphi(el_p4, met)));
+        leptonMetDphivsMet()->fill(pt(missing_energy), fabs(dphi(el_p4, missing_energy)));
 
         fillHtlep();
     }

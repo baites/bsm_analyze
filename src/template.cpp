@@ -155,6 +155,12 @@ int main(int argc, char *argv[])
             whad_mass->GetXaxis()->SetTitleSize(0.045);
             whad_mass->SetMarkerSize(0.1);
 
+            TH1Ptr met = convert(*analyzer->met());
+            met->SetName("met");
+            met->GetXaxis()->SetTitle("MET [GeV/c]");
+            met->GetXaxis()->SetTitleSize(0.045);
+            met->SetMarkerSize(0.1);
+
             TH2Ptr ljet_met_dphi_vs_met = convert(*analyzer->ljetMetDphivsMet());
             ljet_met_dphi_vs_met->SetName("ljet_met_dphi_vs_met");
             ljet_met_dphi_vs_met->GetXaxis()->SetTitle("MET [GeV/c]");
@@ -208,6 +214,7 @@ int main(int argc, char *argv[])
                 whad_mt->Write();
                 wlep_mass->Write();
                 whad_mass->Write();
+                met->Write();
 
                 ljet_met_dphi_vs_met->Write();
                 lepton_met_dphi_vs_met->Write();
