@@ -1153,8 +1153,8 @@ void plotLeptonMetDphivsMet()
 
 void data_mc_comparison()
 {
-    TGaxis::SetMaxDigits(3);
-    gStyle->SetOptStat(kFALSE);
+    //TGaxis::SetMaxDigits(3);
+    //gStyle->SetOptStat(kFALSE);
 
     loadFiles();
 
@@ -1271,6 +1271,7 @@ void data_mc_comparison()
     };
 
     int plots_num = 25;
+    //int plots_num = 2;
 
     //for(int i = 0; 2 > i; ++i)
     for(int i = 0; plots_num > i; ++i)
@@ -1283,6 +1284,6 @@ void data_mc_comparison()
         plotDataMcComparison();
     }
 
-    plotLjetMetDphivsMet();
-    plotLeptonMetDphivsMet();
+    //plotLjetMetDphivsMet();
+    //plotLeptonMetDphivsMet();
 }
