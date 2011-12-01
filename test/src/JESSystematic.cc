@@ -1,3 +1,8 @@
+// Draw jet energy scale systematics
+//
+// Created by Samvel Khalatyan, Nov 18, 2011
+// Copyright 2011, All rights reserved
+
 #include <TCanvas.h>
 #include <TFile.h>
 #include <TH1.h>

@@ -1,3 +1,8 @@
+// Draw systematics with ratio plot
+//
+// Created by Samvel Khalatyan, Nov 18, 2011
+// Copyright 2011, All rights reserved
+
 #include <sstream>
 
 #include <TCanvas.h>

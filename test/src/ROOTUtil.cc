@@ -1,3 +1,8 @@
+// utility ROOT functions for plotting
+//
+// Created by Samvel Khalatyan, Nov 18, 2011
+// Copyright 2011, All rights reserved
+
 #include <TH1.h>
 
 #include "interface/ROOTUtil.h"

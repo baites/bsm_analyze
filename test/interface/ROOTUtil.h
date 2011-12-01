@@ -1,3 +1,8 @@
+// utility ROOT functions for plotting
+//
+// Created by Samvel Khalatyan, Nov 18, 2011
+// Copyright 2011, All rights reserved
+
 #ifndef BSM_ROOT_UTIL
 #define BSM_ROOT_UTIL
 
