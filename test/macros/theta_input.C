@@ -13,7 +13,7 @@ enum Systematic
     NONE
 };
 
-Systematic systematic = MATCHING_MINUS;
+Systematic systematic = NONE;
 
 enum InputType
 {
