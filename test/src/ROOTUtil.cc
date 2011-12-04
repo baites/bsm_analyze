@@ -226,7 +226,7 @@ void scale(TH1 *h, const Input &input)
             }
     }
 
-    h->Scale(scale);
+    h->Scale(scale * 4061.545);
 }
 
 std::string folder(const Input &input)
