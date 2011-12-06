@@ -33,6 +33,9 @@ namespace bsm
 
             const H2Ptr decay_level_1() const;
             const H2Ptr decay_level_2() const;
+            const H2Ptr decay_level_3() const;
+            const H2Ptr decay_level_4() const;
+            const H2Ptr decay_level_5() const;
 
             // Object interface
             //
@@ -52,6 +55,9 @@ namespace bsm
 
             H2ProxyPtr _decay_level_1;
             H2ProxyPtr _decay_level_2;
+            H2ProxyPtr _decay_level_3;
+            H2ProxyPtr _decay_level_4;
+            H2ProxyPtr _decay_level_5;
     };
 }
 

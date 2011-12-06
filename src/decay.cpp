@@ -58,10 +58,28 @@ int main(int argc, char *argv[])
             decay_level_2->GetXaxis()->SetTitle("Particle");
             decay_level_2->GetYaxis()->SetTitle("Parent");
 
+            TH2Ptr decay_level_3 = convert(*analyzer->decay_level_3());
+            decay_level_3->SetName("decay_level_3");
+            decay_level_3->GetXaxis()->SetTitle("Particle");
+            decay_level_3->GetYaxis()->SetTitle("Parent");
+
+            TH2Ptr decay_level_4 = convert(*analyzer->decay_level_4());
+            decay_level_4->SetName("decay_level_4");
+            decay_level_4->GetXaxis()->SetTitle("Particle");
+            decay_level_4->GetYaxis()->SetTitle("Parent");
+
+            TH2Ptr decay_level_5 = convert(*analyzer->decay_level_5());
+            decay_level_5->SetName("decay_level_5");
+            decay_level_5->GetXaxis()->SetTitle("Particle");
+            decay_level_5->GetYaxis()->SetTitle("Parent");
+
             if (app->output())
             {
                 decay_level_1->Write();
                 decay_level_2->Write();
+                decay_level_3->Write();
+                decay_level_4->Write();
+                decay_level_5->Write();
             }
         }
     }
