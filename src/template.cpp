@@ -45,18 +45,21 @@ int main(int argc, char *argv[])
         boost::shared_ptr<Cut2DSelectorOptions> cut_2d_selector_options(new Cut2DSelectorOptions());
         boost::shared_ptr<TriggerOptions> trigger_options(new TriggerOptions());
         boost::shared_ptr<PileupOptions> pileup_options(new PileupOptions());
+        boost::shared_ptr<TemplatesOptions> templates_options(new TemplatesOptions());
 
         jec_options->setDelegate(analyzer->getJetEnergyCorrectionDelegate());
         synch_selector_options->setDelegate(analyzer->getSynchSelectorDelegate());
         cut_2d_selector_options->setDelegate(analyzer->getCut2DSelectorDelegate());
         trigger_options->setDelegate(analyzer.get());
         pileup_options->setDelegate(analyzer->getPileupDelegate());
+        templates_options->setDelegate(analyzer.get());
 
         app->addOptions(*jec_options);
         app->addOptions(*synch_selector_options);
         app->addOptions(*cut_2d_selector_options);
         app->addOptions(*trigger_options);
         app->addOptions(*pileup_options);
+        app->addOptions(*templates_options);
 
         app->setAnalyzer(analyzer);
 

@@ -15,6 +15,7 @@
 #include "bsm_stat/interface/bsm_stat_fwd.h"
 #include "bsm_input/interface/bsm_input_fwd.h"
 #include "interface/Analyzer.h"
+#include "interface/AppController.h"
 #include "interface/Cut.h"
 #include "interface/Pileup.h"
 #include "interface/TriggerAnalyzer.h"
@@ -22,9 +23,86 @@
 
 namespace bsm
 {
+    // Fix of the Wjets Scale Down sample with brocken branching fractions
+    //
+    class WDecay
+    {
+        public:
+            enum Type
+            {
+                ELECTRON = 0,
+                MUON,
+                TAU,
+                UNKNOWN
+            };
+
+            WDecay(const Type &type = UNKNOWN): _type(type)
+            {
+            }
+
+            inline void setType(const Type &type)
+            {
+                if (UNKNOWN >= type)
+                    _type =type;
+            }
+
+            inline Type type() const
+            {
+                return _type;
+            }
+
+            inline float correction() const
+            {
+                switch(type())
+                {
+                    case ELECTRON: return 3.01;
+                    case MUON: // Fall through
+                    case TAU: return 0.75;
+
+                    default: return 0;
+                }
+            }
+
+        private:
+            Type _type;
+    };
+
+    class TemplatesDelegate 
+    {
+        public:
+            virtual ~TemplatesDelegate()
+            {
+            }
+
+            virtual void setWjetCorrection()
+            {
+            }
+    };
+
+    class TemplatesOptions : public Options
+    {
+        public:
+            TemplatesOptions();
+
+            void setDelegate(TemplatesDelegate *);
+            TemplatesDelegate *delegate() const;
+
+            // Options interface
+            //
+            virtual DescriptionPtr description() const;
+
+        private:
+            void setWjetCorrection();
+
+            TemplatesDelegate *_delegate;
+
+            DescriptionPtr _description;
+    };
+
     class TemplateAnalyzer : public Analyzer,
         public CounterDelegate,
-        public TriggerDelegate
+        public TriggerDelegate,
+        public TemplatesDelegate
     {
         public:
             typedef boost::shared_ptr<stat::H1> H1Ptr;
@@ -33,6 +111,13 @@ namespace bsm
 
             TemplateAnalyzer();
             TemplateAnalyzer(const TemplateAnalyzer &);
+
+            // TemplatesDelegate interface
+            //
+            inline virtual void setWjetCorrection()
+            {
+                _apply_wjet_correction = true;
+            }
 
             const H1Ptr npv() const;
             const H1Ptr npvWithPileup() const;
@@ -92,6 +177,8 @@ namespace bsm
         private:
             typedef boost::shared_ptr<H1Proxy> H1ProxyPtr;
             typedef boost::shared_ptr<H2Proxy> H2ProxyPtr;
+            typedef ::google::protobuf::RepeatedPtrField<GenParticle>
+                GenParticles;
 
             void fillDrVsPtrel();
             void fillHtlep();
@@ -113,6 +200,10 @@ namespace bsm
 
             bool isGoodLepton() const;
             bool isBtagJet() const;
+
+            WDecay eventDecay(const Event *) const;
+            WDecay decayType(const GenParticle &) const;
+            WDecay wdecayType(const GenParticle &) const;
 
             boost::shared_ptr<SynchSelector> _synch_selector;
 
@@ -149,6 +240,10 @@ namespace bsm
             boost::shared_ptr<Pileup> _pileup;
             bool _use_pileup;
             float _pileup_weight;
+
+            bool _wjets_input;
+            bool _apply_wjet_correction;
+            float _wjets_weight;
 
             P4MonitorPtr _first_jet;
             P4MonitorPtr _second_jet;
