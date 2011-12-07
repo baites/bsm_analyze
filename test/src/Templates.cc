@@ -293,7 +293,7 @@ TH1 *Templates::get(const InputPlots &plots,
 
 TLegend *Templates::createLegend(const string &text)
 {
-    TLegend *legend = new TLegend( .67, .65, .9, .88);
+    TLegend *legend = new TLegend( .67, .65, .89, .88);
     _heap.push_back(legend);
 
     if (!text.empty())
@@ -320,7 +320,7 @@ void Templates::style(TH1 *h, const Input &input)
 
 void Templates::cmsLegend()
 {
-    TLegend *legend = new TLegend(.20, .9, .60, .95);
+    TLegend *legend = new TLegend(.20, .91, .60, .95);
     _heap.push_back(legend);
 
     legend->SetTextAlign(12);
@@ -356,7 +356,7 @@ void Templates::cmsLegend()
 
 void Templates::histTestLegend(const float &ks, const float &chi2)
 {
-    TLegend *legend = new TLegend(.20, .9, .90, .95);
+    TLegend *legend = new TLegend(.20, .91, .90, .95);
     _heap.push_back(legend);
 
     legend->SetTextAlign(32);
