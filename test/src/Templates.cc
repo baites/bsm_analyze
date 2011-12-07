@@ -3,6 +3,7 @@
 // Created by Samvel Khalatyan, Dec 1, 2011
 // Copyright 2011, All rights reserved
 
+#include <cmath>
 #include <sstream>
 
 #include <TCanvas.h>
@@ -203,6 +204,14 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
         }
 
         mc_sigma->Add(hist);
+    }
+
+    // Add systematics
+    //
+    for(int bin = 1, bins = mc_sigma->GetNbinsX(); bins >= bin; ++bin)
+    {
+        mc_sigma->SetBinError(bin, sqrt(pow(mc_sigma->GetBinError(bin), 2)
+                    + pow(mc_sigma->GetBinContent(bin) * 0.045, 2)));
     }
 
     // Adjust plot to max
