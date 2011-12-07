@@ -318,7 +318,7 @@ void Templates::cmsLegend()
 
     ostringstream title;
     title.precision(2);
-    title << fixed << "L = " << 4.061545 << " /fb";
+    title << fixed << "L = " << luminosity() / 1000 << " /fb";
     legend->SetHeader(title.str().c_str());
 
     legend->SetMargin(0.12);

@@ -226,7 +226,7 @@ void scale(TH1 *h, const Input &input)
             }
     }
 
-    h->Scale(scale * 4061.545);
+    h->Scale(scale * luminosity());
 }
 
 std::string folder(const Input &input)
@@ -419,4 +419,10 @@ void style(TH1 *hist, const Input &input, const int &systematic)
     hist->SetMarkerColor(color);
     hist->SetMarkerSize(0.5);
     hist->SetLineWidth(2);
+}
+
+float luminosity()
+{
+    return 4328.472;
+    //return 4.061545;
 }
