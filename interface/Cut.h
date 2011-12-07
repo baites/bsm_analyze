@@ -140,6 +140,18 @@ namespace bsm
             //
             virtual bool isDisabled() const;
 
+            // Disable cut: apply method will always return True
+            //
+            virtual void noinvert();
+
+            // Enable cut: let apply method do its job
+            //
+            virtual void invert();
+
+            // Check the cut status
+            //
+            virtual bool isInverted() const;
+
             // Object interface
             //
             virtual uint32_t id() const;
@@ -158,6 +170,7 @@ namespace bsm
             float _value;       // cut value
             std::string _name;  // cut name
             bool _is_disabled;
+            bool _is_inverted;
 
             CounterPtr _objects;    // Counter of objects
             CounterPtr _events;     // Counter of events

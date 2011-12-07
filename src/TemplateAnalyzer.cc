@@ -471,6 +471,14 @@ void TemplateAnalyzer::process(const Event *event)
     if (_synch_selector->apply(event))
     {
         Mttbar resonance = mttbar();
+
+        // VEB HACK !!!!
+        if (pt(resonance.ltop) > 100.0)
+        {
+            _event = 0;
+            return;
+        }
+
         mttbarAfterHtlep()->fill(mass(resonance.mttbar) / 1000, _pileup_weight);
 
         ttbarPt()->fill(pt(resonance.mttbar), _pileup_weight);

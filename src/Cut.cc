@@ -132,7 +132,8 @@ void Counter::print(ostream &out) const
 Cut::Cut():
     _value(0),
     _name(""),
-    _is_disabled(false)
+    _is_disabled(false),
+    _is_inverted(false)
 {
     _objects.reset(new Counter());
     _events.reset(new Counter());
@@ -144,7 +145,8 @@ Cut::Cut():
 Cut::Cut(const float &value, const string &name):
     _value(value),
     _name(name),
-    _is_disabled(false)
+    _is_disabled(false),
+    _is_inverted(false)
 {
     _objects.reset(new Counter());
     _events.reset(new Counter());
@@ -156,7 +158,8 @@ Cut::Cut(const float &value, const string &name):
 Cut::Cut(const Cut &object):
     _value(object.value()),
     _name(object.name()),
-    _is_disabled(object.isDisabled())
+    _is_disabled(object.isDisabled()),
+    _is_inverted(object.isInverted())
 {
     _objects.reset(new Counter(*object.objects()));
     _events.reset(new Counter(*object.events()));
@@ -200,8 +203,12 @@ bool Cut::apply(const float &value)
     if (isDisabled())
         return true;
 
-    if (!isPass(value))
-        return false;
+    bool pass = isPass(value);
+
+    if (
+        (pass && isInverted()) ||
+        (!pass && !isInverted())
+    )   return false;
 
     objects()->add();
     events()->add();
@@ -222,6 +229,21 @@ void Cut::enable()
 bool Cut::isDisabled() const
 {
     return _is_disabled;
+}
+
+void Cut::invert()
+{
+    _is_inverted = true;
+}
+
+void Cut::noinvert()
+{
+    _is_inverted = false;
+}
+
+bool Cut::isInverted() const
+{
+    return _is_inverted;
 }
 
 uint32_t Cut::id() const

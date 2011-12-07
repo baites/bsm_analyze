@@ -47,6 +47,11 @@ SynchSelectorOptions::SynchSelectorOptions()
          po::value<float>()->notifier(
              boost::bind(&SynchSelectorOptions::setLeadingJetPt, this, _1)),
          "leading jet pT cut")
+
+         ("qcd-template",
+          po::value<bool>()->implicit_value(false)->notifier(
+             boost::bind(&SynchSelectorOptions::setQCDTemplate, this, _1)),
+         "derived a qcd template")   
     ;
 }
 
@@ -119,13 +124,20 @@ void SynchSelectorOptions::setLeadingJetPt(const float &value)
     delegate()->setLeadingJetPt(value);
 }
 
+void SynchSelectorOptions::setQCDTemplate(const bool &value)
+{
+    if (!delegate())
+        return;
 
+    delegate()->setQCDTemplate(value);
+}
 
 // Synchronization Exercise Selector
 //
 SynchSelector::SynchSelector():
     _lepton_mode(ELECTRON),
-    _cut_mode(CUT_2D)
+    _cut_mode(CUT_2D),
+    _qcd_template(false)
 {
     // Cutflow table
     //
@@ -190,7 +202,8 @@ SynchSelector::SynchSelector():
 
 SynchSelector::SynchSelector(const SynchSelector &object):
     _lepton_mode(object._lepton_mode),
-    _cut_mode(object._cut_mode)
+    _cut_mode(object._cut_mode),
+    _qcd_template(object._qcd_template)
 {
     // Cutflow Table
     //
@@ -289,6 +302,22 @@ bool SynchSelector::apply(const Event *event)
     _good_jets.clear();
     _closest_jet = _nice_jets.end();
 
+    // QCD template
+    if (qcdTemplate())
+    {
+        tricut()->invert();
+        met()->invert();
+        return primaryVertices(event)
+            && jets(event)
+            && lepton()
+            && secondaryLeptonVeto()
+            && isolationAnd2DCut()
+            && leadingJetCut()
+            && htlepCut(event)
+            && (triangularCut(event) || missingEnergy(event));
+    }
+
+    // Nominal
     return primaryVertices(event)
         && jets(event)
         && lepton()
@@ -346,6 +375,11 @@ SynchSelector::CutMode SynchSelector::cutMode() const
     return _cut_mode;
 }
 
+bool SynchSelector::qcdTemplate() const
+{
+    return _qcd_template;
+}
+
 bsm::Cut2DSelectorDelegate *SynchSelector::getCut2DSelectorDelegate() const
 {
     return _cut2d_selector.get();
@@ -366,6 +400,11 @@ void SynchSelector::setCutMode(const CutMode &cut_mode)
 void SynchSelector::setLeadingJetPt(const float &value)
 {
     _leading_jet->setValue(value);
+}
+
+void SynchSelector::setQCDTemplate(const bool &value)
+{
+    _qcd_template = value;
 }
 
 // Jet Energy Correction Delegate interface
@@ -623,11 +662,13 @@ bool SynchSelector::triangularCut(const Event *event)
 
     const float slope = 1.5 / 75;
 
-    return  dphi_el_met < (slope * met_pt + 1.5)
+    bool pass = dphi_el_met < (slope * met_pt + 1.5)
         && dphi_el_met > (-slope * met_pt + 1.5)
         && dphi_ljet_met < (slope * met_pt + 1.5)
         && dphi_ljet_met > (-slope * met_pt + 1.5)
         && (_cutflow->apply(TRICUT), true);
+   
+    return tricut()->isInverted() ? !pass : pass;
 }
 
 bool SynchSelector::missingEnergy(const Event *event)
@@ -714,11 +755,17 @@ void SynchSelector::selectGoodElectrons(const Event *event)
         {
             if (Electron::HyperTight1 != id->name())
                 continue;
-
-            if  (id->identification()
-                    && id->conversion_rejection())
-                is_good_lepton = true;
-
+            
+            if (qcdTemplate())
+            {
+                if (!id->identification() || !id->conversion_rejection())
+                    is_good_lepton = true;
+            } 
+            else
+            {
+                if (id->identification() && id->conversion_rejection())
+                    is_good_lepton = true;
+            }
             break;
         }
 

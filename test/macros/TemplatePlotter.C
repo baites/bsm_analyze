@@ -7,7 +7,6 @@ string plot_name = "mttbar_after_htlep";
 string subtitle = "";
 int rebin = 100;
 bool plot_zprime = true;
-bool data_first = true;
 
 const float rebin_x = 5;
 const float rebin_y = 2;
@@ -491,7 +490,7 @@ TLegend *createLegend(const string &text)
 
 void cmsLabel()
 {
-    TLegend *legend = new TLegend(.20, .9, .85, .95);
+    TLegend *legend = new TLegend(.16, .92, .81, .97);
     ostringstream title;
     title << "CMS Preliminary 2011, "
         << std::setprecision(2) << fixed << luminosity / 1000
@@ -637,7 +636,7 @@ TFile *open(const string &filename)
     return in;
 }
 
-void loadFiles()
+void loadFiles(const string &dir)
 {
     for(int i = 0; CHANNELS > i; ++i)
     {
@@ -649,15 +648,14 @@ void loadFiles()
         input_s1s2_p50[i] = file;
         */
 
-        TFile *file = open(folder(i) + "/output_signal_p250_hlt.root");
-        if (!file)
-            return;
+        TFile *file = open(dir + "/" + folder(i) + ".root");
+        if (!file) return;
 
         input_s1s2_p250[i] = file;
     }
 }
 
-void plotComparison(TFile **input, const string &title, const bool &draw_mc_first = false)
+void plotComparison(TFile **input, const string &title)
 {
     TH1 *ttjets = get(input[TTJETS], plot_name.c_str(), TTJETS);
     scale(ttjets, TTJETS);
@@ -675,6 +673,9 @@ void plotComparison(TFile **input, const string &title, const bool &draw_mc_firs
             plot_name.c_str(),
             RERECO_2011A_MAY10,
             RERECO_2011A_MAY10 + SIGNAL_CHANNELS);
+
+    data->SetMarkerStyle(kFullCircle);
+    data->SetMarkerSize(0.8);
 
     TH1 *zprime_m1000 = get(input[ZPRIME1000], plot_name.c_str(), ZPRIME1000);
     scale(zprime_m1000, ZPRIME1000);
@@ -699,7 +700,7 @@ void plotComparison(TFile **input, const string &title, const bool &draw_mc_firs
     stack->Add(stop);
     //stack->Add(qcd);
 
-    if (draw_mc_first)
+    if (data->GetMaximum() < stack->GetMaximum())
     {
         stack->Draw("hist");
         stack->GetHistogram()->GetXaxis()->SetTitle(data->GetXaxis()->GetTitle());
@@ -748,13 +749,13 @@ void plotComparison(TFile **input, const string &title, const bool &draw_mc_firs
 
     if (plot_zprime)
     {
-        legend->AddEntry(zprime_m1000, "Z' (m = 1 TeV, w 1%)", "lpe");
-        legend->AddEntry(zprime_m2000, "Z' (m = 2 TeV, w 1%)", "lpe");
-        legend->AddEntry(zprime_m3000, "Z' (m = 3 TeV, w 1%)", "lpe");
+        legend->AddEntry(zprime_m1000, "Z' (m = 1 TeV, w 1%)", "l");
+        legend->AddEntry(zprime_m2000, "Z' (m = 2 TeV, w 1%)", "l");
+        legend->AddEntry(zprime_m3000, "Z' (m = 3 TeV, w 1%)", "l");
         //legend->AddEntry(zprime_m4000, "Z' (m = 4 TeV, w 1%)", "lpe");
     }
 
-    legend->Draw();
+    // legend->Draw();
 }
 
 void plotDataMcComparison()
@@ -766,7 +767,7 @@ void plotDataMcComparison()
 
     canvas->cd(1)->SetRightMargin(10);
     canvas->cd(1)->SetTopMargin(10);
-    plotComparison(input_s1s2_p250, "p_{T}^{jet} > 250 GeV/c^{2}", data_first);
+    plotComparison(input_s1s2_p250, "p_{T}^{jet} > 250 GeV/c^{2}");
 
     cmsLabel();
 
@@ -774,14 +775,6 @@ void plotDataMcComparison()
 
     cout << "save canvas: " << output << endl;
     canvas->SaveAs(output.c_str());
-
-    /*
-    canvas->cd(2)->SetRightMargin(10);
-    canvas->cd(2)->SetTopMargin(10);
-    plotComparison(input_s1s2_p50, "p_{T}^{jet} > 50 GeV/c^{2}");
-
-    cmsLabel();
-    */
 }
 
 void plotData(TFile **input, const string &title)
@@ -1151,16 +1144,18 @@ void plotLeptonMetDphivsMet()
     plotLeptonDphivsMet(input_s1s2_p250, "250");
 }
 
-void data_mc_comparison()
+void TemplatePlotter(const string & dir = ".")
 {
     TGaxis::SetMaxDigits(3);
+    gROOT->SetStyle("Plain");
     gStyle->SetOptStat(kFALSE);
 
-    loadFiles();
+    loadFiles(dir);
 
     string plots[] = {
         "mttbar_after_htlep",
         "htlep",
+        "htlep_before_htlep",
         "npv",
         "npv_with_pileup",
         "njets",
@@ -1188,6 +1183,7 @@ void data_mc_comparison()
     int rebins[] = {
         100,    // mttbar
         20,     // htlep
+        4,     // htlep_before_htlep
         1,      // npv
         1,      // npv_with_pu
         1,      // njets
@@ -1212,34 +1208,8 @@ void data_mc_comparison()
         20
     };
 
-    bool data_mc_first[] = {
-        true,    // mttbar
-        true,     // htlep
-        false,      // npv
-        true,      // npv_with_pu
-        true,      // njets
-        true,     // ttbar_pt
-        true,     // wlep_mt
-        true,     // wlep_mass
-        true,      // First Jet
-        true,
-        true,      // second jet
-        true,
-        true,      // third jet
-        true,
-        true,      // electron
-        true,
-        true,      // ltop
-        true,
-        true,
-        true,
-        true,      // htop
-        true,
-        true,
-        true
-    };
-
     string subtitles[] = {
+        "",
         "",
         "",
         "",
@@ -1275,7 +1245,6 @@ void data_mc_comparison()
         plot_name = plots[i];
         rebin = rebins[i];
         subtitle = subtitles[i];
-        data_first = data_mc_first[i];
         plotDataMcComparison();
     }
 
