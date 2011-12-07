@@ -14,6 +14,7 @@
 #include "bsm_input/interface/Algebra.h"
 #include "bsm_input/interface/Electron.pb.h"
 #include "bsm_input/interface/Event.pb.h"
+#include "bsm_input/interface/GenParticle.pb.h"
 #include "bsm_input/interface/Input.pb.h"
 #include "bsm_input/interface/Jet.pb.h"
 #include "bsm_input/interface/Muon.pb.h"
@@ -33,9 +34,58 @@ using namespace std;
 using namespace boost;
 
 using bsm::TemplateAnalyzer;
+using bsm::WDecay;
+using bsm::TemplatesDelegate;
+using bsm::TemplatesOptions;
+
+TemplatesOptions::TemplatesOptions()
+{
+    _delegate = 0;
+
+    _description.reset(new po::options_description("Templates Options"));
+    _description->add_options()
+        ("wjet-correction",
+         po::value<bool>()->implicit_value(true)->notifier(
+             boost::bind(&TemplatesOptions::setWjetCorrection, this)),
+         "Correct Wjets scale-down sample")
+    ;
+}
+
+void TemplatesOptions::setDelegate(TemplatesDelegate *delegate)
+{
+    if (_delegate != delegate)
+        _delegate = delegate;
+}
+
+TemplatesDelegate *TemplatesOptions::delegate() const
+{
+    return _delegate;
+}
+
+// Options interface
+//
+TemplatesOptions::DescriptionPtr
+    TemplatesOptions::description() const
+{
+    return _description;
+}
+
+// Private
+//
+void TemplatesOptions::setWjetCorrection()
+{
+    if (!delegate())
+        return;
+
+    delegate()->setWjetCorrection();
+}
+
+
 
 TemplateAnalyzer::TemplateAnalyzer():
-    _use_pileup(false)
+    _use_pileup(false),
+    _wjets_input(false),
+    _apply_wjet_correction(false)
 {
     _synch_selector.reset(new SynchSelector());
     monitor(_synch_selector);
@@ -92,6 +142,9 @@ TemplateAnalyzer::TemplateAnalyzer():
     _whad_mass.reset(new H1Proxy(200, 0, 200));
     monitor(_whad_mass);
 
+    _met.reset(new H1Proxy(200, 0, 200));
+    monitor(_met);
+
     _ljet_met_dphi_vs_met.reset(new H2Proxy(500, 0, 500, 40, 0, 4));
     monitor(_ljet_met_dphi_vs_met);
 
@@ -133,7 +186,9 @@ TemplateAnalyzer::TemplateAnalyzer():
 
 TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
     _triggers(object._triggers.begin(), object._triggers.end()),
-    _use_pileup(false)
+    _use_pileup(false),
+    _wjets_input(false),
+    _apply_wjet_correction(object._apply_wjet_correction)
 {
     _synch_selector = 
         dynamic_pointer_cast<SynchSelector>(object._synch_selector->clone());
@@ -192,6 +247,9 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
 
     _whad_mass = dynamic_pointer_cast<H1Proxy>(object._whad_mass->clone());
     monitor(_whad_mass);
+
+    _met = dynamic_pointer_cast<H1Proxy>(object._met->clone());
+    monitor(_met);
 
     _ljet_met_dphi_vs_met = dynamic_pointer_cast<H2Proxy>(
             object._ljet_met_dphi_vs_met->clone());
@@ -312,6 +370,11 @@ const TemplateAnalyzer::H1Ptr TemplateAnalyzer::whadMass() const
     return _whad_mass->histogram();
 }
 
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::met() const
+{
+    return _met->histogram();
+}
+
 const TemplateAnalyzer::H2Ptr TemplateAnalyzer::ljetMetDphivsMet() const
 {
     return _ljet_met_dphi_vs_met->histogram();
@@ -396,10 +459,11 @@ void TemplateAnalyzer::didCounterAdd(const Counter *counter)
             ? (*_synch_selector->goodElectrons().begin())->physics_object().p4()
             : (*_synch_selector->goodMuons().begin())->physics_object().p4();
 
-        htlepBeforeCut()->fill(pt(_event->missing_energy().p4()) + pt(lepton_p4),
-                _pileup_weight);
+        htlepBeforeCut()->fill(pt(*_synch_selector->goodMET()) + pt(lepton_p4),
+                _pileup_weight * _wjets_weight);
 
-        mttbarBeforeHtlep()->fill(mass(mttbar().mttbar) / 1000,  _pileup_weight);
+        mttbarBeforeHtlep()->fill(mass(mttbar().mttbar) / 1000,
+                _pileup_weight * _wjets_weight);
     }
 }
 
@@ -412,7 +476,8 @@ void TemplateAnalyzer::onFileOpen(const std::string &filename, const Input *inpu
 {
     if (input->has_type())
     {
-        _use_pileup = Input::DATA != input->type();
+        _use_pileup = (Input::DATA != input->type());
+        _wjets_input = (Input::WJETS == input->type());
     }
     else
     {
@@ -420,12 +485,22 @@ void TemplateAnalyzer::onFileOpen(const std::string &filename, const Input *inpu
             << endl;
 
         _use_pileup = false;
+        _wjets_input = false;
     }
 }
 
 void TemplateAnalyzer::process(const Event *event)
 {
     _pileup_weight = _use_pileup ? 0 : 1;
+    _wjets_weight = 1;
+    
+    if (_apply_wjet_correction
+            && _wjets_input)
+    {
+        WDecay decay = eventDecay(event);
+
+        _wjets_weight *= decay.correction();
+    }
 
     if (!event->has_missing_energy())
         return;
@@ -479,34 +554,46 @@ void TemplateAnalyzer::process(const Event *event)
             return;
         }
 
-        mttbarAfterHtlep()->fill(mass(resonance.mttbar) / 1000, _pileup_weight);
+        mttbarAfterHtlep()->fill(mass(resonance.mttbar) / 1000,
+                _pileup_weight * _wjets_weight);
 
-        ttbarPt()->fill(pt(resonance.mttbar), _pileup_weight);
+        ttbarPt()->fill(pt(resonance.mttbar), _pileup_weight * _wjets_weight);
 
         const LorentzVector &el_p4 = _synch_selector->goodElectrons()[0]->physics_object().p4();
-        wlepMt()->fill(mt(resonance.neutrino, el_p4), _pileup_weight);
+        wlepMt()->fill(mt(resonance.neutrino, el_p4),
+                _pileup_weight * _wjets_weight);
 
-        wlepMass()->fill(mass(resonance.wlep), _pileup_weight);
-        whadMass()->fill(mass(resonance.whad), _pileup_weight);
+        wlepMass()->fill(mass(resonance.wlep),
+                _pileup_weight * _wjets_weight);
+        whadMass()->fill(mass(resonance.whad),
+                _pileup_weight * _wjets_weight);
 
         monitorJets();
-        _electron->fill(el_p4, _pileup_weight);
+        _electron->fill(el_p4, _pileup_weight * _wjets_weight);
 
-        _ltop->fill(resonance.ltop, _pileup_weight);
-        _htop->fill(resonance.htop, _pileup_weight);
+        _ltop->fill(resonance.ltop, _pileup_weight * _wjets_weight);
+        _htop->fill(resonance.htop, _pileup_weight * _wjets_weight);
         
         npv()->fill(event->primary_vertex().size());
-        npvWithPileup()->fill(event->primary_vertex().size(), _pileup_weight);
-        njets()->fill(_synch_selector->goodJets().size(), _pileup_weight);
+        npvWithPileup()->fill(event->primary_vertex().size(),
+                _pileup_weight * _wjets_weight);
+        njets()->fill(_synch_selector->goodJets().size(),
+                _pileup_weight * _wjets_weight);
 
-        const LorentzVector &met = event->missing_energy().p4();
-        ljetMetDphivsMet()->fill(pt(met),
-                fabs(dphi(*_synch_selector->goodJets()[0].corrected_p4, met)));
+        const LorentzVector &missing_energy = *_synch_selector->goodMET();
+        ljetMetDphivsMet()->fill(pt(missing_energy),
+                fabs(dphi(*_synch_selector->goodJets()[0].corrected_p4, missing_energy)),
+                _pileup_weight * _wjets_weight);
 
-        htopNjetvsM()->fill(mass(resonance.htop), resonance.htop_njets, _pileup_weight);
-        htopPtvsM()->fill(mass(resonance.htop), pt(resonance.htop), _pileup_weight);
+        met()->fill(pt(missing_energy), _pileup_weight * _wjets_weight);
 
-        leptonMetDphivsMet()->fill(pt(met), fabs(dphi(el_p4, met)));
+        htopNjetvsM()->fill(mass(resonance.htop), resonance.htop_njets,
+                _pileup_weight * _wjets_weight);
+        htopPtvsM()->fill(mass(resonance.htop), pt(resonance.htop),
+                _pileup_weight * _wjets_weight);
+
+        leptonMetDphivsMet()->fill(pt(missing_energy), fabs(dphi(el_p4, missing_energy)),
+                _pileup_weight * _wjets_weight);
 
         fillHtlep();
     }
@@ -579,19 +666,19 @@ void TemplateAnalyzer::fillDrVsPtrel()
         return;
 
     const float ptrel_value = ptrel(lepton_p4, *closest_jet->corrected_p4);
-    drVsPtrel()->fill(ptrel_value, deltar_min,  _pileup_weight);
+    drVsPtrel()->fill(ptrel_value, deltar_min,  _pileup_weight * _wjets_weight);
 
     if (5 > ptrel_value)
     {
         if (SynchSelector::ELECTRON == _synch_selector->leptonMode())
         {
             d0()->fill((*_synch_selector->goodElectrons().begin())->extra().d0(),
-                    _pileup_weight);
+                    _pileup_weight * _wjets_weight);
         }
         else
         {
             d0()->fill((*_synch_selector->goodMuons().begin())->extra().d0(),
-                    _pileup_weight);
+                    _pileup_weight * _wjets_weight);
         }
     }
 }
@@ -612,8 +699,8 @@ void TemplateAnalyzer::fillHtlep()
         ? (*_synch_selector->goodElectrons().begin())->physics_object().p4()
         : (*_synch_selector->goodMuons().begin())->physics_object().p4();
 
-    htlep()->fill(pt(_event->missing_energy().p4()) + pt(lepton_p4),
-            _pileup_weight);
+    htlep()->fill(pt(*_synch_selector->goodMET()) + pt(lepton_p4),
+            _pileup_weight * _wjets_weight);
 }
 
 TemplateAnalyzer::Mttbar TemplateAnalyzer::mttbar() const
@@ -646,7 +733,7 @@ TemplateAnalyzer::Mttbar TemplateAnalyzer::mttbar() const
     //
     NeutrinoReconstruct neutrinoReconstruct;
     NeutrinoReconstruct::Solutions neutrinos =
-        neutrinoReconstruct(lepton_p4, _event->missing_energy().p4());
+        neutrinoReconstruct(lepton_p4, *_synch_selector->goodMET());
 
     // Prepare generator and loop over all hypotheses of the decay
     // (different jets assignment to leptonic/hadronic legs)
@@ -782,15 +869,15 @@ void TemplateAnalyzer::monitorJets()
 {
     if (_synch_selector->goodJets().size())
         _first_jet->fill(*_synch_selector->goodJets()[0].corrected_p4,
-                _pileup_weight);
+                _pileup_weight * _wjets_weight);
 
     if (1 < _synch_selector->goodJets().size())
         _second_jet->fill(*_synch_selector->goodJets()[1].corrected_p4,
-                _pileup_weight);
+                _pileup_weight * _wjets_weight);
 
     if (2 < _synch_selector->goodJets().size())
         _third_jet->fill(*_synch_selector->goodJets()[2].corrected_p4,
-                _pileup_weight);
+                _pileup_weight * _wjets_weight);
 }
 
 bool TemplateAnalyzer::isBtagJet() const
@@ -817,4 +904,94 @@ bool TemplateAnalyzer::isBtagJet() const
     }
 
     return false;
+}
+
+WDecay TemplateAnalyzer::eventDecay(const Event *event) const
+{
+    WDecay decay;
+
+    const GenParticles &particles = event->gen_particle();
+    for(GenParticles::const_iterator particle = particles.begin();
+            particles.end() != particle
+                && WDecay::UNKNOWN == decay.type();
+            ++particle)
+    {
+        if (3 != particle->status())
+            continue;
+
+        /*
+        decay = decayType(*particle);
+
+        continue;
+        */
+
+        // Skip everything but W-boson
+        //
+        if (24 != abs(particle->id()))
+            continue;
+
+        decay = wdecayType(*particle);
+    }
+
+    return decay;
+}
+
+WDecay TemplateAnalyzer::decayType(const GenParticle &particle) const
+{
+    WDecay decay;
+
+    const GenParticles &particles = particle.child();
+    for(GenParticles::const_iterator child = particles.begin();
+            particles.end() != child
+                && WDecay::UNKNOWN == decay.type();
+            ++child)
+    {
+        // Skip all unstable parents
+        //
+        if (3 != child->status())
+            continue;
+
+        // Skip everything but W-boson
+        //
+        if (24 != abs(child->id()))
+            continue;
+
+        decay = wdecayType(*child);
+    } // End loop over parents
+
+    return decay;
+}
+
+WDecay TemplateAnalyzer::wdecayType(const GenParticle &particle) const
+{
+    WDecay decay;
+
+    const GenParticles &children = particle.child();
+    for(GenParticles::const_iterator child = children.begin();
+            children.end() != child
+                && WDecay::UNKNOWN == decay.type();
+            ++child)
+    {
+        // Skip unstable particles
+        //
+        if (3 != child->status())
+            continue;
+
+        switch(abs(child->id()))
+        {
+            case 11: // Electron
+                decay.setType(WDecay::ELECTRON);
+                break;
+
+            case 13: // Muon
+                decay.setType(WDecay::MUON);
+                break;
+
+            case 15: // Tau
+                decay.setType(WDecay::TAU);
+                break;
+        }
+    } // end loop over children
+
+    return decay;
 }

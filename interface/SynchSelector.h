@@ -83,6 +83,7 @@ namespace bsm
             typedef std::vector<const Electron *> GoodElectrons;
             typedef std::vector<const Muon *> GoodMuons;
             typedef std::vector<CorrectedJet> GoodJets;
+            typedef LorentzVectorPtr GoodMET;
 
             enum Selection
             {
@@ -126,6 +127,7 @@ namespace bsm
             const GoodMuons &goodMuons() const;
             const GoodJets &niceJets() const;
             const GoodJets &goodJets() const;
+            const GoodMET &goodMET() const;
 
             GoodJets::const_iterator closestJet() const;
 
@@ -209,6 +211,7 @@ namespace bsm
             GoodJets _nice_jets; // pT > 25
             GoodJets _good_jets; // pT > 50
             GoodJets::const_iterator _closest_jet;
+            GoodMET _good_met;
 
             // cuts
             //

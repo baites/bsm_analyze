@@ -1,3 +1,8 @@
+// Draw jet energy scale systematics
+//
+// Created by Samvel Khalatyan, Nov 18, 2011
+// Copyright 2011, All rights reserved
+
 #ifndef BSM_ROOT_JES_SYSTEMATIC
 #define BSM_ROOT_JES_SYSTEMATIC
 

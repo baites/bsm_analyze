@@ -114,7 +114,8 @@ namespace bsm
             CorrectedJet correctJet(const Jet *,
                     const Event *,
                     const Electrons &,
-                    const Muons &);
+                    const Muons &,
+                    const LorentzVector *met);
 
             // Jet Energy Correction Delegate interface
             //
@@ -136,7 +137,7 @@ namespace bsm
             typedef boost::shared_ptr<JetCorrectionUncertainty> SystematicPtr;
 
             CorrectorPtr corrector();
-            void correct(CorrectedJet &, const Event *);
+            void correct(CorrectedJet &, const Event *, const LorentzVector *met);
 
             virtual void cleanJet(CorrectedJet &,
                     const Electrons &,

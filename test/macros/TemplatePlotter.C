@@ -1153,6 +1153,7 @@ void TemplatePlotter(const string & dir = ".")
     loadFiles(dir);
 
     string plots[] = {
+        "met",
         "mttbar_after_htlep",
         "htlep",
         "htlep_before_htlep",
@@ -1181,6 +1182,7 @@ void TemplatePlotter(const string & dir = ".")
     };
 
     int rebins[] = {
+        10,
         100,    // mttbar
         20,     // htlep
         4,     // htlep_before_htlep
@@ -1208,6 +1210,37 @@ void TemplatePlotter(const string & dir = ".")
         20
     };
 
+<<<<<<< HEAD
+=======
+    bool data_mc_first[] = {
+        false, // met
+        true,    // mttbar
+        true,     // htlep
+        false,      // npv
+        true,      // npv_with_pu
+        true,      // njets
+        true,     // ttbar_pt
+        true,     // wlep_mt
+        true,     // wlep_mass
+        true,      // First Jet
+        true,
+        true,      // second jet
+        true,
+        true,      // third jet
+        true,
+        true,      // electron
+        true,
+        true,      // ltop
+        true,
+        true,
+        true,
+        true,      // htop
+        true,
+        true,
+        true
+    };
+
+>>>>>>> 45b9a0e7c9c01e1633c0516dae81a4330004bace
     string subtitles[] = {
         "",
         "",
@@ -1236,7 +1269,8 @@ void TemplatePlotter(const string & dir = ".")
         "Hadronic Top"
     };
 
-    int plots_num = 24;
+    int plots_num = 25;
+    //int plots_num = 2;
 
     //for(int i = 0; 2 > i; ++i)
     for(int i = 0; plots_num > i; ++i)
@@ -1248,6 +1282,6 @@ void TemplatePlotter(const string & dir = ".")
         plotDataMcComparison();
     }
 
-    plotLjetMetDphivsMet();
-    plotLeptonMetDphivsMet();
+    //plotLjetMetDphivsMet();
+    //plotLeptonMetDphivsMet();
 }

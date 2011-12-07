@@ -1,3 +1,8 @@
+// utility ROOT functions for plotting
+//
+// Created by Samvel Khalatyan, Nov 18, 2011
+// Copyright 2011, All rights reserved
+
 #include <TH1.h>
 
 #include "interface/ROOTUtil.h"
@@ -221,7 +226,7 @@ void scale(TH1 *h, const Input &input)
             }
     }
 
-    h->Scale(scale);
+    h->Scale(scale * 4061.545);
 }
 
 std::string folder(const Input &input)
