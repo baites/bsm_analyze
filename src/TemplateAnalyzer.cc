@@ -546,6 +546,9 @@ void TemplateAnalyzer::process(const Event *event)
     if (_synch_selector->apply(event))
     {
         Mttbar resonance = mttbar();
+        if (100 >= pt(resonance.ltop))
+            return;
+
         mttbarAfterHtlep()->fill(mass(resonance.mttbar) / 1000,
                 _pileup_weight * _wjets_weight);
 
