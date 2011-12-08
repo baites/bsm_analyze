@@ -1,6 +1,7 @@
 #include <iomanip>
 
-float luminosity = 4061.545;
+float luminosity = 4330;
+//float luminosity = 4061.545;
 //float luminosity = 3393.157;
 //float luminosity = 2039.049;
 string plot_name = "mttbar_after_htlep";
@@ -1210,8 +1211,6 @@ void TemplatePlotter(const string & dir = ".")
         20
     };
 
-<<<<<<< HEAD
-=======
     bool data_mc_first[] = {
         false, // met
         true,    // mttbar
@@ -1240,7 +1239,6 @@ void TemplatePlotter(const string & dir = ".")
         true
     };
 
->>>>>>> 45b9a0e7c9c01e1633c0516dae81a4330004bace
     string subtitles[] = {
         "",
         "",

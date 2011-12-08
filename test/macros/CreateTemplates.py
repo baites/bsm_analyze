@@ -30,7 +30,6 @@ datafiles = (
   'golden_single_el_2011a_prompt_v4',
   'golden_single_el_2011a_prompt_v6', 
   'golden_single_el_2011b_prompt_v1',
-  #'golden_single_el_2011b_prompt_v1_1_5_pb'      
 )
 
 mcfiles = (
@@ -84,21 +83,24 @@ overwrite = options.overwrite
 # Create the output directory
 
 type = ''
+arguments = ''
 if options.type == 'nominal':
   type = 'nominal'
-  options = nominal
-if options.type == 'qcd':
+  arguments = nominal
+elif options.type == 'qcd':
   type = 'qcd'
-  options = '--qcd-template 1 ' + nominal 
+  arguments = '--qcd-template 1 ' + nominal 
 else:
   print 'Error: Undefined type.'
   sys.exit(1)
 
+output = output+'/'+type
+
 if not os.path.exists(output):
-  os.makedirs(output+'/'+type)
+  os.makedirs(output)
 elif overwrite:
-  shutil.rmtree(output+'/'+type)
-  os.makedirs(output+'/'+type)
+  shutil.rmtree(output)
+  os.makedirs(output)
 elif recover:
   print 'Recovering missing files.'
 else:
@@ -109,9 +111,9 @@ else:
 
 for datafile in datafiles:
 
-  if not os.path.isfile(output+'/'+type+'/'+datafile+'.root'):
+  if not os.path.isfile(output+'/'+datafile+'.root'):
     command="bsm_template %s %s %s --output %s %s >& %s" % (
-      dataops, datajec, options, output+'/'+type+'/'+datafile+'.root', input+'/'+datafile+'.txt', output+'/'+type+'/'+datafile+'.log'
+      dataops, datajec, arguments, output+'/'+datafile+'.root', input+'/'+datafile+'.txt', output+'/'+datafile+'.log'
     )
     print 'Executing: %s' % command
     os.system(command)
@@ -120,9 +122,9 @@ for datafile in datafiles:
 
 for mcfile in mcfiles:
 
-  if not os.path.isfile(output+'/'+type+'/'+mcfile+'.root'):  
+  if not os.path.isfile(output+'/'+mcfile+'.root'):  
     command="bsm_template %s %s %s --output %s %s >& %s" % (
-      mcops, mcjec, options, output+'/'+type+'/'+mcfile+'.root', input+'/'+mcfile+'.txt', output+'/'+type+'/'+mcfile+'.log'
+      mcops, mcjec, arguments, output+'/'+mcfile+'.root', input+'/'+mcfile+'.txt', output+'/'+mcfile+'.log'
     )
     print 'Executing: %s' % command
     os.system(command)

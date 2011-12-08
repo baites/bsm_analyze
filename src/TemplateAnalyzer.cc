@@ -548,7 +548,7 @@ void TemplateAnalyzer::process(const Event *event)
         Mttbar resonance = mttbar();
 
         // VEB HACK !!!!
-        if (pt(resonance.ltop) > 100.0)
+        if (pt(resonance.ltop) < 100.0)
         {
             _event = 0;
             return;
