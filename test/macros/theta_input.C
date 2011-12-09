@@ -1,4 +1,5 @@
-float luminosity = 4061.545;
+//float luminosity = 4061.545;
+float luminosity = 4328.472;
 
 enum Systematic
 {
