@@ -417,11 +417,11 @@ P4Monitor::P4Monitor()
     _px.reset(new H1Proxy(100, 0, 100));
     _py.reset(new H1Proxy(100, 0, 100));
     _pz.reset(new H1Proxy(100, 0, 100));
-    _pt.reset(new H1Proxy(100, 0, 500));
-    _eta.reset(new H1Proxy(100, -5, 5));
-    _phi.reset(new H1Proxy(80, -4, 4));
-    _mass.reset(new H1Proxy(300, 0, 300));
-    _mt.reset(new H1Proxy(300, 0, 300));
+    _pt.reset(new H1Proxy(500, 0, 500));
+    _eta.reset(new H1Proxy(1000, -5, 5));
+    _phi.reset(new H1Proxy(800, -4, 4));
+    _mass.reset(new H1Proxy(500, 0, 500));
+    _mt.reset(new H1Proxy(500, 0, 500));
 
     monitor(_energy);
     monitor(_px);

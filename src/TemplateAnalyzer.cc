@@ -120,7 +120,7 @@ TemplateAnalyzer::TemplateAnalyzer():
     _htlep.reset(new H1Proxy(500, 0, 500));
     monitor(_htlep);
 
-    _htlep_before_htlep.reset(new H1Proxy(150, 0, 150));
+    _htlep_before_htlep.reset(new H1Proxy(500, 0, 500));
     monitor(_htlep_before_htlep);
 
     _mttbar_before_htlep.reset(new H1Proxy(4000, 0, 4));
@@ -141,13 +141,13 @@ TemplateAnalyzer::TemplateAnalyzer():
     _whad_mt.reset(new H1Proxy(500, 0, 500));
     monitor(_whad_mt);
 
-    _wlep_mass.reset(new H1Proxy(200, 0, 200));
+    _wlep_mass.reset(new H1Proxy(500, 0, 500));
     monitor(_wlep_mass);
 
-    _whad_mass.reset(new H1Proxy(200, 0, 200));
+    _whad_mass.reset(new H1Proxy(500, 0, 500));
     monitor(_whad_mass);
 
-    _met.reset(new H1Proxy(200, 0, 200));
+    _met.reset(new H1Proxy(500, 0, 500));
     monitor(_met);
 
     _ljet_met_dphi_vs_met_before_tricut.reset(new H2Proxy(500, 0, 500, 400, 0, 4));
@@ -159,13 +159,13 @@ TemplateAnalyzer::TemplateAnalyzer():
     _ljet_met_dphi_vs_met.reset(new H2Proxy(500, 0, 500, 400, 0, 4));
     monitor(_ljet_met_dphi_vs_met);
 
-    _lepton_met_dphi_vs_met.reset(new H2Proxy(500, 0, 500, 40, 0, 4));
+    _lepton_met_dphi_vs_met.reset(new H2Proxy(500, 0, 500, 400, 0, 4));
     monitor(_lepton_met_dphi_vs_met);
 
-    _htop_njet_vs_m.reset(new H2Proxy(1000, 0, 1000, 10, 0, 10));
+    _htop_njet_vs_m.reset(new H2Proxy(1000, 0, 1, 10, 0, 10));
     monitor(_htop_njet_vs_m);
 
-    _htop_pt_vs_m.reset(new H2Proxy(1000, 0, 1000, 10, 0, 10));
+    _htop_pt_vs_m.reset(new H2Proxy(1000, 0, 1, 10, 0, 10));
     monitor(_htop_pt_vs_m);
 
     _event = 0;
