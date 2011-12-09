@@ -9,6 +9,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <utility>
 
 #include "interface/Input.h"
 #include "interface/Channel.h"
@@ -45,11 +46,14 @@ class Templates
         //
         typedef std::vector<TObject *> Heap;
 
+        typedef std::pair<int, int> Rebin;
+
         // Load histograms from given file
         //
         void loadHistograms(TFile *, const Input &);
 
         void plot(const Template &type);
+        void plot2D(const Template &type);
 
         TH1 *get(const InputPlots &plots,
                 const Input::Type &from,
@@ -62,8 +66,10 @@ class Templates
                 const float &chi2);
 
         int rebin(const Template &) const;
+        Rebin rebin2D(const Template &) const;
 
         TCanvas *draw(const Template &, Channels &);
+        TCanvas *draw2D(const Template &, Channels &);
         void style(TH1 *, const Input &);
 
         void setYaxisTitle(TH1 *h, const Template &plot);

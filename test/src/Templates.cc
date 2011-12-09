@@ -9,6 +9,7 @@
 #include <TCanvas.h>
 #include <TFile.h>
 #include <TH1.h>
+#include <TH2.h>
 #include <THStack.h>
 #include <TLegend.h>
 #include <TObject.h>
@@ -68,13 +69,25 @@ void Templates::draw()
     {
         plot(hist_template);
     }
+
+    // 2D plot
+    //
+    for(Template hist_template(Template::DPHI_ELECTRON_VS_MET),
+                end(Template::DPHI_JET_VS_MET_BEFORE_TRICUT);
+            end >= hist_template;
+            ++hist_template)
+    {
+        plot2D(hist_template);
+    }
 }
 
 // Privates
 //
 void Templates::loadHistograms(TFile *file, const Input &input)
 {
-    for(Template plot(Template::MET), end(Template::HTOP_MT); end >= plot; ++plot)
+    for(Template plot(Template::MET), end(Template::DPHI_JET_VS_MET_BEFORE_TRICUT);
+            end >= plot;
+            ++plot)
     {
         InputPlots &input_plots = _plots[plot];
 
@@ -101,9 +114,24 @@ void Templates::loadHistograms(TFile *file, const Input &input)
         scale(histogram, input);
         Templates::style(histogram, input);
 
-        const int merge_bins = rebin(plot);
-        if (1 < merge_bins)
-            histogram->Rebin(merge_bins);
+        if (Template::DPHI_ELECTRON_VS_MET > plot)
+        {
+            const int merge_bins = rebin(plot);
+            if (1 < merge_bins)
+                histogram->Rebin(merge_bins);
+        }
+        else
+        {
+            const Rebin merge_bins = rebin2D(plot);
+
+            TH2 *h = dynamic_cast<TH2 *>(histogram);
+
+            if (1 < merge_bins.first)
+                h->RebinX(merge_bins.first);
+
+            if (1 < merge_bins.second)
+                h->RebinY(merge_bins.second);
+        }
 
         // store plot
         //
@@ -130,6 +158,41 @@ void Templates::plot(const Template &plot)
 
     TCanvas *canvas = draw(plot, channel);
     canvas->SaveAs(("template_" + plot.repr() + ".pdf").c_str());
+}
+
+void Templates::plot2D(const Template &plot)
+{
+    const InputPlots &input_plots = _plots[plot];
+
+    Channels channel;
+    channel[Channel::DATA] = get(input_plots,
+            Input::RERECO_2011A_MAY10,
+            Input::PROMPT_2011B_V1);
+
+    TCanvas *canvas = draw2D(plot, channel);
+    canvas->SaveAs(("template_" + plot.repr()
+                + "_" + channel.begin()->first.repr()
+                + ".pdf").c_str());
+
+    channel.clear();
+    channel[Channel::QCD] = get(input_plots,
+            Input::QCD_BC_PT20_30,
+            Input::QCD_EM_PT80_170);
+
+    canvas = draw2D(plot, channel);
+    canvas->SaveAs(("template_" + plot.repr()
+                + "_" + channel.begin()->first.repr()
+                + ".pdf").c_str());
+
+    channel.clear();
+    channel[Channel::ZPRIME1000] = get(input_plots, Input::ZPRIME1000);
+
+    canvas = draw2D(plot, channel);
+    canvas->SaveAs(("template_" + plot.repr()
+                + "_" + channel.begin()->first.repr()
+                + ".pdf").c_str());
+
+    return;
 }
 
 TCanvas *Templates::draw(const Template &plot, Channels &channels)
@@ -260,6 +323,32 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
     return canvas;
 }
 
+TCanvas *Templates::draw2D(const Template &plot, Channels &channels)
+{
+    ostringstream name;
+    name << "canvas" << _heap.size();
+    TCanvas *canvas = new TCanvas(name.str().c_str(), "", 800, 700);
+    _heap.push_back(canvas);
+
+    TVirtualPad *pad = canvas->cd(1);
+    pad->SetRightMargin(10);
+    pad->SetTopMargin(10);
+
+    TH1 *h = channels.begin()->second;
+    h->GetXaxis()->SetLabelSize(0.04);
+    h->GetXaxis()->SetTitleOffset(1.1);
+    h->GetYaxis()->SetLabelSize(0.04);
+    h->GetYaxis()->SetTitleOffset(1.7);
+    h->SetContour(50);
+    h->Draw("col 9");
+
+    cmsLegend();
+
+    canvas->Update();
+
+    return canvas;
+}
+
 TH1 *Templates::get(const InputPlots &plots,
         const Input::Type &from,
         const Input::Type &to)
@@ -378,32 +467,45 @@ int Templates::rebin(const Template &plot) const
 {
     switch(plot.type())
     {
-        case Template::MET: return 16;
-        case Template::HTLEP: return 20;
+        case Template::MET: return 25;
+        case Template::HTLEP: return 25;
         case Template::NPV: return 1;
         case Template::NJET: return 1;
-        case Template::TTBAR_MASS: return 100;
-        case Template::TTBAR_PT: return 20;
-        case Template::WLEP_MT: return 10;
-        case Template::WLEP_MASS: return 10;
-        case Template::JET1_PT: return 5;
-        case Template::JET1_ETA: return 2;
-        case Template::JET2_PT: return 5;
-        case Template::JET2_ETA: return 2;
-        case Template::JET3_PT: return 5;
-        case Template::JET3_ETA: return 2;
-        case Template::ELECTRON_PT: return 5;
-        case Template::ELECTRON_ETA: return 2;
-        case Template::LTOP_PT: return 20;
-        case Template::LTOP_ETA: return 2;
-        case Template::LTOP_MASS: return 10;
-        case Template::LTOP_MT: return 20;
-        case Template::HTOP_PT: return 20;
-        case Template::HTOP_ETA: return 2;
-        case Template::HTOP_MASS: return 10;
-        case Template::HTOP_MT: return 20;
+        case Template::TTBAR_MASS: return 200;
+        case Template::TTBAR_PT: return 25;
+        case Template::WLEP_MT: return 25;
+        case Template::WLEP_MASS: return 25;
+        case Template::JET1_PT: return 25;
+        case Template::JET1_ETA: return 50;
+        case Template::JET2_PT: return 25;
+        case Template::JET2_ETA: return 50;
+        case Template::JET3_PT: return 25;
+        case Template::JET3_ETA: return 50;
+        case Template::ELECTRON_PT: return 25;
+        case Template::ELECTRON_ETA: return 50;
+        case Template::LTOP_PT: return 25;
+        case Template::LTOP_ETA: return 50;
+        case Template::LTOP_MASS: return 25;
+        case Template::LTOP_MT: return 25;
+        case Template::HTOP_PT: return 25;
+        case Template::HTOP_ETA: return 50;
+        case Template::HTOP_MASS: return 25;
+        case Template::HTOP_MT: return 25;
 
         default: return 1;
+    }
+}
+
+Templates::Rebin Templates::rebin2D(const Template &plot) const
+{
+    switch(plot.type())
+    {
+        case Template::DPHI_ELECTRON_VS_MET: return make_pair(25, 10);
+        case Template::DPHI_JET_VS_MET: return make_pair(25, 10);
+        case Template::DPHI_ELECTRON_VS_MET_BEFORE_TRICUT: return make_pair(25, 10);
+        case Template::DPHI_JET_VS_MET_BEFORE_TRICUT: return make_pair(25, 10);
+
+        default: return make_pair(1, 1);
     }
 }
 
@@ -413,8 +515,7 @@ void Templates::setYaxisTitle(TH1 *h, const Template &plot)
     title.precision(0);
 
     title << "event yield";
-    const float width = h->GetBinWidth(1);
-    if (1 < width)
+    if (1 < rebin(plot))
        title << " / " << fixed << h->GetBinWidth(1) << " " << plot.unit();
 
     h->GetYaxis()->SetTitle(title.str().c_str());
