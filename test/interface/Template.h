@@ -37,7 +37,11 @@ class Template
             HTOP_PT,
             HTOP_ETA,
             HTOP_MASS,
-            HTOP_MT
+            HTOP_MT,
+            DPHI_ELECTRON_VS_MET,
+            DPHI_JET_VS_MET,
+            DPHI_ELECTRON_VS_MET_BEFORE_TRICUT,
+            DPHI_JET_VS_MET_BEFORE_TRICUT
         };
 
         Template(const Type &type): _type(type)
