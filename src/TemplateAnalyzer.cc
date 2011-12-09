@@ -100,6 +100,11 @@ TemplateAnalyzer::TemplateAnalyzer():
                 SynchSelector::LEADING_JET)->objects().get();
     _leading_jet_counter->setDelegate(this);
 
+    _htlep_counter =
+        _synch_selector->cutflow()->cut(
+                SynchSelector::HTLEP)->objects().get();
+    _htlep_counter->setDelegate(this);
+
     _npv.reset(new H1Proxy(25, 0, 25));
     monitor(_npv);
 
@@ -145,7 +150,13 @@ TemplateAnalyzer::TemplateAnalyzer():
     _met.reset(new H1Proxy(200, 0, 200));
     monitor(_met);
 
-    _ljet_met_dphi_vs_met.reset(new H2Proxy(500, 0, 500, 40, 0, 4));
+    _ljet_met_dphi_vs_met_before_tricut.reset(new H2Proxy(500, 0, 500, 400, 0, 4));
+    monitor(_ljet_met_dphi_vs_met_before_tricut);
+
+    _lepton_met_dphi_vs_met_before_tricut.reset(new H2Proxy(500, 0, 500, 400, 0, 4));
+    monitor(_lepton_met_dphi_vs_met_before_tricut);
+
+    _ljet_met_dphi_vs_met.reset(new H2Proxy(500, 0, 500, 400, 0, 4));
     monitor(_ljet_met_dphi_vs_met);
 
     _lepton_met_dphi_vs_met.reset(new H2Proxy(500, 0, 500, 40, 0, 4));
@@ -163,6 +174,7 @@ TemplateAnalyzer::TemplateAnalyzer():
     _second_jet.reset(new P4Monitor());
     _third_jet.reset(new P4Monitor());
     _electron.reset(new P4Monitor());
+    _electron_before_tricut.reset(new P4Monitor());
 
     _ltop.reset(new P4Monitor());
     _ltop->mt()->mutable_axis()->init(1000, 0, 1000);
@@ -176,6 +188,7 @@ TemplateAnalyzer::TemplateAnalyzer():
     monitor(_second_jet);
     monitor(_third_jet);
     monitor(_electron);
+    monitor(_electron_before_tricut);
 
     monitor(_ltop);
     monitor(_htop);
@@ -203,6 +216,11 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
         _synch_selector->cutflow()->cut(
                 SynchSelector::LEADING_JET)->objects().get();
     _leading_jet_counter->setDelegate(this);
+
+    _htlep_counter =
+        _synch_selector->cutflow()->cut(
+                SynchSelector::HTLEP)->objects().get();
+    _htlep_counter->setDelegate(this);
 
     _npv = dynamic_pointer_cast<H1Proxy>(object._npv->clone());
     monitor(_npv);
@@ -251,6 +269,14 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
     _met = dynamic_pointer_cast<H1Proxy>(object._met->clone());
     monitor(_met);
 
+    _ljet_met_dphi_vs_met_before_tricut = dynamic_pointer_cast<H2Proxy>(
+            object._ljet_met_dphi_vs_met_before_tricut->clone());
+    monitor(_ljet_met_dphi_vs_met_before_tricut);
+
+    _lepton_met_dphi_vs_met_before_tricut = dynamic_pointer_cast<H2Proxy>(
+            object._lepton_met_dphi_vs_met_before_tricut->clone());
+    monitor(_lepton_met_dphi_vs_met_before_tricut);
+
     _ljet_met_dphi_vs_met = dynamic_pointer_cast<H2Proxy>(
             object._ljet_met_dphi_vs_met->clone());
     monitor(_ljet_met_dphi_vs_met);
@@ -281,6 +307,9 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
     _electron =
         dynamic_pointer_cast<P4Monitor>(object._electron->clone());
 
+    _electron_before_tricut =
+        dynamic_pointer_cast<P4Monitor>(object._electron_before_tricut->clone());
+
     _ltop =
         dynamic_pointer_cast<P4Monitor>(object._ltop->clone());
 
@@ -291,6 +320,7 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
     monitor(_second_jet);
     monitor(_third_jet);
     monitor(_electron);
+    monitor(_electron_before_tricut);
 
     monitor(_ltop);
     monitor(_htop);
@@ -375,6 +405,16 @@ const TemplateAnalyzer::H1Ptr TemplateAnalyzer::met() const
     return _met->histogram();
 }
 
+const TemplateAnalyzer::H2Ptr TemplateAnalyzer::ljetMetDphivsMetBeforeTricut() const
+{
+    return _ljet_met_dphi_vs_met_before_tricut->histogram();
+}
+
+const TemplateAnalyzer::H2Ptr TemplateAnalyzer::leptonMetDphivsMetBeforeTricut() const
+{
+    return _lepton_met_dphi_vs_met_before_tricut->histogram();
+}
+
 const TemplateAnalyzer::H2Ptr TemplateAnalyzer::ljetMetDphivsMet() const
 {
     return _ljet_met_dphi_vs_met->histogram();
@@ -413,6 +453,11 @@ const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::thirdJet() const
 const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::electron() const
 {
     return _electron;
+}
+
+const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::electronBeforeTricut() const
+{
+    return _electron_before_tricut;
 }
 
 const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::ltop() const
@@ -464,6 +509,24 @@ void TemplateAnalyzer::didCounterAdd(const Counter *counter)
 
         mttbarBeforeHtlep()->fill(mass(mttbar().mttbar) / 1000,
                 _pileup_weight * _wjets_weight);
+    }
+    else if (counter == _htlep_counter)
+    {
+        const LorentzVector &el_p4 =
+            (*_synch_selector->goodElectrons().begin())->physics_object().p4();
+
+        _electron_before_tricut->fill(el_p4, _pileup_weight * _wjets_weight);
+
+        const LorentzVector &missing_energy = *_synch_selector->goodMET();
+
+        ljetMetDphivsMetBeforeTricut()->fill(pt(missing_energy),
+                fabs(dphi(*_synch_selector->goodJets()[0].corrected_p4, missing_energy)),
+                _pileup_weight * _wjets_weight);
+
+        leptonMetDphivsMetBeforeTricut()->fill(pt(missing_energy),
+                    fabs(dphi(el_p4, missing_energy)),
+                _pileup_weight * _wjets_weight);
+
     }
 }
 
@@ -619,6 +682,7 @@ void TemplateAnalyzer::merge(const ObjectPtr &pointer)
 
     _secondary_lepton_counter->setDelegate(0);
     _leading_jet_counter->setDelegate(0);
+    _htlep_counter->setDelegate(0);
 
     Object::merge(pointer);
 }
