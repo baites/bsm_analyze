@@ -19,7 +19,8 @@ class Channel
             TTBAR,
             WJETS,
             ZJETS,
-            STOP
+            STOP,
+            ZPRIME1000
         };
 
         Channel(const Type &type): _type(type)
