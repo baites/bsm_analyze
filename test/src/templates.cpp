@@ -18,7 +18,9 @@ try
     char *empty_argv[] = { argv[0] };
     shared_ptr<TRint> root(new TRint("root", &empty_argc, empty_argv));
 
-    shared_ptr<Templates> templates(new Templates());
+    shared_ptr<Templates> templates(new Templates(1 < argc
+                ? argv[1]
+                : "output_signal_p250_hlt.root"));
     templates->load();
 
     templates->draw();

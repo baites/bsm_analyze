@@ -13,7 +13,9 @@ class TH1;
 class PileupSystematic: public Systematic
 {
     public:
-        PileupSystematic(): _plotname("mttbar_after_htlep")
+        PileupSystematic(const std::string &file_mask):
+            Systematic(file_mask),
+            _plotname("mttbar_after_htlep")
         {
         }
 

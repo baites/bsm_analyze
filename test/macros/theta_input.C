@@ -1,5 +1,6 @@
 //float luminosity = 4061.545;
 float luminosity = 4328.472;
+string file_mask = "output_signal_p250_hlt";
 
 enum Systematic
 {
@@ -102,7 +103,7 @@ string folder(const InputType &input)
 
 string filename()
 {
-    string name = "/output_signal_p250_hlt";
+    string name = "/" + file_mask;
     switch(systematic)
     {
         case PILEUP_PLUS:
@@ -655,8 +656,11 @@ void saveSystematics(const string &plot_name, const string &destination)
     }
 }
 
-void theta_input()
+void theta_input(const string &mask = "")
 {
+    if (!mask.empty())
+        file_mask = mask;
+
     TGaxis::SetMaxDigits(3);
     gStyle->SetOptStat(kFALSE);
 

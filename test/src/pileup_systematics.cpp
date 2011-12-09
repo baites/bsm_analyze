@@ -18,7 +18,9 @@ try
     char *empty_argv[] = { argv[0] };
     shared_ptr<TRint> root(new TRint("root", &empty_argc, empty_argv));
 
-    shared_ptr<PileupSystematic> systematic(new PileupSystematic());
+    shared_ptr<PileupSystematic> systematic(new PileupSystematic(1 < argc
+                ? argv[1]
+                : "output_signal_p250_hlt"));
     systematic->load();
 
     gStyle->SetOptStat(kFALSE);

@@ -24,8 +24,10 @@ class TObject;
 class Templates
 {
     public:
-        Templates();
+        Templates(const std::string &input_file);
         ~Templates();
+
+        std::string input_file() const;
 
         void load();
         void draw();
@@ -76,6 +78,8 @@ class Templates
 
         Heap _heap;
         Plots _plots;
+
+        const std::string _input_file;
 };
 
 #endif

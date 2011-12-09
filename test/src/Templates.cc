@@ -19,7 +19,8 @@
 
 using namespace std;
 
-Templates::Templates()
+Templates::Templates(const std::string &input_file)
+    : _input_file(input_file)
 {
 }
 
@@ -33,6 +34,11 @@ Templates::~Templates()
     }
 }
 
+string Templates::input_file() const
+{
+    return _input_file;
+}
+
 void Templates::load()
 {
     FileStat_t buf;
@@ -40,7 +46,7 @@ void Templates::load()
             end > input;
             ++input)
     {
-        string filename = folder(input) + "/output_signal_p250_hlt.root";
+        string filename = folder(input) + "/" + input_file();
         if (gSystem->GetPathInfo(filename.c_str(), buf))
         {
             cerr << "skip file: " << filename << endl;

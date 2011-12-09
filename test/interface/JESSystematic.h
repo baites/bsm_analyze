@@ -18,7 +18,9 @@ class TH1;
 class JESSystematic: public Systematic
 {
     public:
-        JESSystematic(): _plotname("mttbar_after_htlep")
+        JESSystematic(const std::string &file_mask):
+            Systematic(file_mask),
+            _plotname("mttbar_after_htlep")
         {
         }
 
