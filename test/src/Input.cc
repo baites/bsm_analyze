@@ -46,6 +46,7 @@ Input::operator string() const
         case ZPRIME2000: return "Z' m2000 w20";
         case ZPRIME3000: return "Z' m3000 w30";
         case ZPRIME4000: return "Z' m4000 w40";
+        case QCD: return "QCD";
         default: return "Unknown";
     }
 }
@@ -87,6 +88,7 @@ string Input::repr() const
         case ZPRIME2000: return "z_m2000_w20";
         case ZPRIME3000: return "z_m3000_w30";
         case ZPRIME4000: return "z_m4000_w40";
+        case QCD: return "qcd";
         default: return "unknown";
     }
 }

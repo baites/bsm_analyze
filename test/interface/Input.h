@@ -47,6 +47,7 @@ class Input
             ZPRIME2000,
             ZPRIME3000,
             ZPRIME4000,
+            QCD, // QCD from data
             UNKNOWN
         };
 
