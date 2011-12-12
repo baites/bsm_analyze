@@ -136,8 +136,8 @@ void Templates::load()
 
 void Templates::draw()
 {
-    //for(Template hist_template(Template::MET), end(Template::HTOP_MT);
-    for(Template hist_template(Template::MET), end(Template::WLEP_MT);
+    for(Template hist_template(Template::MET), end(Template::HTOP_MT);
+    //for(Template hist_template(Template::MET), end(Template::WLEP_MT);
             end >= hist_template;
             ++hist_template)
     {
@@ -146,7 +146,6 @@ void Templates::draw()
 
     // 2D plot
     //
-    /*
     for(Template hist_template(Template::DPHI_ELECTRON_VS_MET),
                 end(Template::DPHI_JET_VS_MET_BEFORE_TRICUT);
             end >= hist_template;
@@ -154,7 +153,6 @@ void Templates::draw()
     {
         plot2D(hist_template);
     }
-    */
 }
 
 // Privates
