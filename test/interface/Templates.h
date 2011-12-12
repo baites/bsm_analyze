@@ -6,6 +6,7 @@
 #ifndef BSM_TEMPLATES
 #define BSM_TEMPLATES
 
+#include <iosfwd>
 #include <map>
 #include <string>
 #include <vector>
@@ -24,7 +25,16 @@ class TObject;
 class Templates
 {
     public:
-        Templates(const std::string &input_file);
+        struct ThetaScale
+        {
+            float wjets;
+            float zjets;
+            float stop;
+            float ttjets;
+            float qcd;
+        };
+
+        Templates(const std::string &input_file, const std::string &theta_scale);
         ~Templates();
 
         std::string input_file() const;
@@ -80,6 +90,10 @@ class Templates
         Plots _plots;
 
         const std::string _input_file;
+
+        ThetaScale _theta_scale;
 };
+
+std::ostream &operator <<(std::ostream &, const Templates::ThetaScale &);
 
 #endif

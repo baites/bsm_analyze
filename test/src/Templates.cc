@@ -4,7 +4,13 @@
 // Copyright 2011, All rights reserved
 
 #include <cmath>
+#include <fstream>
+#include <ostream>
 #include <sstream>
+
+#include <boost/filesystem.hpp>
+#include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
 
 #include <TCanvas.h>
 #include <TFile.h>
@@ -18,10 +24,71 @@
 #include "interface/Templates.h"
 
 using namespace std;
+using namespace boost;
 
-Templates::Templates(const std::string &input_file)
+namespace fs = boost::filesystem;
+
+Templates::Templates(const std::string &input_file,
+        const std::string &theta_scale)
     : _input_file(input_file)
 {
+    if (!theta_scale.empty())
+    {
+        if (!fs::exists(theta_scale))
+        {
+            cerr << "theta scale file does not exist: " << theta_scale << endl;
+        }
+        else
+        {
+            ifstream in(theta_scale.c_str());
+            if (!in.is_open())
+            {
+                cerr << "failed to open theta scale file: " << theta_scale
+                    << endl;
+            }
+            else
+            {
+                char buf[512];
+                while(in.getline(buf, 512))
+                {
+                    string input(buf);
+
+                    smatch matches;
+                    regex pattern("^(wjets|zjets|singletop|ttbar|eleqcd):\\s+(\\d+\\.\\d+)$", regex_constants::icase | regex_constants::perl);
+                    if (!regex_match(input, matches, pattern))
+                    {
+                        cerr << "didn't understand line: " << buf << endl;
+                    }
+                    else
+                    {
+                        float scale = lexical_cast<float>(matches[2]);
+                        if ("wjets" == matches[1])
+                        {
+                            _theta_scale.wjets = scale;
+                        }
+                        else if ("zjets" == matches[1])
+                        {
+                            _theta_scale.zjets = scale;
+                        }
+                        else if ("singletop" == matches[1])
+                        {
+                            _theta_scale.stop = scale;
+                        }
+                        else if ("ttbar" == matches[1])
+                        {
+                            _theta_scale.ttjets = scale;
+                        }
+                        else if ("eleqcd" == matches[1])
+                        {
+                            _theta_scale.qcd = scale;
+                        }
+                    }
+                }
+
+                cout << "Read Theta scales" << endl << _theta_scale << endl;
+            }
+        }
+    }
 }
 
 Templates::~Templates()
@@ -157,29 +224,31 @@ void Templates::plot(const Template &plot)
             Input::RERECO_2011A_MAY10,
             Input::PROMPT_2011B_V1);
 
-    const float lumi_scale = 0.987;
-    const float trigger_scale = 0.96 * 0.989;
-
     TH1 *h = get(input_plots,
             Input::STOP_S,
             Input::SATOP_TW);
-    h->Scale(lumi_scale * trigger_scale * 1.16);
+    if (_theta_scale.stop)
+        h->Scale(_theta_scale.stop);
     channel[Channel::STOP] = h;
 
     h = get(input_plots, Input::TTJETS);
-    h->Scale(lumi_scale * trigger_scale * 1.16);
+    if (_theta_scale.ttjets)
+        h->Scale(_theta_scale.ttjets);
     channel[Channel::TTBAR] = h;
 
     h = get(input_plots, Input::WJETS);;
-    h->Scale(lumi_scale * trigger_scale * 0.97);
+    if (_theta_scale.wjets)
+        h->Scale(_theta_scale.wjets);
     channel[Channel::WJETS] = h;
 
     h = get(input_plots, Input::ZJETS);
-    h->Scale(lumi_scale * trigger_scale * 0.97);
+    if (_theta_scale.zjets)
+        h->Scale(_theta_scale.zjets);
     channel[Channel::ZJETS] = h; 
 
     h = get(input_plots, Input::QCD);
-    h->Scale(0.53 * 1.045);
+    if (_theta_scale.qcd)
+        h->Scale(_theta_scale.qcd);
     channel[Channel::QCD] = h;
 
     TCanvas *canvas = draw(plot, channel);
@@ -546,4 +615,13 @@ void Templates::setYaxisTitle(TH1 *h, const Template &plot)
        title << " / " << fixed << h->GetBinWidth(1) << " " << plot.unit();
 
     h->GetYaxis()->SetTitle(title.str().c_str());
+}
+
+ostream &operator <<(ostream &out, const Templates::ThetaScale &scale)
+{
+    return out << "wjets: " << scale.wjets << endl
+        << "zjets: " << scale.zjets << endl
+        << "stop: " << scale.stop << endl
+        << "ttjets: " << scale.ttjets << endl
+        << "qcd: " << scale.qcd;
 }
