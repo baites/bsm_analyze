@@ -307,7 +307,6 @@ bool SynchSelector::apply(const Event *event)
     if (qcdTemplate())
     {
         tricut()->invert();
-        met()->invert();
         return primaryVertices(event)
             && jets(event)
             && lepton()
@@ -315,7 +314,8 @@ bool SynchSelector::apply(const Event *event)
             && isolationAnd2DCut()
             && leadingJetCut()
             && htlepCut(event)
-            && (triangularCut(event) || missingEnergy(event));
+            && missingEnergy(event)
+            && triangularCut(event);
     }
 
     // Nominal

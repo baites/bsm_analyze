@@ -67,12 +67,12 @@ mcfiles = (
 
 # bsm_template options
 
-nominal = '--leading-jet 250 --region signal --trigger hlt_ele45_caloidvt_trkidt --trigger hlt_ele65_caloidvt_trkidt --pileup Pileup/weight3d.root'
+nominal = '--leading-jet 150 --region signal --trigger hlt_ele45_caloidvt_trkidt --trigger hlt_ele65_caloidvt_trkidt --pileup Pileup/weight3d.root'
 
-dataops = '--multi-thread 4'
+dataops = '--multi-thread 6'
 datajec = '--l1 jec/data/L1FastJet.txt --l2 jec/data/L2Relative.txt --l3 jec/data/L3Absolute.txt --l2l3 jec/data/L2L3Residual.txt'
 
-mcops = '--multi-thread 2'
+mcops = '--multi-thread 3'
 mcjec = '--l1 jec/mc/L1FastJet.txt --l2 jec/mc/L2Relative.txt --l3 jec/mc/L3Absolute.txt'
 
 input = options.input

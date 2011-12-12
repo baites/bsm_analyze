@@ -106,7 +106,17 @@ int main(int argc, char *argv[])
             htlep->GetXaxis()->SetTitle("H_{T}^{lep} [GeV/c]");
             htlep->GetXaxis()->SetTitleSize(0.045);
 
-            TH1Ptr htlep_before_htlep = convert(*analyzer->htlepBeforeCut());
+            TH1Ptr htall = convert(*analyzer->htall());
+            htall->SetName("htall");
+            htall->GetXaxis()->SetTitle("H_{T}^{lep} [GeV/c]");
+            htall->GetXaxis()->SetTitleSize(0.045);
+
+            TH1Ptr htlep_after_htlep = convert(*analyzer->htlepAfterHtlep());
+            htlep_after_htlep->SetName("htlep_after_htlep");
+            htlep_after_htlep->GetXaxis()->SetTitle("H_{T}^{lep} [GeV/c]");
+            htlep_after_htlep->GetXaxis()->SetTitleSize(0.045);
+
+            TH1Ptr htlep_before_htlep = convert(*analyzer->htlepBeforeHtlep());
             htlep_before_htlep->SetName("htlep_before_htlep");
             htlep_before_htlep->GetXaxis()->SetTitle("H_{T}^{lep} [GeV/c]");
             htlep_before_htlep->GetXaxis()->SetTitleSize(0.045);
@@ -164,6 +174,12 @@ int main(int argc, char *argv[])
             met->GetXaxis()->SetTitleSize(0.045);
             met->SetMarkerSize(0.1);
 
+            TH1Ptr met_noweight = convert(*analyzer->metNoWeight());
+            met_noweight->SetName("met_noweight");
+            met_noweight->GetXaxis()->SetTitle("MET [GeV/c]");
+            met_noweight->GetXaxis()->SetTitleSize(0.045);
+            met_noweight->SetMarkerSize(0.1);
+
             TH2Ptr ljet_met_dphi_vs_met = convert(*analyzer->ljetMetDphivsMet());
             ljet_met_dphi_vs_met->SetName("ljet_met_dphi_vs_met");
             ljet_met_dphi_vs_met->GetXaxis()->SetTitle("MET [GeV/c]");
@@ -207,6 +223,8 @@ int main(int argc, char *argv[])
                 njets->Write();
                 d0->Write();
                 htlep->Write();
+                htall->Write();
+                htlep_after_htlep->Write();
                 htlep_before_htlep->Write();
                 mttbar_before_htlep->Write();
                 mttbar_after_htlep->Write();
@@ -218,6 +236,7 @@ int main(int argc, char *argv[])
                 wlep_mass->Write();
                 whad_mass->Write();
                 met->Write();
+                met_noweight->Write();
 
                 ljet_met_dphi_vs_met->Write();
                 lepton_met_dphi_vs_met->Write();

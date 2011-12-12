@@ -124,7 +124,9 @@ namespace bsm
             const H1Ptr njets() const;
             const H1Ptr d0() const;
             const H1Ptr htlep() const;
-            const H1Ptr htlepBeforeCut() const; // htlep before its cut is applied
+            const H1Ptr htall() const;   
+            const H1Ptr htlepAfterHtlep() const;
+            const H1Ptr htlepBeforeHtlep() const;
             const H1Ptr mttbarBeforeHtlep() const;
             const H1Ptr mttbarAfterHtlep() const;
             const H2Ptr drVsPtrel() const;
@@ -135,6 +137,7 @@ namespace bsm
             const H1Ptr wlepMass() const;
             const H1Ptr whadMass() const;
             const H1Ptr met() const;
+            const H1Ptr metNoWeight() const;
 
             const H2Ptr ljetMetDphivsMet() const;
             const H2Ptr leptonMetDphivsMet() const;
@@ -198,6 +201,9 @@ namespace bsm
             Mttbar mttbar() const;
             void monitorJets();
 
+            double htlepValue() const;
+            double htallValue() const;
+
             bool isGoodLepton() const;
             bool isBtagJet() const;
 
@@ -212,6 +218,8 @@ namespace bsm
             H1ProxyPtr _njets;
             H1ProxyPtr _d0;
             H1ProxyPtr _htlep;
+            H1ProxyPtr _htall;
+            H1ProxyPtr _htlep_after_htlep;
             H1ProxyPtr _htlep_before_htlep;
             H1ProxyPtr _mttbar_before_htlep;
             H1ProxyPtr _mttbar_after_htlep;
@@ -223,6 +231,7 @@ namespace bsm
             H1ProxyPtr _wlep_mass;
             H1ProxyPtr _whad_mass;
             H1ProxyPtr _met;
+            H1ProxyPtr _met_noweight;
 
             H2ProxyPtr _ljet_met_dphi_vs_met;
             H2ProxyPtr _lepton_met_dphi_vs_met;

@@ -1157,6 +1157,7 @@ void TemplatePlotter(const string & dir = ".")
         "met",
         "mttbar_after_htlep",
         "htlep",
+        "htlep_after_htlep",
         "htlep_before_htlep",
         "npv",
         "npv_with_pileup",
@@ -1186,7 +1187,8 @@ void TemplatePlotter(const string & dir = ".")
         10,
         100,    // mttbar
         20,     // htlep
-        4,     // htlep_before_htlep
+        20,     // htlep_after_htlep
+        4,      // htlep_before_htlep
         1,      // npv
         1,      // npv_with_pu
         1,      // njets
@@ -1194,24 +1196,24 @@ void TemplatePlotter(const string & dir = ".")
         10,     // wlep_mt
         10,     // wlep_mass
         5,      // First Jet
-        2,
+        5,
         5,      // second jet
-        2,
+        5,
         5,      // third jet
-        2,
+        5,
         5,      // electron
-        2,
-        20,      // ltop
-        2,
+        5,
+        20,     // ltop
+        5,
         10,
         20,
-        20,      // htop
-        2,
+        20,     // htop
+        5,
         10,
         20
     };
 
-    bool data_mc_first[] = {
+    /*bool data_mc_first[] = {
         false, // met
         true,    // mttbar
         true,     // htlep
@@ -1237,9 +1239,10 @@ void TemplatePlotter(const string & dir = ".")
         true,
         true,
         true
-    };
+    };*/
 
     string subtitles[] = {
+        "",
         "",
         "",
         "",
