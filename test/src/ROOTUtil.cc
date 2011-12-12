@@ -211,6 +211,7 @@ void scale(TH1 *h, const Input &input)
                 break;
             }
 
+        case Input::QCD: // Fall through: QCD is extracted from Data
         case Input::RERECO_2011A_MAY10: // Fall through
         case Input::RERECO_2011A_AUG05: // Fall through
         case Input::PROMPT_2011A_V4: // Fall through
@@ -268,6 +269,7 @@ std::string folder(const Input &input)
         case Input::ZPRIME2000: return "zprime_m2000_w20";
         case Input::ZPRIME3000: return "zprime_m3000_w30";
         case Input::ZPRIME4000: return "zprime_m4000_w40";
+        case Input::QCD: return "qcd";
         default:
         {
             cerr << "unsupported input: don't know folder" << endl;
@@ -393,6 +395,11 @@ void style(TH1 *hist, const Input &input, const int &systematic)
         case Input::PROMPT_2011A_V6:
         case Input::PROMPT_2011B_V1:
             break;
+        case Input::QCD:
+            {
+                color = kYellow + 3;
+                break;
+            }
         default:
             {
                 cerr << "can not stle plot: unsupported type" << endl;
