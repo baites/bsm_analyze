@@ -16,6 +16,7 @@ Template::operator string() const
         case MET: return "met";
         case HTLEP: return "htlep";
         case NPV: return "npv_with_pileup";
+        case NPV_NO_PU: return "npv";
         case NJET: return "njets";
         case TTBAR_MASS: return "mttbar_after_htlep";
         case TTBAR_PT: return "ttbar_pt";
@@ -29,6 +30,8 @@ Template::operator string() const
         case JET3_ETA: return "Third_jet/eta";
         case ELECTRON_PT: return "Electron/pt";
         case ELECTRON_ETA: return "Electron/eta";
+        case ELECTRON_PT_BEFORE_TRICUT: return "Electron_Before_Tricut/pt";
+        case ELECTRON_ETA_BEFORE_TRICUT: return "Electron_Before_Tricut/eta";
         case LTOP_PT: return "ltop/pt";
         case LTOP_ETA: return "ltop/eta";
         case LTOP_MASS: return "ltop/mass";
@@ -53,6 +56,7 @@ string Template::repr() const
         case MET: return "met";
         case HTLEP: return "htlep";
         case NPV: return "npv_with_pileup";
+        case NPV_NO_PU: return "npv_no_pileup";
         case NJET: return "njets";
         case TTBAR_MASS: return "mttbar_after_htlep";
         case TTBAR_PT: return "ttbar_pt";
@@ -66,6 +70,8 @@ string Template::repr() const
         case JET3_ETA: return "third_jet_eta";
         case ELECTRON_PT: return "electron_pt";
         case ELECTRON_ETA: return "electron_eta";
+        case ELECTRON_PT_BEFORE_TRICUT: return "electron_pt_before_tricut";
+        case ELECTRON_ETA_BEFORE_TRICUT: return "electron_eta_before_tricut";
         case LTOP_PT: return "ltop_pt";
         case LTOP_ETA: return "ltop_eta";
         case LTOP_MASS: return "ltop_mass";
@@ -103,11 +109,12 @@ string Template::unit() const
 {
     switch(type())
     {
-        case MET: return "GeV/c^{2}";
-        case HTLEP: return "GeV";
+        case MET: return "GeV/c";
+        case HTLEP: return "GeV/c";
         case NPV: return "";
+        case NPV_NO_PU: return "";
         case NJET: return "";
-        case TTBAR_MASS: return "GeV/c^{2}";
+        case TTBAR_MASS: return "TeV/c^{2}";
         case TTBAR_PT: return "GeV/c";
         case WLEP_MT: return "GeV/c^{2}";
         case WLEP_MASS: return "GeV/c^{2}";
@@ -119,6 +126,8 @@ string Template::unit() const
         case JET3_ETA: return "";
         case ELECTRON_PT: return "GeV/c";
         case ELECTRON_ETA: return "";
+        case ELECTRON_PT_BEFORE_TRICUT: return "GeV/c";
+        case ELECTRON_ETA_BEFORE_TRICUT: return "";
         case LTOP_PT: return "GeV/c";
         case LTOP_ETA: return "";
         case LTOP_MASS: return "GeV/c^{2}";

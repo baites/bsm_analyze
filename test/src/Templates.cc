@@ -565,6 +565,7 @@ int Templates::rebin(const Template &plot) const
         case Template::MET: return 25;
         case Template::HTLEP: return 25;
         case Template::NPV: return 1;
+        case Template::NPV_NO_PU: return 1;
         case Template::NJET: return 1;
         case Template::TTBAR_MASS: return 200;
         case Template::TTBAR_PT: return 25;
@@ -578,6 +579,8 @@ int Templates::rebin(const Template &plot) const
         case Template::JET3_ETA: return 50;
         case Template::ELECTRON_PT: return 25;
         case Template::ELECTRON_ETA: return 50;
+        case Template::ELECTRON_PT_BEFORE_TRICUT: return 25;
+        case Template::ELECTRON_ETA_BEFORE_TRICUT: return 50;
         case Template::LTOP_PT: return 25;
         case Template::LTOP_ETA: return 50;
         case Template::LTOP_MASS: return 25;
