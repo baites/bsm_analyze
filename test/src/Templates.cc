@@ -227,27 +227,27 @@ void Templates::plot(const Template &plot)
     TH1 *h = get(input_plots,
             Input::STOP_S,
             Input::SATOP_TW);
-    if (_theta_scale.stop)
+    if (h && _theta_scale.stop)
         h->Scale(_theta_scale.stop);
     channel[Channel::STOP] = h;
 
     h = get(input_plots, Input::TTJETS);
-    if (_theta_scale.ttjets)
+    if (h && _theta_scale.ttjets)
         h->Scale(_theta_scale.ttjets);
     channel[Channel::TTBAR] = h;
 
     h = get(input_plots, Input::WJETS);;
-    if (_theta_scale.wjets)
+    if (h && _theta_scale.wjets)
         h->Scale(_theta_scale.wjets);
     channel[Channel::WJETS] = h;
 
     h = get(input_plots, Input::ZJETS);
-    if (_theta_scale.zjets)
+    if (h && _theta_scale.zjets)
         h->Scale(_theta_scale.zjets);
     channel[Channel::ZJETS] = h; 
 
     h = get(input_plots, Input::QCD);
-    if (_theta_scale.qcd)
+    if (h && _theta_scale.qcd)
         h->Scale(_theta_scale.qcd);
     channel[Channel::QCD] = h;
 
