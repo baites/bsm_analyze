@@ -613,7 +613,14 @@ void Templates::setYaxisTitle(TH1 *h, const Template &plot)
 
     title << "event yield";
     if (1 < rebin(plot))
-       title << " / " << fixed << h->GetBinWidth(1) << " " << plot.unit();
+    {
+       const float bin_width = h->GetBinWidth(1);
+       cout << plot << " bin width: " << bin_width << endl;
+       if (1 > bin_width)
+           title.precision(2);
+
+       title << " / " << fixed << bin_width << " " << plot.unit();
+    }
 
     h->GetYaxis()->SetTitle(title.str().c_str());
 }
