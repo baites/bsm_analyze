@@ -69,7 +69,8 @@ void Templates::load()
 
 void Templates::draw()
 {
-    for(Template hist_template(Template::MET), end(Template::HTOP_MT);
+    //for(Template hist_template(Template::MET), end(Template::HTOP_MT);
+    for(Template hist_template(Template::MET), end(Template::WLEP_MT);
             end >= hist_template;
             ++hist_template)
     {
@@ -78,6 +79,7 @@ void Templates::draw()
 
     // 2D plot
     //
+    /*
     for(Template hist_template(Template::DPHI_ELECTRON_VS_MET),
                 end(Template::DPHI_JET_VS_MET_BEFORE_TRICUT);
             end >= hist_template;
@@ -85,6 +87,7 @@ void Templates::draw()
     {
         plot2D(hist_template);
     }
+    */
 }
 
 // Privates
@@ -154,13 +157,30 @@ void Templates::plot(const Template &plot)
             Input::RERECO_2011A_MAY10,
             Input::PROMPT_2011B_V1);
 
-    channel[Channel::STOP] = get(input_plots,
+    const float lumi_scale = 0.987;
+    const float trigger_scale = 0.96 * 0.989;
+
+    TH1 *h = get(input_plots,
             Input::STOP_S,
             Input::SATOP_TW);
+    h->Scale(lumi_scale * trigger_scale * 1.16);
+    channel[Channel::STOP] = h;
 
-    channel[Channel::WJETS] = get(input_plots, Input::WJETS);
-    channel[Channel::ZJETS] = get(input_plots, Input::ZJETS);
-    channel[Channel::TTBAR] = get(input_plots, Input::TTJETS);
+    h = get(input_plots, Input::TTJETS);
+    h->Scale(lumi_scale * trigger_scale * 1.16);
+    channel[Channel::TTBAR] = h;
+
+    h = get(input_plots, Input::WJETS);;
+    h->Scale(lumi_scale * trigger_scale * 0.97);
+    channel[Channel::WJETS] = h;
+
+    h = get(input_plots, Input::ZJETS);
+    h->Scale(lumi_scale * trigger_scale * 0.97);
+    channel[Channel::ZJETS] = h; 
+
+    h = get(input_plots, Input::QCD);
+    h->Scale(0.53 * 1.045);
+    channel[Channel::QCD] = h;
 
     TCanvas *canvas = draw(plot, channel);
     canvas->SaveAs(("template_" + plot.repr() + ".pdf").c_str());
@@ -409,7 +429,8 @@ void Templates::style(TH1 *h, const Input &input)
     h->GetXaxis()->SetTitleSize(0.04);
     ::style(h, input);
 
-    if (input < Input::RERECO_2011A_MAY10)
+    if (input < Input::RERECO_2011A_MAY10
+            || Input::QCD == input)
         h->SetFillColor(h->GetLineColor());
 }
 
