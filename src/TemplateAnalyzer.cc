@@ -120,7 +120,13 @@ TemplateAnalyzer::TemplateAnalyzer():
     _htlep.reset(new H1Proxy(500, 0, 500));
     monitor(_htlep);
 
-    _htlep_before_htlep.reset(new H1Proxy(500, 0, 500));
+    _htall.reset(new H1Proxy(500, 300, 1600));
+    monitor(_htall);
+
+    _htlep_after_htlep.reset(new H1Proxy(500, 0, 500));
+    monitor(_htlep_after_htlep);
+
+    _htlep_before_htlep.reset(new H1Proxy(50, 100, 150));
     monitor(_htlep_before_htlep);
 
     _mttbar_before_htlep.reset(new H1Proxy(4000, 0, 4));
@@ -149,6 +155,9 @@ TemplateAnalyzer::TemplateAnalyzer():
 
     _met.reset(new H1Proxy(500, 0, 500));
     monitor(_met);
+
+    _met_noweight.reset(new H1Proxy(500, 0, 500));
+    monitor(_met_noweight);
 
     _ljet_met_dphi_vs_met_before_tricut.reset(new H2Proxy(500, 0, 500, 400, 0, 4));
     monitor(_ljet_met_dphi_vs_met_before_tricut);
@@ -237,6 +246,12 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
     _htlep = dynamic_pointer_cast<H1Proxy>(object._htlep->clone());
     monitor(_htlep);
 
+    _htall = dynamic_pointer_cast<H1Proxy>(object._htall->clone());
+    monitor(_htall);
+
+    _htlep_after_htlep = dynamic_pointer_cast<H1Proxy>(object._htlep_after_htlep->clone());
+    monitor(_htlep_after_htlep);
+
     _htlep_before_htlep = dynamic_pointer_cast<H1Proxy>(object._htlep_before_htlep->clone());
     monitor(_htlep_before_htlep);
 
@@ -268,6 +283,9 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
 
     _met = dynamic_pointer_cast<H1Proxy>(object._met->clone());
     monitor(_met);
+
+    _met_noweight = dynamic_pointer_cast<H1Proxy>(object._met_noweight->clone());
+    monitor(_met_noweight);
 
     _ljet_met_dphi_vs_met_before_tricut = dynamic_pointer_cast<H2Proxy>(
             object._ljet_met_dphi_vs_met_before_tricut->clone());
@@ -355,7 +373,17 @@ const TemplateAnalyzer::H1Ptr TemplateAnalyzer::htlep() const
     return _htlep->histogram();
 }
 
-const TemplateAnalyzer::H1Ptr TemplateAnalyzer::htlepBeforeCut() const
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::htall() const
+{
+    return _htall->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::htlepAfterHtlep() const
+{
+    return _htlep_after_htlep->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::htlepBeforeHtlep() const
 {
     return _htlep_before_htlep->histogram();
 }
@@ -403,6 +431,11 @@ const TemplateAnalyzer::H1Ptr TemplateAnalyzer::whadMass() const
 const TemplateAnalyzer::H1Ptr TemplateAnalyzer::met() const
 {
     return _met->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::metNoWeight() const
+{
+    return _met_noweight->histogram();
 }
 
 const TemplateAnalyzer::H2Ptr TemplateAnalyzer::ljetMetDphivsMetBeforeTricut() const
@@ -495,21 +528,6 @@ void TemplateAnalyzer::didCounterAdd(const Counter *counter)
 {
     if (counter == _secondary_lepton_counter)
         fillDrVsPtrel();
-    else if (counter == _leading_jet_counter)
-    {
-        // Note: leptons are kept in a vector of pointers
-        //
-        const LorentzVector &lepton_p4 =
-            SynchSelector::ELECTRON == _synch_selector->leptonMode()
-            ? (*_synch_selector->goodElectrons().begin())->physics_object().p4()
-            : (*_synch_selector->goodMuons().begin())->physics_object().p4();
-
-        htlepBeforeCut()->fill(pt(*_synch_selector->goodMET()) + pt(lepton_p4),
-                _pileup_weight * _wjets_weight);
-
-        mttbarBeforeHtlep()->fill(mass(mttbar().mttbar) / 1000,
-                _pileup_weight * _wjets_weight);
-    }
     else if (counter == _htlep_counter)
     {
         const LorentzVector &el_p4 =
@@ -524,9 +542,8 @@ void TemplateAnalyzer::didCounterAdd(const Counter *counter)
                 _pileup_weight * _wjets_weight);
 
         leptonMetDphivsMetBeforeTricut()->fill(pt(missing_energy),
-                    fabs(dphi(el_p4, missing_energy)),
+                fabs(dphi(el_p4, missing_energy)),
                 _pileup_weight * _wjets_weight);
-
     }
 }
 
@@ -609,6 +626,7 @@ void TemplateAnalyzer::process(const Event *event)
     if (_synch_selector->apply(event))
     {
         Mttbar resonance = mttbar();
+
         if (100 >= pt(resonance.ltop))
             return;
 
@@ -644,6 +662,7 @@ void TemplateAnalyzer::process(const Event *event)
                 _pileup_weight * _wjets_weight);
 
         met()->fill(pt(missing_energy), _pileup_weight * _wjets_weight);
+        metNoWeight()->fill(pt(missing_energy));
 
         htopNjetvsM()->fill(mass(resonance.htop), resonance.htop_njets,
                 _pileup_weight * _wjets_weight);
@@ -653,8 +672,30 @@ void TemplateAnalyzer::process(const Event *event)
         leptonMetDphivsMet()->fill(pt(missing_energy), fabs(dphi(el_p4, missing_energy)),
                 _pileup_weight * _wjets_weight);
 
-        fillHtlep();
+        htlep()->fill(htlepValue(), _pileup_weight * _wjets_weight);
+        htall()->fill(htallValue(), _pileup_weight * _wjets_weight);
+        htlepAfterHtlep()->fill(htlepValue(), _pileup_weight * _wjets_weight);
     }
+
+    // Process only events, that pass the synch selector with htlep inverted
+    //
+    _synch_selector->htlep()->invert();
+    if (_synch_selector->apply(event))
+    {
+        Mttbar resonance = mttbar();
+
+        // VEB HACK !!!!
+        if (pt(resonance.ltop) < 100.0)
+        {
+            _event = 0;
+            return;
+        }
+
+        htlep()->fill(htlepValue(), _pileup_weight * _wjets_weight);
+        htlepBeforeHtlep()->fill(htlepValue(), _pileup_weight * _wjets_weight);
+        mttbarBeforeHtlep()->fill(mass(mttbar().mttbar) / 1000, _pileup_weight * _wjets_weight);
+    } 
+    _synch_selector->htlep()->noinvert(); 
 
     _event = 0;
 }
@@ -740,26 +781,6 @@ void TemplateAnalyzer::fillDrVsPtrel()
                     _pileup_weight * _wjets_weight);
         }
     }
-}
-
-void TemplateAnalyzer::fillHtlep()
-{
-    if (!_event)
-    {
-        clog << "event is not available: can not fill htlep" << endl;
-
-        return;
-    }
-
-    // Note: leptons are kept in a vector of pointers
-    //
-    const LorentzVector &lepton_p4 =
-        SynchSelector::ELECTRON == _synch_selector->leptonMode()
-        ? (*_synch_selector->goodElectrons().begin())->physics_object().p4()
-        : (*_synch_selector->goodMuons().begin())->physics_object().p4();
-
-    htlep()->fill(pt(*_synch_selector->goodMET()) + pt(lepton_p4),
-            _pileup_weight * _wjets_weight);
 }
 
 TemplateAnalyzer::Mttbar TemplateAnalyzer::mttbar() const
@@ -937,6 +958,34 @@ void TemplateAnalyzer::monitorJets()
     if (2 < _synch_selector->goodJets().size())
         _third_jet->fill(*_synch_selector->goodJets()[2].corrected_p4,
                 _pileup_weight * _wjets_weight);
+}
+
+
+double TemplateAnalyzer::htlepValue() const
+{
+    // Note: leptons are kept in a vector of pointers
+    const LorentzVector &lepton_p4 =
+        SynchSelector::ELECTRON == _synch_selector->leptonMode()
+        ? (*_synch_selector->goodElectrons().begin())->physics_object().p4()
+        : (*_synch_selector->goodMuons().begin())->physics_object().p4();
+
+    return pt(*_synch_selector->goodMET()) + pt(lepton_p4);
+}
+
+
+double TemplateAnalyzer::htallValue() const
+{
+    // Computting the HT of the event
+    double htjets = 0;
+    for(
+        SynchSelector::GoodJets::const_iterator jet =
+        _synch_selector->goodJets().begin();
+        _synch_selector->goodJets().end() != jet;
+        ++jet
+    )
+        htjets += pt(*jet->corrected_p4);
+
+    return htjets + htlepValue();
 }
 
 bool TemplateAnalyzer::isBtagJet() const

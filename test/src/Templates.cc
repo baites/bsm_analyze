@@ -14,13 +14,16 @@
 
 #include <TCanvas.h>
 #include <TFile.h>
+#include <TFractionFitter.h>
 #include <TH1.h>
 #include <TH2.h>
 #include <THStack.h>
 #include <TLegend.h>
 #include <TObject.h>
+#include <TObjArray.h>
 #include <TSystem.h>
 
+#include "interface/ROOTStyles.h"
 #include "interface/Templates.h"
 
 using namespace std;
@@ -29,8 +32,12 @@ using namespace boost;
 namespace fs = boost::filesystem;
 
 Templates::Templates(const std::string &input_file,
-        const std::string &theta_scale)
-    : _input_file(input_file)
+        const std::string &theta_scale):
+    _input_file(input_file),
+    _mc_scale(1.0),
+    _mc_scale_error(0.0),
+    _qcd_scale(1.0),
+    _qcd_scale_error(0.0)
 {
     if (!theta_scale.empty())
     {
@@ -89,6 +96,8 @@ Templates::Templates(const std::string &input_file,
             }
         }
     }
+
+    setTDRStyle();
 }
 
 Templates::~Templates()
@@ -136,6 +145,8 @@ void Templates::load()
 
 void Templates::draw()
 {
+    normalize();
+
     for(Template hist_template(Template::MET), end(Template::HTOP_MT);
     //for(Template hist_template(Template::MET), end(Template::WLEP_MT);
             end >= hist_template;
@@ -215,6 +226,12 @@ void Templates::loadHistograms(TFile *file, const Input &input)
 
 void Templates::plot(const Template &plot)
 {
+    if (
+        plot == Template::MET_QCD ||
+        plot == Template::MET_QCD_NOWEIGHT
+    )
+        return;
+
     const InputPlots &input_plots = _plots[plot];
 
     Channels channel;
@@ -248,6 +265,8 @@ void Templates::plot(const Template &plot)
     if (h && _theta_scale.qcd)
         h->Scale(_theta_scale.qcd);
     channel[Channel::QCD] = h;
+
+    channel[Channel::QCD] = get(input_plots, Input::QCD_FROM_DATA);
 
     TCanvas *canvas = draw(plot, channel);
     canvas->SaveAs(("template_" + plot.repr() + ".pdf").c_str());
@@ -326,10 +345,19 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
         {
             continue;
         }
+        
+        if (Channel::QCD == channel->first)
+        {
+            channel->second->Scale(_qcd_scale);
+        }
         else
-            legend->AddEntry(channel->second,
-                    static_cast<string>(channel->first).c_str(),
-                    "fe");
+        {
+            channel->second->Scale(_mc_scale);
+        }
+
+        legend->AddEntry(channel->second,
+            static_cast<string>(channel->first).c_str(),
+            "fe");
 
         stack->Add(channel->second);
     }
@@ -440,6 +468,207 @@ TCanvas *Templates::draw2D(const Template &plot, Channels &channels)
 
     canvas->Update();
 
+    return canvas;
+}
+
+void Templates::normalize()
+{
+    Template plot(Template::MET_QCD);
+    Template uwplot(Template::MET_QCD_NOWEIGHT);
+
+    const InputPlots &input_plots = _plots[plot];
+    const InputPlots &input_plots_noweight = _plots[uwplot];
+
+    Channels channel, uwchannel;
+    channel[Channel::DATA] = get(input_plots,
+            Input::RERECO_2011A_MAY10,
+            Input::PROMPT_2011B_V1);
+
+    channel[Channel::STOP] = get(input_plots,
+            Input::STOP_S,
+            Input::SATOP_TW);
+
+    channel[Channel::WJETS] = get(input_plots, Input::WJETS);
+    channel[Channel::ZJETS] = get(input_plots, Input::ZJETS);
+    channel[Channel::TTBAR] = get(input_plots, Input::TTJETS);
+
+    channel[Channel::QCD] = get(input_plots, Input::QCD_FROM_DATA);
+
+    uwchannel[Channel::STOP] = get(input_plots_noweight,
+            Input::STOP_S,
+            Input::SATOP_TW);
+
+    uwchannel[Channel::WJETS] = get(input_plots_noweight, Input::WJETS);
+    uwchannel[Channel::ZJETS] = get(input_plots_noweight, Input::ZJETS);
+    uwchannel[Channel::TTBAR] = get(input_plots_noweight, Input::TTJETS);
+
+    TCanvas *canvas = normalize(plot, channel, uwchannel);
+    canvas->SaveAs(("template_" + plot.repr() + ".pdf").c_str());
+}
+
+TCanvas *Templates::normalize(const Template &plot, Channels &channels, Channels &uwchannels)
+{
+    ostringstream name;
+    name << "canvas" << _heap.size();
+    TCanvas *canvas = new TCanvas(name.str().c_str(), "", 800, 700);
+    _heap.push_back(canvas);
+
+    TVirtualPad *pad = canvas->cd(1);
+    pad->SetRightMargin(10);
+    pad->SetTopMargin(10);
+
+    TH1 *data = 0;
+    if (
+        channels.end() != channels.find(Channel::DATA) && 
+        channels[Channel::DATA]
+    )
+        data = channels[Channel::DATA];
+
+    TH1 *qcd = 0;
+    if (
+        channels.end() != channels.find(Channel::QCD) && 
+        channels[Channel::QCD]
+    )
+        qcd = channels[Channel::QCD];
+    
+    TH1 * mc = 0;
+    bool isclone = false;
+    
+    for(Channels::const_iterator channel = channels.begin();
+            channels.end() != channel;
+            ++channel)
+    {
+        if (!channel->second)
+        {
+            cerr << channel->first << " is not available" << endl;
+            continue;
+        }
+
+        if (
+            Channel::DATA == channel->first || 
+            Channel::QCD == channel->first
+        )
+        {
+            continue;
+        }            
+ 
+        if (!isclone)
+        {
+            mc = dynamic_cast<TH1 *>(channel->second->Clone());
+            isclone = true;
+            continue;
+        }
+        
+        mc->Add(channel->second);
+    }
+
+    TH1 *uwmc = 0;
+    isclone = false;
+
+    for(Channels::const_iterator channel = uwchannels.begin();
+            uwchannels.end() != channel;
+            ++channel)
+    {
+        if (!channel->second)
+        {
+            cerr << channel->first << " is not available" << endl;
+            continue;
+        }
+
+        if (!isclone)
+        {
+            uwmc = dynamic_cast<TH1 *>(channel->second->Clone());
+            isclone = true;
+            continue;
+        }
+
+        uwmc->Add(channel->second);
+    }
+
+    TH1 *wmc = dynamic_cast<TH1 *>(mc->Clone());
+    wmc->Divide(uwmc);
+    for(Int_t i=1; i<=wmc->GetNbinsX(); ++i)
+        if (wmc->GetBinContent(i) <= 0.0) wmc->SetBinContent(i,1.0);
+
+    TObjArray *templates = new TObjArray(2);
+    templates->Add(uwmc);
+    templates->Add(qcd);
+    
+    TFractionFitter * fitter = new TFractionFitter(data, templates);
+    fitter->SetWeight(0,wmc);
+    Int_t status = fitter->Fit();
+
+    if (status == 0)
+    {   
+        fitter->GetResult(0, _mc_scale, _mc_scale_error);
+        fitter->GetResult(1, _qcd_scale, _qcd_scale_error); 
+
+        cout << "MC  fraction: " << _mc_scale << " +- " << _mc_scale_error << endl;
+        cout << "QCD fraction: " << _qcd_scale << " +- " << _qcd_scale_error << endl;
+
+        ostringstream mclabel, qcdlabel;
+        mclabel.precision(1);
+        mclabel << fixed << "MC (" << (100*_mc_scale) << "%)";
+        qcdlabel.precision(1);
+        qcdlabel << fixed << "QCD (" << (100*_qcd_scale) << "%)";
+        
+        _mc_scale = _mc_scale*data->Integral()/mc->Integral();
+        _qcd_scale = _qcd_scale*data->Integral()/qcd->Integral();
+       
+        cout << "MC scale: " << _qcd_scale << endl; 
+        cout << "QCD scale: " << _mc_scale << endl;
+
+        data->GetXaxis()->SetLabelSize(0.04);
+        data->GetXaxis()->SetTitleOffset(1.1);
+        data->GetYaxis()->SetLabelSize(0.04);
+        data->GetYaxis()->SetTitleOffset(1.7);
+        data->SetMarkerStyle(20);
+        data->SetMarkerSize(1);
+        data->Rebin(rebin(Template::MET)/rebin(Template::MET_QCD));
+        setYaxisTitle(data, plot);
+
+        TH1 * result = (TH1*) fitter->GetPlot();
+        result->SetFillStyle(0);
+        result->SetLineWidth(2);
+        result->Rebin(rebin(Template::MET)/rebin(Template::MET_QCD));
+
+        float maxy = max(
+            data->GetBinContent(data->GetMaximumBin()),
+            result->GetBinContent(result->GetMaximumBin())
+        );
+        data->GetYaxis()->SetRangeUser(0, maxy * 1.2);
+        data->Draw("9");
+        result->Draw("9 same");
+        
+        qcd->SetFillStyle(0);
+        qcd->SetLineWidth(2);
+        qcd->SetLineColor(kBlue);
+        qcd->SetLineStyle(2);
+        qcd->Scale(_qcd_scale);
+        qcd->Rebin(rebin(Template::MET)/rebin(Template::MET_QCD));       
+        qcd->Draw("9 histsame");
+        
+        mc->SetFillStyle(0);
+        mc->SetLineWidth(2);
+        mc->SetLineColor(kRed);
+        mc->SetLineStyle(3);
+        mc->Scale(_mc_scale);
+        mc->Rebin(rebin(Template::MET)/rebin(Template::MET_QCD));
+        mc->Draw("9 histsame");
+        
+        data->Draw("9 sameEp");
+
+        cmsLegend();
+        
+        TLegend *legend = createLegend();
+
+        legend->AddEntry(data, "Data", "pe");
+        legend->AddEntry(result, "Fit", "l");
+        legend->AddEntry(mc, mclabel.str().c_str(), "l");
+        legend->AddEntry(qcd, qcdlabel.str().c_str(), "l");
+        legend->Draw();
+    }
+    
     return canvas;
 }
 
@@ -563,6 +792,8 @@ int Templates::rebin(const Template &plot) const
     switch(plot.type())
     {
         case Template::MET: return 25;
+        case Template::MET_QCD: return 5;
+        case Template::MET_QCD_NOWEIGHT: return 5;
         case Template::HTLEP: return 25;
         case Template::NPV: return 1;
         case Template::NPV_NO_PU: return 1;
@@ -610,7 +841,7 @@ Templates::Rebin Templates::rebin2D(const Template &plot) const
 void Templates::setYaxisTitle(TH1 *h, const Template &plot)
 {
     ostringstream title;
-    title.precision(0);
+    title.precision(1);
 
     title << "event yield";
     if (1 < rebin(plot))

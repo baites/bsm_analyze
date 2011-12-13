@@ -92,6 +92,16 @@ class Templates
         const std::string _input_file;
 
         ThetaScale _theta_scale;
+
+        // QCD and MC normalization from data
+        //
+        double _mc_scale;
+        double _mc_scale_error;
+        double _qcd_scale;
+        double _qcd_scale_error;
+
+        void normalize(); 
+        TCanvas *normalize(const Template &, Channels &, Channels &);
 };
 
 std::ostream &operator <<(std::ostream &, const Templates::ThetaScale &);

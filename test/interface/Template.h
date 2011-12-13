@@ -15,6 +15,8 @@ class Template
         enum Type
         {
             MET = 0,
+            MET_QCD,
+            MET_QCD_NOWEIGHT,
             HTLEP,
             NPV,
             NPV_NO_PU,

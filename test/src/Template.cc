@@ -14,6 +14,8 @@ Template::operator string() const
     switch(type())
     {
         case MET: return "met";
+        case MET_QCD: return "met";
+        case MET_QCD_NOWEIGHT: return "met_noweight";
         case HTLEP: return "htlep";
         case NPV: return "npv_with_pileup";
         case NPV_NO_PU: return "npv";
@@ -54,6 +56,8 @@ string Template::repr() const
     switch(type())
     {
         case MET: return "met";
+        case MET_QCD: return "met_norm";
+        case MET_QCD_NOWEIGHT: return "met_noweight";
         case HTLEP: return "htlep";
         case NPV: return "npv_with_pileup";
         case NPV_NO_PU: return "npv_no_pileup";
@@ -110,7 +114,9 @@ string Template::unit() const
     switch(type())
     {
         case MET: return "GeV/c";
-        case HTLEP: return "GeV/c";
+        case MET_QCD: return "GeV/c";
+        case MET_QCD_NOWEIGHT: return "GeV/c";
+        case HTLEP: return "GeV";
         case NPV: return "";
         case NPV_NO_PU: return "";
         case NJET: return "";

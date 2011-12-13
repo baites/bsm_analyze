@@ -217,6 +217,7 @@ void scale(TH1 *h, const Input &input)
         case Input::PROMPT_2011A_V4: // Fall through
         case Input::PROMPT_2011A_V6: // Fall through
         case Input::PROMPT_2011B_V1: // Do nothing
+        case Input::QCD_FROM_DATA:
             return;
 
         default:
@@ -227,7 +228,7 @@ void scale(TH1 *h, const Input &input)
             }
     }
 
-    h->Scale(scale * luminosity());
+    h->Scale(scale * luminosity() * triggerSF());
 }
 
 std::string folder(const Input &input)
@@ -242,6 +243,7 @@ std::string folder(const Input &input)
         case Input::QCD_EM_PT20_30: return "qcd_em_pt20to30";
         case Input::QCD_EM_PT30_80: return "qcd_em_pt30to80";
         case Input::QCD_EM_PT80_170: return "qcd_em_pt80to170";
+        case Input::QCD_FROM_DATA: return "qcd_from_data";
         case Input::TTJETS: return "ttjets";
         case Input::TTJETS_MATCHING_UP: return "ttjets_matchingup";
         case Input::TTJETS_MATCHING_DOWN: return "ttjets_matchingdown";
@@ -314,6 +316,11 @@ void style(TH1 *hist, const Input &input, const int &systematic)
         case Input::QCD_EM_PT80_170:
             {
                 color = kOrange;
+                break;
+            }
+        case Input::QCD_FROM_DATA:
+            {
+                color = kOrange+3;
                 break;
             }
         case Input::STOP_S:
@@ -432,4 +439,9 @@ float luminosity()
 {
     return 4328.472;
     //return 4.061545;
+}
+
+float triggerSF()
+{
+    return 0.96;
 }

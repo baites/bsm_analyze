@@ -135,7 +135,7 @@ void normalize(TH1 *hist)
 
 TLegend *createLegend(const string &text)
 {
-    TLegend *legend = new TLegend( .5, .5, .8, .9);
+    TLegend *legend = new TLegend( .5, .5, .8, .88);
     if (!text.empty())
         legend->SetHeader(text.c_str());
 
@@ -227,23 +227,23 @@ TFile *open(const string &filename)
     return in;
 }
 
-void loadFiles()
+void loadFiles(const string & dir1, const string & dir2)
 {
     for(int i = 0; QCD_CHANNELS > i; ++i)
     {
-        TFile *file = open(folder[i] + "/output_s1_p250_hlt.root");
+        TFile *file = open(dir2 + "/" + folder[i] + ".root");
         if (!file)
             return;
 
         input_s1[i] = file;
 
-        file = open(folder[i] + "/output_s2_p250_hlt.root");
+        /*file = open(dir2 + "/" + folder[i] + ".root");
         if (!file)
             return;
 
-        input_s2[i] = file;
+        input_s2[i] = file;*/
 
-        file = open(folder[i] + "/output_signal_p250_hlt.root");
+        file = open(dir1 + "/" + folder[i] + ".root");
         if (!file)
             return;
 
@@ -254,71 +254,78 @@ void loadFiles()
 void plotQCDTemplates()
 {
     TH1 *htlep_s1 = merge(input_s1, "htlep", 0, QCD_CHANNELS);
-    TH1 *htlep_s2 = merge(input_s2, "htlep", 0, QCD_CHANNELS);
+    // TH1 *htlep_s2 = merge(input_s2, "htlep", 0, QCD_CHANNELS);
     TH1 *htlep_signal = merge(input_signal, "htlep", 0, QCD_CHANNELS);
 
+    htlep_s1->Rebin(20);
+    // mttbar_before_htlep_s2->Rebin(20);
+    htlep_signal->Rebin(20);
+
     normalize(htlep_s1);
-    normalize(htlep_s2);
+    // normalize(htlep_s2);
     normalize(htlep_signal);
 
     string canvas_title = "QCD Templates (jet pT > 50 GeV/c)";
     TCanvas *canvas = new TCanvas();
     canvas->SetTitle(canvas_title.c_str());
     canvas->SetWindowSize(1200, 480);
-    canvas->Divide(3);
+    canvas->Divide(2);
 
     canvas->cd(1);
     htlep_s1->SetLineColor(kYellow + 1);
     htlep_s1->SetMarkerColor(kYellow + 1);
+    htlep_s1->SetLineWidth(2);
     
-    htlep_s2->SetLineColor(2);
-    htlep_s2->SetMarkerColor(2);
+    //htlep_s2->SetLineColor(2);
+    //htlep_s2->SetMarkerColor(2);
 
     htlep_signal->SetLineColor(1);
     htlep_signal->SetMarkerColor(1);
+    htlep_signal->SetLineWidth(2);
 
     THStack *stack = new THStack();
     stack->Add(htlep_s1);
-    stack->Add(htlep_s2);
+    //stack->Add(htlep_s2);
     stack->Add(htlep_signal);
 
+    stack->SetMaximum(0.5);
     stack->Draw("nostack");
     stack->GetHistogram()->GetXaxis()->SetTitle("H_{T}^{lep} [GeV]");
 
-    TLegend *legend = createLegend(" ");
-    legend->AddEntry(htlep_s1, "s1", "lpe");
-    legend->AddEntry(htlep_s2, "s2", "lpe");
-    legend->AddEntry(htlep_signal, "signal", "lpe");
+    TLegend *legend = createLegend("Trigcut");
+    legend->AddEntry(htlep_s1, "No pass", "l");
+    //legend->AddEntry(htlep_s2, "s2", "lpe");
+    legend->AddEntry(htlep_signal, "Pass", "l");
     legend->Draw();
 
-    TH1 *mttbar_before_htlep_s1 =
+    /*TH1 *mttbar_before_htlep_s1 =
         merge(input_s1, "mttbar_before_htlep", 0, QCD_CHANNELS);
-    TH1 *mttbar_before_htlep_s2 =
-        merge(input_s2, "mttbar_before_htlep", 0, QCD_CHANNELS);
+    // TH1 *mttbar_before_htlep_s2 =
+    //    merge(input_s2, "mttbar_before_htlep", 0, QCD_CHANNELS);
     TH1 *mttbar_before_htlep_signal =
         merge(input_signal, "mttbar_before_htlep", 0, QCD_CHANNELS);
 
-    mttbar_before_htlep_s1->Rebin(20);
-    mttbar_before_htlep_s2->Rebin(20);
-    mttbar_before_htlep_signal->Rebin(20);
+    mttbar_before_htlep_s1->Rebin(100);
+    // mttbar_before_htlep_s2->Rebin(20);
+    mttbar_before_htlep_signal->Rebin(100);
 
     normalize(mttbar_before_htlep_s1);
-    normalize(mttbar_before_htlep_s2);
+    // normalize(mttbar_before_htlep_s2);
     normalize(mttbar_before_htlep_signal);
 
     canvas->cd(2);
     mttbar_before_htlep_s1->SetLineColor(kYellow + 1);
     mttbar_before_htlep_s1->SetMarkerColor(kYellow + 1);
     
-    mttbar_before_htlep_s2->SetLineColor(2);
-    mttbar_before_htlep_s2->SetMarkerColor(2);
+    // mttbar_before_htlep_s2->SetLineColor(2);
+    // mttbar_before_htlep_s2->SetMarkerColor(2);
 
     mttbar_before_htlep_signal->SetLineColor(1);
     mttbar_before_htlep_signal->SetMarkerColor(1);
 
     stack = new THStack();
     stack->Add(mttbar_before_htlep_s1);
-    stack->Add(mttbar_before_htlep_s2);
+    // stack->Add(mttbar_before_htlep_s2);
     stack->Add(mttbar_before_htlep_signal);
 
     stack->Draw("nostack");
@@ -326,51 +333,54 @@ void plotQCDTemplates()
 
     legend = createLegend("before H_{T}^{lep}");
     legend->AddEntry(mttbar_before_htlep_s1, "s1", "lpe");
-    legend->AddEntry(mttbar_before_htlep_s2, "s2", "lpe");
+    // legend->AddEntry(mttbar_before_htlep_s2, "s2", "lpe");
     legend->AddEntry(mttbar_before_htlep_signal, "signal", "lpe");
-    legend->Draw();
+    legend->Draw();*/
 
     TH1 *mttbar_after_htlep_s1 =
         merge(input_s1, "mttbar_after_htlep", 0, QCD_CHANNELS);
-    TH1 *mttbar_after_htlep_s2 =
-        merge(input_s2, "mttbar_after_htlep", 0, QCD_CHANNELS);
+    // TH1 *mttbar_after_htlep_s2 =
+    //    merge(input_s2, "mttbar_after_htlep", 0, QCD_CHANNELS);
     TH1 *mttbar_after_htlep_signal =
         merge(input_signal, "mttbar_after_htlep", 0, QCD_CHANNELS);
 
-    mttbar_after_htlep_s1->Rebin(40);
-    mttbar_after_htlep_s2->Rebin(40);
-    mttbar_after_htlep_signal->Rebin(40);
+    mttbar_after_htlep_s1->Rebin(100);
+    //mttbar_after_htlep_s2->Rebin(40);
+    mttbar_after_htlep_signal->Rebin(100);
 
     normalize(mttbar_after_htlep_s1);
-    normalize(mttbar_after_htlep_s2);
+    //normalize(mttbar_after_htlep_s2);
     normalize(mttbar_after_htlep_signal);
 
-    canvas->cd(3);
+    canvas->cd(2);
     mttbar_after_htlep_s1->SetLineColor(kYellow + 1);
     mttbar_after_htlep_s1->SetMarkerColor(kYellow + 1);
-    
-    mttbar_after_htlep_s2->SetLineColor(2);
-    mttbar_after_htlep_s2->SetMarkerColor(2);
+    mttbar_after_htlep_s1->SetLineWidth(2);    
+
+    // mttbar_after_htlep_s2->SetLineColor(2);
+    // mttbar_after_htlep_s2->SetMarkerColor(2);
 
     mttbar_after_htlep_signal->SetLineColor(1);
     mttbar_after_htlep_signal->SetMarkerColor(1);
+    mttbar_after_htlep_signal->SetLineWidth(2);
 
     stack = new THStack();
-    stack->Add(mttbar_after_htlep_s1);
-    stack->Add(mttbar_after_htlep_s2);
     stack->Add(mttbar_after_htlep_signal);
+    stack->Add(mttbar_after_htlep_s1);
+    // stack->Add(mttbar_after_htlep_s2);
 
+    stack->SetMaximum(0.4);
     stack->Draw("nostack");
     stack->GetHistogram()->GetXaxis()->SetTitle("M_{t#bar{t}} [GeV/c^{2}]");
 
-    legend = createLegend("after H_{T}^{lep}");
-    legend->AddEntry(mttbar_after_htlep_s1, "s1", "lpe");
-    legend->AddEntry(mttbar_after_htlep_s2, "s2", "lpe");
-    legend->AddEntry(mttbar_after_htlep_signal, "signal", "lpe");
+    legend = createLegend("Trigcut");
+    legend->AddEntry(mttbar_after_htlep_s1, "No pass", "l");
+    // legend->AddEntry(mttbar_after_htlep_s2, "s2", "lpe");
+    legend->AddEntry(mttbar_after_htlep_signal, "Pass", "l");
     legend->Draw();
 }
 
-void plotQCD(TFile **input, const string &hist, const string &axis_title, const string &title, const int rebin = 0)
+void plotQCD(TFile **input, const string &hist, const string &axis_title, const string &title, const int rebin = 8)
 {
     TH1 *qcd_bc_pt20_30 = get(input[QCD_BC_PT20_30], hist, QCD_BC_PT20_30);
     TH1 *qcd_bc_pt30_80 = get(input[QCD_BC_PT30_80], hist, QCD_BC_PT30_80);
@@ -432,16 +442,17 @@ void plotQCDComparisonInRegion(TFile **input, const string &title)
 void plotQCDComparison()
 {
     plotQCDComparisonInRegion(input_s1, "sideband 1");
-    plotQCDComparisonInRegion(input_s2, "sideband 2");
+    // plotQCDComparisonInRegion(input_s2, "sideband 2");
     plotQCDComparisonInRegion(input_signal, "signal");
 }
 
-void qcd_templates()
+void qcd_templates(const string & dir1, const string & dir2)
 {
+    gROOT->SetStyle("Plain");
     TGaxis::SetMaxDigits(3);
 
-    loadFiles();
+    loadFiles(dir1, dir2);
 
-    plotQCDComparison();
+    // plotQCDComparison();
     plotQCDTemplates();
 }
