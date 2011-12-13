@@ -684,16 +684,12 @@ void TemplateAnalyzer::process(const Event *event)
     {
         Mttbar resonance = mttbar();
 
-        // VEB HACK !!!!
-        if (pt(resonance.ltop) < 100.0)
+        if (pt(resonance.ltop) >= 100.0)
         {
-            _event = 0;
-            return;
+            htlep()->fill(htlepValue(), _pileup_weight * _wjets_weight);
+            htlepBeforeHtlep()->fill(htlepValue(), _pileup_weight * _wjets_weight);
+            mttbarBeforeHtlep()->fill(mass(mttbar().mttbar) / 1000, _pileup_weight * _wjets_weight);
         }
-
-        htlep()->fill(htlepValue(), _pileup_weight * _wjets_weight);
-        htlepBeforeHtlep()->fill(htlepValue(), _pileup_weight * _wjets_weight);
-        mttbarBeforeHtlep()->fill(mass(mttbar().mttbar) / 1000, _pileup_weight * _wjets_weight);
     } 
     _synch_selector->htlep()->noinvert(); 
 
