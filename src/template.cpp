@@ -180,6 +180,20 @@ int main(int argc, char *argv[])
             met_noweight->GetXaxis()->SetTitleSize(0.045);
             met_noweight->SetMarkerSize(0.1);
 
+            TH2Ptr ljet_met_dphi_vs_met_before_tricut = convert(*analyzer->ljetMetDphivsMetBeforeTricut());
+            ljet_met_dphi_vs_met_before_tricut->SetName("ljet_met_dphi_vs_met_before_tricut");
+            ljet_met_dphi_vs_met_before_tricut->GetXaxis()->SetTitle("MET [GeV/c]");
+            ljet_met_dphi_vs_met_before_tricut->GetXaxis()->SetTitleSize(0.045);
+            ljet_met_dphi_vs_met_before_tricut->GetYaxis()->SetTitle("#Delta #phi(jet1, MET)) [rad]");
+            ljet_met_dphi_vs_met_before_tricut->GetYaxis()->SetTitleSize(0.045);
+
+            TH2Ptr lepton_met_dphi_vs_met_before_tricut = convert(*analyzer->leptonMetDphivsMetBeforeTricut());
+            lepton_met_dphi_vs_met_before_tricut->SetName("lepton_met_dphi_vs_met_before_tricut");
+            lepton_met_dphi_vs_met_before_tricut->GetXaxis()->SetTitle("MET [GeV/c]");
+            lepton_met_dphi_vs_met_before_tricut->GetXaxis()->SetTitleSize(0.045);
+            lepton_met_dphi_vs_met_before_tricut->GetYaxis()->SetTitle("#Delta #phi(e, MET)) [rad]");
+            lepton_met_dphi_vs_met_before_tricut->GetYaxis()->SetTitleSize(0.045);
+
             TH2Ptr ljet_met_dphi_vs_met = convert(*analyzer->ljetMetDphivsMet());
             ljet_met_dphi_vs_met->SetName("ljet_met_dphi_vs_met");
             ljet_met_dphi_vs_met->GetXaxis()->SetTitle("MET [GeV/c]");
@@ -212,6 +226,7 @@ int main(int argc, char *argv[])
             shared_ptr<P4Canvas> second_jet(new P4Canvas("Second jet", "jet2"));
             shared_ptr<P4Canvas> third_jet(new P4Canvas("Third jet", "jet3"));
             shared_ptr<P4Canvas> electron(new P4Canvas("Electron", "e"));
+            shared_ptr<P4Canvas> electron_before_tricut(new P4Canvas("Electron Before Tricut", "e_no_tricut"));
 
             shared_ptr<P4Canvas> ltop(new P4Canvas("ltop", "ltop"));
             shared_ptr<P4Canvas> htop(new P4Canvas("htop", "htop"));
@@ -238,6 +253,8 @@ int main(int argc, char *argv[])
                 met->Write();
                 met_noweight->Write();
 
+                ljet_met_dphi_vs_met_before_tricut->Write();
+                lepton_met_dphi_vs_met_before_tricut->Write();
                 ljet_met_dphi_vs_met->Write();
                 lepton_met_dphi_vs_met->Write();
                 htop_njet_vs_m->Write();
@@ -248,6 +265,8 @@ int main(int argc, char *argv[])
                 third_jet->write(app->output().get(), *analyzer->thirdJet());
 
                 electron->write(app->output().get(), *analyzer->electron());
+                electron_before_tricut->write(app->output().get(),
+                        *analyzer->electronBeforeTricut());
 
                 ltop->write(app->output().get(), *analyzer->ltop());
                 htop->write(app->output().get(), *analyzer->htop());
@@ -316,6 +335,7 @@ int main(int argc, char *argv[])
                 third_jet->draw(*analyzer->thirdJet());
 
                 electron->draw(*analyzer->electron());
+                electron_before_tricut->draw(*analyzer->electronBeforeTricut());
 
                 ltop->draw(*analyzer->ltop());
                 htop->draw(*analyzer->htop());

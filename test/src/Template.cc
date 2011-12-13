@@ -14,6 +14,8 @@ Template::operator string() const
     switch(type())
     {
         case MET: return "met";
+        case MET_QCD: return "met";
+        case MET_QCD_NOWEIGHT: return "met_noweight";
         case HTLEP: return "htlep";
         case NPV: return "npv_with_pileup";
         case NJET: return "njets";
@@ -37,6 +39,10 @@ Template::operator string() const
         case HTOP_ETA: return "htop/eta";
         case HTOP_MASS: return "htop/mass";
         case HTOP_MT: return "htop/mt";
+        case DPHI_ELECTRON_VS_MET: return "lepton_met_dphi_vs_met";
+        case DPHI_JET_VS_MET: return "ljet_met_dphi_vs_met";
+        case DPHI_ELECTRON_VS_MET_BEFORE_TRICUT: return "lepton_met_dphi_vs_met_before_tricut";
+        case DPHI_JET_VS_MET_BEFORE_TRICUT: return "ljet_met_dphi_vs_met_before_tricut";
 
         default: return "unknown";
     }
@@ -47,6 +53,8 @@ string Template::repr() const
     switch(type())
     {
         case MET: return "met";
+        case MET_QCD: return "met_norm";
+        case MET_QCD_NOWEIGHT: return "met_noweight";
         case HTLEP: return "htlep";
         case NPV: return "npv_with_pileup";
         case NJET: return "njets";
@@ -70,6 +78,10 @@ string Template::repr() const
         case HTOP_ETA: return "htop_eta";
         case HTOP_MASS: return "htop_mass";
         case HTOP_MT: return "htop_mt";
+        case DPHI_ELECTRON_VS_MET: return "lepton_met_dphi_vs_met";
+        case DPHI_JET_VS_MET: return "ljet_met_dphi_vs_met";
+        case DPHI_ELECTRON_VS_MET_BEFORE_TRICUT: return "lepton_met_dphi_vs_met_before_tricut";
+        case DPHI_JET_VS_MET_BEFORE_TRICUT: return "ljet_met_dphi_vs_met_before_tricut";
         
         default: return "unknown";
     }
@@ -77,7 +89,7 @@ string Template::repr() const
 
 Template &Template::operator ++()
 {
-    if (HTOP_MT != type());
+    if (DPHI_JET_VS_MET_BEFORE_TRICUT != type());
         _type = Type(static_cast<int>(type()) + 1);
 
     return *this;
@@ -95,7 +107,9 @@ string Template::unit() const
 {
     switch(type())
     {
-        case MET: return "GeV/c^{2}";
+        case MET: return "GeV/c";
+        case MET_QCD: return "GeV/c";
+        case MET_QCD_NOWEIGHT: return "GeV/c";
         case HTLEP: return "GeV";
         case NPV: return "";
         case NJET: return "";
@@ -119,6 +133,10 @@ string Template::unit() const
         case HTOP_ETA: return "";
         case HTOP_MASS: return "GeV/c^{2}";
         case HTOP_MT: return "GeV/c^{2}";
+        case DPHI_ELECTRON_VS_MET: return "";
+        case DPHI_JET_VS_MET: return "";
+        case DPHI_ELECTRON_VS_MET_BEFORE_TRICUT: return "";
+        case DPHI_JET_VS_MET_BEFORE_TRICUT: return "";
 
         default: return "";
     }

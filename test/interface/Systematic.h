@@ -6,6 +6,7 @@
 #ifndef BSM_ROOT_SYSTEMATIC
 #define BSM_ROOT_SYSTEMATIC
 
+#include <string>
 #include <vector>
 
 class TCanvas;
@@ -17,8 +18,13 @@ class Input;
 class Systematic
 {
     public:
-        Systematic() {}
+        Systematic(const std::string &file_mask): _file_mask(file_mask)
+        {
+        }
+
         virtual ~Systematic();
+
+        std::string file_mask() const;
 
         TCanvas *draw(const Input &input,
                 TH1 *central,
@@ -31,6 +37,7 @@ class Systematic
         typedef std::vector<TObject *> Heap;
 
         Heap _heap;
+        std::string _file_mask;
 };
 
 #endif

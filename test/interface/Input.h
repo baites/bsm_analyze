@@ -20,6 +20,7 @@ class Input
             QCD_EM_PT20_30,
             QCD_EM_PT30_80,
             QCD_EM_PT80_170,
+            QCD_FROM_DATA,
             TTJETS,
             TTJETS_SCALE_UP,
             TTJETS_SCALE_DOWN,

@@ -9,6 +9,7 @@
 #include <map>
 #include <string>
 #include <vector>
+#include <utility>
 
 #include "interface/Input.h"
 #include "interface/Channel.h"
@@ -23,8 +24,10 @@ class TObject;
 class Templates
 {
     public:
-        Templates();
+        Templates(const std::string &input_file);
         ~Templates();
+
+        std::string input_file() const;
 
         void load();
         void draw();
@@ -45,11 +48,14 @@ class Templates
         //
         typedef std::vector<TObject *> Heap;
 
+        typedef std::pair<int, int> Rebin;
+
         // Load histograms from given file
         //
         void loadHistograms(TFile *, const Input &);
 
         void plot(const Template &type);
+        void plot2D(const Template &type);
 
         TH1 *get(const InputPlots &plots,
                 const Input::Type &from,
@@ -62,14 +68,29 @@ class Templates
                 const float &chi2);
 
         int rebin(const Template &) const;
+        Rebin rebin2D(const Template &) const;
 
         TCanvas *draw(const Template &, Channels &);
+        TCanvas *draw2D(const Template &, Channels &);
         void style(TH1 *, const Input &);
 
         void setYaxisTitle(TH1 *h, const Template &plot);
 
         Heap _heap;
         Plots _plots;
+
+        const std::string _input_file;
+
+        // QCD and MC normalization from data
+        //
+        double _mc_scale;
+        double _mc_scale_error;
+        double _qcd_scale;
+        double _qcd_scale_error;
+
+        void normalize(); 
+        TCanvas *normalize(const Template &, Channels &, Channels &);
+
 };
 
 #endif

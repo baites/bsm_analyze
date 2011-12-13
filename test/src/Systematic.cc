@@ -27,6 +27,11 @@ Systematic::~Systematic()
     }
 }
 
+string Systematic::file_mask() const
+{
+    return _file_mask;
+}
+
 TCanvas *Systematic::draw(const Input &input,
         TH1 *central,
         TH1 *plus,

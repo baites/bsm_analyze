@@ -139,8 +139,11 @@ namespace bsm
             const H1Ptr met() const;
             const H1Ptr metNoWeight() const;
 
+            const H2Ptr ljetMetDphivsMetBeforeTricut() const;
+            const H2Ptr leptonMetDphivsMetBeforeTricut() const;
             const H2Ptr ljetMetDphivsMet() const;
             const H2Ptr leptonMetDphivsMet() const;
+
             const H2Ptr htopNjetvsM() const;
             const H2Ptr htopPtvsM() const;
 
@@ -148,6 +151,7 @@ namespace bsm
             const P4MonitorPtr secondJet() const;
             const P4MonitorPtr thirdJet() const;
             const P4MonitorPtr electron() const;
+            const P4MonitorPtr electronBeforeTricut() const;
 
             const P4MonitorPtr ltop() const;
             const P4MonitorPtr htop() const;
@@ -233,8 +237,11 @@ namespace bsm
             H1ProxyPtr _met;
             H1ProxyPtr _met_noweight;
 
+            H2ProxyPtr _ljet_met_dphi_vs_met_before_tricut;
+            H2ProxyPtr _lepton_met_dphi_vs_met_before_tricut;
             H2ProxyPtr _ljet_met_dphi_vs_met;
             H2ProxyPtr _lepton_met_dphi_vs_met;
+
             H2ProxyPtr _htop_njet_vs_m;
             H2ProxyPtr _htop_pt_vs_m;
 
@@ -242,6 +249,7 @@ namespace bsm
 
             Counter *_secondary_lepton_counter;
             Counter *_leading_jet_counter;
+            Counter *_htlep_counter;
 
             typedef std::vector<uint64_t> Triggers;
             Triggers _triggers; // hashes of triggers to be passed
@@ -258,6 +266,7 @@ namespace bsm
             P4MonitorPtr _second_jet;
             P4MonitorPtr _third_jet;
             P4MonitorPtr _electron;
+            P4MonitorPtr _electron_before_tricut;
 
             P4MonitorPtr _ltop;
             P4MonitorPtr _htop;

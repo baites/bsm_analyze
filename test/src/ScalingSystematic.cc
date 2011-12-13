@@ -116,7 +116,7 @@ TH1 *ScalingSystematic::loadPlot(const Input &input, const string &suffix, Plots
 {
     FileStat_t buf;
 
-    string filename = folder(input) + "/output_signal_p250_hlt" + suffix + ".root";
+    string filename = folder(input) + "/" + file_mask() + suffix + ".root";
     if (gSystem->GetPathInfo(filename.c_str(), buf))
     {
         cerr << "skip file: " << filename << endl;

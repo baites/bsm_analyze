@@ -13,7 +13,9 @@ class TH1;
 class MatchingSystematic: public Systematic
 {
     public:
-        MatchingSystematic(): _plotname("mttbar_after_htlep")
+        MatchingSystematic(const std::string &file_mask):
+            Systematic(file_mask),
+            _plotname("mttbar_after_htlep")
         {
         }
 

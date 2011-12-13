@@ -1,4 +1,6 @@
-float luminosity = 4061.545;
+//float luminosity = 4061.545;
+float luminosity = 4328.472;
+string file_mask = "output_signal_p250_hlt";
 
 enum Systematic
 {
@@ -101,7 +103,7 @@ string folder(const InputType &input)
 
 string filename()
 {
-    string name = "/output_signal_p250_hlt";
+    string name = "/" + file_mask;
     switch(systematic)
     {
         case PILEUP_PLUS:
@@ -488,6 +490,11 @@ void loadFiles()
 
     for(int i = 0; CHANNELS > i; ++i)
     {
+        // SKIP QCD
+        //
+        if (QCD_EM_PT80_170 >= i)
+            continue;
+
         string file_name = folder(i) + filename();
         if (gSystem->GetPathInfo(file_name.c_str(), buf))
         {
@@ -509,25 +516,36 @@ void save(const string &plot_name, const string &destination)
     scale(hist, TTJETS);
     hist->Write(("el_" + destination + "__ttbar").c_str());
 
+    TH1 *mc = (TH1 *) hist->Clone();
+
     hist = get(input[ZJETS], plot_name.c_str(), ZJETS);
     scale(hist, ZJETS);
     hist->Write(("el_" + destination + "__zjets").c_str());
+    mc->Add(hist);
 
     hist = get(input[WJETS], plot_name.c_str(), WJETS);
     scale(hist, WJETS);
     hist->Write(("el_" + destination + "__wjets").c_str());
+    mc->Add(hist);
     
     hist = merge(input, plot_name.c_str(), STOP_S, STOP_S + STOP_CHANNELS);
     hist->Write(("el_" + destination + "__singletop").c_str());
+    mc->Add(hist);
 
+    /*
     hist = merge(input, plot_name.c_str(), 0, QCD_CHANNELS);
     hist->Write(("el_" + destination + "__eleqcd").c_str());
+    */
 
     hist = merge(input,
             plot_name.c_str(),
             RERECO_2011A_MAY10,
             RERECO_2011A_MAY10 + SIGNAL_CHANNELS);
     hist->Write(("el_" + destination + "__DATA").c_str());
+
+    TH1 *data = (TH1 *) hist->Clone();
+    data->Add(mc, -1);
+    cout << "Integral(Data - MC): " << data->Integral() << endl;
 
     hist = get(input[ZPRIME1000], plot_name.c_str(), ZPRIME1000);
     scale(hist, ZPRIME1000);
@@ -611,8 +629,10 @@ void saveSystematics(const string &plot_name, const string &destination)
         hist = merge(input, plot_name.c_str(), STOP_S, STOP_S + STOP_CHANNELS);
         hist->Write(("el_" + destination + "__singletop"+ suffix).c_str());
 
+        /*
         hist = merge(input, plot_name.c_str(), 0, QCD_CHANNELS);
         hist->Write(("el_" + destination + "__eleqcd"+ suffix).c_str());
+        */
 
         hist = get(input[ZPRIME1000], plot_name.c_str(), ZPRIME1000);
         scale(hist, ZPRIME1000);
@@ -636,8 +656,11 @@ void saveSystematics(const string &plot_name, const string &destination)
     }
 }
 
-void theta_input()
+void theta_input(const string &mask = "")
 {
+    if (!mask.empty())
+        file_mask = mask;
+
     TGaxis::SetMaxDigits(3);
     gStyle->SetOptStat(kFALSE);
 

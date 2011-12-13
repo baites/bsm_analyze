@@ -18,7 +18,9 @@ class TH1;
 class ScalingSystematic: public Systematic
 {
     public:
-        ScalingSystematic(): _plotname("mttbar_after_htlep")
+        ScalingSystematic(const std::string &file_mask):
+            Systematic(file_mask),
+            _plotname("mttbar_after_htlep")
         {
         }
 

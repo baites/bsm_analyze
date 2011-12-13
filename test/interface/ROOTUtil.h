@@ -26,4 +26,8 @@ std::string folder(const Input &input);
 //
 void style(TH1 *hist, const Input &input, const int &systematic = 0);
 
+float luminosity();
+
+float triggerSF();
+
 #endif
