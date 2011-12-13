@@ -27,6 +27,15 @@ class Templates
     public:
         struct ThetaScale
         {
+            ThetaScale():
+                wjets(0),
+                zjets(0),
+                stop(0),
+                ttjets(0),
+                qcd(0)
+            {
+            }
+
             float wjets;
             float zjets;
             float stop;
