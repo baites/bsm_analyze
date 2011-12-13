@@ -19,11 +19,11 @@ try
     shared_ptr<TRint> root(new TRint("root", &empty_argc, empty_argv));
 
     shared_ptr<Templates> templates(new Templates(1 < argc
-                ? argv[1]
-                : "output_signal_p250_hlt.root",
+                    ? argv[1]
+                    : "output_signal_p250_hlt.root",
                 2 < argc
-                ? argv[2]
-                : ""));
+                    ? argv[2]
+                    : ""));
     templates->load();
 
     templates->draw();
