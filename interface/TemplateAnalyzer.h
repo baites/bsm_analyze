@@ -205,8 +205,8 @@ namespace bsm
             Mttbar mttbar() const;
             void monitorJets();
 
-            double htlepValue() const;
-            double htallValue() const;
+            float htlepValue() const;
+            float htallValue() const;
 
             bool isGoodLepton() const;
             bool isBtagJet() const;

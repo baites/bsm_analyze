@@ -961,7 +961,7 @@ void TemplateAnalyzer::monitorJets()
 }
 
 
-double TemplateAnalyzer::htlepValue() const
+float TemplateAnalyzer::htlepValue() const
 {
     // Note: leptons are kept in a vector of pointers
     const LorentzVector &lepton_p4 =
@@ -973,10 +973,10 @@ double TemplateAnalyzer::htlepValue() const
 }
 
 
-double TemplateAnalyzer::htallValue() const
+float TemplateAnalyzer::htallValue() const
 {
     // Computting the HT of the event
-    double htjets = 0;
+    float htjets = 0;
     for(
         SynchSelector::GoodJets::const_iterator jet =
         _synch_selector->goodJets().begin();
