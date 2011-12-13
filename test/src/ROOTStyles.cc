@@ -1,10 +1,9 @@
-
+#include <TColor.h>
 #include <TStyle.h>
 
 #include "interface/ROOTStyles.h"
 
-void setTDRStyle() 
-{
+void setTDRStyle() {
     TStyle *tdrStyle = new TStyle("tdrStyle","Style for P-TDR");
 
     // For the canvas:
@@ -12,7 +11,7 @@ void setTDRStyle()
     tdrStyle->SetCanvasColor(kWhite);
     tdrStyle->SetCanvasDefH(600); //Height of canvas
     tdrStyle->SetCanvasDefW(600); //Width of canvas
-    tdrStyle->SetCanvasDefX(0); //POsition on screen
+    tdrStyle->SetCanvasDefX(0);   //POsition on screen
     tdrStyle->SetCanvasDefY(0);
 
     // For the Pad:
@@ -34,14 +33,14 @@ void setTDRStyle()
     tdrStyle->SetFrameLineWidth(1);
 
     // For the histo:
-    /*tdrStyle->SetHistLineColor(1);
+    tdrStyle->SetHistLineColor(1);
     tdrStyle->SetHistLineStyle(0);
     tdrStyle->SetHistLineWidth(1);
 
     tdrStyle->SetEndErrorSize(2);
-    tdrStyle->SetErrorX(0.);
+    //tdrStyle->SetErrorX(0.);
 
-    tdrStyle->SetMarkerStyle(20);*/
+    tdrStyle->SetMarkerStyle(20);
 
     //For the fit/function:
     tdrStyle->SetOptFit(1);
@@ -55,15 +54,17 @@ void setTDRStyle()
 
     // For the statistics box:
     tdrStyle->SetOptFile(0);
-    tdrStyle->SetOptStat(0); // To display the mean and RMS: SetOptStat("mr");
+    tdrStyle->SetOptStat(0); // To display the mean and RMS:   SetOptStat("mr");
+    tdrStyle->SetOptStat(1111);
+    tdrStyle->SetOptStat(kFALSE);
     tdrStyle->SetStatColor(kWhite);
     tdrStyle->SetStatFont(42);
-    tdrStyle->SetStatFontSize(0.025);
+    tdrStyle->SetStatFontSize(0.035);
     tdrStyle->SetStatTextColor(1);
     tdrStyle->SetStatFormat("6.4g");
     tdrStyle->SetStatBorderSize(1);
-    tdrStyle->SetStatH(0.1);
-    tdrStyle->SetStatW(0.15);
+    tdrStyle->SetStatH(0.5);
+    tdrStyle->SetStatW(0.4);
 
     // Margins:
     tdrStyle->SetPadTopMargin(0.05);
@@ -101,8 +102,8 @@ void setTDRStyle()
     tdrStyle->SetStripDecimals(kTRUE);
     tdrStyle->SetTickLength(0.03, "XYZ");
     tdrStyle->SetNdivisions(510, "XYZ");
-    tdrStyle->SetPadTickX(1); // To get tick marks on the opposite side of the frame
-    tdrStyle->SetPadTickY(1);
+    //tdrStyle->SetPadTickX(1);  // To get tick marks on the opposite side of the frame
+    //tdrStyle->SetPadTickY(1);
 
     // Change for log plots:
     tdrStyle->SetOptLogx(0);
@@ -112,6 +113,21 @@ void setTDRStyle()
     // Postscript options:
     tdrStyle->SetPaperSize(20.,20.);
 
+    // 2D Plots palette
+    //
+    const UInt_t tdr_Number = 7;
+    Double_t tdr_Red[tdr_Number]    = { 0.60, 0.00, 0.00, 0.00, 1.00, 1.00, 1.00};
+    Double_t tdr_Green[tdr_Number]  = { 0.00, 0.00, 0.60, 1.00, 1.00, 0.60, 0.00};
+    Double_t tdr_Blue[tdr_Number]   = { 1.00, 1.00, 1.00, 0.00, 0.00, 0.00, 0.00};
+    Double_t tdr_Length[tdr_Number] = { 0.00, 0.17, 0.34, 0.51, 0.68, 0.85, 1.00 };
+    const Int_t tdr_nb = 50;
+
+    TColor::CreateGradientColorTable(tdr_Number,
+            tdr_Length,
+            tdr_Red,
+            tdr_Green,
+            tdr_Blue,
+            tdr_nb);
+
     tdrStyle->cd();
 }
-
