@@ -228,7 +228,7 @@ void scale(TH1 *h, const Input &input)
             }
     }
 
-    h->Scale(scale * luminosity() * triggerSF());
+    h->Scale(scale * luminosity());
 }
 
 std::string folder(const Input &input)
