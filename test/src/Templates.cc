@@ -261,12 +261,10 @@ void Templates::plot(const Template &plot)
         h->Scale(_theta_scale.zjets);
     channel[Channel::ZJETS] = h; 
 
-    h = get(input_plots, Input::QCD);
+    h = get(input_plots, Input::QCD_FROM_DATA);
     if (h && _theta_scale.qcd)
         h->Scale(_theta_scale.qcd);
     channel[Channel::QCD] = h;
-
-    channel[Channel::QCD] = get(input_plots, Input::QCD_FROM_DATA);
 
     TCanvas *canvas = draw(plot, channel);
     canvas->SaveAs(("template_" + plot.repr() + ".pdf").c_str());
