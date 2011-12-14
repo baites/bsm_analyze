@@ -183,31 +183,31 @@ void scale(TH1 *h, const Input &input)
 
         case Input::ZPRIME1000:
             {
-                scale = 10.0 / 207992;
+                scale = 1.0 / 207992;
                 break;
             }
 
         case Input::ZPRIME1500:
             {
-                scale = 10.0 / 168383;
+                scale = 1.0 / 168383;
                 break;
             }
 
         case Input::ZPRIME2000:
             {
-                scale = 10.0 / 179315;
+                scale = 1.0 / 179315;
                 break;
             }
 
         case Input::ZPRIME3000:
             {
-                scale = 10.0 / 195410;
+                scale = 1.0 / 195410;
                 break;
             }
 
         case Input::ZPRIME4000:
             {
-                scale = 10.0 / 180381;
+                scale = 1.0 / 180381;
                 break;
             }
 
