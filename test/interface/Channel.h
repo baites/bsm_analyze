@@ -16,10 +16,10 @@ class Channel
         {
             DATA = 0,
             QCD,
-            TTBAR,
-            WJETS,
-            ZJETS,
             STOP,
+            ZJETS,
+            WJETS,
+            TTBAR,
             ZPRIME1000
         };
 

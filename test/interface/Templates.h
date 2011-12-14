@@ -32,6 +32,14 @@ class Templates
             float stop;
             float ttjets;
             float qcd;
+
+            ThetaScale():
+               wjets(0.0),
+               zjets(0.0),
+               stop(0.0),
+               ttjets(0.0),
+               qcd(0.0)
+            {}
         };
 
         Templates(const std::string &input_file, const std::string &theta_scale);
@@ -79,6 +87,9 @@ class Templates
 
         int rebin(const Template &) const;
         Rebin rebin2D(const Template &) const;
+
+        void rebin(TH1 *, const Template &) const;
+        void rebin2D(TH1 *, const Template &) const;
 
         TCanvas *draw(const Template &, Channels &);
         TCanvas *draw2D(const Template &, Channels &);

@@ -20,7 +20,7 @@ try
 
     shared_ptr<Templates> templates(new Templates(1 < argc
                 ? argv[1]
-                : "output_signal_p250_hlt.root",
+                : "output_signal_p150_hlt.root",
                 2 < argc
                 ? argv[2]
                 : ""));
