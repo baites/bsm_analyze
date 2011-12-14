@@ -6,12 +6,13 @@
 #ifndef BSM_ROOT_UTIL
 #define BSM_ROOT_UTIL
 
-#include <iostream>
 #include <string>
 
 #include "interface/Input.h"
 
 class TH1;
+
+float getScale(const Input &input);
 
 // Scale by x-section, number of events and filter efficiency. Luminosity is
 // not taken into account

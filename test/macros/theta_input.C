@@ -15,7 +15,7 @@ enum Systematic
     NONE
 };
 
-Systematic systematic = NONE;
+Systematic systematic = SCALING_PLUS;
 
 enum InputType
 {
@@ -52,6 +52,7 @@ enum InputType
     ZPRIME2000,
     ZPRIME3000,
     ZPRIME4000,
+    QCD_FROM_DATA,
     UNKNOWN
 };
 
@@ -92,6 +93,7 @@ string folder(const InputType &input)
         case ZPRIME2000: return "zprime_m2000_w20";
         case ZPRIME3000: return "zprime_m3000_w30";
         case ZPRIME4000: return "zprime_m4000_w40";
+        case QCD_FROM_DATA: return "qcd_from_data";
         default:
         {
             cerr << "unsupported input" << endl;
@@ -194,6 +196,7 @@ string toString(const InputType &input_type)
         case ZPRIME2000: return "Z' m2000 w20";
         case ZPRIME3000: return "Z' m3000 w30";
         case ZPRIME4000: return "Z' m4000 w40";
+        case QCD_FROM_DATA: return "QCD from Data";
         default: return "Unknown";
     }
 }
@@ -396,7 +399,8 @@ void scale(TH1 *hist, const InputType &input_type)
         case RERECO_2011A_AUG05: // Fall through
         case PROMPT_2011A_V4: // Fall through
         case PROMPT_2011A_V6: // Fall through
-        case PROMPT_2011B_V1: // Do nothing
+        case PROMPT_2011B_V1: // Fall through
+        case QCD_FROM_DATA: // do nothing
             return;
 
         default:
@@ -566,6 +570,10 @@ void save(const string &plot_name, const string &destination)
     hist = get(input[ZPRIME4000], plot_name.c_str(), ZPRIME4000);
     scale(hist, ZPRIME4000);
     hist->Write(("el_" + destination + "__zp4000").c_str());
+
+    hist = get(input[QCD_FROM_DATA], plot_name.c_str(), QCD_FROM_DATA);
+    scale(hist, QCD_FROM_DATA);
+    hist->Write(("el_" + destination + "__eleqcd").c_str());
 }
 
 void saveSystematics(const string &plot_name, const string &destination)
