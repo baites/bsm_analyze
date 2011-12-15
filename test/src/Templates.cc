@@ -840,17 +840,19 @@ Templates::Rebin Templates::rebin2D(const Template &plot) const
 void Templates::setYaxisTitle(TH1 *h, const Template &plot)
 {
     ostringstream title;
-    title.precision(1);
 
     title << "event yield";
     if (1 < rebin(plot))
     {
        const float bin_width = h->GetBinWidth(1);
-       cout << plot << " bin width: " << bin_width << endl;
-       if (1 > bin_width)
-           title.precision(2);
+       if (1 != bin_width)
+       {
+           title.precision(1 > bin_width
+                   ? 2
+                   : 1);
 
-       title << " / " << fixed << bin_width << " " << plot.unit();
+           title << " / " << fixed << bin_width << " " << plot.unit();
+       }
     }
 
     h->GetYaxis()->SetTitle(title.str().c_str());
