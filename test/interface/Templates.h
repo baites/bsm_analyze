@@ -89,6 +89,9 @@ class Templates
         int rebin(const Template &) const;
         Rebin rebin2D(const Template &) const;
 
+        void rebin(TH1 *, const Template &) const;
+        void rebin2D(TH1 *, const Template &) const;
+
         TCanvas *draw(const Template &, Channels &);
         TCanvas *draw2D(const Template &, Channels &);
         void style(TH1 *, const Input &);

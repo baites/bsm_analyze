@@ -200,25 +200,6 @@ void Templates::loadHistograms(TFile *file, const Input &input)
         scale(histogram, input);
         Templates::style(histogram, input);
 
-        if (Template::DPHI_ELECTRON_VS_MET > plot)
-        {
-            const int merge_bins = rebin(plot);
-            if (1 < merge_bins)
-                histogram->Rebin(merge_bins);
-        }
-        else
-        {
-            const Rebin merge_bins = rebin2D(plot);
-
-            TH2 *h = dynamic_cast<TH2 *>(histogram);
-
-            if (1 < merge_bins.first)
-                h->RebinX(merge_bins.first);
-
-            if (1 < merge_bins.second)
-                h->RebinY(merge_bins.second);
-        }
-
         // store plot
         //
         input_plots[input] = histogram;
@@ -268,6 +249,7 @@ void Templates::plot(const Template &plot)
     channel[Channel::QCD] = h;
 
     TCanvas *canvas = draw(plot, channel);
+    canvas->SaveAs(("template_" + plot.repr() + ".png").c_str());
     canvas->SaveAs(("template_" + plot.repr() + ".pdf").c_str());
 }
 
@@ -283,6 +265,9 @@ void Templates::plot2D(const Template &plot)
     TCanvas *canvas = draw2D(plot, channel);
     canvas->SaveAs(("template_" + plot.repr()
                 + "_" + channel.begin()->first.repr()
+                + ".png").c_str());
+    canvas->SaveAs(("template_" + plot.repr()
+                + "_" + channel.begin()->first.repr()
                 + ".pdf").c_str());
 
     channel.clear();
@@ -293,12 +278,19 @@ void Templates::plot2D(const Template &plot)
     canvas = draw2D(plot, channel);
     canvas->SaveAs(("template_" + plot.repr()
                 + "_" + channel.begin()->first.repr()
+                + ".png").c_str());
+    canvas = draw2D(plot, channel);
+    canvas->SaveAs(("template_" + plot.repr()
+                + "_" + channel.begin()->first.repr()
                 + ".pdf").c_str());
 
     channel.clear();
     channel[Channel::ZPRIME1000] = get(input_plots, Input::ZPRIME1000);
 
     canvas = draw2D(plot, channel);
+    canvas->SaveAs(("template_" + plot.repr()
+                + "_" + channel.begin()->first.repr()
+                + ".png").c_str());
     canvas->SaveAs(("template_" + plot.repr()
                 + "_" + channel.begin()->first.repr()
                 + ".pdf").c_str());
@@ -317,13 +309,81 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
     pad->SetRightMargin(10);
     pad->SetTopMargin(10);
 
+    // Read data histogram
+    //
     TH1 *data = 0;
-    if (channels.end() != channels.find(Channel::DATA)
-            && channels[Channel::DATA])
-    {
+    if (
+        channels.end() != channels.find(Channel::DATA) && 
+        channels[Channel::DATA]
+    )
         data = channels[Channel::DATA];
-        data->Draw("9");
+    
+    // Read background histogram
+    //
+    TH1 * mc_sigma = 0;
+    bool isclone = false;
+    
+    for(Channels::const_iterator channel = channels.begin();
+            channels.end() != channel;
+            ++channel)
+    {
+        if (!channel->second)
+        {
+            cerr << channel->first << " is not available" << endl;
+            continue;
+        }
+
+        if (Channel::DATA == channel->first)
+        {
+            continue;
+        }            
+
+        if (Channel::QCD == channel->first)
+        {
+            channel->second->Scale(_qcd_scale);
+        }
+        else
+        {
+            channel->second->Scale(_mc_scale);
+        }
+ 
+        if (!isclone)
+        {
+            mc_sigma = dynamic_cast<TH1 *>(channel->second->Clone());
+            _heap.push_back(mc_sigma);
+            isclone = true;
+            continue;
+        }
+        
+        mc_sigma->Add(channel->second);
+    }    
+
+    // Add systematics
+    //
+    TH1 * mc = (TH1*) mc_sigma->Clone();
+    for(int bin = 1, bins = mc->GetNbinsX(); bins >= bin; ++bin)
+    {
+        mc->SetBinError(bin, sqrt(pow(mc->GetBinError(bin), 2)
+                    + pow(mc->GetBinContent(bin) * 0.045, 2)
+                    + pow(mc->GetBinContent(bin) * 0.04, 2)));
     }
+
+    float ks = 0;
+    if (data) ks = data->KolmogorovTest(mc);
+
+    // Rebin histogram
+    rebin(data, plot);
+    rebin(mc_sigma, plot);
+
+    for(int bin = 1, bins = mc_sigma->GetNbinsX(); bins >= bin; ++bin)
+    {
+        mc_sigma->SetBinError(bin, sqrt(pow(mc_sigma->GetBinError(bin), 2)
+                    + pow(mc_sigma->GetBinContent(bin) * 0.045, 2)
+                    + pow(mc_sigma->GetBinContent(bin) * 0.04, 2)));
+    }
+
+    float chi2 = 0;
+    if (data) chi2 = data->Chi2Test(mc_sigma, "UW");
 
     THStack *stack = new THStack();
     _heap.push_back(stack);
@@ -344,59 +404,20 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
         {
             continue;
         }
-        
-        if (Channel::QCD == channel->first)
-        {
-            channel->second->Scale(_qcd_scale);
-        }
-        else
-        {
-            channel->second->Scale(_mc_scale);
-        }
 
         legend->AddEntry(channel->second,
             static_cast<string>(channel->first).c_str(),
             "fe");
-
+            
+        rebin(channel->second, plot);
         stack->Add(channel->second);
     }
 
-    if (data)
-        stack->Draw("9 hist same");
-    else
-        stack->Draw("9 hist");
+    if (data) data->Draw("9");
+    
+    stack->Draw("9 hist same");
 
     legend->Draw("9");
-
-    TH1 *mc_sigma = dynamic_cast<TH1 *>(stack->GetHistogram()->Clone());
-    _heap.push_back(mc_sigma);
-
-    mc_sigma->Sumw2();
-
-    // copy stack bin content to mc_sigma
-    //
-    TIter next(stack->GetHists());
-    for(TObject *obj = next(); obj; obj = next())
-    {
-        TH1 *hist = dynamic_cast<TH1 *>(obj);
-        if (!hist)
-        {
-            cout << "failed hist: " << obj->GetName() << " " << obj->GetTitle() << endl;
-
-            continue;
-        }
-
-        mc_sigma->Add(hist);
-    }
-
-    // Add systematics
-    //
-    for(int bin = 1, bins = mc_sigma->GetNbinsX(); bins >= bin; ++bin)
-    {
-        mc_sigma->SetBinError(bin, sqrt(pow(mc_sigma->GetBinError(bin), 2)
-                    + pow(mc_sigma->GetBinContent(bin) * 0.045, 2)
-                    + pow(mc_sigma->GetBinContent(bin) * 0.04, 2)));
-    }
 
     // Adjust plot to max
     //
@@ -409,6 +430,7 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
     }
 
     mc_sigma->SetMarkerSize(0);
+    mc_sigma->SetLineColor(1);
     mc_sigma->SetLineWidth(2);
     mc_sigma->SetFillColor(1);
     mc_sigma->SetFillStyle(3004);
@@ -428,14 +450,9 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
 
     setYaxisTitle(data, plot);
     data->Draw("9 same");
+    data->Draw("axis same");
 
-    if (data)
-    {
-        const float ks = data->KolmogorovTest(mc_sigma);
-        const float chi2 = data->Chi2Test(mc_sigma);
-
-        histTestLegend(ks, chi2);
-    }
+    // if (data) histTestLegend(ks, chi2);
 
     cmsLegend();
 
@@ -456,6 +473,7 @@ TCanvas *Templates::draw2D(const Template &plot, Channels &channels)
     pad->SetTopMargin(10);
 
     TH1 *h = channels.begin()->second;
+    rebin2D(h, plot);
     h->GetXaxis()->SetLabelSize(0.04);
     h->GetXaxis()->SetTitleOffset(1.1);
     h->GetYaxis()->SetLabelSize(0.04);
@@ -502,6 +520,7 @@ void Templates::normalize()
     uwchannel[Channel::TTBAR] = get(input_plots_noweight, Input::TTJETS);
 
     TCanvas *canvas = normalize(plot, channel, uwchannel);
+    canvas->SaveAs(("template_" + plot.repr() + ".png").c_str());
     canvas->SaveAs(("template_" + plot.repr() + ".pdf").c_str());
 }
 
@@ -554,6 +573,7 @@ TCanvas *Templates::normalize(const Template &plot, Channels &channels, Channels
         if (!isclone)
         {
             mc = dynamic_cast<TH1 *>(channel->second->Clone());
+            _heap.push_back(mc);
             isclone = true;
             continue;
         }
@@ -577,6 +597,7 @@ TCanvas *Templates::normalize(const Template &plot, Channels &channels, Channels
         if (!isclone)
         {
             uwmc = dynamic_cast<TH1 *>(channel->second->Clone());
+            _heap.push_back(uwmc);
             isclone = true;
             continue;
         }
@@ -584,16 +605,24 @@ TCanvas *Templates::normalize(const Template &plot, Channels &channels, Channels
         uwmc->Add(channel->second);
     }
 
+    rebin(data, plot);
+    rebin(qcd, plot);
+    rebin(mc, plot);
+    rebin(uwmc, plot);
+ 
     TH1 *wmc = dynamic_cast<TH1 *>(mc->Clone());
+    _heap.push_back(wmc);
     wmc->Divide(uwmc);
     for(Int_t i=1; i<=wmc->GetNbinsX(); ++i)
         if (wmc->GetBinContent(i) <= 0.0) wmc->SetBinContent(i,1.0);
 
     TObjArray *templates = new TObjArray(2);
+    _heap.push_back(templates);
     templates->Add(uwmc);
     templates->Add(qcd);
     
     TFractionFitter * fitter = new TFractionFitter(data, templates);
+    _heap.push_back(fitter);
     fitter->SetWeight(0,wmc);
     Int_t status = fitter->Fit();
 
@@ -623,13 +652,13 @@ TCanvas *Templates::normalize(const Template &plot, Channels &channels, Channels
         data->GetYaxis()->SetTitleOffset(1.7);
         data->SetMarkerStyle(20);
         data->SetMarkerSize(1);
-        data->Rebin(rebin(Template::MET)/rebin(Template::MET_QCD));
+        // data->Rebin(rebin(Template::MET)/rebin(Template::MET_QCD));
         setYaxisTitle(data, plot);
 
         TH1 * result = (TH1*) fitter->GetPlot();
         result->SetFillStyle(0);
         result->SetLineWidth(2);
-        result->Rebin(rebin(Template::MET)/rebin(Template::MET_QCD));
+        // result->Rebin(rebin(Template::MET)/rebin(Template::MET_QCD));
 
         float maxy = max(
             data->GetBinContent(data->GetMaximumBin()),
@@ -644,7 +673,7 @@ TCanvas *Templates::normalize(const Template &plot, Channels &channels, Channels
         qcd->SetLineColor(kBlue);
         qcd->SetLineStyle(2);
         qcd->Scale(_qcd_scale);
-        qcd->Rebin(rebin(Template::MET)/rebin(Template::MET_QCD));       
+        // qcd->Rebin(rebin(Template::MET)/rebin(Template::MET_QCD));       
         qcd->Draw("9 histsame");
         
         mc->SetFillStyle(0);
@@ -652,7 +681,7 @@ TCanvas *Templates::normalize(const Template &plot, Channels &channels, Channels
         mc->SetLineColor(kRed);
         mc->SetLineStyle(3);
         mc->Scale(_mc_scale);
-        mc->Rebin(rebin(Template::MET)/rebin(Template::MET_QCD));
+        // mc->Rebin(rebin(Template::MET)/rebin(Template::MET_QCD));
         mc->Draw("9 histsame");
         
         data->Draw("9 sameEp");
@@ -704,7 +733,7 @@ TH1 *Templates::get(const InputPlots &plots,
 
 TLegend *Templates::createLegend(const string &text)
 {
-    TLegend *legend = new TLegend( .67, .65, .89, .88);
+    TLegend *legend = new TLegend( .67, .63, .89, .86);
     _heap.push_back(legend);
 
     if (!text.empty())
@@ -739,7 +768,7 @@ void Templates::cmsLegend()
 
     ostringstream title;
     title.precision(2);
-    title << fixed << "L = " << luminosity() / 1000 << " /fb";
+    title << fixed << "L = " << luminosity() / 1000 << " fb^{-1}, e+jets";
     legend->SetHeader(title.str().c_str());
 
     legend->SetMargin(0.12);
@@ -749,7 +778,7 @@ void Templates::cmsLegend()
     
     legend->Draw();
 
-    legend = new TLegend(.20, .83, .60, .88);
+    legend = new TLegend(.20, .81, .60, .86);
     _heap.push_back(legend);
 
     legend->SetTextAlign(12);
@@ -786,6 +815,24 @@ void Templates::histTestLegend(const float &ks, const float &chi2)
     legend->Draw();
 }
 
+void Templates::rebin(TH1 *histogram, const Template &plot) const
+{
+    const int merge_bins = rebin(plot);
+    if (1 < merge_bins)
+        histogram->Rebin(merge_bins);
+}
+
+void Templates::rebin2D(TH1 *histogram, const Template &plot) const
+{
+    TH2 *h = dynamic_cast<TH2 *>(histogram);
+
+    const Rebin merge_bins = rebin2D(plot);
+    if (1 < merge_bins.first)
+        h->RebinX(merge_bins.first);
+    if (1 < merge_bins.second)
+        h->RebinY(merge_bins.second);
+}
+
 int Templates::rebin(const Template &plot) const
 {
     switch(plot.type())
@@ -793,7 +840,10 @@ int Templates::rebin(const Template &plot) const
         case Template::MET: return 25;
         case Template::MET_QCD: return 5;
         case Template::MET_QCD_NOWEIGHT: return 5;
+        case Template::HTALL: return 25;
         case Template::HTLEP: return 25;
+        case Template::HTLEP_BEFORE_HTLEP: return 5;
+        case Template::HTLEP_AFTER_HTLEP: return 25;
         case Template::NPV: return 1;
         case Template::NPV_NO_PU: return 1;
         case Template::NJET: return 1;
@@ -842,18 +892,17 @@ void Templates::setYaxisTitle(TH1 *h, const Template &plot)
     ostringstream title;
 
     title << "event yield";
-    if (1 < rebin(plot))
-    {
-       const float bin_width = h->GetBinWidth(1);
-       if (1 != bin_width)
-       {
-           title.precision(1 > bin_width
-                   ? 2
-                   : 1);
+    
+    const float bin_width = h->GetBinWidth(1);
+    cout << plot << " bin width: " << bin_width << endl;
+    if (bin_width < 1.0)
+        title.precision(2);
+    else if (bin_width < 10)
+        title.precision(1);
+    else
+        title.precision(0);
 
-           title << " / " << fixed << bin_width << " " << plot.unit();
-       }
-    }
+    title << " / " << fixed << bin_width << " " << plot.unit();
 
     h->GetYaxis()->SetTitle(title.str().c_str());
 }

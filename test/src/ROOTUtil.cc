@@ -333,7 +333,7 @@ void style(TH1 *hist, const Input &input, const int &systematic)
             }
         case Input::QCD_FROM_DATA:
             {
-                color = kOrange+3;
+                color = kYellow + 1;
                 break;
             }
         case Input::STOP_S:
@@ -454,7 +454,3 @@ float luminosity()
     //return 4.061545;
 }
 
-float triggerSF()
-{
-    return 0.96;
-}
