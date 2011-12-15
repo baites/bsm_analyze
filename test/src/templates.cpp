@@ -22,8 +22,8 @@ try
                 ? argv[1]
                 : "output_signal_p150_hlt.root",
                 2 < argc
-                ? argv[2]
-                : ""));
+                    ? argv[2]
+                    : ""));
     templates->load();
 
     templates->draw();

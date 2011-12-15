@@ -3,21 +3,16 @@
 // Created by Samvel Khalatyan, Nov 18, 2011
 // Copyright 2011, All rights reserved
 
+#include <iostream>
+
 #include <TH1.h>
 
 #include "interface/ROOTUtil.h"
 
-void scale(TH1 *h, const Input &input)
+using namespace std;
+
+float getScale(const Input &input)
 {
-    using namespace std;
-
-    if (!h->GetEntries())
-    {
-        cerr << "didn't scale " << input << ": no entries" << endl;
-
-        return;
-    }
-
     float scale = 1;
     switch(input.type())
     {
@@ -183,31 +178,31 @@ void scale(TH1 *h, const Input &input)
 
         case Input::ZPRIME1000:
             {
-                scale = 10.0 / 207992;
+                scale = 1.0 / 207992;
                 break;
             }
 
         case Input::ZPRIME1500:
             {
-                scale = 10.0 / 168383;
+                scale = 1.0 / 168383;
                 break;
             }
 
         case Input::ZPRIME2000:
             {
-                scale = 10.0 / 179315;
+                scale = 1.0 / 179315;
                 break;
             }
 
         case Input::ZPRIME3000:
             {
-                scale = 10.0 / 195410;
+                scale = 1.0 / 195410;
                 break;
             }
 
         case Input::ZPRIME4000:
             {
-                scale = 10.0 / 180381;
+                scale = 1.0 / 180381;
                 break;
             }
 
@@ -218,15 +213,33 @@ void scale(TH1 *h, const Input &input)
         case Input::PROMPT_2011A_V6: // Fall through
         case Input::PROMPT_2011B_V1: // Do nothing
         case Input::QCD_FROM_DATA:
-            return;
+            break;
 
         default:
             {
                 cerr << "didn't scale: insupported input type" << endl;
 
-                return;
+                break;
             }
     }
+
+    return scale;
+}
+
+void scale(TH1 *h, const Input &input)
+{
+    using namespace std;
+
+    if (!h->GetEntries())
+    {
+        cerr << "didn't scale " << input << ": no entries" << endl;
+
+        return;
+    }
+
+    float scale = getScale(input);
+    if (1 == scale)
+        return;
 
     h->Scale(scale * luminosity());
 }

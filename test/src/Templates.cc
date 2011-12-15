@@ -5,6 +5,7 @@
 
 #include <cmath>
 #include <fstream>
+#include <iostream>
 #include <ostream>
 #include <sstream>
 
@@ -249,6 +250,7 @@ void Templates::plot(const Template &plot)
 
     TCanvas *canvas = draw(plot, channel);
     canvas->SaveAs(("template_" + plot.repr() + ".png").c_str());
+    canvas->SaveAs(("template_" + plot.repr() + ".pdf").c_str());
 }
 
 void Templates::plot2D(const Template &plot)
@@ -264,6 +266,9 @@ void Templates::plot2D(const Template &plot)
     canvas->SaveAs(("template_" + plot.repr()
                 + "_" + channel.begin()->first.repr()
                 + ".png").c_str());
+    canvas->SaveAs(("template_" + plot.repr()
+                + "_" + channel.begin()->first.repr()
+                + ".pdf").c_str());
 
     channel.clear();
     channel[Channel::QCD] = get(input_plots,
@@ -274,6 +279,10 @@ void Templates::plot2D(const Template &plot)
     canvas->SaveAs(("template_" + plot.repr()
                 + "_" + channel.begin()->first.repr()
                 + ".png").c_str());
+    canvas = draw2D(plot, channel);
+    canvas->SaveAs(("template_" + plot.repr()
+                + "_" + channel.begin()->first.repr()
+                + ".pdf").c_str());
 
     channel.clear();
     channel[Channel::ZPRIME1000] = get(input_plots, Input::ZPRIME1000);
@@ -282,6 +291,9 @@ void Templates::plot2D(const Template &plot)
     canvas->SaveAs(("template_" + plot.repr()
                 + "_" + channel.begin()->first.repr()
                 + ".png").c_str());
+    canvas->SaveAs(("template_" + plot.repr()
+                + "_" + channel.begin()->first.repr()
+                + ".pdf").c_str());
 
     return;
 }
@@ -509,6 +521,7 @@ void Templates::normalize()
 
     TCanvas *canvas = normalize(plot, channel, uwchannel);
     canvas->SaveAs(("template_" + plot.repr() + ".png").c_str());
+    canvas->SaveAs(("template_" + plot.repr() + ".pdf").c_str());
 }
 
 TCanvas *Templates::normalize(const Template &plot, Channels &channels, Channels &uwchannels)
