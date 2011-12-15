@@ -177,6 +177,12 @@ TemplateAnalyzer::TemplateAnalyzer():
     _htop_pt_vs_m.reset(new H2Proxy(1000, 0, 1, 10, 0, 10));
     monitor(_htop_pt_vs_m);
 
+    _htop_pt_vs_njets.reset(new H2Proxy(5, 0, 5, 1000, 0, 1));
+    monitor(_htop_pt_vs_njets);
+
+    _htop_pt_vs_ltop_pt.reset(new H2Proxy(1000, 0, 1, 1000, 0, 1));
+    monitor(_htop_pt_vs_ltop_pt);
+
     _event = 0;
 
     _first_jet.reset(new P4Monitor());
@@ -310,6 +316,14 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
     _htop_pt_vs_m = dynamic_pointer_cast<H2Proxy>(
             object._htop_pt_vs_m->clone());
     monitor(_htop_pt_vs_m);
+
+    _htop_pt_vs_njets = dynamic_pointer_cast<H2Proxy>(
+            object._htop_pt_vs_njets->clone());
+    monitor(_htop_pt_vs_njets);
+
+    _htop_pt_vs_ltop_pt = dynamic_pointer_cast<H2Proxy>(
+            object._htop_pt_vs_ltop_pt->clone());
+    monitor(_htop_pt_vs_ltop_pt);
 
     _event = 0;
 
@@ -466,6 +480,16 @@ const TemplateAnalyzer::H2Ptr TemplateAnalyzer::htopNjetvsM() const
 const TemplateAnalyzer::H2Ptr TemplateAnalyzer::htopPtvsM() const
 {
     return _htop_pt_vs_m->histogram();
+}
+
+const TemplateAnalyzer::H2Ptr TemplateAnalyzer::htopPtvsNjets() const
+{
+    return _htop_pt_vs_njets->histogram();
+}
+
+const TemplateAnalyzer::H2Ptr TemplateAnalyzer::htopPtvsLtoppt() const
+{
+    return _htop_pt_vs_ltop_pt->histogram();
 }
 
 const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::firstJet() const
@@ -667,6 +691,12 @@ void TemplateAnalyzer::process(const Event *event)
         htopNjetvsM()->fill(mass(resonance.htop), resonance.htop_njets,
                 _pileup_weight * _wjets_weight);
         htopPtvsM()->fill(mass(resonance.htop), pt(resonance.htop),
+                _pileup_weight * _wjets_weight);
+
+        htopPtvsNjets()->fill(resonance.htop_njets, pt(resonance.htop),
+                _pileup_weight * _wjets_weight);
+
+        htopPtvsLtoppt()->fill(pt(resonance.ltop), pt(resonance.htop),
                 _pileup_weight * _wjets_weight);
 
         leptonMetDphivsMet()->fill(pt(missing_energy), fabs(dphi(el_p4, missing_energy)),

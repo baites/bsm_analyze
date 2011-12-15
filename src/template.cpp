@@ -222,6 +222,20 @@ int main(int argc, char *argv[])
             htop_pt_vs_m->GetYaxis()->SetTitle("p_{T}^{htop} [GeV/c]");
             htop_pt_vs_m->GetYaxis()->SetTitleSize(0.045);
 
+            TH2Ptr htop_pt_vs_njets = convert(*analyzer->htopPtvsNjets());
+            htop_pt_vs_njets->SetName("htop_pt_vs_njets");
+            htop_pt_vs_njets->GetXaxis()->SetTitle("N_jets");
+            htop_pt_vs_njets->GetXaxis()->SetTitleSize(0.045);
+            htop_pt_vs_njets->GetYaxis()->SetTitle("p_{T}^{htop} [GeV/c]");
+            htop_pt_vs_njets->GetYaxis()->SetTitleSize(0.045);
+
+            TH2Ptr htop_pt_vs_ltop_pt = convert(*analyzer->htopPtvsLtoppt());
+            htop_pt_vs_ltop_pt->SetName("htop_pt_vs_ltop_pt");
+            htop_pt_vs_ltop_pt->GetXaxis()->SetTitle("p_{T}^{ltop} [GeV/c]");
+            htop_pt_vs_ltop_pt->GetXaxis()->SetTitleSize(0.045);
+            htop_pt_vs_ltop_pt->GetYaxis()->SetTitle("p_{T}^{htop} [GeV/c]");
+            htop_pt_vs_ltop_pt->GetYaxis()->SetTitleSize(0.045);
+
             shared_ptr<P4Canvas> first_jet(new P4Canvas("First jet", "jet1"));
             shared_ptr<P4Canvas> second_jet(new P4Canvas("Second jet", "jet2"));
             shared_ptr<P4Canvas> third_jet(new P4Canvas("Third jet", "jet3"));
@@ -259,6 +273,8 @@ int main(int argc, char *argv[])
                 lepton_met_dphi_vs_met->Write();
                 htop_njet_vs_m->Write();
                 htop_pt_vs_m->Write();
+                htop_pt_vs_njets->Write();
+                htop_pt_vs_ltop_pt->Write();
 
                 first_jet->write(app->output().get(), *analyzer->firstJet());
                 second_jet->write(app->output().get(), *analyzer->secondJet());
