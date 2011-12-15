@@ -54,41 +54,41 @@ float getScale(const Input &input)
 
         case Input::TTJETS_SCALE_UP:
             {
-                // Use NLO x-section: 157.5 instead of LO: 94.76
+                // Use NNLO x-section: 163 instead of NLO: 157.5 or LO: 94.76
                 //
-                scale = 157.5 * 1.0 / 930483;
+                scale = 163 * 1.0 / 930483;
                 break;
             }
 
         case Input::TTJETS_SCALE_DOWN:
             {
-                // Use NLO x-section: 157.5 instead of LO: 94.76
+                // Use NNLO x-section: 163 instead of NLO: 157.5 or LO: 94.76
                 //
-                scale = 157.5 * 1.0 / 967055;
+                scale = 163 * 1.0 / 967055;
                 break;
             }
 
         case Input::TTJETS_MATCHING_UP:
             {
-                // Use NLO x-section: 157.5 instead of LO: 94.76
+                // Use NNLO x-section: 163 instead of NLO: 157.5 or LO: 94.76
                 //
-                scale = 157.5 * 1.0 / 1057479;
+                scale = 163 * 1.0 / 1057479;
                 break;
             }
 
         case Input::TTJETS_MATCHING_DOWN:
             {
-                // Use NLO x-section: 157.5 instead of LO: 94.76
+                // Use NNLO x-section: 163 instead of NLO: 157.5 or LO: 94.76
                 //
-                scale = 157.5 * 1.0 / 1065323;
+                scale = 163 * 1.0 / 1065323;
                 break;
             }
 
         case Input::TTJETS:
             {
-                // Use NLO x-section: 157.5 instead of LO: 94.76
+                // Use NNLO x-section: 163 instead of NLO: 157.5 or LO: 94.76
                 //
-                scale = 157.5 * 1.0 / 3701947;
+                scale = 163 * 1.0 / 3701947;
                 break;
             }
 
