@@ -1,6 +1,8 @@
 //float luminosity = 4061.545;
 float luminosity = 4328.472;
 string file_mask = "output_signal_p250_hlt";
+float mc_scale = 0.96;
+float qcd_scale = 1;
 
 enum Systematic
 {
@@ -15,7 +17,7 @@ enum Systematic
     NONE
 };
 
-Systematic systematic = SCALING_PLUS;
+Systematic systematic = NONE;
 
 enum InputType
 {
@@ -215,37 +217,37 @@ void scale(TH1 *hist, const InputType &input_type)
     {
         case QCD_BC_PT20_30:
             {
-                scale = 2.361e8 * 5.9e-4 / 2081560;
+                scale = 2.361e8 * 5.9e-4 / 2081560 * mc_scale;
                 break;
             }
 
         case QCD_BC_PT30_80:
             {
-                scale = 5.944e7 * 2.42e-3 / 2030033;
+                scale = 5.944e7 * 2.42e-3 / 2030033 * mc_scale;
                 break;
             }
 
         case QCD_BC_PT80_170:
             {
-                scale = 8.982e5 * 1.05e-2 / 1082691;
+                scale = 8.982e5 * 1.05e-2 / 1082691 * mc_scale;
                 break;
             }
 
         case QCD_EM_PT20_30:
             {
-                scale = 2.361e8 * 1.06e-2 / 35729669;
+                scale = 2.361e8 * 1.06e-2 / 35729669 * mc_scale;
                 break;
             }
 
         case QCD_EM_PT30_80:
             {
-                scale = 5.944e7 * 6.1e-2 / 70392060;
+                scale = 5.944e7 * 6.1e-2 / 70392060 * mc_scale;
                 break;
             }
 
         case QCD_EM_PT80_170:
             {
-                scale = 8.982e5 * 1.59e-1 / 8150672;
+                scale = 8.982e5 * 1.59e-1 / 8150672 * mc_scale;
                 break;
             }
 
@@ -253,35 +255,35 @@ void scale(TH1 *hist, const InputType &input_type)
             {
                 // Use NLO x-section: 157.5 instead of LO: 94.76
                 //
-                scale = 157.5 * 1.0 / 930483;
+                scale = 163 * 1.0 / 930483 * mc_scale;
                 break;
             }
         case TTJETS_SCALE_DOWN:
             {
                 // Use NLO x-section: 157.5 instead of LO: 94.76
                 //
-                scale = 157.5 * 1.0 / 967055;
+                scale = 163 * 1.0 / 967055 * mc_scale;
                 break;
             }
         case TTJETS_MATCHING_UP:
             {
                 // Use NLO x-section: 157.5 instead of LO: 94.76
                 //
-                scale = 157.5 * 1.0 / 1057479;
+                scale = 163 * 1.0 / 1057479 * mc_scale;
                 break;
             }
         case TTJETS_MATCHING_DOWN:
             {
                 // Use NLO x-section: 157.5 instead of LO: 94.76
                 //
-                scale = 157.5 * 1.0 / 1065323;
+                scale = 163 * 1.0 / 1065323 * mc_scale;
                 break;
             }
         case TTJETS:
             {
                 // Use NLO x-section: 157.5 instead of LO: 94.76
                 //
-                scale = 157.5 * 1.0 / 3701947;
+                scale = 163 * 1.0 / 3701947 * mc_scale;
                 break;
             }
 
@@ -289,7 +291,7 @@ void scale(TH1 *hist, const InputType &input_type)
             {
                 // Use NLO x-section: 3048 instead of LO: 2475
                 //
-                scale = 3048 * 1.0 / 36277961;
+                scale = 3048 * 1.0 / 36277961 * mc_scale;
                 break;
             }
 
@@ -297,101 +299,101 @@ void scale(TH1 *hist, const InputType &input_type)
             {
                 // Use NLO x-section: 31314 instead of LO: 27770
                 //
-                scale = 31314 * 1.0 / 9784907;
+                scale = 31314 * 1.0 / 9784907 * mc_scale;
                 break;
             }
         case WJETS_SCALE_DOWN: // fall through
             {
                 // Use NLO x-section: 31314 instead of LO: 27770
                 //
-                scale = 31314 * 1.0 / 10022324;
+                scale = 31314 * 1.0 / 10022324 * mc_scale;
                 break;
             }
         case WJETS_MATCHING_UP: // fall through
             {
                 // Use NLO x-section: 31314 instead of LO: 27770
                 //
-                scale = 31314 * 1.0 / 10461655;
+                scale = 31314 * 1.0 / 10461655 * mc_scale;
                 break;
             }
         case WJETS_MATCHING_DOWN: // fall through
             {
                 // Use NLO x-section: 31314 instead of LO: 27770
                 //
-                scale = 31314 * 1.0 / 9956679;
+                scale = 31314 * 1.0 / 9956679 * mc_scale;
                 break;
             }
         case WJETS:
             {
                 // Use NLO x-section: 31314 instead of LO: 27770
                 //
-                scale = 31314 * 1.0 / 77105816;
+                scale = 31314 * 1.0 / 77105816 * mc_scale;
                 break;
             }
 
         case STOP_S:
             {
-                scale = 3.19 * 1.0 / 259971;
+                scale = 3.19 * 1.0 / 259971 * mc_scale;
                 break;
             }
 
         case STOP_T:
             {
-                scale = 41.92 * 1.0 / 3900171;
+                scale = 41.92 * 1.0 / 3900171 * mc_scale;
                 break;
             }
 
         case STOP_TW:
             {
-                scale = 7.87 * 1.0 / 814390;
+                scale = 7.87 * 1.0 / 814390 * mc_scale;
                 break;
             }
 
         case SATOP_S:
             {
-                scale = 1.44 * 1.0 / 137980;
+                scale = 1.44 * 1.0 / 137980 * mc_scale;
                 break;
             }
 
         case SATOP_T:
             {
-                scale = 22.65 * 1.0 / 1944826;
+                scale = 22.65 * 1.0 / 1944826 * mc_scale;
                 break;
             }
 
         case SATOP_TW:
             {
-                scale = 7.87 * 1.0 / 809984;
+                scale = 7.87 * 1.0 / 809984 * mc_scale;
                 break;
             }
 
         case ZPRIME1000:
             {
-                scale = 1.0 / 207992;
+                scale = 1.0 / 207992 * mc_scale;
                 break;
             }
 
         case ZPRIME1500:
             {
-                scale = 1.0 / 168383;
+                scale = 1.0 / 168383 * mc_scale;
                 break;
             }
 
         case ZPRIME2000:
             {
-                scale = 1.0 / 179315;
+                scale = 1.0 / 179315 * mc_scale;
                 break;
             }
 
         case ZPRIME3000:
             {
-                scale = 1.0 / 195410;
+                scale = 1.0 / 195410 * mc_scale;
                 break;
             }
 
         case ZPRIME4000:
             {
-                scale = 1.0 / 180381;
+                scale = 1.0 / 180381 * mc_scale;
                 break;
             }
 
@@ -399,8 +401,11 @@ void scale(TH1 *hist, const InputType &input_type)
         case RERECO_2011A_AUG05: // Fall through
         case PROMPT_2011A_V4: // Fall through
         case PROMPT_2011A_V6: // Fall through
-        case PROMPT_2011B_V1: // Fall through
+        case PROMPT_2011B_V1:  // Do nothing
+            return;
+
         case QCD_FROM_DATA: // do nothing
+            hist->Scale(qcd_scale);
             return;
 
         default:
@@ -664,10 +669,16 @@ void saveSystematics(const string &plot_name, const string &destination)
     }
 }
 
-void theta_input(const string &mask = "")
+void theta_input(const string &mask = "",
+        const float &scale_qcd)
 {
     if (!mask.empty())
         file_mask = mask;
+
+    qcd_scale = scale_qcd;
+
+    cout << "mc_scale: " << mc_scale << endl;
+    cout << "qcd_scale: " << qcd_scale << endl;
 
     TGaxis::SetMaxDigits(3);
     gStyle->SetOptStat(kFALSE);
