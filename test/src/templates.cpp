@@ -21,6 +21,7 @@ try
         ("help", "produce help message")
         ("input", po::value<string>()->default_value("output_signal_p150_hlt.root"), "input file")
         ("scale-file", po::value<string>()->default_value(string()), "file with sample scales")
+        ("mc-error", po::value<bool>()->default_value(true), "plot mc errors because luminosity and trigger")
         ("qcd-type", po::value<string>()->default_value("none"), "qcd type")
         ("pull-plots", po::value<float>()->default_value(0.0), "pull plots providing maximum pull")
         ("ks-chi2", po::value<bool>()->default_value(false), "add ks and chi2 to the plots")
@@ -60,6 +61,8 @@ try
         cout << "Unknown qcd-type option (allowed = none, mc, dara)\n";
         return 1;
     }    
+
+    templates->setMCError(options["mc-error"].as<bool>());
 
     templates->setPullPlots(options["pull-plots"].as<float>());
 

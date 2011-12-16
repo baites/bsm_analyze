@@ -37,6 +37,7 @@ Templates::Templates(const std::string &input_file,
     _input_file(input_file),
     _mc_scale(1.0),
     _mc_scale_error(0.0),
+    _mc_error(false),
     _qcd_scale(1.0),
     _qcd_scale_error(0.0),
     _qcd_type(QCD_NONE),
@@ -460,14 +461,18 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
         data->GetYaxis()->SetRangeUser(0, max_y * 1.2);
     }
 
-    mc_sigma->SetMarkerSize(0);
-    mc_sigma->SetLineColor(1);
-    mc_sigma->SetLineWidth(2);
-    mc_sigma->SetFillColor(1);
-    mc_sigma->SetFillStyle(3004);
-    mc_sigma->Draw("9 e2 same");
+    if (_mc_error)
+    {
+        mc_sigma->SetMarkerSize(0);
+        mc_sigma->SetLineColor(1);
+        mc_sigma->SetLineWidth(2);
+        mc_sigma->SetFillColor(1);
+        mc_sigma->SetFillStyle(3004);
+        mc_sigma->Draw("9 e2 same");
 
-    legend->AddEntry(mc_sigma, "Uncertainty", "fe");
+        legend->AddEntry(mc_sigma, "Uncertainty", "fe");
+    }
+
     legend->AddEntry(data,
             static_cast<string>(Channel(Channel::DATA)).c_str(),
             "lpe");
@@ -486,6 +491,8 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
     if (data && _ks_chi2) histTestLegend(ks, chi2);
 
     cmsLegend();
+
+    cout << "Victor Yields for data and mc: " << data->Integral() << " " << mc->Integral() << endl;
 
     if (_pull_plots)
     {
@@ -855,7 +862,7 @@ void Templates::cmsLegend()
 
     ostringstream title;
     title.precision(2);
-    title << fixed << "L = 4.6 fb^{-1}, e+jets";
+    title << fixed << "L = " << (luminosity()/1000) << " fb^{-1}, e+jets";
     legend->SetHeader(title.str().c_str());
 
     legend->SetMargin(0.12);
@@ -925,7 +932,7 @@ int Templates::rebin(const Template &plot) const
 {
     switch(plot.type())
     {
-        case Template::MET: return 25;
+        case Template::MET: return 10;
         case Template::MET_QCD: return 5;
         case Template::MET_QCD_NOWEIGHT: return 5;
         case Template::HTALL: return 25;

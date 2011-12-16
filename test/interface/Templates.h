@@ -58,14 +58,19 @@ class Templates
             _qcd_type = value;
         }
 
+        void setMCError(bool value = true)
+        {
+            _mc_error = value;
+        }
+
         void setPullPlots(float value = 1.0)
         {
             _pull_plots = value;
         }
 
-        void setKSChi2(bool flag = true)
+        void setKSChi2(bool value = true)
         {
-            _ks_chi2 = flag;
+            _ks_chi2 = value;
         }
 
     private:
@@ -126,6 +131,8 @@ class Templates
         //
         double _mc_scale;
         double _mc_scale_error;
+        bool _mc_error;
+
         double _qcd_scale;
         double _qcd_scale_error;
 
