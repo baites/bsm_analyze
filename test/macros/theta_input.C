@@ -205,6 +205,8 @@ string toString(const InputType &input_type)
 
 void scale(TH1 *hist, const InputType &input_type)
 {
+    cout << "Attempt to scale: " << toString(input_type) << endl;
+
     if (!hist->GetEntries())
     {
         cout << "skip scale " << toString(input_type) << ": no entries" << endl;
@@ -213,211 +215,192 @@ void scale(TH1 *hist, const InputType &input_type)
     }
 
     float scale = 1;
-    switch(input_type)
+    if (QCD_BC_PT20_30 == input_type)
     {
-        case QCD_BC_PT20_30:
-            {
-                scale = 2.361e8 * 5.9e-4 / 2081560 * mc_scale;
-                break;
-            }
+        scale = 2.361e8 * 5.9e-4 / 2081560 * mc_scale;
+    }
+    else if (QCD_BC_PT30_80 == input_type)
+    {
+        scale = 5.944e7 * 2.42e-3 / 2030033 * mc_scale;
+    }
+    else if (QCD_BC_PT80_170 == input_type)
+    {
+        scale = 8.982e5 * 1.05e-2 / 1082691 * mc_scale;
+    }
+    else if (QCD_EM_PT20_30 == input_type)
+    {
+        scale = 2.361e8 * 1.06e-2 / 35729669 * mc_scale;
+    }
+    else if (QCD_EM_PT30_80 == input_type)
+    {
+        scale = 5.944e7 * 6.1e-2 / 70392060 * mc_scale;
+    }
+    else if (QCD_EM_PT80_170 == input_type)
+    {
+        scale = 8.982e5 * 1.59e-1 / 8150672 * mc_scale;
+    }
+    else if (TTJETS_SCALE_UP == input_type)
+    {
+        // Use NLO x-section: 157.5 instead of LO: 94.76
+        //
+        scale = 163 * 1.0 / 930483 * mc_scale;
+    }
+    else if (TTJETS_SCALE_DOWN == input_type)
+    {
+        // Use NLO x-section: 157.5 instead of LO: 94.76
+        //
+        scale = 163 * 1.0 / 967055 * mc_scale;
+    }
+    else if (TTJETS_MATCHING_UP == input_type)
+    {
+        // Use NLO x-section: 157.5 instead of LO: 94.76
+        //
+        scale = 163 * 1.0 / 1057479 * mc_scale;
+    }
+    else if (TTJETS_MATCHING_DOWN == input_type)
+    {
+        // Use NLO x-section: 157.5 instead of LO: 94.76
+        //
+        scale = 163 * 1.0 / 1065323 * mc_scale;
+    }
+    else if (TTJETS == input_type)
+    {
+        // Use NLO x-section: 157.5 instead of LO: 94.76
+        //
+        scale = 163 * 1.0 / 3701947 * mc_scale;
+    }
 
-        case QCD_BC_PT30_80:
-            {
-                scale = 5.944e7 * 2.42e-3 / 2030033 * mc_scale;
-                break;
-            }
+    else if (ZJETS == input_type)
+    {
+        // Use NLO x-section: 3048 instead of LO: 2475
+        //
+        scale = 3048 * 1.0 / 36277961 * mc_scale;
+    }
 
-        case QCD_BC_PT80_170:
-            {
-                scale = 8.982e5 * 1.05e-2 / 1082691 * mc_scale;
-                break;
-            }
+    else if (WJETS_SCALE_UP == input_type) // fall through
+    {
+        // Use NLO x-section: 31314 instead of LO: 27770
+        //
+        scale = 31314 * 1.0 / 9784907 * mc_scale;
+    }
+    else if (WJETS_SCALE_DOWN == input_type) // fall through
+    {
+        // Use NLO x-section: 31314 instead of LO: 27770
+        //
+        scale = 31314 * 1.0 / 10022324 * mc_scale;
+    }
+    else if (WJETS_MATCHING_UP == input_type) // fall through
+    {
+        // Use NLO x-section: 31314 instead of LO: 27770
+        //
+        scale = 31314 * 1.0 / 10461655 * mc_scale;
+    }
+    else if (WJETS_MATCHING_DOWN == input_type) // fall through
+    {
+        // Use NLO x-section: 31314 instead of LO: 27770
+        //
+        scale = 31314 * 1.0 / 9956679 * mc_scale;
+    }
+    else if (WJETS == input_type)
+    {
+        // Use NLO x-section: 31314 instead of LO: 27770
+        //
+        scale = 31314 * 1.0 / 77105816 * mc_scale;
+    }
 
-        case QCD_EM_PT20_30:
-            {
-                scale = 2.361e8 * 1.06e-2 / 35729669 * mc_scale;
-                break;
-            }
+    else if (STOP_S == input_type)
+    {
+        scale = 3.19 * 1.0 / 259971 * mc_scale;
+    }
 
-        case QCD_EM_PT30_80:
-            {
-                scale = 5.944e7 * 6.1e-2 / 70392060 * mc_scale;
-                break;
-            }
+    else if (STOP_T == input_type)
+    {
+        scale = 41.92 * 1.0 / 3900171 * mc_scale;
+    }
 
-        case QCD_EM_PT80_170:
-            {
-                scale = 8.982e5 * 1.59e-1 / 8150672 * mc_scale;
-                break;
-            }
+    else if (STOP_TW == input_type)
+    {
+        scale = 7.87 * 1.0 / 814390 * mc_scale;
+    }
 
-        case TTJETS_SCALE_UP:
-            {
-                // Use NLO x-section: 157.5 instead of LO: 94.76
-                //
-                scale = 163 * 1.0 / 930483 * mc_scale;
-                break;
-            }
-        case TTJETS_SCALE_DOWN:
-            {
-                // Use NLO x-section: 157.5 instead of LO: 94.76
-                //
-                scale = 163 * 1.0 / 967055 * mc_scale;
-                break;
-            }
-        case TTJETS_MATCHING_UP:
-            {
-                // Use NLO x-section: 157.5 instead of LO: 94.76
-                //
-                scale = 163 * 1.0 / 1057479 * mc_scale;
-                break;
-            }
-        case TTJETS_MATCHING_DOWN:
-            {
-                // Use NLO x-section: 157.5 instead of LO: 94.76
-                //
-                scale = 163 * 1.0 / 1065323 * mc_scale;
-                break;
-            }
-        case TTJETS:
-            {
-                // Use NLO x-section: 157.5 instead of LO: 94.76
-                //
-                scale = 163 * 1.0 / 3701947 * mc_scale;
-                break;
-            }
+    else if (SATOP_S == input_type)
+    {
+        scale = 1.44 * 1.0 / 137980 * mc_scale;
+    }
 
-        case ZJETS:
-            {
-                // Use NLO x-section: 3048 instead of LO: 2475
-                //
-                scale = 3048 * 1.0 / 36277961 * mc_scale;
-                break;
-            }
+    else if (SATOP_T == input_type)
+    {
+        scale = 22.65 * 1.0 / 1944826 * mc_scale;
+    }
 
-        case WJETS_SCALE_UP: // fall through
-            {
-                // Use NLO x-section: 31314 instead of LO: 27770
-                //
-                scale = 31314 * 1.0 / 9784907 * mc_scale;
-                break;
-            }
-        case WJETS_SCALE_DOWN: // fall through
-            {
-                // Use NLO x-section: 31314 instead of LO: 27770
-                //
-                scale = 31314 * 1.0 / 10022324 * mc_scale;
-                break;
-            }
-        case WJETS_MATCHING_UP: // fall through
-            {
-                // Use NLO x-section: 31314 instead of LO: 27770
-                //
-                scale = 31314 * 1.0 / 10461655 * mc_scale;
-                break;
-            }
-        case WJETS_MATCHING_DOWN: // fall through
-            {
-                // Use NLO x-section: 31314 instead of LO: 27770
-                //
-                scale = 31314 * 1.0 / 9956679 * mc_scale;
-                break;
-            }
-        case WJETS:
-            {
-                // Use NLO x-section: 31314 instead of LO: 27770
-                //
-                scale = 31314 * 1.0 / 77105816 * mc_scale;
-                break;
-            }
+    else if (SATOP_TW == input_type)
+    {
+        scale = 7.87 * 1.0 / 809984 * mc_scale;
+    }
 
-        case STOP_S:
-            {
-                scale = 3.19 * 1.0 / 259971 * mc_scale;
-                break;
-            }
+    else if (ZPRIME1000 == input_type)
+    {
+        scale = 1.0 / 207992 * mc_scale;
+    }
 
-        case STOP_T:
-            {
-                scale = 41.92 * 1.0 / 3900171 * mc_scale;
-                break;
-            }
+    else if (ZPRIME1500 == input_type)
+    {
+        scale = 1.0 / 168383 * mc_scale;
+    }
 
-        case STOP_TW:
-            {
-                scale = 7.87 * 1.0 / 814390 * mc_scale;
-                break;
-            }
+    else if (ZPRIME2000 == input_type)
+    {
+        scale = 1.0 / 179315 * mc_scale;
+    }
 
-        case SATOP_S:
-            {
-                scale = 1.44 * 1.0 / 137980 * mc_scale;
-                break;
-            }
+    else if (ZPRIME3000 == input_type)
+    {
+        scale = 1.0 / 195410 * mc_scale;
+    }
 
-        case SATOP_T:
-            {
-                scale = 22.65 * 1.0 / 1944826 * mc_scale;
-                break;
-            }
+    else if (ZPRIME4000 == input_type)
+    {
+        scale = 1.0 / 180381 * mc_scale;
+    }
 
-        case SATOP_TW:
-            {
-                scale = 7.87 * 1.0 / 809984 * mc_scale;
-                break;
-            }
+    else if (RERECO_2011A_MAY10 == input_type) // Fall through
+    {
+        return;
+    }
+    else if (RERECO_2011A_AUG05 == input_type) // Fall through
+    {
+        return;
+    }
+    else if (PROMPT_2011A_V4 == input_type) // Fall through
+    {
+        return;
+    }
+    else if (PROMPT_2011A_V6 == input_type) // Fall through
+    {
+        return;
+    }
+    else if (PROMPT_2011B_V1 == input_type)  // Do nothing
+    {
+        return;
+    }
 
-        case ZPRIME1000:
-            {
-                scale = 1.0 / 207992 * mc_scale;
-                break;
-            }
+    else if (QCD_FROM_DATA == input_type) // do nothing
+    {
+        cout << "Scale QCD by: " << qcd_scale << endl;
+        hist->Scale(qcd_scale);
+        return;
+    }
 
-        case ZPRIME1500:
-            {
-                scale = 1.0 / 168383 * mc_scale;
-                break;
-            }
+    else
+    {
+        cerr << "unknown type: can not scale the plot" << endl;
 
-        case ZPRIME2000:
-            {
-                scale = 1.0 / 179315 * mc_scale;
-                break;
-            }
-
-        case ZPRIME3000:
-            {
-                scale = 1.0 / 195410 * mc_scale;
-                break;
-            }
-
-        case ZPRIME4000:
-            {
-                scale = 1.0 / 180381 * mc_scale;
-                break;
-            }
-
-        case RERECO_2011A_MAY10: // Fall through
-        case RERECO_2011A_AUG05: // Fall through
-        case PROMPT_2011A_V4: // Fall through
-        case PROMPT_2011A_V6: // Fall through
-        case PROMPT_2011B_V1:  // Do nothing
-            return;
-
-        case QCD_FROM_DATA: // do nothing
-            hist->Scale(qcd_scale);
-            return;
-
-        default:
-            {
-                cerr << "unknown type: can not scale the plot" << endl;
-
-                return;
-            }
+        return;
     }
 
     float scale_with_luminosity = scale * luminosity;
 
+    cout << "scaling by: " << scale_with_luminosity << endl;
     hist->Scale(scale_with_luminosity);
 }
 
@@ -696,7 +679,7 @@ void theta_input(const string &mask = "",
 
     if (NONE == systematic)
     {
-        save("htlep_before_htlep", "htlep");
+        //save("htlep_before_htlep", "htlep");
         save("mttbar_after_htlep", "mttbar");
     }
     else
