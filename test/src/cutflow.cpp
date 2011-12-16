@@ -5,21 +5,24 @@
 
 #include <iostream>
 
+#include <boost/lexical_cast.hpp>
+
 #include "interface/Cutflow.h"
 
+using namespace boost;
 using namespace std;
 
 int main(int argc, char *argv[])
 {
-    if (2 > argc)
+    if (3 > argc)
     {
-        cerr << "Usage: " << argv[0] << " cutflow.txt" << endl;
+        cerr << "Usage: " << argv[0] << " cutflow.txt qcd_scale" << endl;
 
         return 0;
     }
 
     Cutflow cutflow;
-    cutflow.load(argv[1]);
+    cutflow.load(argv[1], lexical_cast<float>(argv[2]));
 
     return 0;
 }

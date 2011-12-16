@@ -15,7 +15,7 @@ class Cutflow
         {
         }
 
-        void load(const std::string &filename);
+        void load(const std::string &filename, const float &qcd_scale);
 };
 
 #endif

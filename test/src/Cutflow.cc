@@ -20,7 +20,7 @@ using namespace boost;
 
 namespace fs = boost::filesystem;
 
-void Cutflow::load(const string &filename)
+void Cutflow::load(const string &filename, const float &qcd_scale)
 {
     if (filename.empty())
         return;
@@ -47,7 +47,7 @@ void Cutflow::load(const string &filename)
         string input(buf);
 
         smatch matches;
-        regex pattern("^((?:zprime_[^\\s]+)|(?:w|z|tt)jets|(?:s|sa)top_(?:s|t|tw)|data)((?:\\s+\\d+)+)$",
+        regex pattern("^((?:zprime_[^\\s]+)|(?:w|z|tt)jets|(?:s|sa)top_(?:s|t|tw)|data|qcd_data)((?:\\s+\\d+)+)$",
                 regex_constants::icase | regex_constants::perl);
         if (!regex_match(input, matches, pattern))
         {
@@ -56,6 +56,7 @@ void Cutflow::load(const string &filename)
             continue;
         }
 
+        bool use_luminosity = true;
         float scale = 1;
         if ("wjets" == matches[1])
         {
@@ -109,18 +110,25 @@ void Cutflow::load(const string &filename)
         {
             scale = getScale(Input::ZPRIME3000);
         }
+        else if ("qcd_data" ==  matches[1])
+        {
+            scale = qcd_scale;
+            use_luminosity = false;
+        }
         else
         {
-            cout << input << endl;
-            continue;
+            use_luminosity = false;
         }
 
-        scale *= luminosity();
+        if (use_luminosity)
+            scale *= luminosity();
 
         istringstream in(matches[2]);
 
         cout << matches[1] << " ";
-        for(float events; in >> events; cout << events * scale << " ");
+        int precision = cout.precision(2);
+        for(float events; in >> events; cout << fixed << events * scale << " ");
+        cout.precision(precision);
 
         cout << endl;
     }
