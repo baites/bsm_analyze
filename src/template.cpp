@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
 
             TH1Ptr htall = convert(*analyzer->htall());
             htall->SetName("htall");
-            htall->GetXaxis()->SetTitle("H_{T}^{lep} [GeV/c]");
+            htall->GetXaxis()->SetTitle("H_{T}^{all} [GeV/c]");
             htall->GetXaxis()->SetTitleSize(0.045);
 
             TH1Ptr htlep_after_htlep = convert(*analyzer->htlepAfterHtlep());

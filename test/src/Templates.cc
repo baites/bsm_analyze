@@ -37,8 +37,12 @@ Templates::Templates(const std::string &input_file,
     _input_file(input_file),
     _mc_scale(1.0),
     _mc_scale_error(0.0),
+    _mc_error(false),
     _qcd_scale(1.0),
-    _qcd_scale_error(0.0)
+    _qcd_scale_error(0.0),
+    _qcd_type(QCD_NONE),
+    _pull_plots(0.0),
+    _ks_chi2(false)
 {
     if (!theta_scale.empty())
     {
@@ -146,7 +150,8 @@ void Templates::load()
 
 void Templates::draw()
 {
-    normalize();
+    if (_qcd_type == QCD_FROM_DATA)
+        normalize();
 
     for(Template hist_template(Template::MET), end(Template::HTOP_MT);
     //for(Template hist_template(Template::MET), end(Template::WLEP_MT);
@@ -243,10 +248,20 @@ void Templates::plot(const Template &plot)
         h->Scale(_theta_scale.zjets);
     channel[Channel::ZJETS] = h; 
 
-    h = get(input_plots, Input::QCD_FROM_DATA);
-    if (h && _theta_scale.qcd)
-        h->Scale(_theta_scale.qcd);
-    channel[Channel::QCD] = h;
+    if (_qcd_type == QCD_FROM_DATA)
+    {
+        h = get(input_plots, Input::QCD_FROM_DATA);
+        if (h && _theta_scale.qcd)
+            h->Scale(_theta_scale.qcd);
+        channel[Channel::QCD] = h;
+    }
+    else if (_qcd_type == QCD_FROM_MC)
+    {
+        h = get(input_plots, Input::QCD);
+        if (h && _theta_scale.qcd)
+            h->Scale(_theta_scale.qcd);
+        channel[Channel::QCD] = h;
+    }
 
     TCanvas *canvas = draw(plot, channel);
     canvas->SaveAs(("template_" + plot.repr() + ".png").c_str());
@@ -305,7 +320,24 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
     TCanvas *canvas = new TCanvas(name.str().c_str(), "", 800, 700);
     _heap.push_back(canvas);
 
-    TVirtualPad *pad = canvas->cd(1);
+    TPad *pad1 = 0, *pad2 = 0;
+    TVirtualPad *pad = 0;
+
+    if (_pull_plots)
+    { 
+        pad1 = new TPad("pad1", "histogram", 0.01, 0.25, 0.99, 0.99);
+        _heap.push_back(pad1);
+        pad1->Draw();
+
+        pad2 = new TPad("pad2", "ratio", 0.01,0.01,0.99,0.24);
+        _heap.push_back(pad2);
+        pad2->Draw();
+    
+        pad = pad1->cd();
+    } 
+    else
+        pad = canvas->cd(1);
+
     pad->SetRightMargin(10);
     pad->SetTopMargin(10);
 
@@ -429,14 +461,18 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
         data->GetYaxis()->SetRangeUser(0, max_y * 1.2);
     }
 
-    mc_sigma->SetMarkerSize(0);
-    mc_sigma->SetLineColor(1);
-    mc_sigma->SetLineWidth(2);
-    mc_sigma->SetFillColor(1);
-    mc_sigma->SetFillStyle(3004);
-    mc_sigma->Draw("9 e2 same");
+    if (_mc_error)
+    {
+        mc_sigma->SetMarkerSize(0);
+        mc_sigma->SetLineColor(1);
+        mc_sigma->SetLineWidth(2);
+        mc_sigma->SetFillColor(1);
+        mc_sigma->SetFillStyle(3004);
+        mc_sigma->Draw("9 e2 same");
 
-    legend->AddEntry(mc_sigma, "Uncertainty", "fe");
+        legend->AddEntry(mc_sigma, "Uncertainty", "fe");
+    }
+
     legend->AddEntry(data,
             static_cast<string>(Channel(Channel::DATA)).c_str(),
             "lpe");
@@ -452,9 +488,66 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
     data->Draw("9 same");
     data->Draw("axis same");
 
-    // if (data) histTestLegend(ks, chi2);
+    if (data && _ks_chi2) histTestLegend(ks, chi2);
 
     cmsLegend();
+
+    cout << "Victor Yields for data and mc: " << data->Integral() << " " << mc->Integral() << endl;
+
+    if (_pull_plots)
+    {
+        pad = pad2->cd();
+        pad->SetRightMargin(10);
+        pad->SetTopMargin(10);
+
+        TH1F *dat = (TH1F*) data->Clone();
+
+        // Background sustraction to data (spetial treatment for errors)
+        for (Int_t i = 1; i <= dat->GetNbinsX()+1; ++i)
+        {
+            float value = 0.0, error = 0.0;
+            if (mc_sigma->GetBinContent(i) > 0.0)
+            {
+                value = (dat->GetBinContent(i) - mc_sigma->GetBinContent(i))/mc_sigma->GetBinContent(i);
+                error = sqrt(dat->GetBinContent(i)+pow(mc_sigma->GetBinError(i),2))/mc_sigma->GetBinContent(i);
+            }
+            else
+                value = error = 0.0;
+            dat->SetBinContent(i, value);
+            dat->SetBinError(i, error);
+        }
+
+        float ymax = dat->GetBinContent(dat->GetMaximumBin());
+        float ymin = dat->GetBinContent(dat->GetMinimumBin());
+ 
+        if (ymax > _pull_plots) ymax = _pull_plots;
+        if (ymin < -_pull_plots) ymin = -_pull_plots;  
+
+        for (Int_t i=1; i<=dat->GetNbinsX(); ++i)
+        {
+            Float_t value = 1.05 * (dat->GetBinContent(i) + dat->GetBinError(i));
+            if (value > _pull_plots) value = _pull_plots;
+            ymax = max(ymax, value);
+            value = 1.05 * (dat->GetBinContent(i) - dat->GetBinError(i));
+            if (value < -_pull_plots) value = -_pull_plots;        
+            ymin = min(ymin, value);
+        }
+
+        dat->GetXaxis()->SetTitle("");
+        dat->GetXaxis()->SetLabelSize(0.0);
+        dat->GetYaxis()->SetTitle("Pull");
+        dat->GetYaxis()->SetTitleOffset(0.5);
+        dat->GetYaxis()->SetTitleSize(0.11);
+        dat->GetYaxis()->SetRangeUser(ymin,ymax);
+        dat->GetYaxis()->SetLabelSize(0.09);
+        dat->GetYaxis()->SetNdivisions(8);
+ 
+        // draw bkg sustracted background
+        dat->SetLineWidth(2);
+        dat->Draw("9 e");
+ 
+        pad2->SetGrid();
+    }
 
     canvas->Update();
 
@@ -733,7 +826,7 @@ TH1 *Templates::get(const InputPlots &plots,
 
 TLegend *Templates::createLegend(const string &text)
 {
-    TLegend *legend = new TLegend( .67, .63, .89, .86);
+    TLegend *legend = new TLegend( .67, .65, .89, .88);
     _heap.push_back(legend);
 
     if (!text.empty())
@@ -761,14 +854,15 @@ void Templates::style(TH1 *h, const Input &input)
 
 void Templates::cmsLegend()
 {
-    TLegend *legend = new TLegend(.20, .91, .60, .95);
+    TLegend *legend = new TLegend(.18, .91, .50, .96);
     _heap.push_back(legend);
 
     legend->SetTextAlign(12);
+    legend->SetTextSize(0.12);
 
     ostringstream title;
     title.precision(2);
-    title << fixed << "L = " << luminosity() / 1000 << " fb^{-1}, e+jets";
+    title << fixed << "L = " << (luminosity()/1000) << " fb^{-1}, e+jets";
     legend->SetHeader(title.str().c_str());
 
     legend->SetMargin(0.12);
@@ -778,13 +872,14 @@ void Templates::cmsLegend()
     
     legend->Draw();
 
-    legend = new TLegend(.20, .81, .60, .86);
+    legend = new TLegend(.55, .91, .90, .96);
     _heap.push_back(legend);
 
-    legend->SetTextAlign(12);
+    legend->SetTextAlign(32);
+    legend->SetTextSize(0.12);
 
     title.str("");
-    title << "#splitline{CMS Preliminary}{#sqrt{s}=7 TeV}";
+    title << "CMS Preliminary  #sqrt{s} = 7 TeV";
     legend->SetHeader(title.str().c_str());
 
     legend->SetMargin(0.12);
@@ -797,10 +892,10 @@ void Templates::cmsLegend()
 
 void Templates::histTestLegend(const float &ks, const float &chi2)
 {
-    TLegend *legend = new TLegend(.20, .91, .90, .95);
+    TLegend *legend = new TLegend(.18, .84, .40, .89);
     _heap.push_back(legend);
 
-    legend->SetTextAlign(32);
+    legend->SetTextAlign(12);
 
     ostringstream title;
     title.precision(3);
@@ -837,7 +932,7 @@ int Templates::rebin(const Template &plot) const
 {
     switch(plot.type())
     {
-        case Template::MET: return 25;
+        case Template::MET: return 10;
         case Template::MET_QCD: return 5;
         case Template::MET_QCD_NOWEIGHT: return 5;
         case Template::HTALL: return 25;
@@ -915,3 +1010,4 @@ ostream &operator <<(ostream &out, const Templates::ThetaScale &scale)
         << "ttjets: " << scale.ttjets << endl
         << "qcd: " << scale.qcd;
 }
+
