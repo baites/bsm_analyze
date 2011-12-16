@@ -5,8 +5,9 @@ sum_samples()
 {
     for pattern in $@
     do
-        grep $pattern $filename
-    done | awk '{a+=$2; b+=$3; c+=$4; d+=$5; e+=$6; f+=$7} END {print a, "&", b, "&", c, "&", d, "&", e, "\\\\"}'
+        grep -E "^$pattern" $filename
+    #done | awk '{a+=$2; b+=$3; c+=$4; d+=$5; e+=$6; f+=$7} END {print a, "\\pm", sqrt(a), "&", b, "&", c, "&", d, "&", e, "\\\\"}'
+done | awk '{a+=$2; b+=$3; c+=$4; d+=$5; e+=$6; f+=$7} END {printf("\$%.2f \\pm %.2f\$ & \$%.2f \\pm %.2f\$ & \$%.2f \\pm %.2f\$ & \$%.2f \\pm %.2f\$ & \$%.2f \\pm %.2f\$ \\\\\n", a, sqrt(a), b, sqrt(b), c, sqrt(c), d, sqrt(d), e, sqrt(e))}'
 }
 
 echo -n "stop & "
@@ -20,6 +21,9 @@ done
 
 echo -n "total & "
 sum_samples "stop" satop {w,z,tt}jets
+
+echo -n "qcd_data & "
+sum_samples qcd_data
 
 echo -n "data & "
 sum_samples data
