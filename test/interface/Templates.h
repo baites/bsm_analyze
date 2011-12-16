@@ -51,6 +51,23 @@ class Templates
         void load();
         void draw();
 
+        enum QCDType {QCD_NONE = 0, QCD_FROM_MC, QCD_FROM_DATA};
+
+        void setQCDType(QCDType value)
+        {
+            _qcd_type = value;
+        }
+
+        void setPullPlots(float value = 1.0)
+        {
+            _pull_plots = value;
+        }
+
+        void setKSChi2(bool flag = true)
+        {
+            _ks_chi2 = flag;
+        }
+
     private:
         // Histograms groupped in channels
         //
@@ -114,6 +131,10 @@ class Templates
 
         void normalize(); 
         TCanvas *normalize(const Template &, Channels &, Channels &);
+
+        QCDType _qcd_type;
+        float _pull_plots;
+        bool _ks_chi2;
 };
 
 std::ostream &operator <<(std::ostream &, const Templates::ThetaScale &);
