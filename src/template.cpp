@@ -121,6 +121,16 @@ int main(int argc, char *argv[])
             htlep_before_htlep->GetXaxis()->SetTitle("H_{T}^{lep} [GeV/c]");
             htlep_before_htlep->GetXaxis()->SetTitleSize(0.045);
 
+            TH1Ptr htlep_before_htlep_qcd = convert(*analyzer->htlepBeforeHtlepQCD());
+            htlep_before_htlep_qcd->SetName("htlep_before_htlep_qcd");
+            htlep_before_htlep_qcd->GetXaxis()->SetTitle("H_{T}^{lep} [GeV/c]");
+            htlep_before_htlep_qcd->GetXaxis()->SetTitleSize(0.045);
+
+            TH1Ptr htlep_before_htlep_qcd_noweight = convert(*analyzer->htlepBeforeHtlepQCDNoWeight());
+            htlep_before_htlep_qcd_noweight->SetName("htlep_before_htlep_qcd_noweight");
+            htlep_before_htlep_qcd_noweight->GetXaxis()->SetTitle("H_{T}^{lep} [GeV/c]");
+            htlep_before_htlep_qcd_noweight->GetXaxis()->SetTitleSize(0.045);
+
             TH1Ptr mttbar_before_htlep = convert(*analyzer->mttbarBeforeHtlep());
             mttbar_before_htlep->SetName("mttbar_before_htlep");
             mttbar_before_htlep->GetXaxis()->SetTitle("M_{t#bar{t}} [TeV/c^{2}]");
@@ -255,6 +265,8 @@ int main(int argc, char *argv[])
                 htall->Write();
                 htlep_after_htlep->Write();
                 htlep_before_htlep->Write();
+                htlep_before_htlep_qcd->Write();
+                htlep_before_htlep_qcd_noweight->Write();           
                 mttbar_before_htlep->Write();
                 mttbar_after_htlep->Write();
                 dr_vs_ptrel->Write();
