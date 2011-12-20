@@ -151,7 +151,7 @@ SynchSelector::SynchSelector():
     monitor(_primary_vertex_selector);
 
     _electron_selector.reset(new ElectronSelector());
-    _electron_selector->cut(ElectronSelector::PT)->setValue(50);
+    _electron_selector->cut(ElectronSelector::PT)->setValue(70);
     _electron_selector->cut(ElectronSelector::PRIMARY_VERTEX)->disable();
     monitor(_electron_selector);
 
@@ -768,7 +768,7 @@ void SynchSelector::selectGoodElectrons(const Event *event)
         {
             if (Electron::HyperTight1 != id->name())
                 continue;
-            
+
             if (qcdTemplate())
             {
                 if (!id->identification() || !id->conversion_rejection())
@@ -779,6 +779,7 @@ void SynchSelector::selectGoodElectrons(const Event *event)
                 if (id->identification() && id->conversion_rejection())
                     is_good_lepton = true;
             }
+
             break;
         }
 

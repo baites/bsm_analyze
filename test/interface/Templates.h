@@ -102,7 +102,7 @@ class Templates
                 const Input::Type &from,
                 const Input::Type &to = Input::UNKNOWN);
 
-        TLegend *createLegend(const std::string & = "");
+        TLegend *createLegend(const std::string & = "", bool = false);
 
         void cmsLegend();
         void histTestLegend(const float &kolmogorov_smirnov,
@@ -129,12 +129,12 @@ class Templates
 
         // QCD and MC normalization from data
         //
-        double _mc_scale;
-        double _mc_scale_error;
+        double _mc_fraction;
+        double _mc_fraction_error;
         bool _mc_error;
 
-        double _qcd_scale;
-        double _qcd_scale_error;
+        double _qcd_fraction;
+        double _qcd_fraction_error;
 
         void normalize(); 
         TCanvas *normalize(const Template &, Channels &, Channels &);

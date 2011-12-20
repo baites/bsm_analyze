@@ -129,6 +129,12 @@ TemplateAnalyzer::TemplateAnalyzer():
     _htlep_before_htlep.reset(new H1Proxy(50, 100, 150));
     monitor(_htlep_before_htlep);
 
+    _htlep_before_htlep_qcd.reset(new H1Proxy(50, 100, 150));
+    monitor(_htlep_before_htlep_qcd);
+
+    _htlep_before_htlep_qcd_noweight.reset(new H1Proxy(50, 100, 150));
+    monitor(_htlep_before_htlep_qcd_noweight); 
+
     _mttbar_before_htlep.reset(new H1Proxy(4000, 0, 4));
     monitor(_mttbar_before_htlep);
 
@@ -260,6 +266,12 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
 
     _htlep_before_htlep = dynamic_pointer_cast<H1Proxy>(object._htlep_before_htlep->clone());
     monitor(_htlep_before_htlep);
+
+    _htlep_before_htlep_qcd = dynamic_pointer_cast<H1Proxy>(object._htlep_before_htlep_qcd->clone());
+    monitor(_htlep_before_htlep_qcd);
+
+    _htlep_before_htlep_qcd_noweight = dynamic_pointer_cast<H1Proxy>(object._htlep_before_htlep_qcd_noweight->clone());
+    monitor(_htlep_before_htlep_qcd_noweight);
 
     _mttbar_before_htlep =
         dynamic_pointer_cast<H1Proxy>(object._mttbar_before_htlep->clone());
@@ -400,6 +412,16 @@ const TemplateAnalyzer::H1Ptr TemplateAnalyzer::htlepAfterHtlep() const
 const TemplateAnalyzer::H1Ptr TemplateAnalyzer::htlepBeforeHtlep() const
 {
     return _htlep_before_htlep->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::htlepBeforeHtlepQCD() const
+{
+    return _htlep_before_htlep_qcd->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::htlepBeforeHtlepQCDNoWeight() const
+{
+    return _htlep_before_htlep_qcd_noweight->histogram();
 }
 
 const TemplateAnalyzer::H1Ptr TemplateAnalyzer::mttbarBeforeHtlep() const
@@ -718,6 +740,8 @@ void TemplateAnalyzer::process(const Event *event)
         {
             htlep()->fill(htlepValue(), _pileup_weight * _wjets_weight);
             htlepBeforeHtlep()->fill(htlepValue(), _pileup_weight * _wjets_weight);
+            htlepBeforeHtlepQCD()->fill(htlepValue(), _pileup_weight * _wjets_weight);
+            htlepBeforeHtlepQCDNoWeight()->fill(htlepValue());
             mttbarBeforeHtlep()->fill(mass(mttbar().mttbar) / 1000, _pileup_weight * _wjets_weight);
         }
     } 

@@ -35,11 +35,11 @@ namespace fs = boost::filesystem;
 Templates::Templates(const std::string &input_file,
         const std::string &theta_scale):
     _input_file(input_file),
-    _mc_scale(1.0),
-    _mc_scale_error(0.0),
+    _mc_fraction(1.0),
+    _mc_fraction_error(0.0),
     _mc_error(false),
-    _qcd_scale(1.0),
-    _qcd_scale_error(0.0),
+    _qcd_fraction(1.0),
+    _qcd_fraction_error(0.0),
     _qcd_type(QCD_NONE),
     _pull_plots(0.0),
     _ks_chi2(false)
@@ -214,8 +214,8 @@ void Templates::loadHistograms(TFile *file, const Input &input)
 void Templates::plot(const Template &plot)
 {
     if (
-        plot == Template::MET_QCD ||
-        plot == Template::MET_QCD_NOWEIGHT
+        plot == Template::HTLEP_BEFORE_HTLEP_QCD ||
+        plot == Template::HTLEP_BEFORE_HTLEP_QCD_NOWEIGHT
     )
         return;
 
@@ -365,19 +365,13 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
             continue;
         }
 
-        if (Channel::DATA == channel->first)
+        if (
+            Channel::DATA == channel->first ||
+            Channel::QCD == channel->first
+        )
         {
             continue;
         }            
-
-        if (Channel::QCD == channel->first)
-        {
-            channel->second->Scale(_qcd_scale);
-        }
-        else
-        {
-            channel->second->Scale(_mc_scale);
-        }
  
         if (!isclone)
         {
@@ -389,6 +383,24 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
         
         mc_sigma->Add(channel->second);
     }    
+
+    // mc and qcd scales computed from the mc fraction
+    //
+    float mc_scale = _mc_fraction*data->Integral()/mc_sigma->Integral();
+    float qcd_scale = _qcd_fraction*data->Integral()/channels[Channel::QCD]->Integral();
+
+    // print the scales for mttbar
+    //
+    if (plot == Template::TTBAR_MASS)
+    {
+        cout << "MC scale for mttbar : " << mc_scale << endl;
+        cout << "QCD scale for mttbar : " << qcd_scale << endl;
+    }
+
+    // Scale/Add mc/qcd with the correct scale
+    //
+    mc_sigma->Scale(mc_scale);
+    mc_sigma->Add(channels[Channel::QCD], qcd_scale);    
 
     // Add systematics
     //
@@ -435,6 +447,15 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
         if (Channel::DATA == channel->first)
         {
             continue;
+        }
+
+        if (Channel::QCD == channel->first)
+        {
+            channel->second->Scale(qcd_scale);
+        }
+        else
+        {
+            channel->second->Scale(mc_scale);
         }
 
         legend->AddEntry(channel->second,
@@ -491,8 +512,6 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
     if (data && _ks_chi2) histTestLegend(ks, chi2);
 
     cmsLegend();
-
-    cout << "Victor Yields for data and mc: " << data->Integral() << " " << mc->Integral() << endl;
 
     if (_pull_plots)
     {
@@ -583,8 +602,8 @@ TCanvas *Templates::draw2D(const Template &plot, Channels &channels)
 
 void Templates::normalize()
 {
-    Template plot(Template::MET_QCD);
-    Template uwplot(Template::MET_QCD_NOWEIGHT);
+    Template plot(Template::HTLEP_BEFORE_HTLEP_QCD);
+    Template uwplot(Template::HTLEP_BEFORE_HTLEP_QCD_NOWEIGHT);
 
     const InputPlots &input_plots = _plots[plot];
     const InputPlots &input_plots_noweight = _plots[uwplot];
@@ -721,23 +740,20 @@ TCanvas *Templates::normalize(const Template &plot, Channels &channels, Channels
 
     if (status == 0)
     {   
-        fitter->GetResult(0, _mc_scale, _mc_scale_error);
-        fitter->GetResult(1, _qcd_scale, _qcd_scale_error); 
+        fitter->GetResult(0, _mc_fraction, _mc_fraction_error);
+        fitter->GetResult(1, _qcd_fraction, _qcd_fraction_error); 
 
-        cout << "MC  fraction: " << _mc_scale << " +- " << _mc_scale_error << endl;
-        cout << "QCD fraction: " << _qcd_scale << " +- " << _qcd_scale_error << endl;
+        cout << "MC  fraction: " << _mc_fraction << " +- " << _mc_fraction_error << endl;
+        cout << "QCD fraction: " << _qcd_fraction << " +- " << _qcd_fraction_error << endl;
 
         ostringstream mclabel, qcdlabel;
         mclabel.precision(1);
-        mclabel << fixed << "MC (" << (100*_mc_scale) << "%)";
+        mclabel << fixed << "MC (" << (100*_mc_fraction) << "%)";
         qcdlabel.precision(1);
-        qcdlabel << fixed << "QCD (" << (100*_qcd_scale) << "%)";
+        qcdlabel << fixed << "QCD (" << (100*_qcd_fraction) << "%)";
         
-        _mc_scale = _mc_scale*data->Integral()/mc->Integral();
-        _qcd_scale = _qcd_scale*data->Integral()/qcd->Integral();
-       
-        cout << "MC scale: " << _qcd_scale << endl; 
-        cout << "QCD scale: " << _mc_scale << endl;
+        float mc_scale = _mc_fraction*data->Integral()/mc->Integral();
+        float qcd_scale = _qcd_fraction*data->Integral()/qcd->Integral();
 
         data->GetXaxis()->SetLabelSize(0.04);
         data->GetXaxis()->SetTitleOffset(1.1);
@@ -745,13 +761,11 @@ TCanvas *Templates::normalize(const Template &plot, Channels &channels, Channels
         data->GetYaxis()->SetTitleOffset(1.7);
         data->SetMarkerStyle(20);
         data->SetMarkerSize(1);
-        // data->Rebin(rebin(Template::MET)/rebin(Template::MET_QCD));
         setYaxisTitle(data, plot);
 
         TH1 * result = (TH1*) fitter->GetPlot();
         result->SetFillStyle(0);
         result->SetLineWidth(2);
-        // result->Rebin(rebin(Template::MET)/rebin(Template::MET_QCD));
 
         float maxy = max(
             data->GetBinContent(data->GetMaximumBin()),
@@ -765,23 +779,21 @@ TCanvas *Templates::normalize(const Template &plot, Channels &channels, Channels
         qcd->SetLineWidth(2);
         qcd->SetLineColor(kBlue);
         qcd->SetLineStyle(2);
-        qcd->Scale(_qcd_scale);
-        // qcd->Rebin(rebin(Template::MET)/rebin(Template::MET_QCD));       
+        qcd->Scale(qcd_scale);
         qcd->Draw("9 histsame");
         
         mc->SetFillStyle(0);
         mc->SetLineWidth(2);
         mc->SetLineColor(kRed);
         mc->SetLineStyle(3);
-        mc->Scale(_mc_scale);
-        // mc->Rebin(rebin(Template::MET)/rebin(Template::MET_QCD));
+        mc->Scale(mc_scale);
         mc->Draw("9 histsame");
         
         data->Draw("9 sameEp");
 
         cmsLegend();
         
-        TLegend *legend = createLegend();
+        TLegend *legend = createLegend("",true);
 
         legend->AddEntry(data, "Data", "pe");
         legend->AddEntry(result, "Fit", "l");
@@ -824,9 +836,14 @@ TH1 *Templates::get(const InputPlots &plots,
     return hist;
 }
 
-TLegend *Templates::createLegend(const string &text)
+TLegend *Templates::createLegend(const string &text, bool left)
 {
-    TLegend *legend = new TLegend( .67, .65, .89, .88);
+    TLegend *legend = 0;
+
+    if (left)
+        legend = new TLegend( .25, .65, .47, .88);
+    else
+        legend = new TLegend( .67, .65, .89, .88);
     _heap.push_back(legend);
 
     if (!text.empty())
@@ -933,11 +950,10 @@ int Templates::rebin(const Template &plot) const
     switch(plot.type())
     {
         case Template::MET: return 10;
-        case Template::MET_QCD: return 5;
-        case Template::MET_QCD_NOWEIGHT: return 5;
         case Template::HTALL: return 25;
         case Template::HTLEP: return 25;
         case Template::HTLEP_BEFORE_HTLEP: return 5;
+        case Template::HTLEP_BEFORE_HTLEP_QCD: return 2;
         case Template::HTLEP_AFTER_HTLEP: return 25;
         case Template::NPV: return 1;
         case Template::NPV_NO_PU: return 1;
