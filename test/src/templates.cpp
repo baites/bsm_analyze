@@ -25,6 +25,7 @@ try
         ("qcd-type", po::value<string>()->default_value("none"), "qcd type")
         ("pull-plots", po::value<float>()->default_value(0.0), "pull plots providing maximum pull")
         ("ks-chi2", po::value<bool>()->default_value(false), "add ks and chi2 to the plots")
+        ("log-scale", po::value<bool>()->default_value(false), "make plots in log scale")
         ;
 
     po::variables_map options;
@@ -67,6 +68,8 @@ try
     templates->setPullPlots(options["pull-plots"].as<float>());
 
     templates->setKSChi2(options["ks-chi2"].as<bool>());
+
+    templates->setLogScale(options["log-scale"].as<bool>());
 
     templates->load();
 

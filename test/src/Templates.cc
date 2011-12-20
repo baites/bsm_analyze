@@ -42,7 +42,8 @@ Templates::Templates(const std::string &input_file,
     _qcd_fraction_error(0.0),
     _qcd_type(QCD_NONE),
     _pull_plots(0.0),
-    _ks_chi2(false)
+    _ks_chi2(false),
+    _log_scale(false)
 {
     if (!theta_scale.empty())
     {
@@ -263,9 +264,14 @@ void Templates::plot(const Template &plot)
         channel[Channel::QCD] = h;
     }
 
+    channel[Channel::ZPRIME1000] = get(input_plots, Input::ZPRIME1000);
+    channel[Channel::ZPRIME2000] = get(input_plots, Input::ZPRIME2000);
+
     TCanvas *canvas = draw(plot, channel);
-    canvas->SaveAs(("template_" + plot.repr() + ".png").c_str());
-    canvas->SaveAs(("template_" + plot.repr() + ".pdf").c_str());
+    canvas->SaveAs(("template_" + plot.repr() + (_log_scale ? "_log" : "")
+                + ".png").c_str());
+    canvas->SaveAs(("template_" + plot.repr() + (_log_scale ? "_log" : "") 
+                + ".pdf").c_str());
 }
 
 void Templates::plot2D(const Template &plot)
@@ -303,6 +309,19 @@ void Templates::plot2D(const Template &plot)
     channel[Channel::ZPRIME1000] = get(input_plots, Input::ZPRIME1000);
 
     canvas = draw2D(plot, channel);
+
+    canvas->SaveAs(("template_" + plot.repr()
+                + "_" + channel.begin()->first.repr()
+                + ".png").c_str());
+    canvas->SaveAs(("template_" + plot.repr()
+                + "_" + channel.begin()->first.repr()
+                + ".pdf").c_str());
+
+    channel.clear();
+    channel[Channel::ZPRIME2000] = get(input_plots, Input::ZPRIME2000);
+
+    canvas = draw2D(plot, channel);
+
     canvas->SaveAs(("template_" + plot.repr()
                 + "_" + channel.begin()->first.repr()
                 + ".png").c_str());
@@ -362,13 +381,15 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
         if (!channel->second)
         {
             cerr << channel->first << " is not available" << endl;
+
             continue;
         }
 
-        if (
-            Channel::DATA == channel->first ||
-            Channel::QCD == channel->first
-        )
+        if (Channel::DATA == channel->first
+            || Channel::QCD == channel->first
+            || Channel::ZPRIME1000 == channel->first
+            || Channel::ZPRIME1500 == channel->first
+            || Channel::ZPRIME2000 == channel->first)
         {
             continue;
         }            
@@ -444,7 +465,10 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
             continue;
         }
 
-        if (Channel::DATA == channel->first)
+        if (Channel::DATA == channel->first
+                || Channel::ZPRIME1000 == channel->first
+                || Channel::ZPRIME1500 == channel->first
+                || Channel::ZPRIME2000 == channel->first)
         {
             continue;
         }
@@ -469,6 +493,48 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
     if (data) data->Draw("9");
     
     stack->Draw("9 hist same");
+
+    // Z'
+    //
+    TH1 *hist = 0;
+    if (channels.end() != channels.find(Channel::ZPRIME1000)
+            && channels[Channel::ZPRIME1000])
+    {
+        hist = channels[Channel::ZPRIME1000];
+        hist->Scale(10);
+        rebin(hist, plot);
+
+        legend->AddEntry(hist, "Z' 1 TeV/c^{2}", "fe");
+
+        hist->Draw("9 hist same");
+    }
+
+    if (channels.end() != channels.find(Channel::ZPRIME1500)
+            && channels[Channel::ZPRIME1500])
+    {
+        hist = channels[Channel::ZPRIME1500];
+        hist->Scale(10);
+        rebin(hist, plot);
+
+        legend->AddEntry(hist, "Z' 1.5 TeV/c^{2}", "fe");
+
+        hist->Draw("9 hist same");
+    }
+
+    if (channels.end() != channels.find(Channel::ZPRIME2000)
+            && channels[Channel::ZPRIME2000])
+    {
+        hist = channels[Channel::ZPRIME2000];
+        hist->Scale(10);
+        rebin(hist, plot);
+
+        legend->AddEntry(hist, "Z' 2 TeV/c^{2}", "fe");
+
+        hist->Draw("9 hist same");
+    }
+
+    if (_log_scale)
+        pad->SetLogy();
 
     legend->Draw("9");
 
@@ -632,8 +698,10 @@ void Templates::normalize()
     uwchannel[Channel::TTBAR] = get(input_plots_noweight, Input::TTJETS);
 
     TCanvas *canvas = normalize(plot, channel, uwchannel);
-    canvas->SaveAs(("template_" + plot.repr() + ".png").c_str());
-    canvas->SaveAs(("template_" + plot.repr() + ".pdf").c_str());
+    canvas->SaveAs(("template_" + plot.repr() + (_log_scale ? "_log" : "")
+                + ".png").c_str());
+    canvas->SaveAs(("template_" + plot.repr() + (_log_scale ? "_log" : "")
+                + ".pdf").c_str());
 }
 
 TCanvas *Templates::normalize(const Template &plot, Channels &channels, Channels &uwchannels)
@@ -750,7 +818,8 @@ TCanvas *Templates::normalize(const Template &plot, Channels &channels, Channels
         mclabel.precision(1);
         mclabel << fixed << "MC (" << (100*_mc_fraction) << "%)";
         qcdlabel.precision(1);
-        qcdlabel << fixed << "QCD (" << (100*_qcd_fraction) << "%)";
+        qcdlabel << fixed << static_cast<string>(Channel(Channel::QCD))
+            << " (" << (100*_qcd_fraction) << "%)";
         
         float mc_scale = _mc_fraction*data->Integral()/mc->Integral();
         float qcd_scale = _qcd_fraction*data->Integral()/qcd->Integral();
@@ -791,6 +860,11 @@ TCanvas *Templates::normalize(const Template &plot, Channels &channels, Channels
         
         data->Draw("9 sameEp");
 
+        /*
+        if (_log_scale)
+            pad->SetLogy();
+            */
+
         cmsLegend();
         
         TLegend *legend = createLegend("",true);
@@ -801,6 +875,8 @@ TCanvas *Templates::normalize(const Template &plot, Channels &channels, Channels
         legend->AddEntry(qcd, qcdlabel.str().c_str(), "l");
         legend->Draw();
     }
+
+    canvas->Update();
     
     return canvas;
 }
@@ -949,7 +1025,7 @@ int Templates::rebin(const Template &plot) const
 {
     switch(plot.type())
     {
-        case Template::MET: return 10;
+        case Template::MET: return 25;
         case Template::HTALL: return 25;
         case Template::HTLEP: return 25;
         case Template::HTLEP_BEFORE_HTLEP: return 5;
@@ -958,7 +1034,7 @@ int Templates::rebin(const Template &plot) const
         case Template::NPV: return 1;
         case Template::NPV_NO_PU: return 1;
         case Template::NJET: return 1;
-        case Template::TTBAR_MASS: return 200;
+        case Template::TTBAR_MASS: return 100;
         case Template::TTBAR_PT: return 25;
         case Template::WLEP_MT: return 25;
         case Template::WLEP_MASS: return 25;

@@ -73,6 +73,11 @@ class Templates
             _ks_chi2 = value;
         }
 
+        void setLogScale(const bool &value)
+        {
+            _log_scale = value;
+        }
+
     private:
         // Histograms groupped in channels
         //
@@ -142,6 +147,8 @@ class Templates
         QCDType _qcd_type;
         float _pull_plots;
         bool _ks_chi2;
+
+        bool _log_scale;
 };
 
 std::ostream &operator <<(std::ostream &, const Templates::ThetaScale &);
