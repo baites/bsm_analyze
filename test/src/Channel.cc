@@ -14,12 +14,14 @@ Channel::operator string() const
     switch(type())
     {
         case DATA: return "CMS Data 2011";
-        case QCD: return "QCD";
+        case QCD: return "QCD data-driven";
         case TTBAR: return "t#bar{t}";
         case WJETS: return "W#rightarrowl#nu";
         case ZJETS: return "Z/#gamma*#rightarrowl^{+}l^{-}";
         case STOP: return "Single-Top";
         case ZPRIME1000: return "Z' 1 #pm .01 TeV/c^{2}";
+        case ZPRIME1500: return "Z' 1.5 #pm .015 TeV/c^{2}";
+        case ZPRIME2000: return "Z' 2 #pm .02 TeV/c^{2}";
 
         default: return "unknown";
     }
@@ -36,6 +38,8 @@ string Channel::repr() const
         case ZJETS: return "zjets";
         case STOP: return "stop";
         case ZPRIME1000: return "zprime_1000";
+        case ZPRIME1500: return "zprime_1500";
+        case ZPRIME2000: return "zprime_2000";
 
         default: return "unknown";
     }
@@ -43,7 +47,7 @@ string Channel::repr() const
 
 Channel &Channel::operator ++()
 {
-    if (ZPRIME1000 != type());
+    if (ZPRIME2000 != type());
         _type = Type(static_cast<int>(type()) + 1);
 
     return *this;
