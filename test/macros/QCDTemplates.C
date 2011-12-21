@@ -265,10 +265,11 @@ void plotQCDTemplates()
     string canvas_title = "QCD Templates (jet pT > 50 GeV/c)";
     TCanvas *canvas = new TCanvas();
     canvas->SetTitle(canvas_title.c_str());
-    canvas->SetWindowSize(1200, 480);
+    canvas->SetWindowSize(1200, 600);
     canvas->Divide(2);
 
     canvas->cd(1);
+
     htlep_s1->SetLineColor(kYellow + 1);
     htlep_s1->SetMarkerColor(kYellow + 1);
     htlep_s1->SetLineWidth(2);
@@ -283,12 +284,19 @@ void plotQCDTemplates()
 
     // stack->SetMaximum(0.5);
     stack->Draw("9 nostack");
-    stack->GetHistogram()->GetXaxis()->SetTitle("MET [GeV]");
+    stack->GetHistogram()->GetXaxis()->SetTitle("H^{lep}_{T} [GeV]");
+    stack->GetHistogram()->GetYaxis()->SetTitle("event fraction");
+    stack->GetHistogram()->GetYaxis()->SetTitleOffset(1.45);
 
-    TLegend *legend = createLegend("Triag. cut");
-    legend->AddEntry(htlep_s1, "No pass", "l");
+    TLegend *legend = createLegend("Electron id.");
+    legend->AddEntry(htlep_s1, "Fail", "l");
     legend->AddEntry(htlep_signal, "Pass", "l");
     legend->Draw("9");
+
+    TLatex * label = new TLatex();
+    label->SetNDC();
+    label->SetTextColor(kBlack);
+    label->DrawLatex(.45, .91, "CMS MC Preliminary");
 
     TH1 *mttbar_after_htlep_s1 =
         merge(input_s1, "mttbar_after_htlep", 0, QCD_CHANNELS);
@@ -317,11 +325,15 @@ void plotQCDTemplates()
     // stack->SetMaximum(0.4);
     stack->Draw("9 nostack");
     stack->GetHistogram()->GetXaxis()->SetTitle("M_{t#bar{t}} [GeV/c^{2}]");
+    stack->GetHistogram()->GetYaxis()->SetTitle("event fraction");
+    stack->GetHistogram()->GetYaxis()->SetTitleOffset(1.45);
 
-    legend = createLegend("Triag cut");
-    legend->AddEntry(mttbar_after_htlep_s1, "No pass", "l");
+    legend = createLegend("Electron id.");
+    legend->AddEntry(mttbar_after_htlep_s1, "Fail", "l");
     legend->AddEntry(mttbar_after_htlep_signal, "Pass", "l");
     legend->Draw("9");
+
+    label->DrawLatex(.45, .91, "CMS MC Preliminary");
 
     canvas->SaveAs("qcd_template_comparison.png");
     canvas->SaveAs("qcd_template_comparison.pdf");    

@@ -137,7 +137,6 @@ class Templates
         double _mc_fraction;
         double _mc_fraction_error;
         bool _mc_error;
-
         double _qcd_fraction;
         double _qcd_fraction_error;
 
