@@ -122,10 +122,10 @@ string Template::unit() const
         case MET: return "GeV/c";
         case MET_QCD: return "GeV/c";
         case MET_QCD_NOWEIGHT: return "GeV/c";
-        case HTALL: return "GeV";
-        case HTLEP: return "GeV";
-        case HTLEP_BEFORE_HTLEP: return "GeV";
-        case HTLEP_AFTER_HTLEP: return "GeV";
+        case HTALL: return "GeV/c";
+        case HTLEP: return "GeV/c";
+        case HTLEP_BEFORE_HTLEP: return "GeV/c";
+        case HTLEP_AFTER_HTLEP: return "GeV/c";
         case NPV: return "";
         case NPV_NO_PU: return "";
         case NJET: return "";

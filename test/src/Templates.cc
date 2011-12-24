@@ -407,8 +407,14 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
 
     // mc and qcd scales computed from the mc fraction
     //
-    float mc_scale = _mc_fraction*data->Integral()/mc_sigma->Integral();
-    float qcd_scale = _qcd_fraction*data->Integral()/channels[Channel::QCD]->Integral();
+    float mc_scale = 1.0;
+    float qcd_scale = 1.0;
+
+    if (_qcd_type == QCD_FROM_DATA)
+    {
+        mc_scale = _mc_fraction*data->Integral()/mc_sigma->Integral();
+        qcd_scale = _qcd_fraction*data->Integral()/channels[Channel::QCD]->Integral();
+    }
 
     // print the scales for mttbar
     //

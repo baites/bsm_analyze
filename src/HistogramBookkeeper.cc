@@ -21,59 +21,16 @@ using namespace stat;
 
 static TH1Ptr convert(string const & name, H1 const & h1)
 {
-    TH1Ptr h(new TH1D());
-
+    TH1Ptr h(convert(h1));
     h->SetName(name.c_str());
-    h->Sumw2();
-
-    if (h1)
-    {
-        h->SetBins(h1.axis()->bins(), h1.axis()->min(), h1.axis()->max());
-
-        for(int bin = 0, bins = 1 + h1.axis()->bins(); bins >= bin; ++bin)
-        {
-            const Bin & b(h1[bin]);
-            h->SetBinContent(bin, b.data());
-            h->SetBinError(bin, b.error());
-        }
-
-        h->SetEntries(h1.entries());
-    }
-
     return h;
 }
 
 
 static TH2Ptr convert(string const & name, const H2 &h2)
 {
-    TH2Ptr h(new TH2D());
-
+    TH2Ptr h(convert(h2));
     h->SetName(name.c_str());
-    h->Sumw2();
-
-    if (!h2)
-        return h;
-
-    h->SetBins(
-        h2.xAxis()->bins(), h2.xAxis()->min(),h2.xAxis()->max(),
-        h2.yAxis()->bins(), h2.yAxis()->min(),h2.yAxis()->max()
-    );
-
-    for(
-        uint32_t x_bin = 0,
-        x_bins = 1 + h2.xAxis()->bins(),
-        y_bins = 1 + h2.yAxis()->bins();
-        x_bins >= x_bin;
-        ++x_bin
-    )
-        for(uint32_t y_bin = 0; y_bins >= y_bin; ++y_bin)
-        {
-            const Bin & b(h2[x_bin][y_bin]);
-            h->SetBinContent(x_bin, y_bin, b.data());
-            h->SetBinError(x_bin, y_bin, b.error());
-        }
-
-    h->SetEntries(h2.entries());
     return h;
 }
 
