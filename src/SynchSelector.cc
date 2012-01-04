@@ -48,6 +48,11 @@ SynchSelectorOptions::SynchSelectorOptions()
              boost::bind(&SynchSelectorOptions::setLeadingJetPt, this, _1)),
          "leading jet pT cut")
 
+        ("electron-pt",
+         po::value<float>()->notifier(
+             boost::bind(&SynchSelectorOptions::setElectronPt, this, _1)),
+         "electron pT cut")
+
          ("qcd-template",
           po::value<bool>()->implicit_value(false)->notifier(
              boost::bind(&SynchSelectorOptions::setQCDTemplate, this, _1)),
@@ -122,6 +127,13 @@ void SynchSelectorOptions::setLeadingJetPt(const float &value)
     }
 
     delegate()->setLeadingJetPt(value);
+}
+
+void SynchSelectorOptions::setElectronPt(const float & value)
+{
+    if (!delegate()) return;    
+
+    delegate()->setElectronPt(value);
 }
 
 void SynchSelectorOptions::setQCDTemplate(const bool &value)
@@ -406,6 +418,11 @@ void SynchSelector::setCutMode(const CutMode &cut_mode)
 void SynchSelector::setLeadingJetPt(const float &value)
 {
     _leading_jet->setValue(value);
+}
+
+void SynchSelector::setElectronPt(const float &value)
+{
+    _electron_selector->cut(ElectronSelector::PT)->setValue(value);
 }
 
 void SynchSelector::setQCDTemplate(const bool &value)

@@ -62,10 +62,8 @@ void HistogramBookkeeper::merge(const ObjectPtr & pointer)
 }
 
 
-void HistogramBookkeeper::write(std::string const & filename)
+void HistogramBookkeeper::write() const
 {
-    boost::shared_ptr<TFile> file = boost::shared_ptr<TFile>(new TFile(filename.c_str(),"recreate"));
-
     for ( H1ProxyPtrContainer::const_iterator h1 = _cache1d.begin(); h1 != _cache1d.end(); ++h1 )
     {
         TH1Ptr th1 = convert(h1->first, (*h1->second->histogram()));

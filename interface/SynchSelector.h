@@ -42,6 +42,7 @@ namespace bsm
             virtual void setLeptonMode(const LeptonMode &) {}
             virtual void setCutMode(const CutMode &) {}
             virtual void setLeadingJetPt(const float &) {}
+            virtual void setElectronPt(const float &) {}
             virtual void setQCDTemplate(const bool &) {}
     };
 
@@ -62,6 +63,7 @@ namespace bsm
             void setLeptonMode(std::string);
             void setCutMode(std::string);
             void setLeadingJetPt(const float &);
+            void setElectronPt(const float &);
             void setQCDTemplate(const bool &);
 
             SynchSelectorDelegate *_delegate;
@@ -142,6 +144,7 @@ namespace bsm
             virtual void setLeptonMode(const LeptonMode &);
             virtual void setCutMode(const CutMode &);
             virtual void setLeadingJetPt(const float &);
+            virtual void setElectronPt(const float &);
             virtual void setQCDTemplate(const bool &);
 
             // Jet Energy Correction Delegate interface

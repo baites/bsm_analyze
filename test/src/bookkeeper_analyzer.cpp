@@ -42,7 +42,9 @@ int main(int argc, char *argv[])
         result = app->run(argc, argv);
 
         // Save the histograms once the job is done
-        analyzer->bookkeeper()->write("histograms.root");
+        if (app->output())
+            analyzer->bookkeeper()->write();
+       
     }
     catch(const exception &error)
     {
