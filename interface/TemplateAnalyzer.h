@@ -127,8 +127,7 @@ namespace bsm
             const H1Ptr htall() const;   
             const H1Ptr htlepAfterHtlep() const;
             const H1Ptr htlepBeforeHtlep() const;
-            const H1Ptr htlepBeforeHtlepQCD() const;
-            const H1Ptr htlepBeforeHtlepQCDNoWeight() const;
+            const H1Ptr htlepBeforeHtlepNoWeight() const;
 
             const H1Ptr mttbarBeforeHtlep() const;
             const H1Ptr mttbarAfterHtlep() const;
@@ -230,8 +229,7 @@ namespace bsm
             H1ProxyPtr _htall;
             H1ProxyPtr _htlep_after_htlep;
             H1ProxyPtr _htlep_before_htlep;
-            H1ProxyPtr _htlep_before_htlep_qcd;
-            H1ProxyPtr _htlep_before_htlep_qcd_noweight;
+            H1ProxyPtr _htlep_before_htlep_noweight;
 
             H1ProxyPtr _mttbar_before_htlep;
             H1ProxyPtr _mttbar_after_htlep;

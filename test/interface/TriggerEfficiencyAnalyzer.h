@@ -8,6 +8,7 @@
 #ifndef BSM_TRIGGER_EFFICIENCY_ANALYZER
 #define BSM_TRIGGER_EFFICIENCY_ANALYZER
 
+#include <boost/program_options.hpp>
 #include <boost/shared_ptr.hpp>
 
 #include "interface/Analyzer.h"
@@ -19,7 +20,53 @@
 
 namespace bsm
 {
-class TriggerEfficiencyAnalyzer : public Analyzer
+
+class TriggerEfficiencyDelegate
+{
+public:
+
+    virtual ~TriggerEfficiencyDelegate() {}
+
+    virtual void setLooseSelection(bool) {}
+};
+
+
+class TriggerEfficiencyOptions : public Options
+{
+public:
+
+    TriggerEfficiencyOptions();
+
+    virtual ~TriggerEfficiencyOptions() {}
+
+    void setDelegate(TriggerEfficiencyDelegate *delegate)
+    {
+        if (_delegate != delegate)
+            _delegate = delegate;
+    }
+
+    TriggerEfficiencyDelegate *delegate() const
+    {
+        return _delegate;
+    }
+
+    virtual DescriptionPtr description() const
+    {
+        return _description;
+    }
+
+private:
+
+    void setLooseSelection(bool);
+
+    TriggerEfficiencyDelegate *_delegate;
+
+    DescriptionPtr _description;
+};
+
+
+class TriggerEfficiencyAnalyzer : 
+    public Analyzer, public TriggerEfficiencyDelegate
 {
 public:
 
@@ -40,6 +87,9 @@ public:
 
     // Print service
     virtual void print(std::ostream & os) const;
+
+    // Set the loose selection for trigger studies
+    virtual void setLooseSelection(bool);
 
     // Return the bookkeeper
     const HistogramBookkeeperPtr bookkeeper()

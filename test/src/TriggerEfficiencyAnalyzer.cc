@@ -21,13 +21,36 @@ namespace bsm
 
 using namespace std;
 
+TriggerEfficiencyOptions::TriggerEfficiencyOptions()
+{
+    _delegate = 0;
+
+    _description.reset(new po::options_description("Trigger Analyzer Options"));
+
+    _description->add_options()(
+         "loose-selection",
+         po::value<bool>()->implicit_value(false)->notifier(
+             boost::bind(&TriggerEfficiencyOptions::setLooseSelection, this, _1)
+         ),
+         "loose selection for trigger studies"
+    );
+}
+
+
+void TriggerEfficiencyOptions::setLooseSelection(bool value)
+{
+    if (!delegate()) return;
+
+    delegate()->setLooseSelection(value);
+}
+
+
 TriggerEfficiencyAnalyzer::TriggerEfficiencyAnalyzer():
     _use_pileup(false)
 {
     // Initializing selector (desabling htlep)
 
     _synch_selector.reset(new SynchSelector());
-    //_synch_selector->htlep()->disable();
     monitor(_synch_selector);
 
     _pileup.reset(new Pileup());
@@ -36,6 +59,7 @@ TriggerEfficiencyAnalyzer::TriggerEfficiencyAnalyzer():
     // Initializing bookkeeper (booking histograms)
 
     _bookkeeper.reset(new HistogramBookkeeper());
+    _bookkeeper->book1d("AllTriggerThreshold", 50, 0, 200);
     _bookkeeper->book1d("AllEventsHT", 50, 400, 1000);
     _bookkeeper->book1d("AllEventsElectronPT", 50, 100, 400);
     _bookkeeper->book1d("TriggerHT200HT", 50, 400, 1000);
@@ -43,6 +67,7 @@ TriggerEfficiencyAnalyzer::TriggerEfficiencyAnalyzer():
     _bookkeeper->book1d("TriggerCaloIsoHT", 50, 400, 1000);
     _bookkeeper->book1d("TriggerEle25TriCentralJet30HT", 50, 400, 1000);
     _bookkeeper->book1d("TriggerEleXHT", 50, 400, 1000);
+    _bookkeeper->book1d("PassTriggerThreshold", 50, 0, 200);
     _bookkeeper->book1d("TriggerEleXElectronPT", 50, 100, 400);
     _bookkeeper->book1d("TriggerEle90HT", 50, 400, 1000);
     _bookkeeper->book1d("TriggerEle90ElectronPT", 50, 100, 400);
@@ -143,42 +168,7 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
     if (_use_pileup) weight = _pileup->scale(event);
 
     // Get the collection of good electron from the synch selection
-    SynchSelector::GoodElectrons const & electrons = _synch_selector->goodElectrons();
-
-    // Electron id selection
-    bool passeid = false;
-    double electronPt = 0.0;
-
-    // Loop over the collection (it should be one electron)
-    for (std::size_t i = 0; i < electrons.size(); ++i)
-    {
-        bsm::Electron const & electron = *electrons[i];
-
-        // Loop over the possible electron ids
-        for (int j = 0; j < electron.id_size(); ++j)
-        {
-            const bsm::Electron::ElectronID & electronid = electron.id(j);
-
-            // Keep looping if the electron id is not HyperTight1
-            if (electronid.name() != bsm::Electron::HyperTight1) continue;
-
-            // Check if HyperTight1 minimal condition
-            if (
-                electronid.identification() &&
-                electronid.conversion_rejection() // &&
-                // electronid.isolation() &&
-                // electronid.impact_parameter()
-            )
-                passeid = true;
-
-            break;
-        }
-        electronPt = pt(electron.physics_object().p4());
-        break;
-    }
-
-    // Reject the event if do not pass the electronid
-    if (!passeid) return;
+    double electronPt = pt((*_synch_selector->goodElectrons().begin())->physics_object().p4());
 
     typedef ::google::protobuf::RepeatedPtrField<Trigger> Triggers;
 
@@ -201,12 +191,10 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
     // Adding also the pt of the electron
     ht += electronPt;
 
-    // Cuting in ht
-    if (electronPt < 100) return;
-
     // Fill the histogram with all the events
     _bookkeeper->get1d("AllEventsHT")->fill(ht,weight);
     _bookkeeper->get1d("AllEventsElectronPT")->fill(electronPt,weight);
+    _bookkeeper->get1d("AllTriggerThreshold")->fill(electronPt,weight);
 
     bool elexflag = false;
     bool ele90flag = false;
@@ -243,6 +231,9 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
             elexflag = true;
     }
 
+    if (elexflag)
+        _bookkeeper->get1d("PassTriggerThreshold")->fill(electronPt,weight);
+
     if (elexflag && ele90flag)
     {
         _bookkeeper->get1d("TriggerEleXHT")->fill(ht,weight);
@@ -252,5 +243,15 @@ void TriggerEfficiencyAnalyzer::process(const Event *event)
     return;
 }
 
+
+void TriggerEfficiencyAnalyzer::setLooseSelection(bool value)
+{
+    if (value)
+    {
+        _synch_selector->htlep()->disable();
+        _synch_selector->tricut()->disable();
+        _synch_selector->met()->disable();
+    }
+} 
 
 }

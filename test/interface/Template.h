@@ -15,11 +15,11 @@ class Template
         enum Type
         {
             MET = 0,
+            MET_QCD,
+            MET_QCD_NOWEIGHT,
             HTALL,
             HTLEP,
             HTLEP_BEFORE_HTLEP,
-            HTLEP_BEFORE_HTLEP_QCD,
-            HTLEP_BEFORE_HTLEP_QCD_NOWEIGHT,
             HTLEP_AFTER_HTLEP,
             NPV,
             NPV_NO_PU,

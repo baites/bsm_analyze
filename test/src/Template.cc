@@ -14,11 +14,11 @@ Template::operator string() const
     switch(type())
     {
         case MET: return "met";
+        case MET_QCD: return "met";
+        case MET_QCD_NOWEIGHT: return "met_noweight";
         case HTALL: return "htall";
         case HTLEP: return "htlep";
         case HTLEP_BEFORE_HTLEP: return "htlep_before_htlep";
-        case HTLEP_BEFORE_HTLEP_QCD: return "htlep_before_htlep_qcd";
-        case HTLEP_BEFORE_HTLEP_QCD_NOWEIGHT: return "htlep_before_htlep_qcd_noweight";
         case HTLEP_AFTER_HTLEP: return "htlep_after_htlep";
         case NPV: return "npv_with_pileup";
         case NPV_NO_PU: return "npv";
@@ -59,11 +59,11 @@ string Template::repr() const
     switch(type())
     {
         case MET: return "met";
+        case MET_QCD: return "met_qcd";
+        case MET_QCD_NOWEIGHT: return "met_qcd_noweight";
         case HTALL: return "htall";
         case HTLEP: return "htlep";
         case HTLEP_BEFORE_HTLEP: return "htlep_before_htlep";
-        case HTLEP_BEFORE_HTLEP_QCD: return "htlep_before_htlep_qcd";
-        case HTLEP_BEFORE_HTLEP_QCD_NOWEIGHT: return "htlep_before_htlep_qcd_noweight";
         case HTLEP_AFTER_HTLEP: return "htlep_after_htlep";
         case NPV: return "npv_with_pileup";
         case NPV_NO_PU: return "npv_no_pileup";
@@ -120,12 +120,12 @@ string Template::unit() const
     switch(type())
     {
         case MET: return "GeV/c";
-        case HTALL: return "GeV";
-        case HTLEP: return "GeV";
-        case HTLEP_BEFORE_HTLEP: return "GeV";
-        case HTLEP_BEFORE_HTLEP_QCD: return "GeV";
-        case HTLEP_BEFORE_HTLEP_QCD_NOWEIGHT: return "GeV";
-        case HTLEP_AFTER_HTLEP: return "GeV";
+        case MET_QCD: return "GeV/c";
+        case MET_QCD_NOWEIGHT: return "GeV/c";
+        case HTALL: return "GeV/c";
+        case HTLEP: return "GeV/c";
+        case HTLEP_BEFORE_HTLEP: return "GeV/c";
+        case HTLEP_AFTER_HTLEP: return "GeV/c";
         case NPV: return "";
         case NPV_NO_PU: return "";
         case NJET: return "";

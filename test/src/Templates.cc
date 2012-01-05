@@ -215,8 +215,8 @@ void Templates::loadHistograms(TFile *file, const Input &input)
 void Templates::plot(const Template &plot)
 {
     if (
-        plot == Template::HTLEP_BEFORE_HTLEP_QCD ||
-        plot == Template::HTLEP_BEFORE_HTLEP_QCD_NOWEIGHT
+        plot == Template::MET_QCD ||
+        plot == Template::MET_QCD_NOWEIGHT
     )
         return;
 
@@ -407,8 +407,14 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
 
     // mc and qcd scales computed from the mc fraction
     //
-    float mc_scale = _mc_fraction*data->Integral()/mc_sigma->Integral();
-    float qcd_scale = _qcd_fraction*data->Integral()/channels[Channel::QCD]->Integral();
+    float mc_scale = 1.0;
+    float qcd_scale = 1.0;
+
+    if (_qcd_type == QCD_FROM_DATA)
+    {
+        mc_scale = _mc_fraction*data->Integral()/mc_sigma->Integral();
+        qcd_scale = _qcd_fraction*data->Integral()/channels[Channel::QCD]->Integral();
+    }
 
     // print the scales for mttbar
     //
@@ -668,8 +674,8 @@ TCanvas *Templates::draw2D(const Template &plot, Channels &channels)
 
 void Templates::normalize()
 {
-    Template plot(Template::HTLEP_BEFORE_HTLEP_QCD);
-    Template uwplot(Template::HTLEP_BEFORE_HTLEP_QCD_NOWEIGHT);
+    Template plot(Template::MET_QCD);
+    Template uwplot(Template::MET_QCD_NOWEIGHT);
 
     const InputPlots &input_plots = _plots[plot];
     const InputPlots &input_plots_noweight = _plots[uwplot];
@@ -917,7 +923,7 @@ TLegend *Templates::createLegend(const string &text, bool left)
     TLegend *legend = 0;
 
     if (left)
-        legend = new TLegend( .25, .65, .47, .88);
+        legend = new TLegend( .57, .65, .79, .88);
     else
         legend = new TLegend( .67, .65, .89, .88);
     _heap.push_back(legend);
@@ -1026,10 +1032,10 @@ int Templates::rebin(const Template &plot) const
     switch(plot.type())
     {
         case Template::MET: return 25;
+        case Template::MET_QCD: return 5;
         case Template::HTALL: return 25;
         case Template::HTLEP: return 25;
         case Template::HTLEP_BEFORE_HTLEP: return 5;
-        case Template::HTLEP_BEFORE_HTLEP_QCD: return 2;
         case Template::HTLEP_AFTER_HTLEP: return 25;
         case Template::NPV: return 1;
         case Template::NPV_NO_PU: return 1;

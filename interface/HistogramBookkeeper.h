@@ -66,7 +66,7 @@ public:
 
     virtual void print(std::ostream &) const;
 
-    void write(std::string const &);
+    void write() const;
 
     virtual uint32_t id() const
     {

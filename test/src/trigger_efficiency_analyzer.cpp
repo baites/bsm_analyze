@@ -31,6 +31,7 @@ int main(int argc, char *argv[])
         boost::shared_ptr<SynchSelectorOptions> synch_selector_options(new SynchSelectorOptions());
         boost::shared_ptr<Cut2DSelectorOptions> cut_2d_selector_options(new Cut2DSelectorOptions());
         boost::shared_ptr<PileupOptions> pileup_options(new PileupOptions());
+        boost::shared_ptr<TriggerEfficiencyOptions> analyzer_options(new TriggerEfficiencyOptions());
         boost::shared_ptr<TriggerEfficiencyAnalyzer> analyzer(new TriggerEfficiencyAnalyzer());
         boost::shared_ptr<AppController> app(new AppController());
 
@@ -45,13 +46,15 @@ int main(int argc, char *argv[])
         app->addOptions(*synch_selector_options);
         app->addOptions(*cut_2d_selector_options);
         app->addOptions(*pileup_options);
+        app->addOptions(*analyzer_options);
 
         // Set the analyzer into the controller
         app->setAnalyzer(analyzer);
         result = app->run(argc, argv);
 
         // Save the histograms once the job is done
-        analyzer->bookkeeper()->write("histograms.root");
+        if (app->output())
+            analyzer->bookkeeper()->write();
     }
     catch(const std::exception &error)
     {
