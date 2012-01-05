@@ -66,6 +66,8 @@ NeutrinoReconstruct::Solutions
         solution->set_e(magnitude(toVector(*solution)));
 
         solutions.push_back(solution);
+
+        _solutions = 0 > discriminant ? 0 : 1;
     }
     else
     {
@@ -84,9 +86,16 @@ NeutrinoReconstruct::Solutions
         solution->set_e(magnitude(toVector(*solution)));
 
         solutions.push_back(solution);
+
+        _solutions = 2;
     }
 
     return solutions;
+}
+
+int NeutrinoReconstruct::solutions() const
+{
+    return _solutions;
 }
 
 uint32_t NeutrinoReconstruct::id() const

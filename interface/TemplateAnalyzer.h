@@ -127,6 +127,7 @@ namespace bsm
             const H1Ptr htlepAfterHtlep() const;
             const H1Ptr htlepBeforeHtlep() const;
             const H1Ptr htlepBeforeHtlepNoWeight() const;
+            const H1Ptr solutions() const;
 
             const H1Ptr mttbarBeforeHtlep() const;
             const H1Ptr mttbarAfterHtlep() const;
@@ -200,6 +201,7 @@ namespace bsm
                 LorentzVector htop;
 
                 int htop_njets;
+                int solutions;
             };
 
             Mttbar mttbar() const;
@@ -227,6 +229,7 @@ namespace bsm
             H1ProxyPtr _htlep_after_htlep;
             H1ProxyPtr _htlep_before_htlep;
             H1ProxyPtr _htlep_before_htlep_noweight;
+            H1ProxyPtr _solutions;
 
             H1ProxyPtr _mttbar_before_htlep;
             H1ProxyPtr _mttbar_after_htlep;

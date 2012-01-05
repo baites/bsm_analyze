@@ -132,6 +132,9 @@ TemplateAnalyzer::TemplateAnalyzer():
     _htlep_before_htlep_noweight.reset(new H1Proxy(50, 100, 150));
     monitor(_htlep_before_htlep_noweight); 
 
+    _solutions.reset(new H1Proxy(3, 0, 3));
+    monitor(_solutions);
+
     _mttbar_before_htlep.reset(new H1Proxy(4000, 0, 4));
     monitor(_mttbar_before_htlep);
 
@@ -265,6 +268,9 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
 
     _htlep_before_htlep_noweight = dynamic_pointer_cast<H1Proxy>(object._htlep_before_htlep_noweight->clone());
     monitor(_htlep_before_htlep_noweight);
+
+    _solutions = dynamic_pointer_cast<H1Proxy>(object._solutions->clone());
+    monitor(_solutions);
 
     _mttbar_before_htlep =
         dynamic_pointer_cast<H1Proxy>(object._mttbar_before_htlep->clone());
@@ -410,6 +416,11 @@ const TemplateAnalyzer::H1Ptr TemplateAnalyzer::htlepBeforeHtlep() const
 const TemplateAnalyzer::H1Ptr TemplateAnalyzer::htlepBeforeHtlepNoWeight() const
 {
     return _htlep_before_htlep_noweight->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::solutions() const
+{
+    return _solutions->histogram();
 }
 
 const TemplateAnalyzer::H1Ptr TemplateAnalyzer::mttbarBeforeHtlep() const
@@ -691,6 +702,8 @@ void TemplateAnalyzer::process(const Event *event)
         htlep()->fill(htlepValue(), _pileup_weight * _wjets_weight);
         htall()->fill(htallValue(), _pileup_weight * _wjets_weight);
         htlepAfterHtlep()->fill(htlepValue(), _pileup_weight * _wjets_weight);
+
+        solutions()->fill(resonance.solutions);
     }
 
     // Process only events, that pass the synch selector with htlep inverted
@@ -825,6 +838,8 @@ TemplateAnalyzer::Mttbar TemplateAnalyzer::mttbar() const
     NeutrinoReconstruct neutrinoReconstruct;
     NeutrinoReconstruct::Solutions neutrinos =
         neutrinoReconstruct(lepton_p4, *_synch_selector->goodMET());
+
+    result.solutions = neutrinoReconstruct.solutions();
 
     // Prepare generator and loop over all hypotheses of the decay
     // (different jets assignment to leptonic/hadronic legs)

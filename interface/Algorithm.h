@@ -57,6 +57,8 @@ namespace bsm
             Solutions operator()(const LorentzVector &lepton,
                     const LorentzVector &neutrino);
 
+            int solutions() const;
+
             // Object interface
             //
             virtual uint32_t id() const;
@@ -64,6 +66,10 @@ namespace bsm
             virtual ObjectPtr clone() const;
 
             virtual void print(std::ostream &) const;
+
+        private:
+            int _solutions; // number of solutions found:
+                            //  0 - complex, 1, 2 - real
     };
 
     class TTbarDeltaRReconstruct : public core::Object

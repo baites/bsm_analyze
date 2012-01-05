@@ -126,6 +126,11 @@ int main(int argc, char *argv[])
             htlep_before_htlep_noweight->GetXaxis()->SetTitle("H_{T}^{lep} [GeV/c]");
             htlep_before_htlep_noweight->GetXaxis()->SetTitleSize(0.045);
 
+            TH1Ptr solutions = convert(*analyzer->solutions());
+            solutions->SetName("solutions");
+            solutions->GetXaxis()->SetTitle("N_{solutions}^{#nu}");
+            solutions->GetXaxis()->SetTitleSize(0.045);
+
             TH1Ptr mttbar_before_htlep = convert(*analyzer->mttbarBeforeHtlep());
             mttbar_before_htlep->SetName("mttbar_before_htlep");
             mttbar_before_htlep->GetXaxis()->SetTitle("M_{t#bar{t}} [TeV/c^{2}]");
@@ -261,6 +266,7 @@ int main(int argc, char *argv[])
                 htlep_after_htlep->Write();
                 htlep_before_htlep->Write();
                 htlep_before_htlep_noweight->Write();           
+                solutions->Write();
                 mttbar_before_htlep->Write();
                 mttbar_after_htlep->Write();
                 dr_vs_ptrel->Write();
