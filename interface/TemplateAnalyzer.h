@@ -14,11 +14,11 @@
 
 #include "bsm_stat/interface/bsm_stat_fwd.h"
 #include "bsm_input/interface/bsm_input_fwd.h"
+#include "bsm_input/interface/GenParticle.pb.h"
 #include "interface/Analyzer.h"
 #include "interface/AppController.h"
 #include "interface/Cut.h"
 #include "interface/Pileup.h"
-#include "interface/TriggerAnalyzer.h"
 #include "interface/bsm_fwd.h"
 
 namespace bsm
@@ -101,7 +101,6 @@ namespace bsm
 
     class TemplateAnalyzer : public Analyzer,
         public CounterDelegate,
-        public TriggerDelegate,
         public TemplatesDelegate
     {
         public:
@@ -164,14 +163,11 @@ namespace bsm
             SynchSelectorDelegate *getSynchSelectorDelegate() const;
             Cut2DSelectorDelegate *getCut2DSelectorDelegate() const;
             PileupDelegate *getPileupDelegate() const;
+            TriggerDelegate *getTriggerDelegate() const;
 
             // Counter Delegate interface
             //
             virtual void didCounterAdd(const Counter *);
-
-            // Trigger Delegate inteface
-            //
-            virtual void setTrigger(const Trigger &);
 
             // Anlayzer interface
             //
@@ -258,9 +254,6 @@ namespace bsm
             Counter *_secondary_lepton_counter;
             Counter *_leading_jet_counter;
             Counter *_htlep_counter;
-
-            typedef std::vector<uint64_t> Triggers;
-            Triggers _triggers; // hashes of triggers to be passed
 
             boost::shared_ptr<Pileup> _pileup;
             bool _use_pileup;

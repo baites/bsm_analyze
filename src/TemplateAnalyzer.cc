@@ -216,7 +216,6 @@ TemplateAnalyzer::TemplateAnalyzer():
 }
 
 TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
-    _triggers(object._triggers.begin(), object._triggers.end()),
     _use_pileup(false),
     _wjets_input(false),
     _apply_wjet_correction(object._apply_wjet_correction)
@@ -559,6 +558,11 @@ bsm::PileupDelegate *TemplateAnalyzer::getPileupDelegate() const
     return _pileup.get();
 }
 
+bsm::TriggerDelegate *TemplateAnalyzer::getTriggerDelegate() const
+{
+    return _synch_selector.get();
+}
+
 void TemplateAnalyzer::didCounterAdd(const Counter *counter)
 {
     if (counter == _secondary_lepton_counter)
@@ -580,11 +584,6 @@ void TemplateAnalyzer::didCounterAdd(const Counter *counter)
                 fabs(dphi(el_p4, missing_energy)),
                 _pileup_weight * _wjets_weight);
     }
-}
-
-void TemplateAnalyzer::setTrigger(const Trigger &trigger)
-{
-    _triggers.push_back(trigger.hash());
 }
 
 void TemplateAnalyzer::onFileOpen(const std::string &filename, const Input *input)
@@ -619,38 +618,6 @@ void TemplateAnalyzer::process(const Event *event)
 
     if (!event->has_missing_energy())
         return;
-
-    // Test if trigger passed the event (in case any trigger is defined)
-    //
-    if (!_triggers.empty()
-            && event->hlt().trigger().size())
-    {
-        // OR triggers
-        //
-        typedef ::google::protobuf::RepeatedPtrField<Trigger> PBTriggers;
-        bool is_trigger_pass = false;
-        for(Triggers::const_iterator trigger = _triggers.begin();
-                _triggers.end() != trigger
-                    && !is_trigger_pass;
-                ++trigger)
-        {
-            for(PBTriggers::const_iterator hlt = event->hlt().trigger().begin();
-                    event->hlt().trigger().end() != hlt;
-                    ++hlt)
-            {
-                if (hlt->hash() == *trigger)
-                {
-                    if (hlt->pass())
-                        is_trigger_pass = true;
-
-                    break;
-                }
-            }
-        }
-
-        if (!is_trigger_pass)
-            return;
-    }
 
     _event = event;
     if (_use_pileup)

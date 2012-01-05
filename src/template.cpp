@@ -50,7 +50,7 @@ int main(int argc, char *argv[])
         jec_options->setDelegate(analyzer->getJetEnergyCorrectionDelegate());
         synch_selector_options->setDelegate(analyzer->getSynchSelectorDelegate());
         cut_2d_selector_options->setDelegate(analyzer->getCut2DSelectorDelegate());
-        trigger_options->setDelegate(analyzer.get());
+        trigger_options->setDelegate(analyzer->getTriggerDelegate());
         pileup_options->setDelegate(analyzer->getPileupDelegate());
         templates_options->setDelegate(analyzer.get());
 
