@@ -216,6 +216,7 @@ namespace bsm
             WDecay wdecayType(const GenParticle &) const;
 
             boost::shared_ptr<SynchSelector> _synch_selector;
+            boost::shared_ptr<SynchSelector> _synch_selector_with_inverted_htlep;
 
             H1ProxyPtr _npv;
             H1ProxyPtr _npv_with_pileup;

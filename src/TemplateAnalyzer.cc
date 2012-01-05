@@ -605,6 +605,14 @@ void TemplateAnalyzer::onFileOpen(const std::string &filename, const Input *inpu
 
 void TemplateAnalyzer::process(const Event *event)
 {
+    if (!_synch_selector_with_inverted_htlep)
+    {
+        _synch_selector_with_inverted_htlep =
+            dynamic_pointer_cast<SynchSelector>(_synch_selector->clone());
+
+        _synch_selector_with_inverted_htlep->htlep()->invert();
+    }
+
     _pileup_weight = _use_pileup ? 0 : 1;
     _wjets_weight = 1;
     
@@ -687,8 +695,7 @@ void TemplateAnalyzer::process(const Event *event)
 
     // Process only events, that pass the synch selector with htlep inverted
     //
-    _synch_selector->htlep()->invert();
-    if (_synch_selector->apply(event))
+    if (_synch_selector_with_inverted_htlep->apply(event))
     {
         Mttbar resonance = mttbar();
 
@@ -700,7 +707,6 @@ void TemplateAnalyzer::process(const Event *event)
             mttbarBeforeHtlep()->fill(mass(mttbar().mttbar) / 1000, _pileup_weight * _wjets_weight);
         }
     } 
-    _synch_selector->htlep()->noinvert(); 
 
     _event = 0;
 }
