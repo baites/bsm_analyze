@@ -8,6 +8,7 @@
 #define BSM_SYNCHRONIZATION_SELECTOR
 
 #include <string>
+#include <vector>
 
 #include "bsm_core/interface/Object.h"
 #include "bsm_input/interface/bsm_input_fwd.h"
@@ -17,6 +18,7 @@
 #include "interface/AppController.h"
 #include "interface/Selector.h"
 #include "interface/CorrectedJet.h"
+#include "interface/TriggerAnalyzer.h"
 
 namespace bsm
 {
@@ -73,7 +75,8 @@ namespace bsm
 
     class SynchSelector : public Selector,
         public SynchSelectorDelegate,
-        public JetEnergyCorrectionDelegate
+        public JetEnergyCorrectionDelegate,
+        public TriggerDelegate
     {
         public:
             typedef boost::shared_ptr<Cut> CutPtr;
@@ -90,6 +93,7 @@ namespace bsm
             enum Selection
             {
                 PRESELECTION = 0,
+                TRIGGER,
                 SCRAPING,
                 HBHENOISE,
                 PRIMARY_VERTEX,
@@ -157,6 +161,10 @@ namespace bsm
 
             virtual void setChildCorrection();
 
+            // Trigger Delegater interface
+            //
+            virtual void setTrigger(const Trigger &trigger);
+
             // Selector interface
             //
             // Note: empty at the moment
@@ -179,6 +187,7 @@ namespace bsm
             bool missingEnergy(const Event *);
             
         private:
+            bool triggers(const Event *);
             bool primaryVertices(const Event *);
             bool jets(const Event *);
             bool lepton();
@@ -225,6 +234,9 @@ namespace bsm
             CutPtr _met;
 
             bool _qcd_template;
+
+            typedef std::vector<uint64_t> Triggers;
+            Triggers _triggers; // hashes of triggers to be passed
     };
 
     // Helpers

@@ -215,7 +215,8 @@ SynchSelector::SynchSelector():
 SynchSelector::SynchSelector(const SynchSelector &object):
     _lepton_mode(object._lepton_mode),
     _cut_mode(object._cut_mode),
-    _qcd_template(object._qcd_template)
+    _qcd_template(object._qcd_template),
+    _triggers(object._triggers.begin(), object._triggers.end())
 {
     // Cutflow Table
     //
@@ -319,7 +320,8 @@ bool SynchSelector::apply(const Event *event)
     if (qcdTemplate())
     {
         tricut()->invert();
-        return primaryVertices(event)
+        return triggers(event)
+            && primaryVertices(event)
             && jets(event)
             && lepton()
             && secondaryLeptonVeto()
@@ -331,7 +333,8 @@ bool SynchSelector::apply(const Event *event)
     }
 
     // Nominal
-    return primaryVertices(event)
+    return triggers(event)
+        && primaryVertices(event)
         && jets(event)
         && lepton()
         && secondaryLeptonVeto()
@@ -458,6 +461,13 @@ void SynchSelector::setChildCorrection()
     _jec = jec;
 }
 
+// Trigger Delegate interface
+//
+void SynchSelector::setTrigger(const Trigger &trigger)
+{
+    _triggers.push_back(trigger.hash());
+}
+
 // Selector interface
 //
 void SynchSelector::enable()
@@ -483,6 +493,7 @@ SynchSelector::ObjectPtr SynchSelector::clone() const
 void SynchSelector::print(std::ostream &out) const
 {
     _cutflow->cut(PRESELECTION)->setName("pre-selection");
+    _cutflow->cut(TRIGGER)->setName("trigger");
     _cutflow->cut(SCRAPING)->setName("Scraping Veto");
     _cutflow->cut(HBHENOISE)->setName("HBHE Noise");
     _cutflow->cut(PRIMARY_VERTEX)->setName("Good Primary Vertex");
@@ -509,6 +520,40 @@ void SynchSelector::print(std::ostream &out) const
 
 // Private
 //
+bool SynchSelector::triggers(const Event *event)
+{
+    bool result = _triggers.empty();
+
+    if (!result
+            && event->hlt().trigger().size())
+    {
+        // OR triggers
+        //
+        typedef ::google::protobuf::RepeatedPtrField<Trigger> PBTriggers;
+        for(Triggers::const_iterator trigger = _triggers.begin();
+                _triggers.end() != trigger
+                    && !result;
+                ++trigger)
+        {
+            for(PBTriggers::const_iterator hlt = event->hlt().trigger().begin();
+                    event->hlt().trigger().end() != hlt;
+                    ++hlt)
+            {
+                if (hlt->hash() == *trigger)
+                {
+                    if (hlt->pass())
+                        result = true;
+
+                    break;
+                }
+            }
+        }
+    }
+
+    return result
+        && (_cutflow->apply(TRIGGER), true);
+}
+
 bool SynchSelector::primaryVertices(const Event *event)
 {
     selectGoodPrimaryVertices(event);
