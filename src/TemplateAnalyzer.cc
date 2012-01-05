@@ -92,7 +92,7 @@ TemplateAnalyzer::TemplateAnalyzer():
 
     _secondary_lepton_counter =
         _synch_selector->cutflow()->cut(
-                SynchSelector::VETO_SECOND_LEPTON)->objects().get();
+                SynchSelector::VETO_SECOND_MUON)->objects().get();
     _secondary_lepton_counter->setDelegate(this);
 
     _leading_jet_counter =
@@ -226,7 +226,7 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
 
     _secondary_lepton_counter =
         _synch_selector->cutflow()->cut(
-                SynchSelector::VETO_SECOND_LEPTON)->objects().get();
+                SynchSelector::VETO_SECOND_MUON)->objects().get();
     _secondary_lepton_counter->setDelegate(this);
 
     _leading_jet_counter =

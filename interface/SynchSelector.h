@@ -99,7 +99,8 @@ namespace bsm
                 PRIMARY_VERTEX,
                 JET,
                 LEPTON,
-                VETO_SECOND_LEPTON,
+                VETO_SECOND_ELECTRON,
+                VETO_SECOND_MUON,
                 CUT_LEPTON,
                 LEADING_JET,
                 HTLEP,
@@ -191,7 +192,8 @@ namespace bsm
             bool primaryVertices(const Event *);
             bool jets(const Event *);
             bool lepton();
-            bool secondaryLeptonVeto();
+            bool secondElectronVeto();
+            bool secondMuonVeto();
             bool isolationAnd2DCut();
             bool leadingJetCut();
             bool htlepCut(const Event *);

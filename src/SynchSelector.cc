@@ -324,7 +324,8 @@ bool SynchSelector::apply(const Event *event)
             && primaryVertices(event)
             && jets(event)
             && lepton()
-            && secondaryLeptonVeto()
+            && secondElectronVeto()
+            && secondMuonVeto()
             && isolationAnd2DCut()
             && leadingJetCut()
             && htlepCut(event)
@@ -337,7 +338,8 @@ bool SynchSelector::apply(const Event *event)
         && primaryVertices(event)
         && jets(event)
         && lepton()
-        && secondaryLeptonVeto()
+        && secondElectronVeto()
+        && secondMuonVeto()
         && isolationAnd2DCut()
         && leadingJetCut()
         && htlepCut(event)
@@ -492,8 +494,8 @@ SynchSelector::ObjectPtr SynchSelector::clone() const
 
 void SynchSelector::print(std::ostream &out) const
 {
-    _cutflow->cut(PRESELECTION)->setName("pre-selection");
-    _cutflow->cut(TRIGGER)->setName("trigger");
+    _cutflow->cut(PRESELECTION)->setName("Pre-Selection");
+    _cutflow->cut(TRIGGER)->setName("Trigger");
     _cutflow->cut(SCRAPING)->setName("Scraping Veto");
     _cutflow->cut(HBHENOISE)->setName("HBHE Noise");
     _cutflow->cut(PRIMARY_VERTEX)->setName("Good Primary Vertex");
@@ -503,7 +505,8 @@ void SynchSelector::print(std::ostream &out) const
     lepton << _lepton_mode;
 
     _cutflow->cut(LEPTON)->setName(string("Good ") + lepton.str());
-    _cutflow->cut(VETO_SECOND_LEPTON)->setName("Veto 2nd lepton");
+    _cutflow->cut(VETO_SECOND_ELECTRON)->setName("Veto 2nd electron");
+    _cutflow->cut(VETO_SECOND_MUON)->setName("Veto 2nd muon");
 
     lepton << " " << _cut_mode;
     _cutflow->cut(CUT_LEPTON)->setName(lepton.str());
@@ -632,16 +635,20 @@ bool SynchSelector::lepton()
         && (_cutflow->apply(LEPTON), true);
 }
 
-bool SynchSelector::secondaryLeptonVeto()
+bool SynchSelector::secondElectronVeto()
 {
     return (ELECTRON == _lepton_mode
-        ? (1 == _good_electrons.size()
-            && _good_muons.empty())
+            ? 1 == _good_electrons.size()
+            : _good_electrons.empty())
+        && (_cutflow->apply(VETO_SECOND_ELECTRON), true);
+}
 
-        : (1 == _good_muons.size()
-            && _good_electrons.empty()))
-
-        && (_cutflow->apply(VETO_SECOND_LEPTON), true);
+bool SynchSelector::secondMuonVeto()
+{
+    return (ELECTRON == _lepton_mode
+            ? _good_muons.empty()
+            : 1 == _good_muons.size())
+        && (_cutflow->apply(VETO_SECOND_MUON), true);
 }
 
 bool SynchSelector::isolationAnd2DCut()
