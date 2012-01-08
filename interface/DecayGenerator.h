@@ -24,6 +24,7 @@ namespace bsm
             {
                 Iterators leptonic;
                 Iterators hadronic;
+                Iterators neutral;
             };
 
             DecayGenerator();
@@ -85,15 +86,16 @@ typename bsm::DecayGenerator<T>::Hypothesis bsm::DecayGenerator<T>::hypothesis()
         {
             switch(current_hypothesis % 3)
             {
-                case 0: // hadronic
+                case 0: // leptonic
                     hypothesis.leptonic.push_back(object);
                     break;
 
-                case 1: // leptonic
+                case 1: // hadronic
                     hypothesis.hadronic.push_back(object);
                     break;
 
                 default:    // none
+                    hypothesis.neutral.push_back(object);
                     break;
             }
 
