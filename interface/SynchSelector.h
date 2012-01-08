@@ -103,6 +103,7 @@ namespace bsm
                 VETO_SECOND_MUON,
                 CUT_LEPTON,
                 LEADING_JET,
+                MAX_BTAG,
                 HTLEP,
                 TRICUT,
                 MET,
@@ -119,6 +120,7 @@ namespace bsm
             //
             CutPtr cut() const;
             CutPtr leadingJet() const;
+            CutPtr maxBtag() const;
             CutPtr htlep() const;
             CutPtr tricut() const;
             CutPtr met() const;
@@ -149,6 +151,7 @@ namespace bsm
             virtual void setLeptonMode(const LeptonMode &);
             virtual void setCutMode(const CutMode &);
             virtual void setLeadingJetPt(const float &);
+            virtual void setMaxBtag(const float &);
             virtual void setElectronPt(const float &);
             virtual void setQCDTemplate(const bool &);
 
@@ -196,6 +199,7 @@ namespace bsm
             bool secondMuonVeto();
             bool isolationAnd2DCut();
             bool leadingJetCut();
+            bool maxBtags();
             bool htlepCut(const Event *);
 
             void selectGoodPrimaryVertices(const Event *);
@@ -231,6 +235,7 @@ namespace bsm
             //
             CutPtr _cut;
             CutPtr _leading_jet;
+            CutPtr _max_btag;
             CutPtr _htlep;
             CutPtr _tricut;
             CutPtr _met;

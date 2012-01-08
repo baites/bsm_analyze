@@ -200,6 +200,9 @@ SynchSelector::SynchSelector():
     _leading_jet.reset(new Comparator<>(250));
     monitor(_leading_jet);
 
+    _max_btag.reset(new Comparator<less<float> >(3));
+    monitor(_max_btag);
+
     _htlep.reset(new Comparator<>(150));
     monitor(_htlep);
 
@@ -265,6 +268,9 @@ SynchSelector::SynchSelector(const SynchSelector &object):
     _leading_jet = dynamic_pointer_cast<Cut>(object.leadingJet()->clone());
     monitor(_leading_jet);
 
+    _max_btag = dynamic_pointer_cast<Cut>(object.maxBtag()->clone());
+    monitor(_max_btag);
+
     _htlep = dynamic_pointer_cast<Cut>(object.htlep()->clone());
     monitor(_htlep);
 
@@ -287,6 +293,11 @@ SynchSelector::CutPtr SynchSelector::cut() const
 SynchSelector::CutPtr SynchSelector::leadingJet() const
 {
     return _leading_jet;
+}
+
+SynchSelector::CutPtr SynchSelector::maxBtag() const
+{
+    return _max_btag;
 }
 
 SynchSelector::CutPtr SynchSelector::htlep() const
@@ -328,6 +339,7 @@ bool SynchSelector::apply(const Event *event)
             && secondMuonVeto()
             && isolationAnd2DCut()
             && leadingJetCut()
+            && maxBtags()
             && htlepCut(event)
             && missingEnergy(event)
             && triangularCut(event);
@@ -342,6 +354,7 @@ bool SynchSelector::apply(const Event *event)
         && secondMuonVeto()
         && isolationAnd2DCut()
         && leadingJetCut()
+        && maxBtags()
         && htlepCut(event)
         && triangularCut(event)
         && missingEnergy(event);
@@ -423,6 +436,11 @@ void SynchSelector::setCutMode(const CutMode &cut_mode)
 void SynchSelector::setLeadingJetPt(const float &value)
 {
     _leading_jet->setValue(value);
+}
+
+void SynchSelector::setMaxBtag(const float &value)
+{
+    _max_btag->setValue(value);
 }
 
 void SynchSelector::setElectronPt(const float &value)
@@ -512,6 +530,10 @@ void SynchSelector::print(std::ostream &out) const
     _cutflow->cut(CUT_LEPTON)->setName(lepton.str());
 
     _cutflow->cut(LEADING_JET)->setName("Leading Jet");
+
+    ostringstream max_btag;
+    max_btag << "btagged jets < " << maxBtag()->value();
+    _cutflow->cut(MAX_BTAG)->setName(max_btag.str());
     _cutflow->cut(HTLEP)->setName("hTlep");
     _cutflow->cut(TRICUT)->setName("tri-cut");
     _cutflow->cut(MET)->setName("MET");
@@ -708,6 +730,37 @@ bool SynchSelector::leadingJetCut()
 
     return leadingJet()->apply(max_pt)
         && (_cutflow->apply(LEADING_JET), true);
+}
+
+bool SynchSelector::maxBtags()
+{
+    if (maxBtag()->isDisabled())
+        return true;
+
+    uint32_t btags = 0;
+    for(GoodJets::const_iterator jet = _good_jets.begin();
+            _good_jets.end() != jet;
+            ++jet)
+    {
+        typedef ::google::protobuf::RepeatedPtrField<Jet::BTag> BTags;
+
+        bool is_jet_btagged = false;
+        for(BTags::const_iterator btag = jet->jet->btag().begin();
+                jet->jet->btag().end() != btag
+                    && !is_jet_btagged;
+                ++btag)
+        {
+            if (Jet::BTag::SSVHE == btag->type()
+                    && 1.74 < btag->discriminator())
+                is_jet_btagged = true;
+        }
+
+        if (is_jet_btagged)
+            ++btags;
+    }
+
+    return maxBtag()->apply(btags)
+        && (_cutflow->apply(MAX_BTAG), true);
 }
 
 bool SynchSelector::htlepCut(const Event *event)
