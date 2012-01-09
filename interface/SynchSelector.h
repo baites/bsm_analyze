@@ -44,6 +44,8 @@ namespace bsm
             virtual void setLeptonMode(const LeptonMode &) {}
             virtual void setCutMode(const CutMode &) {}
             virtual void setLeadingJetPt(const float &) {}
+            virtual void setMaxBtag(const float &) {}
+            virtual void setMinBtag(const float &) {}
             virtual void setElectronPt(const float &) {}
             virtual void setQCDTemplate(const bool &) {}
     };
@@ -65,6 +67,8 @@ namespace bsm
             void setLeptonMode(std::string);
             void setCutMode(std::string);
             void setLeadingJetPt(const float &);
+            void setMaxBtag(const float &);
+            void setMinBtag(const float &);
             void setElectronPt(const float &);
             void setQCDTemplate(const bool &);
 
@@ -104,6 +108,7 @@ namespace bsm
                 CUT_LEPTON,
                 LEADING_JET,
                 MAX_BTAG,
+                MIN_BTAG,
                 HTLEP,
                 TRICUT,
                 MET,
@@ -121,6 +126,7 @@ namespace bsm
             CutPtr cut() const;
             CutPtr leadingJet() const;
             CutPtr maxBtag() const;
+            CutPtr minBtag() const;
             CutPtr htlep() const;
             CutPtr tricut() const;
             CutPtr met() const;
@@ -152,6 +158,7 @@ namespace bsm
             virtual void setCutMode(const CutMode &);
             virtual void setLeadingJetPt(const float &);
             virtual void setMaxBtag(const float &);
+            virtual void setMinBtag(const float &);
             virtual void setElectronPt(const float &);
             virtual void setQCDTemplate(const bool &);
 
@@ -200,6 +207,7 @@ namespace bsm
             bool isolationAnd2DCut();
             bool leadingJetCut();
             bool maxBtags();
+            bool minBtags();
             bool htlepCut(const Event *);
 
             void selectGoodPrimaryVertices(const Event *);
@@ -208,6 +216,8 @@ namespace bsm
 
             bool cut2D(const LorentzVector *);
             bool isolation(const LorentzVector *, const PFIsolation *);
+
+            bool isBtagJet(const Jet *) const;
 
             LeptonMode _lepton_mode;
             CutMode _cut_mode;
@@ -236,6 +246,7 @@ namespace bsm
             CutPtr _cut;
             CutPtr _leading_jet;
             CutPtr _max_btag;
+            CutPtr _min_btag;
             CutPtr _htlep;
             CutPtr _tricut;
             CutPtr _met;
