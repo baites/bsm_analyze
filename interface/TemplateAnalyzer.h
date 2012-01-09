@@ -211,7 +211,7 @@ namespace bsm
             float htallValue() const;
 
             bool isGoodLepton() const;
-            bool isBtagJet() const;
+            bool isBtagJet(const Jet *) const;
 
             WDecay eventDecay(const Event *) const;
             WDecay decayType(const GenParticle &) const;

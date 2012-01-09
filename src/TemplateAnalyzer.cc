@@ -885,8 +885,57 @@ TemplateAnalyzer::Mttbar TemplateAnalyzer::mttbar() const
                 || hypothesis.hadronic.empty())
             continue;
 
+        // Skip hypothesis if any neutral jets are b-tagged
+        //
+        uint32_t btagged_jets = 0;
+        for(Generator::Iterators::const_iterator jet =
+                    hypothesis.neutral.begin();
+                hypothesis.neutral.end() != jet;
+                ++jet)
+        {
+            if (isBtagJet((*jet)->jet))
+                ++btagged_jets;
+        }
+
+        if (0 < btagged_jets)
+            continue;
+
+        // Skip hypothesis if there are more than 1 b-tagged jets in hadronic
+        // side
+        //
+        btagged_jets = 0;
+        for(Generator::Iterators::const_iterator jet =
+                    hypothesis.hadronic.begin();
+                hypothesis.hadronic.end() != jet;
+                ++jet)
+        {
+            if (isBtagJet((*jet)->jet))
+                ++btagged_jets;
+        }
+
+        if (1 < btagged_jets)
+            continue;
+
+        // Skip hypothesis if there are more than 1 b-tagged jets in leptonic
+        // side
+        //
+        btagged_jets = 0;
+        for(Generator::Iterators::const_iterator jet =
+                    hypothesis.leptonic.begin();
+                hypothesis.leptonic.end() != jet;
+                ++jet)
+        {
+            if (isBtagJet((*jet)->jet))
+                ++btagged_jets;
+        }
+
+        if (1 < btagged_jets)
+            continue;
+
         // Leptonic Top p4 = leptonP4 + nuP4 + bP4
-        // where bP4 is the hardest jet (highest pT)
+        // where bP4 is:
+        //  - b-tagged jet
+        //  - otherwise, the hardest jet (highest pT)
         //
         LorentzVector ltop = lepton_p4;
 
@@ -903,6 +952,12 @@ TemplateAnalyzer::Mttbar TemplateAnalyzer::mttbar() const
                 hypothesis.leptonic.end() != jet;
                 ++jet)
         {
+            if (isBtagJet((*jet)->jet))
+            {
+                hardest_jet = &*(*jet);
+                break;
+            }
+
             const float jet_pt = pt(*(*jet)->corrected_p4);
             if (jet_pt > highest_pt)
                 hardest_jet = &*(*jet);
@@ -1014,26 +1069,17 @@ float TemplateAnalyzer::htallValue() const
     return htjets + htlepValue();
 }
 
-bool TemplateAnalyzer::isBtagJet() const
+bool TemplateAnalyzer::isBtagJet(const Jet *jet) const
 {
     typedef ::google::protobuf::RepeatedPtrField<Jet::BTag> BTags;
 
-    // require at least one jet to be b-Tagged
-    //
-    for(SynchSelector::GoodJets::const_iterator jet =
-            _synch_selector->goodJets().begin();
-            _synch_selector->goodJets().end() != jet;
-            ++jet)
+    for(BTags::const_iterator btag = jet->btag().begin();
+            jet->btag().end() != btag;
+            ++btag)
     {
-        for(BTags::const_iterator btag = jet->jet->btag().begin();
-                jet->jet->btag().end() != btag;
-                ++btag)
+        if (Jet::BTag::SSVHE == btag->type())
         {
-            if (Jet::BTag::TCHE == btag->type()
-                    && 3.3 <= btag->discriminator())
-            {
-                return true;
-            }
+            return 1.74 < btag->discriminator();
         }
     }
 
