@@ -626,7 +626,7 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
 
         dat->GetXaxis()->SetTitle("");
         dat->GetXaxis()->SetLabelSize(0.0);
-        dat->GetYaxis()->SetTitle("Pull");
+        dat->GetYaxis()->SetTitle("#frac{Data - MC}{MC}");
         dat->GetYaxis()->SetTitleOffset(0.5);
         dat->GetYaxis()->SetTitleSize(0.11);
         dat->GetYaxis()->SetRangeUser(ymin,ymax);
