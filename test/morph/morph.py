@@ -21,10 +21,9 @@ class Morph:
                 "__pileup__plus"]:
             for bounds, mass_points in {
                     #(750, 1000): tuple(range(800, 1000, 100)),
-                    #(1000, 1500): tuple(range(1100, 1500, 100)),
+                    (1000, 1500): tuple(range(1100, 1500, 100))
                     #(1500, 2000): tuple(range(1600, 2000, 100)),
                     #(2000, 3000): tuple(range(2100, 3000, 100))
-                    (1000, 1500): (1250, )
                     }.items():
                 for mass_point in mass_points:
                     stdout = open("cout_{0}{1}.log".format(mass_point,
