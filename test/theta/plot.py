@@ -10,6 +10,7 @@ from ROOT import *
 from array import array
 import os
 import re
+import sys
 from theoryxsecs import *
 
 # Apply styles
@@ -214,7 +215,7 @@ def plot(expected_limits, observed_limits):
     lumi_legend.SetTextSize(0.035)
     lumi_legend.Draw("9")
 
-    method_legend = TLatex(0.2, 0.85, "CLs method")
+    method_legend = TLatex(0.2, 0.85, "{0} method".format("CLs" if 1 < len(sys.argv) else "Bayesian"))
     method_legend.SetNDC()
     method_legend.SetTextSize(0.035)
     method_legend.Draw("9")

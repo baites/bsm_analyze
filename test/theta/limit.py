@@ -73,3 +73,23 @@ if "__main__" == __name__:
             '-'.join(["{0:.2f}".format(x) for x in expected[-2:]]),
             '-'.join(["{0:.2f}".format(x) for x in expected[-4:-2]]),
             observed[0]))
+
+    print()
+    format_string = "{process:<15} {expected:<20} {observed:<20}"
+    print(format_string.format(process = "Process",
+                               expected = "Expected [pb]",
+                               observed = "Observed [pb]"))
+
+    for key in sorted(expected_limits.keys()):
+        if not key in observed_limits:
+            print("key {} is not present in the observed limits".format(key))
+            continue
+
+        expected = expected_limits[key]
+        observed = observed_limits[key]
+
+        values = dict(process = "Z' {0} TeV".format(key // 1000 if 0 == (key % 1000) else key / 1000),
+                expected = "{0:.2f}".format(expected[0]),
+                observed = "{0:.2f}".format(observed[0]))
+
+        print(format_string.format(**values))

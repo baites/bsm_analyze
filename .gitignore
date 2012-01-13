@@ -1,3 +1,4 @@
 tmp
 *.root
 *.log
+*.pyc

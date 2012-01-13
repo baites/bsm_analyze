@@ -22,6 +22,7 @@ if "__main__" == __name__:
                 continue
 
             channel, weight = line.split()
+            channel = channel.split(':')[0]
 
             print("{0:<10} {1:.2f}".format(channel, float(weight)))
 
