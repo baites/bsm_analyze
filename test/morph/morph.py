@@ -5,13 +5,17 @@ import shlex
 import subprocess
 import sys
 
-def usage():
-    print("Usage: {0} max_processes".format(sys.argv[0]), file = sys.stderr)
+def usage(argv):
+    return "Usage: {0} [process:number] [file:theta_input.root]".format(argv[0])
 
 class Morph:
-    def __init__(self, max_process = 0):
-        self.max_process = max_process 
+    def __init__(self, process = 1, file = "theta_input.root"):
+        if not os.path.lexists(file):
+            raise Exception("input file does not exist: " + file)
+
+        self.max_process = min(1, int(process))
         self.processes = []
+        self.file = file
 
     def run(self):
         for plot_suffix in ["",
@@ -20,8 +24,6 @@ class Morph:
                 "__pileup__minus",
                 "__pileup__plus"]:
             for bounds, mass_points in {
-                    #(750, 1000): tuple(range(800, 1000, 100)),
-                    #(1000, 1500): tuple(range(1100, 1500, 100)),
                     (1000, 1500): (1250,),
                     (1500, 2000): (1750,),
                     (2000, 3000): (2500,)
@@ -34,6 +36,7 @@ class Morph:
                                                            plot_suffix), "w")
 
                     args = {
+                            "input_file": self.file,
                             "low_plot": self.histogram(bounds[0], plot_suffix),
                             "high_plot": self.histogram(bounds[1], plot_suffix),
                             "low_mass": bounds[0],
@@ -43,7 +46,7 @@ class Morph:
                             "target_file": "theta_input_{0}{1}.root".format(mass_point, plot_suffix)
                             }
 
-                    command = ("./morph theta_input.root {low_plot} "
+                    command = ("./morph {input_file} {low_plot} "
                                "{high_plot} {low_mass} {high_mass} "
                                "{target_mass} {target_plot} "
                                "{target_file}").format(**args)
@@ -68,22 +71,21 @@ class Morph:
         self.processes = []
 
 def main(argv = sys.argv):
-    if 2 > len(argv):
-        usage()
-    else:
+    try:
         if not os.path.exists("morph"):
-            print("executable does not exist: morph")
-        else:
-            try:
-                morph = Morph(max_process = int(argv[1]))
-            except ValueError:
-                usage()
-            else:
-                morph.run()
+            raise Exception("executable does not exist: morph")
 
-                return 0
+        morph = Morph(**dict((x.split(':') for x in argv[1:] if ':' in x)))
 
-    return 1
+        morph.run()
+    except Exception as error:
+        print(error, file = sys.stderr)
+        print(file = sys.stderr)
+        print(usage(argv), file = sys.stderr)
+
+        return 1
+    else:
+        return 0
 
 if "__main__" == __name__:
     sys.exit(main())
