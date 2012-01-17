@@ -2,3 +2,5 @@ tmp
 *.root
 *.log
 *.pyc
+*.pdf
+*.gz
