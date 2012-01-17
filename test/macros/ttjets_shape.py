@@ -139,7 +139,7 @@ def compare(powheg = None, madgraph = None):
 def main(argv = sys.argv):
     try:
         if 3 > len(argv):
-            raise Exception(usage())
+            raise Exception(usage(argv))
 
         rootStyle("tdrstyle.C")
 
