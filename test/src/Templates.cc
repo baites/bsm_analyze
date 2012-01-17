@@ -363,10 +363,9 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
     // Read data histogram
     //
     TH1 *data = 0;
-    if (
-        channels.end() != channels.find(Channel::DATA) && 
-        channels[Channel::DATA]
-    )
+    if (channels.end() != channels.find(Channel::DATA)
+        && channels[Channel::DATA])
+
         data = channels[Channel::DATA];
     
     // Read background histogram
@@ -399,6 +398,7 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
             mc_sigma = dynamic_cast<TH1 *>(channel->second->Clone());
             _heap.push_back(mc_sigma);
             isclone = true;
+
             continue;
         }
         
@@ -456,6 +456,8 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
     float chi2 = 0;
     if (data) chi2 = data->Chi2Test(mc_sigma, "UW");
 
+    TH1 *mc_sum = 0;
+
     THStack *stack = new THStack();
     _heap.push_back(stack);
 
@@ -493,7 +495,14 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
             "fe");
             
         rebin(channel->second, plot);
+
         stack->Add(channel->second);
+        if (!mc_sum)
+        {
+            mc_sum = dynamic_cast<TH1 *>(channel->second->Clone());
+        }
+        else
+            mc_sum->Add(channel->second);
     }
 
     if (data) data->Draw("9");
@@ -626,7 +635,7 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
 
         dat->GetXaxis()->SetTitle("");
         dat->GetXaxis()->SetLabelSize(0.0);
-        dat->GetYaxis()->SetTitle("#frac{Data - MC}{MC}");
+        dat->GetYaxis()->SetTitle("#frac{Data - BKGD}{BKGD}");
         dat->GetYaxis()->SetTitleOffset(0.5);
         dat->GetYaxis()->SetTitleSize(0.11);
         dat->GetYaxis()->SetRangeUser(ymin,ymax);
@@ -641,6 +650,16 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
     }
 
     canvas->Update();
+
+    if (plot == Template::TTBAR_MASS)
+    {
+        TFile *output = TFile::Open("mttbar.root", "recreate");
+        if (!output->IsZombie())
+        {
+            output->WriteObject(mc_sum, "mttbar_mc");
+            output->WriteObject(data, "mttbar_data");
+        }
+    }
 
     return canvas;
 }
