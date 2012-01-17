@@ -14,8 +14,8 @@ using namespace boost;
 int main(int argc, char *argv[])
 try
 {
-    int empty_argc = 1;
-    char *empty_argv[] = { argv[0] };
+    int empty_argc = 3;
+    char *empty_argv[] = { argv[0], "-b", "-q"};
     shared_ptr<TRint> root(new TRint("root", &empty_argc, empty_argv));
 
     shared_ptr<ScalingSystematic> systematic(new ScalingSystematic(1 < argc
