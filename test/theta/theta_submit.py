@@ -96,10 +96,8 @@ def submit(mass_points = set(),
             os.chdir(job_folder)
             
             try:
-                for f in ("theta_input.root", "theory-xsecs.py"):
+                for f in links.keys() - {"run.sh"}:
                     os.symlink("../" + f, f)
-
-                shutil.copy("../analysis.py", "./")
 
                 createHistogramFilter(mass)
             finally:
