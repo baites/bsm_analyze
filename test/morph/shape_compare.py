@@ -87,6 +87,7 @@ class Compare():
             h.SetDirectory(0)
             h.Rebin(100)
             h.Scale(1 / h.Integral())
+
             stack.Add(h)
 
         canvas = TCanvas()
@@ -94,18 +95,22 @@ class Compare():
 
         canvas.SetWindowSize(640, 480)
 
-        stack.Draw("hist nostack")
+        stack.Draw("hist nostack 9")
 
         len(plots) and stack.GetHistogram().GetXaxis().SetTitle(plots[0].GetXaxis().GetTitle())
+        stack.GetHistogram().GetYaxis().SetTitle("a.u.")
 
-        legend.Draw()
+        legend.Draw("9")
 
         canvas.Update()
+
+        if not suffix:
+            canvas.SaveAs("_".join(self.morph) + ".pdf")
 
         file.Close()
 
     def legend(self, title):
-        legend = TLegend(.5, .65, .85, .88)
+        legend = TLegend(.8, .65, .9, .88)
         self.objects.append(legend)
 
         legend.SetHeader(title if title else "nominal")
