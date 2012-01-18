@@ -19,7 +19,9 @@ def rootStyle(filename):
     else:
         print("ROOT style is not available: " + filename)
 
-def generateCDF(filename):
+def generateCDF(filename, start = 0):
+    start = float(start)
+
     if not os.path.lexists(filename):
         raise Exception("input file does not exist: " + filename)
 
@@ -35,7 +37,7 @@ def generateCDF(filename):
 
         plots[plot_name.split('_')[1]] = h
 
-    cdfs = {x: cdf(y) for x, y in plots.items()}
+    integrals = {x: integral(y, start) for x, y in plots.items()}
 
     legend = TLegend(.8, .3, .9, .5)
     legend.SetMargin(0.12)  
@@ -44,7 +46,7 @@ def generateCDF(filename):
     legend.SetBorderSize(0) 
 
     stack = THStack()
-    for k, v in cdfs.items():
+    for k, v in integrals.items():
         color = ROOT.kBlack if "data" == k else ROOT.kRed
         v.SetMarkerColor(color)
         v.SetLineColor(color)
@@ -58,34 +60,40 @@ def generateCDF(filename):
 
     stack.Draw("nostack 9")
 
-    stack.GetHistogram().GetXaxis().SetTitle(cdfs["mc"].GetXaxis().GetTitle())
+    stack.GetHistogram().GetXaxis().SetTitle(integrals["mc"].GetXaxis().GetTitle())
     stack.GetHistogram().GetYaxis().SetTitle("#int_{0}^{x} M_{t#bar{t}}")
-    stack.GetHistogram().GetYaxis().SetTitleSize(0.04)
+    stack.GetHistogram().GetYaxis().SetTitleSize(0.03)
+    stack.GetHistogram().GetYaxis().SetTitleOffset(2)
+    stack.GetHistogram().GetYaxis().SetRangeUser(0, 500)
     TGaxis.SetMaxDigits(2)
 
     legend.Draw("9")
 
     canvas.Update()
 
-    canvas.SaveAs("mttbar_cdf.pdf")
+    canvas.SaveAs("mttbar_integral.pdf")
+    canvas.SaveAs("mttbar_integral.png")
 
-    raw_input("press Enter")
-
-def cdf(h):
+def integral(h, start):
     plot = h.Clone()
+    plot.Reset()
 
+    start_bin = plot.GetXaxis().FindBin(start)
     integral, variance = 0, 0
-    for bin in range(1, plot.GetXaxis().GetNbins() + 2):
+    
+    for bin in range(start_bin, plot.GetXaxis().GetNbins() + 2):
         integral += h.GetBinContent(bin)
         variance += h.GetBinError(bin) ** 2
 
         plot.SetBinContent(bin, integral)
         plot.SetBinError(bin, sqrt(variance))
 
+    plot.SetMaximum(integral * 1.2)
+
     return plot
 
 def usage(argv):
-    return "usage: {0} mttbar.root".format(argv[0])
+    return "usage: {0} mttbar.root [start:mass]".format(argv[0])
 
 def main(argv = sys.argv):
     try:
@@ -94,7 +102,8 @@ def main(argv = sys.argv):
 
         rootStyle("tdrstyle.C")
 
-        generateCDF(argv[1])
+        generateCDF([x for x in argv[1:] if ':' not in x][0],
+                    **dict((x.split(':') for x in argv[1:] if ':' in x)))
 
     except Exception as error:
         print(error, file = sys.stderr)
