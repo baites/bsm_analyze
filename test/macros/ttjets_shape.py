@@ -72,8 +72,8 @@ def compare(powheg = None, madgraph = None):
         stack.Add(h)
 
     ratio = powheg_h.Clone()
-    ratio.GetYaxis().SetRangeUser(-4, 4)
-    ratio.GetYaxis().SetTitle("#frac{powheg - madgraph}{#sigma_{madgraph}}")
+    ratio.GetYaxis().SetRangeUser(0, 4)
+    ratio.GetYaxis().SetTitle("#frac{powheg}{madgraph}")
     ratio.GetYaxis().SetTitleSize(0.08)
     ratio.GetYaxis().SetTitleOffset(0.6)
     ratio.GetYaxis().SetLabelSize(0.09)
@@ -84,22 +84,15 @@ def compare(powheg = None, madgraph = None):
     ratio.SetLineWidth(1)
     ratio.SetLineColor(ROOT.kGray + 2)
     for bin in range(1, ratio.GetXaxis().GetNbins() + 1):
-        '''
-        ratio = (powheg - madgraph) / sigma_madgraph
-        
-        error = sqrt((sigma_powheg / sigma_madgraph) ** 2 + 1)
-        '''
         madgraph_bin = madgraph_h.GetBinContent(bin)
         powheg_bin = powheg_h.GetBinContent(bin)
 
         madgraph_bin_error = madgraph_h.GetBinError(bin)
         powheg_bin_error = powheg_h.GetBinError(bin)
 
-        ratio.SetBinContent(bin, (powheg_bin - madgraph_bin) / madgraph_bin_error
-                                    if madgraph_bin else 0)
-
-        ratio.SetBinError(bin, sqrt((powheg_bin_error / madgraph_bin_error) ** 2 + 1)
-                                    if madgraph_bin else 0)
+        bin_ratio = powheg_bin / madgraph_bin if madgraph_bin else 0
+        ratio.SetBinContent(bin, bin_ratio)
+        ratio.SetBinError(bin, sqrt((bin_ratio ** 2 * madgraph_bin_error ** 2 + powheg_bin_error ** 2) / madgraph_bin_error ** 2) if madgraph_bin else 0)
 
     canvas = TCanvas()
 
@@ -131,10 +124,9 @@ def compare(powheg = None, madgraph = None):
     ratio.Draw("e 9")
 
     canvas.SaveAs("shape.pdf")
+    canvas.SaveAs("shape.png")
 
     canvas.Update()
-
-    raw_input("press Enter")
 
 def main(argv = sys.argv):
     try:
