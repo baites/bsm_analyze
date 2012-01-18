@@ -16,11 +16,13 @@ from theoryxsecs import *
 # Apply styles
 #
 def rootStyle(filename):
-    if os.path.isfile(filename):
+    if os.path.lexists(filename):
         gROOT.ProcessLine(".L {0}".format(filename))
         ROOT.setTDRStyle()
 
         print("Loaded style from: {0}".format(filename))
+    else:
+        print("TDR style is not available: " + filename)
 
 def loadLimits(filename):
     # Data convention:
