@@ -20,6 +20,7 @@ class Channel
             ZJETS,
             WJETS,
             TTBAR,
+            TTBAR_POWHEG,
             ZPRIME1000,
             ZPRIME1500,
             ZPRIME2000

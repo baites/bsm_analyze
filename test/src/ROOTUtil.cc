@@ -92,6 +92,14 @@ float getScale(const Input &input)
                 break;
             }
 
+        case Input::TTJETS_POWHEG:
+            {
+                // Use NNLO x-section: 163 instead of NLO: 157.5 or LO: 94.76
+                //
+                scale = 163 * 1.0 / 16330372;
+                break;
+            }
+
         case Input::ZJETS:
             {
                 // Use NLO x-section: 3048 instead of LO: 2475
@@ -258,6 +266,7 @@ std::string folder(const Input &input)
         case Input::QCD_EM_PT80_170: return "qcd_em_pt80to170";
         case Input::QCD_FROM_DATA: return "qcd_from_data";
         case Input::TTJETS: return "ttjets";
+        case Input::TTJETS_POWHEG: return "ttjets_powheg";
         case Input::TTJETS_MATCHING_UP: return "ttjets_matchingup";
         case Input::TTJETS_MATCHING_DOWN: return "ttjets_matchingdown";
         case Input::TTJETS_SCALE_UP: return "ttjets_scaleup";
@@ -367,6 +376,11 @@ void style(TH1 *hist, const Input &input, const int &systematic)
                 break;
             }
         case Input::TTJETS:
+            {
+                color = kRed + 1;
+                break;
+            }
+        case Input::TTJETS_POWHEG:
             {
                 color = kRed + 1;
                 break;
