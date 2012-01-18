@@ -227,11 +227,13 @@ def plot(expected_limits, observed_limits):
     canvas.Update()
 
     canvas.SaveAs("theta_limits.pdf")
+    canvas.SaveAs("theta_limits.png")
 
     canvas.SetLogy()
     canvas.Update()
 
     canvas.SaveAs("theta_limits_log.pdf")
+    canvas.SaveAs("theta_limits_log.png")
 
 if "__main__" == __name__:
     rootStyle("tdrstyle.C")
