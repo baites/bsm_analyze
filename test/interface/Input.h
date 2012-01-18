@@ -22,6 +22,7 @@ class Input
             QCD_EM_PT80_170,
             QCD_FROM_DATA,
             TTJETS,
+            TTJETS_POWHEG,
             TTJETS_SCALE_UP,
             TTJETS_SCALE_DOWN,
             TTJETS_MATCHING_UP,

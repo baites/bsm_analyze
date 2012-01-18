@@ -20,6 +20,7 @@ Input::operator string() const
         case QCD_EM_PT30_80: return  "QCD EM pt30to80";
         case QCD_EM_PT80_170: return "QCD EM pt80to170";
         case TTJETS: return "TTjets";
+        case TTJETS_POWHEG: return "TTjets POWHEG";
         case TTJETS_MATCHING_UP: return "TTjets matching up";
         case TTJETS_MATCHING_DOWN: return "TTjets matching down";
         case TTJETS_SCALE_UP: return "TTjets scale up";
@@ -62,6 +63,7 @@ string Input::repr() const
         case QCD_EM_PT30_80: return  "qcd_em_pt30to80";
         case QCD_EM_PT80_170: return "qcd_em_pt80to170";
         case TTJETS: return "ttjets";
+        case TTJETS_POWHEG: return "ttjets_powheg";
         case TTJETS_MATCHING_UP: return "ttjets_matching_up";
         case TTJETS_MATCHING_DOWN: return "ttjets_matching_down";
         case TTJETS_SCALE_UP: return "ttjets_scaling_up";

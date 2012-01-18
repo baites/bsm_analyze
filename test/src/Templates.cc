@@ -235,9 +235,19 @@ void Templates::plot(const Template &plot)
     channel[Channel::STOP] = h;
 
     h = get(input_plots, Input::TTJETS);
-    if (h && _theta_scale.ttjets)
-        h->Scale(_theta_scale.ttjets);
-    channel[Channel::TTBAR] = h;
+    if (h)
+    {
+        if (h && _theta_scale.ttjets)
+            h->Scale(_theta_scale.ttjets);
+        channel[Channel::TTBAR] = h;
+    }
+    else
+    {
+        h = get(input_plots, Input::TTJETS_POWHEG);
+        if (h && _theta_scale.ttjets)
+            h->Scale(_theta_scale.ttjets);
+        channel[Channel::TTBAR_POWHEG] = h;
+    }
 
     h = get(input_plots, Input::WJETS);;
     if (h && _theta_scale.wjets)
@@ -710,7 +720,15 @@ void Templates::normalize()
 
     channel[Channel::WJETS] = get(input_plots, Input::WJETS);
     channel[Channel::ZJETS] = get(input_plots, Input::ZJETS);
-    channel[Channel::TTBAR] = get(input_plots, Input::TTJETS);
+
+    TH1 *h = get(input_plots, Input::TTJETS);
+    if (h)
+        channel[Channel::TTBAR] = h;
+    else
+    {
+        h = get(input_plots, Input::TTJETS_POWHEG);
+        channel[Channel::TTBAR_POWHEG] = h;
+    }
 
     channel[Channel::QCD] = get(input_plots, Input::QCD_FROM_DATA);
 
@@ -720,7 +738,15 @@ void Templates::normalize()
 
     uwchannel[Channel::WJETS] = get(input_plots_noweight, Input::WJETS);
     uwchannel[Channel::ZJETS] = get(input_plots_noweight, Input::ZJETS);
-    uwchannel[Channel::TTBAR] = get(input_plots_noweight, Input::TTJETS);
+
+    h = get(input_plots_noweight, Input::TTJETS);
+    if (h)
+        uwchannel[Channel::TTBAR] = h;
+    else
+    {
+        h = get(input_plots_noweight, Input::TTJETS_POWHEG);
+        uwchannel[Channel::TTBAR_POWHEG] = h;
+    }
 
     TCanvas *canvas = normalize(plot, channel, uwchannel);
     canvas->SaveAs(("template_" + plot.repr() + (_log_scale ? "_log" : "")

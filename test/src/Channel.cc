@@ -16,6 +16,7 @@ Channel::operator string() const
         case DATA: return "CMS Data 2011";
         case QCD: return "QCD data-driven";
         case TTBAR: return "t#bar{t}";
+        case TTBAR_POWHEG: return "t#bar{t} POWHEG";
         case WJETS: return "W#rightarrowl#nu";
         case ZJETS: return "Z/#gamma*#rightarrowl^{+}l^{-}";
         case STOP: return "Single-Top";
@@ -34,6 +35,7 @@ string Channel::repr() const
         case DATA: return "data_2011";
         case QCD: return "qcd";
         case TTBAR: return "ttbar";
+        case TTBAR_POWHEG: return "ttbar";
         case WJETS: return "wjets";
         case ZJETS: return "zjets";
         case STOP: return "stop";
