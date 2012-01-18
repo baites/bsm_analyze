@@ -18,7 +18,9 @@
 #include "interface/Analyzer.h"
 #include "interface/AppController.h"
 #include "interface/Cut.h"
+#include "interface/DecayGenerator.h"
 #include "interface/Pileup.h"
+#include "interface/SynchSelector.h"
 #include "interface/bsm_fwd.h"
 
 namespace bsm
@@ -77,6 +79,10 @@ namespace bsm
             virtual void setWjetCorrection()
             {
             }
+
+            virtual void setBtagReconstruction()
+            {
+            }
     };
 
     class TemplatesOptions : public Options
@@ -93,10 +99,79 @@ namespace bsm
 
         private:
             void setWjetCorrection();
+            void setBtagReconstruction();
 
             TemplatesDelegate *_delegate;
 
             DescriptionPtr _description;
+    };
+
+    class ResonanceReconstructor: public core::Object
+    {
+        public:
+            typedef DecayGenerator<CorrectedJet> Generator;
+            typedef Generator::Iterators Iterators;
+
+            struct Mttbar
+            {
+                LorentzVector mttbar;
+                LorentzVector wlep;
+                LorentzVector whad;
+                LorentzVector neutrino;
+                LorentzVector ltop;
+                LorentzVector htop;
+
+                int htop_njets;
+                int solutions;
+            };
+
+            Mttbar run(const LorentzVector &lepton,
+                       const LorentzVector &met,
+                       const SynchSelector::GoodJets &) const;
+
+            // Object interface
+            //
+            virtual void print(std::ostream &) const;
+
+        protected:
+            virtual bool isValidHadronicSide(const Iterators &) const = 0;
+            virtual bool isValidLeptonicSide(const Iterators &) const = 0;
+            virtual bool isValidNeutralSide(const Iterators &) const = 0;
+            virtual LorentzVector getLeptonicJet(const Iterators &) const = 0;
+    };
+
+    class SimpleResonanceReconstructor: public ResonanceReconstructor
+    {
+        public:
+            // Object interface
+            //
+            virtual uint32_t id() const;
+            virtual ObjectPtr clone() const;
+
+        protected:
+            virtual bool isValidHadronicSide(const Iterators &) const;
+            virtual bool isValidLeptonicSide(const Iterators &) const;
+            virtual bool isValidNeutralSide(const Iterators &) const;
+            virtual LorentzVector getLeptonicJet(const Iterators &) const;
+    };
+
+    class BtagResonanceReconstructor: public SimpleResonanceReconstructor
+    {
+        public:
+            // Object interface
+            //
+            virtual uint32_t id() const;
+            virtual ObjectPtr clone() const;
+
+        protected:
+            virtual bool isValidHadronicSide(const Iterators &) const;
+            virtual bool isValidLeptonicSide(const Iterators &) const;
+            virtual bool isValidNeutralSide(const Iterators &) const;
+            virtual LorentzVector getLeptonicJet(const Iterators &) const;
+
+        private:
+            uint32_t countBtags(const Iterators &) const;
+            bool isBtagJet(const Jet *jet) const;
     };
 
     class TemplateAnalyzer : public Analyzer,
@@ -117,6 +192,8 @@ namespace bsm
             {
                 _apply_wjet_correction = true;
             }
+
+            virtual void setBtagReconstruction();
 
             const H1Ptr npv() const;
             const H1Ptr npvWithPileup() const;
@@ -188,21 +265,10 @@ namespace bsm
             typedef ::google::protobuf::RepeatedPtrField<GenParticle>
                 GenParticles;
 
+            typedef ResonanceReconstructor::Mttbar Mttbar;
+
             void fillDrVsPtrel();
             void fillHtlep();
-
-            struct Mttbar
-            {
-                LorentzVector mttbar;
-                LorentzVector wlep;
-                LorentzVector whad;
-                LorentzVector neutrino;
-                LorentzVector ltop;
-                LorentzVector htop;
-
-                int htop_njets;
-                int solutions;
-            };
 
             Mttbar mttbar() const;
             void monitorJets();
@@ -275,6 +341,8 @@ namespace bsm
 
             P4MonitorPtr _ltop;
             P4MonitorPtr _htop;
+
+            boost::shared_ptr<ResonanceReconstructor> _reconstructor;
     };
 }
 
