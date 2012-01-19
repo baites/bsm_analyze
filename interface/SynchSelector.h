@@ -112,6 +112,7 @@ namespace bsm
                 HTLEP,
                 TRICUT,
                 MET,
+                LTOP,
 
                 SELECTIONS // this item should always be the last one
             };

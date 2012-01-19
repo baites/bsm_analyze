@@ -965,6 +965,8 @@ void TemplateAnalyzer::process(const Event *event)
         if (100 >= pt(resonance.ltop))
             return;
 
+        _synch_selector->cutflow()->apply(SynchSelector::LTOP);
+
         mttbarAfterHtlep()->fill(mass(resonance.mttbar) / 1000,
                 _pileup_weight * _wjets_weight);
 
@@ -1028,6 +1030,8 @@ void TemplateAnalyzer::process(const Event *event)
 
         if (pt(resonance.ltop) >= 100.0)
         {
+            _synch_selector_with_inverted_htlep->cutflow()->apply(SynchSelector::LTOP);
+
             htlep()->fill(htlepValue(), _pileup_weight * _wjets_weight);
             htlepBeforeHtlep()->fill(htlepValue(), _pileup_weight * _wjets_weight);
             htlepBeforeHtlepNoWeight()->fill(htlepValue());

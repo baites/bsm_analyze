@@ -530,9 +530,9 @@ void SynchSelector::setChildCorrection()
 
     // Activate new Jet Energy Corrections
     //
-    stopMonitor(_jec)
+    stopMonitor(_jec);
     _jec = jec;
-    monitor(_jec)
+    monitor(_jec);
 }
 
 // Trigger Delegate interface
@@ -596,6 +596,7 @@ void SynchSelector::print(std::ostream &out) const
     _cutflow->cut(HTLEP)->setName("hTlep");
     _cutflow->cut(TRICUT)->setName("tri-cut");
     _cutflow->cut(MET)->setName("MET");
+    _cutflow->cut(LTOP)->setName("pt(ltop)");
 
     out << "Cutflow [" << _lepton_mode << ": " << _cut_mode << "]" << endl;
     out << *_cutflow << endl;
