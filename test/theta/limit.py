@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.2
+#!/usr/bin/env python3
 #
 # Read Theta limits from text files and convert these to LaTeX format
 #

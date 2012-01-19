@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.2
+#!/usr/bin/env python3
 #
 # Created by Samvel Khalatyan, Jan 13, 2012
 # Copyright 2011, All rights reserved
