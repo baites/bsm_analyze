@@ -460,7 +460,9 @@ void SynchSelector::setChildCorrection()
 
     // Activate new Jet Energy Corrections
     //
+    stopMonitor(_jec)
     _jec = jec;
+    monitor(_jec)
 }
 
 // Trigger Delegate interface
