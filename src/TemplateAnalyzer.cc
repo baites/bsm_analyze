@@ -1193,23 +1193,6 @@ float TemplateAnalyzer::htallValue() const
     return htjets + htlepValue();
 }
 
-bool TemplateAnalyzer::isBtagJet(const Jet *jet) const
-{
-    typedef ::google::protobuf::RepeatedPtrField<Jet::BTag> BTags;
-
-    for(BTags::const_iterator btag = jet->btag().begin();
-            jet->btag().end() != btag;
-            ++btag)
-    {
-        if (Jet::BTag::SSVHE == btag->type())
-        {
-            return 1.74 < btag->discriminator();
-        }
-    }
-
-    return false;
-}
-
 WDecay TemplateAnalyzer::eventDecay(const Event *event) const
 {
     WDecay decay;
