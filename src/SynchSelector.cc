@@ -226,12 +226,16 @@ SynchSelector::SynchSelector():
     _leading_jet.reset(new Comparator<>(250));
     monitor(_leading_jet);
 
+    // Do not cut on max number of b-tagged jets by default
+    //
     _max_btag.reset(new Comparator<less<float> >(3));
+    _max_btag->disable();
     monitor(_max_btag);
 
     // Do not cut on min number of b-tagged jets by default
     //
-    _min_btag.reset(new Comparator<>(-1));
+    _min_btag.reset(new Comparator<>(1));
+    _min_btag->disable();
     monitor(_min_btag);
 
     _htlep.reset(new Comparator<>(150));
@@ -482,11 +486,13 @@ void SynchSelector::setLeadingJetPt(const float &value)
 void SynchSelector::setMaxBtag(const float &value)
 {
     _max_btag->setValue(value);
+    _max_btag->enable();
 }
 
 void SynchSelector::setMinBtag(const float &value)
 {
     _min_btag->setValue(value);
+    _min_btag->enable();
 }
 
 void SynchSelector::setElectronPt(const float &value)
