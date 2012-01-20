@@ -18,7 +18,7 @@ class Compare():
         self.legend = None
         self.ratio = None
 
-    def __call__(self, numerator, denominator):
+    def __call__(self, numerator, denominator, title = ""):
         '''
         Draw plots and their ratio below
         '''
@@ -51,6 +51,8 @@ class Compare():
         self.legend.SetTextSize(0.03)
         self.legend.SetFillColor(10) 
         self.legend.SetBorderSize(0) 
+        if title:
+            self.legend.SetHeader(title)
 
         for h in self.numerator, self.denominator:
             self.legend.AddEntry(h, h.GetTitle(), "l")
@@ -71,7 +73,7 @@ class Compare():
         self.stack.Add(self.numerator)
         self.stack.Add(self.denominator)
 
-        self.stack.Draw("nostack 9")
+        self.stack.Draw("nostack hist 9")
         self.legend.Draw("9")
 
         # Draw ratio
