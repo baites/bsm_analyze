@@ -3,10 +3,12 @@
 # Created by Samvel Khalatyan, Jan 09, 2012
 # Copyright 2012, All rights reserved
 
-from __future__ import division
+from __future__ import division, print_function
 
 import os
 import sys
+
+from compare import Compare
 
 from ROOT import *
 
@@ -17,22 +19,30 @@ def rootStyle(filename):
 
         print("Loaded ROOT style from: {0}".format(filename))
 
-class Compare():
+class CompareOld():
     def __init__(self, left_folder, right_folder):
         self.left_folder = left_folder
         self.right_folder = right_folder
         self.objects= []
 
     def run(self):
+        for channel in [x + "jets" for x in ["tt", "w", "z"]]:
+            '''
         for channel in [x + "jets" for x in ["tt", "w", "z"]] \
                 + ["zprime_m" + x + "00_w" + x for x in \
                     [str(x) for x in [10, 15, 20, 30, 40]]] \
                 + [x + "_" + y for y in ["s", "t", "tw"] \
                     for x in ["stop", "satop"]]:
+            '''
 
             filename = "output_signal_p150_hlt.root"
-            left_input = "{0}/{1}/{2}".format(self.left_folder, channel, filename).replace("//", "/")
-            right_input = "{0}/{1}/{2}".format(self.right_folder, channel, filename).replace("//", "/")
+            left_input = "{0}/{1}/{2}".format(self.left_folder,
+                    channel,
+                    filename).replace("//", "/")
+
+            right_input = "{0}/{1}/{2}".format(self.right_folder,
+                    channel,
+                    filename).replace("//", "/")
 
             if not os.path.exists(left_input):
                 print("skip channel {0} - input is not available: {1}".format(channel, left_input))
@@ -66,6 +76,7 @@ class Compare():
 
         lh = lh.Clone()
         lh.SetDirectory(0)
+        lh.SetTitle(channel + 
 
         rh = rin.Get(plot_name)
         if type(rh) == TObject:
@@ -87,13 +98,12 @@ class Compare():
             h.SetLineWidth(2)
             h.SetFillStyle(0)
 
-        canvas = TCanvas()
-        canvas.SetTitle(channel)
-        canvas.SetWindowSize(640, 480)
+        compare = Compare()
+        compare(rh, lh)
 
-        lh.Draw("hist")
-        rh.Draw("hist same")
+        self.objects.append(compare)
 
+        '''
         legend = TLegend(.5, .65, .85, .88)
         legend.SetMargin(0.12)  
         legend.SetTextSize(0.03)
@@ -114,14 +124,26 @@ class Compare():
         self.objects.append(lh)
         self.objects.append(rh)
         self.objects.append(canvas)
+        '''
+
+def usage(argv):
+    return "usage: {0} numerator:folder denominator:folder".format(argv[0])
+
+def main(argv = sys.argv):
+    try:
+        if 3 > len(sys.argv):
+            raise Exception(usage(argv))
+
+        rootStyle("tdrstyle.C")
+
+        compare = CompareOld(*sys.argv[1:3])
+        compare.run()
+    except Exception as error:
+        print(error, file = sys.stderr)
+
+        return 1
+    else:
+        return 0
 
 if "__main__" == __name__:
-    if 3 > len(sys.argv):
-        print("usage: {0[0]} nominal_folder_1 nominal_folder_2".format(sys.argv))
-
-        exit(1)
-
-    rootStyle("tdrstyle.C")
-
-    compare = Compare(*sys.argv[1:3])
-    compare.run()
+    sys.exit(main())
