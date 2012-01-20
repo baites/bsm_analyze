@@ -37,7 +37,11 @@ def compareFiles(left, right):
         raise Exception("failed to open RIGHT file: " + right)
 
     objects = []
-    for channel in "ttbar", "zjets", "wjets", "singletop":
+    scaling_channels = set(["wjets", "ttbar"])
+    jes_channels = scaling_channels | set(["zjets", "singletop"]) | set(map(lambda x: "zp" + str(x), (1000, 1500, 2000, 3000, 4000)))
+    all_channels = jes_channels | set(["DATA", "eleqcd"])
+
+    for channel in [y + x for x in "__matching__plus", "__matching__minus", "__scaling__plus", "__scaling__minus" for y in scaling_channels] + [y + x for x in "__pileup__plus", "__pileup__minus", "__jes__plus", "__jes__minus" for y in jes_channels] + list(all_channels):
         histogram = "el_mttbar__" + channel
 
         lh = left_input.Get(histogram)
@@ -48,7 +52,7 @@ def compareFiles(left, right):
 
             continue
 
-        lh.SetLineColor(ROOT.kRed)
+        lh.SetLineColor(ROOT.kRed + 1)
         lh.SetTitle("left")
 
         rh = right_input.Get(histogram)
@@ -59,14 +63,16 @@ def compareFiles(left, right):
 
             continue
 
-        rh.SetLineColor(ROOT.kGreen)
+        rh.SetLineColor(ROOT.kGreen + 1)
         rh.SetTitle("right")
 
         for h in lh, rh:
             h.Rebin(100)
+            h.SetMarkerSize(0.5)
+            h.SetLineWidth(1)
 
         compare = Compare()
-        compare(lh, rh)
+        compare(lh, rh, title = channel)
 
         objects.append(compare)
 
