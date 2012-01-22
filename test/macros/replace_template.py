@@ -1,78 +1,92 @@
 #!/usr/bin/env python
 #
-# Created by Samvel Khalatyan, Jan 04, 2012
+# Created by Samvel Khalatyan, Jan 20, 2012
 # Copyright 2012, All rights reserved
 
+from __future__ import division, print_function
+
 import os
+import shutil
+import sys
 
-from ROOT import *
+import ROOT
 
-def expandHistograms(histograms, channels, suffix):
-    for channel in channels:
-        histograms.append("el_mttbar__{0}{1}".format(channel, suffix))
+def replace(templates = set(),
+            in_file = None,
+            with_file = None,
+            to_file = None):
+    '''
+    Replace specified templates in the input file and store result in file
 
-def histograms():
-    mc = ("ttbar", "zjets", "wjets", "singletop")
-    signal = ("zp1000", "zp1500", "zp2000", "zp3000", "zp4000")
-    data = ("DATA", "eleqcd")
+    templates   collection of template names to be replaced
+    in_file     source file where all templates will be taken from
+    with_file   source of replacement templates
+    to_file    destination file
+    '''
+    if not os.path.lexists(in_file):
+        raise Exception("templates input file does not exist: " + in_file)
 
-    histograms = []
-    for suffix in ("", ):
-        expandHistograms(histograms, (x for x in mc + signal + data if x != "wjets"), suffix)
+    if os.path.lexists(to_file):
+        raise Exception("destination file exists: " + to_file)
 
-    for suffix in ("__jes__minus", "__jes__plus", "__pileup__plus", "__pileup__minus"):
-        expandHistograms(histograms, mc + signal, suffix)
+    # Shortcut
+    #
+    if not templates:
+        print("no templates are specified for replacement: copy {0} to {1}".format(in_file, to_file))
+        shutil.copy2(in_file, to_file)
 
-    for suffix in ("__matching__plus", "__matching__minus"):
-        expandHistograms(histograms, ("wjets", "ttbar"), suffix)
+        return
 
-    for suffix in ("__scaling__plus", "__scaling__minus"):
-        expandHistograms(histograms, ("wjets", "ttbar"), suffix)
+    if not os.path.lexists(with_file):
+        raise Exception("replacement templates file does not exist: " + in_file)
 
-    return histograms
+    replacement = {
+            "in": ROOT.TFile(in_file),
+            "with": ROOT.TFile(with_file),
+            "to": ROOT.TFile(to_file, "recreate")
+            }
 
-def rootStyle(filename):
-    if os.path.isfile(filename):
-        gROOT.ProcessLine(".L {0}".format(filename))
-        ROOT.setTDRStyle()
+    for key, file in replacement.items():
+        if file.IsZombie():
+            raise Exception("failed to open {0} file: {1}".format(key.upper(), file.GetName()))
 
-        print("Loaded ROOT style from: {0}".format(filename))
+    # Get set of templates in files
+    # 
+    names = {}
+    for key, file in replacement.items():
+        if "to" == key:
+            continue
 
-def removeScaling(file_in, file_out):
-    if os.path.isfile(file_in):
-        output = TFile(file_out, "recreate")
-        input = TFile(file_in)
+        objects = set([x.GetName() for x in file.GetListOfKeys()])
 
-        # Save everyting in output file except wjets
-        #
-        hists = histograms()
+        objects = objects - templates if "in" == key else objects & templates
+        names[key] = objects
 
-        for hist in hists:
-            h = input.Get(hist)
+    # Store templates that are not found in the with_file
+    # 
+    names["missing"] = templates - (templates & names["with"])
 
-            output.WriteObject(h, hist)
+    # Copy templates from in_file to output
+    #
+    output_file = replacement["to"]
+    for key in "in", "with":
+        input_file = replacement[key]
+        for name in names[key]:
+            h = input_file.Get(name)
+            if not h:
+                print("failed to read template: " + name, file = sys.stderr)
 
-        # process separately wjets
-        #
-        hist_name = "el_mttbar__wjets"
-        nominal = input.Get(hist_name)
-        scale_up = input.Get("{0}__scaling__plus".format(hist_name))
+                continue
 
-        clone = nominal.Clone()
-        bins = clone.GetNbinsX()
-        scale = 0.37
-        for bin in range(bins + 2):
-            content, variance = clone.GetBinContent(bin) * (1 - scale) + scale * scale_up.GetBinContent(bin), (clone.GetBinError(bin) * (1 - scale)) ** 2 + (scale * scale_up.GetBinContent(bin)) ** 2
+            h = h.Clone()
+            output_file.WriteObject(h, key)
 
-            clone.SetBinContent(bin, content)
-            clone.SetBinError(bin, sqrt(variance))
-
-        output.WriteObject(clone, hist_name)
-
-    else:
-        print("input file does not exist: {0}".format(file_in))
+    if names["missing"]:
+        print("Missing templates: they were not found in file " + with_file, file = sys.stderr)
+        print(names["missing"], file = sys.stderr)
+        print()
 
 if "__main__" == __name__:
-    rootStyle("tdrstyle.C")
+    print("module is not designed for execution", file = sys.stderr)
 
-    removeScaling("theta_input.root", "theta_input_no_scaling.root")
+    sys.exit(1)
