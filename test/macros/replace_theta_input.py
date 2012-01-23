@@ -25,8 +25,6 @@ def main(argv = sys.argv):
 
         files = dict([[x + "_file", files.get(x)] for x in ["in", "with", "to"]])
 
-        print("files: {0}".format(files))
-
         replace_template.replace(templates, **files)
 
     except Exception as error:
