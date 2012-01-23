@@ -218,6 +218,14 @@ int main(int argc, char *argv[])
             lepton_met_dphi_vs_met->GetYaxis()->SetTitle("#Delta #phi(e, MET)) [rad]");
             lepton_met_dphi_vs_met->GetYaxis()->SetTitleSize(0.045);
 
+            TH1Ptr htop_njets = convert(*analyzer->htopNjets());
+            htop_njets->SetName("htop_njets");
+            htop_njets->GetXaxis()->SetTitle("N_{jets}^{htop}");
+
+            TH1Ptr htop_delta_r = convert(*analyzer->htopDeltaR());
+            htop_delta_r->SetName("htop_delta_r");
+            htop_delta_r->GetXaxis()->SetTitle("#Delta R(jet1^{htop}, jet2^{htop})");
+
             TH2Ptr htop_njet_vs_m = convert(*analyzer->htopNjetvsM());
             htop_njet_vs_m->SetName("htop_njet_vs_m");
             htop_njet_vs_m->GetXaxis()->SetTitle("M^{htop} [GeV/c^{2}]");
@@ -283,6 +291,9 @@ int main(int argc, char *argv[])
                 lepton_met_dphi_vs_met_before_tricut->Write();
                 ljet_met_dphi_vs_met->Write();
                 lepton_met_dphi_vs_met->Write();
+
+                htop_njets->Write();
+                htop_delta_r->Write();
                 htop_njet_vs_m->Write();
                 htop_pt_vs_m->Write();
                 htop_pt_vs_njets->Write();

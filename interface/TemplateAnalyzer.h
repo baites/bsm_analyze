@@ -223,6 +223,8 @@ namespace bsm
             const H2Ptr ljetMetDphivsMet() const;
             const H2Ptr leptonMetDphivsMet() const;
 
+            const H1Ptr htopNjets() const;
+            const H1Ptr htopDeltaR() const;
             const H2Ptr htopNjetvsM() const;
             const H2Ptr htopPtvsM() const;
             const H2Ptr htopPtvsNjets() const;
@@ -313,6 +315,8 @@ namespace bsm
             H2ProxyPtr _ljet_met_dphi_vs_met;
             H2ProxyPtr _lepton_met_dphi_vs_met;
 
+            H1ProxyPtr _htop_njets;
+            H1ProxyPtr _htop_delta_r;
             H2ProxyPtr _htop_njet_vs_m;
             H2ProxyPtr _htop_pt_vs_m;
             H2ProxyPtr _htop_pt_vs_njets;

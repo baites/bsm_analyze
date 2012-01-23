@@ -476,6 +476,12 @@ TemplateAnalyzer::TemplateAnalyzer():
     _lepton_met_dphi_vs_met.reset(new H2Proxy(500, 0, 500, 400, 0, 4));
     monitor(_lepton_met_dphi_vs_met);
 
+    _htop_njets.reset(new H1Proxy(10, 0, 10));
+    monitor(_htop_njets);
+
+    _htop_delta_r.reset(new H1Proxy(50, 0, 5));
+    monitor(_htop_delta_r);
+
     _htop_njet_vs_m.reset(new H2Proxy(1000, 0, 1, 10, 0, 10));
     monitor(_htop_njet_vs_m);
 
@@ -621,6 +627,14 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
     _lepton_met_dphi_vs_met = dynamic_pointer_cast<H2Proxy>(
             object._lepton_met_dphi_vs_met->clone());
     monitor(_lepton_met_dphi_vs_met);
+
+    _htop_njets = dynamic_pointer_cast<H1Proxy>(
+            object._htop_njets->clone());
+    monitor(_htop_njets);
+
+    _htop_delta_r = dynamic_pointer_cast<H1Proxy>(
+            object._htop_delta_r->clone());
+    monitor(_htop_delta_r);
 
     _htop_njet_vs_m = dynamic_pointer_cast<H2Proxy>(
             object._htop_njet_vs_m->clone());
@@ -805,6 +819,16 @@ const TemplateAnalyzer::H2Ptr TemplateAnalyzer::ljetMetDphivsMet() const
 const TemplateAnalyzer::H2Ptr TemplateAnalyzer::leptonMetDphivsMet() const
 {
     return _lepton_met_dphi_vs_met->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::htopNjets() const
+{
+    return _htop_njets->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::htopDeltaR() const
+{
+    return _htop_delta_r->histogram();
 }
 
 const TemplateAnalyzer::H2Ptr TemplateAnalyzer::htopNjetvsM() const
