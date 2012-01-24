@@ -40,6 +40,11 @@ def generateCDF(filename, start = 0):
 
     integrals = {x: integral(y, start) for x, y in plots.items()}
 
+    print("-- Integral ".ljust(80, '-'))
+    for k, v in integrals.items():
+        print("{0:<10} {1:<.1f}".format(k, v.Integral()))
+    print()
+
     legend = TLegend(.8, .3, .9, .5)
     legend.SetMargin(0.12)  
     legend.SetTextSize(0.03)
