@@ -217,7 +217,7 @@ def plot(expected_limits, observed_limits):
     lumi_legend.SetTextSize(0.035)
     lumi_legend.Draw("9")
 
-    method_legend = TLatex(0.2, 0.85, "{0} method".format("Bayesian" if 1 < len(sys.argv) else "CLs"))
+    method_legend = TLatex(0.2, 0.85, "{0} method".format("Bayesian" if sys.argv[1:].count("bayes") else "CLs"))
     method_legend.SetNDC()
     method_legend.SetTextSize(0.035)
     method_legend.Draw("9")
@@ -236,6 +236,8 @@ def plot(expected_limits, observed_limits):
 
     canvas.SaveAs("theta_limits_log.pdf")
     canvas.SaveAs("theta_limits_log.png")
+
+    raw_input("enter")
 
 if "__main__" == __name__:
     rootStyle("tdrstyle.C")
