@@ -12,6 +12,8 @@
 
 #include <iosfwd>
 
+#include <boost/shared_ptr.hpp>
+
 #include "bsm_stat/interface/bsm_stat_fwd.h"
 #include "bsm_input/interface/bsm_input_fwd.h"
 #include "bsm_input/interface/GenParticle.pb.h"
@@ -111,6 +113,7 @@ namespace bsm
         public:
             typedef DecayGenerator<CorrectedJet> Generator;
             typedef Generator::Iterators Iterators;
+            typedef std::vector<CorrectedJet> CorrectedJets;
 
             struct Mttbar
             {
@@ -120,6 +123,8 @@ namespace bsm
                 LorentzVector neutrino;
                 LorentzVector ltop;
                 LorentzVector htop;
+
+                CorrectedJets htop_jets;
 
                 int htop_njets;
                 int solutions;

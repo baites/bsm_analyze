@@ -27,6 +27,7 @@
 #include "interface/Monitor.h"
 #include "interface/StatProxy.h"
 #include "interface/TemplateAnalyzer.h"
+#include "interface/Utility.h"
 
 using namespace std;
 using namespace boost;
@@ -139,6 +140,8 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
         LorentzVector htop; // Reconstructed hadronic leg
         LorentzVector missing_energy;
 
+        CorrectedJets htop_jets;
+
         float deltaRmin;
         float deltaRlh;
         int htop_njets;
@@ -209,6 +212,15 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
                 best_solution.htop = htop;
                 best_solution.missing_energy = neutrino_p4;
                 best_solution.htop_njets = hypothesis.hadronic.size();
+
+                best_solution.htop_jets.clear();
+                for(Generator::Iterators::const_iterator jet =
+                            hypothesis.hadronic.begin();
+                        hypothesis.hadronic.end() != jet;
+                        ++jet)
+                {
+                    best_solution.htop_jets.push_back(*(*jet));
+                }
             }
         }
     }
@@ -222,6 +234,16 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
     result.ltop = best_solution.ltop;
     result.htop = best_solution.htop;
     result.htop_njets = best_solution.htop_njets;
+
+    result.htop_jets.clear();
+    for(CorrectedJets::const_iterator jet = best_solution.htop_jets.begin();
+            best_solution.htop_jets.end() != jet;
+            ++jet)
+    {
+        result.htop_jets.push_back(*jet);
+    }
+
+    sort(result.htop_jets.begin(), result.htop_jets.end(), CorrectedPtGreater()); 
 
     return result;
 }
@@ -479,7 +501,7 @@ TemplateAnalyzer::TemplateAnalyzer():
     _htop_njets.reset(new H1Proxy(10, 0, 10));
     monitor(_htop_njets);
 
-    _htop_delta_r.reset(new H1Proxy(50, 0, 5));
+    _htop_delta_r.reset(new H1Proxy(500, 0, 5));
     monitor(_htop_delta_r);
 
     _htop_njet_vs_m.reset(new H2Proxy(1000, 0, 1, 10, 0, 10));
@@ -1024,6 +1046,22 @@ void TemplateAnalyzer::process(const Event *event)
 
         met()->fill(pt(missing_energy), _pileup_weight * _wjets_weight);
         metNoWeight()->fill(pt(missing_energy));
+
+        if (resonance.htop_njets != int(resonance.htop_jets.size()))
+            cerr << "inconsistent number of htop jets. htop_njets: "
+                << resonance.htop_njets << " htop_jets.size(): "
+                << resonance.htop_jets.size() << endl;
+
+        htopNjets()->fill(resonance.htop_jets.size(),
+                _pileup_weight * _wjets_weight);
+
+        const ResonanceReconstructor::CorrectedJets &htop_jets =
+            resonance.htop_jets;
+        if (1 < htop_jets.size())
+        {
+            htopDeltaR()->fill(dr(*htop_jets[0].corrected_p4, *htop_jets[1].corrected_p4),
+                    _pileup_weight * _wjets_weight);
+        }
 
         htopNjetvsM()->fill(mass(resonance.htop), resonance.htop_njets,
                 _pileup_weight * _wjets_weight);

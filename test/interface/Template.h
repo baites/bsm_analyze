@@ -42,6 +42,8 @@ class Template
             LTOP_ETA,
             LTOP_MASS,
             LTOP_MT,
+            HTOP_NJETS,
+            HTOP_DELTA_R,
             HTOP_PT,
             HTOP_ETA,
             HTOP_MASS,
