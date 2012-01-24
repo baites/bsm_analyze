@@ -14,15 +14,18 @@ using namespace std;
 
 int main(int argc, char *argv[])
 {
-    if (3 > argc)
+    if (2 > argc)
     {
-        cerr << "Usage: " << argv[0] << " cutflow.txt qcd_scale" << endl;
+        cerr << "Usage: " << argv[0] << " cutflow.txt [scales.txt]" << endl;
 
         return 0;
     }
 
     Cutflow cutflow;
-    cutflow.load(argv[1], lexical_cast<float>(argv[2]));
+    if (2 < argc)
+        cutflow.loadScales(argv[2]);
+
+    cutflow.load(argv[1]);
 
     return 0;
 }

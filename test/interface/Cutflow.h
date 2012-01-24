@@ -8,6 +8,8 @@
 
 #include <string>
 
+#include "interface/ThetaScale.h"
+
 class Cutflow
 {
     public:
@@ -15,7 +17,12 @@ class Cutflow
         {
         }
 
-        void load(const std::string &filename, const float &qcd_scale);
+        void loadScales(const std::string &filename);
+
+        void load(const std::string &filename);
+
+    private:
+        ThetaScale _scales;
 };
 
 #endif

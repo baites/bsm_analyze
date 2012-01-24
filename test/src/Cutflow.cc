@@ -20,7 +20,12 @@ using namespace boost;
 
 namespace fs = boost::filesystem;
 
-void Cutflow::load(const string &filename, const float &qcd_scale)
+void Cutflow::loadScales(const string &filename)
+{
+    _scales.load(filename);
+}
+
+void Cutflow::load(const string &filename)
 {
     if (filename.empty())
         return;
@@ -41,13 +46,13 @@ void Cutflow::load(const string &filename, const float &qcd_scale)
         return;
     }
 
-    char buf[512];
-    while(in.getline(buf, 512))
+    char buf[1024];
+    while(in.getline(buf, 1024))
     {
         string input(buf);
 
         smatch matches;
-        regex pattern("^((?:zprime_[^\\s]+)|(?:w|z|tt)jets|(?:s|sa)top_(?:s|t|tw)|data|qcd_data)((?:\\s+\\d+)+)$",
+        regex pattern("^((?:zprime_[^\\s]+)|(?:w|z|tt)jets|(?:s|sa)top_(?:s|t|tw)|data|qcd_data)((?:\\s+\\d+)+)\\s+$",
                 regex_constants::icase | regex_constants::perl);
         if (!regex_match(input, matches, pattern))
         {
@@ -60,39 +65,39 @@ void Cutflow::load(const string &filename, const float &qcd_scale)
         float scale = 1;
         if ("wjets" == matches[1])
         {
-            scale = getScale(Input::WJETS);
+            scale = getScale(Input::WJETS) * _scales.wjets;
         }
         else if ("zjets" == matches[1])
         {
-            scale = getScale(Input::ZJETS);
+            scale = getScale(Input::ZJETS) * _scales.zjets;
         }
         else if ("ttjets" == matches[1])
         {
-            scale = getScale(Input::TTJETS);
+            scale = getScale(Input::TTJETS) * _scales.ttjets;
         }
         else if ("stop_s" == matches[1])
         {
-            scale = getScale(Input::STOP_S);
+            scale = getScale(Input::STOP_S) * _scales.stop;
         }
         else if ("stop_t" == matches[1])
         {
-            scale = getScale(Input::STOP_T);
+            scale = getScale(Input::STOP_T) * _scales.stop;
         }
         else if ("stop_tw" == matches[1])
         {
-            scale = getScale(Input::STOP_TW);
+            scale = getScale(Input::STOP_TW) * _scales.stop;
         }
         else if ("satop_s" == matches[1])
         {
-            scale = getScale(Input::SATOP_S);
+            scale = getScale(Input::SATOP_S) * _scales.stop;
         }
         else if ("satop_t" == matches[1])
         {
-            scale = getScale(Input::SATOP_T);
+            scale = getScale(Input::SATOP_T) * _scales.stop;
         }
         else if ("satop_tw" == matches[1])
         {
-            scale = getScale(Input::SATOP_TW);
+            scale = getScale(Input::SATOP_TW) * _scales.stop;
         }
         else if ("zprime_m1000_w10" == matches[1])
         {
@@ -112,7 +117,7 @@ void Cutflow::load(const string &filename, const float &qcd_scale)
         }
         else if ("qcd_data" ==  matches[1])
         {
-            scale = qcd_scale;
+            scale = _scales.qcd;
             use_luminosity = false;
         }
         else
@@ -126,9 +131,7 @@ void Cutflow::load(const string &filename, const float &qcd_scale)
         istringstream in(matches[2]);
 
         cout << matches[1] << " ";
-        int precision = cout.precision(2);
         for(float events; in >> events; cout << fixed << events * scale << " ");
-        cout.precision(precision);
 
         cout << endl;
     }
