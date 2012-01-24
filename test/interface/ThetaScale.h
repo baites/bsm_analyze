@@ -11,11 +11,11 @@
 struct ThetaScale
 {
     ThetaScale():
-        wjets(0),
-        zjets(0),
-        stop(0),
-        ttjets(0),
-        qcd(0)
+        wjets(1),
+        zjets(1),
+        stop(1),
+        ttjets(1),
+        qcd(1)
     {
     }
 
