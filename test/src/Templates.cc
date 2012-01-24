@@ -277,6 +277,10 @@ void Templates::plot(const Template &plot)
     channel[Channel::ZPRIME1000] = get(input_plots, Input::ZPRIME1000);
     channel[Channel::ZPRIME2000] = get(input_plots, Input::ZPRIME2000);
 
+    if (Template::TTBAR_MASS == plot)
+        channel[Channel::ZPRIME3000] = get(input_plots, Input::ZPRIME3000);
+
+
     TCanvas *canvas = draw(plot, channel);
     canvas->SaveAs(("template_" + plot.repr() + (_log_scale ? "_log" : "")
                 + ".png").c_str());
@@ -398,7 +402,8 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
             || Channel::QCD == channel->first
             || Channel::ZPRIME1000 == channel->first
             || Channel::ZPRIME1500 == channel->first
-            || Channel::ZPRIME2000 == channel->first)
+            || Channel::ZPRIME2000 == channel->first
+            || Channel::ZPRIME3000 == channel->first)
         {
             continue;
         }            
@@ -486,7 +491,8 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
         if (Channel::DATA == channel->first
                 || Channel::ZPRIME1000 == channel->first
                 || Channel::ZPRIME1500 == channel->first
-                || Channel::ZPRIME2000 == channel->first)
+                || Channel::ZPRIME2000 == channel->first
+                || Channel::ZPRIME3000 == channel->first)
         {
             continue;
         }
@@ -554,6 +560,18 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
         rebin(hist, plot);
 
         legend->AddEntry(hist, "Z' 2 TeV/c^{2}", "fe");
+
+        hist->Draw("9 hist same");
+    }
+    
+    if (channels.end() != channels.find(Channel::ZPRIME3000)
+            && channels[Channel::ZPRIME3000])
+    {
+        hist = channels[Channel::ZPRIME3000];
+        hist->Scale(10);
+        rebin(hist, plot);
+
+        legend->AddEntry(hist, "Z' 3 TeV/c^{2}", "fe");
 
         hist->Draw("9 hist same");
     }
@@ -1103,6 +1121,8 @@ int Templates::rebin(const Template &plot) const
         case Template::LTOP_ETA: return 50;
         case Template::LTOP_MASS: return 25;
         case Template::LTOP_MT: return 25;
+        case Template::HTOP_NJETS: return 1;
+        case Template::HTOP_DELTA_R: return 25;
         case Template::HTOP_PT: return 25;
         case Template::HTOP_ETA: return 50;
         case Template::HTOP_MASS: return 25;
