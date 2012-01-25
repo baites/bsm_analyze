@@ -26,6 +26,16 @@ class TObject;
 class Templates
 {
     public:
+        struct Scales
+        {
+            Scales(): mc(1), qcd(1)
+            {
+            }
+
+            float mc;
+            float qcd;
+        };
+
         Templates(const std::string &input_file, const std::string &theta_scale);
         ~Templates();
 
@@ -103,10 +113,14 @@ class Templates
         void rebin2D(TH1 *, const Template &) const;
 
         TCanvas *draw(const Template &, Channels &);
+        void drawSignal(const Template &, Channels &, const Channel &, TLegend *);
+
         TCanvas *draw2D(const Template &, Channels &);
         void style(TH1 *, const Input &);
 
         void setYaxisTitle(TH1 *h, const Template &plot);
+
+        Scales getScales(Channels &);
 
         Heap _heap;
         Plots _plots;
@@ -132,5 +146,7 @@ class Templates
 
         bool _log_scale;
 };
+
+std::ostream &operator <<(std::ostream &, const Templates::Scales &);
 
 #endif
