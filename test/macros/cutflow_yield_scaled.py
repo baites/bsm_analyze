@@ -16,11 +16,11 @@ def cutflow(filename):
     with open(filename) as in_file:
         for line in in_file:
             channel, *events = line.split()
-            events = [float(x) for x in events]
+            events = [(float(y), float(z)) for y, z in [x.split("+") for x in events]]
 
             if channel.startswith("stop") or channel.startswith("satop"):
                 if "stop" in cutflow:
-                    cutflow["stop"] = list(map(lambda x, y: x + y, cutflow["stop"], events))
+                    cutflow["stop"] = list(map(lambda x, y: (x[0] + y[0], math.sqrt(x[1] ** 2 + y[1] ** 2)), cutflow["stop"], events))
                 else:
                     cutflow["stop"] = events
             else:
@@ -28,13 +28,13 @@ def cutflow(filename):
 
     cuts = []
     for channel in {"stop", "ttjets", "wjets", "zjets"} & cutflow.keys():
-        cuts = list(map(lambda x, y: x + y, cuts, cutflow[channel])) if cuts else cutflow[channel]
+        cuts = list(map(lambda x, y: (x[0] + y[0], math.sqrt(x[1] ** 2 + y[1] ** 2)), cuts, cutflow[channel])) if cuts else cutflow[channel]
     else:
         cutflow["mc"] = cuts
     
     cuts = []
     for channel in {"mc", "qcd_data"} & cutflow.keys():
-        cuts = list(map(lambda x, y: x + y, cuts, cutflow[channel])) if cuts else cutflow[channel]
+        cuts = list(map(lambda x, y: (x[0] + y[0], math.sqrt(x[1] ** 2 + y[1] ** 2)), cuts, cutflow[channel])) if cuts else cutflow[channel]
     else:
         cutflow["background"] = cuts
 
@@ -78,10 +78,10 @@ def cutflow(filename):
         else:
             if key in keys:
                 line = "{0:<30}".format(lables[key])
-                for events in cutflow[key]:
+                for events, err in cutflow[key]:
                     line += " & ${0:>7.0f}".format(events)
                     if "data" != key:
-                        line += " \\pm {0:<.0f}$".format(math.sqrt(events))
+                        line += " \\pm {0:<.0f}$".format(err)
                     else:
                         line += "$"
 
