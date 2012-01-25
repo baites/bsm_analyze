@@ -131,7 +131,7 @@ void Cutflow::load(const string &filename)
         istringstream in(matches[2]);
 
         cout << matches[1] << " ";
-        for(float events; in >> events; cout << fixed << events * scale << " ");
+        for(float events; in >> events; cout << fixed << events * scale << "+" << sqrt(events) * scale << " ");
 
         cout << endl;
     }
