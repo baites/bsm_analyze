@@ -20,10 +20,10 @@ Channel::operator string() const
         case WJETS: return "W#rightarrowl#nu";
         case ZJETS: return "Z/#gamma*#rightarrowl^{+}l^{-}";
         case STOP: return "Single-Top";
-        case ZPRIME1000: return "Z' 1 #pm .01 TeV/c^{2}";
-        case ZPRIME1500: return "Z' 1.5 #pm .015 TeV/c^{2}";
-        case ZPRIME2000: return "Z' 2 #pm .02 TeV/c^{2}";
-        case ZPRIME3000: return "Z' 3 #pm .03 TeV/c^{2}";
+        case ZPRIME1000: return "Z' 1 TeV/c^{2}";
+        case ZPRIME1500: return "Z' 1.5 TeV/c^{2}";
+        case ZPRIME2000: return "Z' 2 TeV/c^{2}";
+        case ZPRIME3000: return "Z' 3 TeV/c^{2}";
 
         default: return "unknown";
     }
