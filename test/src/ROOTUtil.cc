@@ -240,7 +240,7 @@ void scale(TH1 *h, const Input &input)
 
     if (!h->GetEntries())
     {
-        cerr << "didn't scale " << input << ": no entries" << endl;
+        //cerr << "didn't scale " << input << ": no entries" << endl;
 
         return;
     }
