@@ -32,7 +32,7 @@ def loadCutflow(*, key, folders, log):
     if folders:
         for folder in folders:
             loaded_cutflow = loadCutflowFromLog(folder = folder, log = log)
-            if key in cutflow:
+            if cutflow:
                 cutflow[key] = list(map(lambda x, y: x + y,
                                                 cutflow[key],
                                                 loaded_cutflow))
