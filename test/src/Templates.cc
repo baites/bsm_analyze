@@ -47,60 +47,10 @@ Templates::Templates(const std::string &input_file,
 {
     if (!theta_scale.empty())
     {
-        if (!fs::exists(theta_scale))
-        {
-            cerr << "theta scale file does not exist: " << theta_scale << endl;
-        }
-        else
-        {
-            ifstream in(theta_scale.c_str());
-            if (!in.is_open())
-            {
-                cerr << "failed to open theta scale file: " << theta_scale
-                    << endl;
-            }
-            else
-            {
-                char buf[512];
-                while(in.getline(buf, 512))
-                {
-                    string input(buf);
+        _theta_scale.load(theta_scale);
 
-                    smatch matches;
-                    regex pattern("^(wjets|zjets|singletop|ttbar|eleqcd):\\s+(\\d+\\.\\d+)$", regex_constants::icase | regex_constants::perl);
-                    if (!regex_match(input, matches, pattern))
-                    {
-                        cerr << "didn't understand line: " << buf << endl;
-                    }
-                    else
-                    {
-                        float scale = lexical_cast<float>(matches[2]);
-                        if ("wjets" == matches[1])
-                        {
-                            _theta_scale.wjets = scale;
-                        }
-                        else if ("zjets" == matches[1])
-                        {
-                            _theta_scale.zjets = scale;
-                        }
-                        else if ("singletop" == matches[1])
-                        {
-                            _theta_scale.stop = scale;
-                        }
-                        else if ("ttbar" == matches[1])
-                        {
-                            _theta_scale.ttjets = scale;
-                        }
-                        else if ("eleqcd" == matches[1])
-                        {
-                            _theta_scale.qcd = scale;
-                        }
-                    }
-                }
-
-                cout << "Read Theta scales" << endl << _theta_scale << endl;
-            }
-        }
+        cout << "Loaded theta scales: " << endl;
+        cout << _theta_scale << endl;
     }
 
     setTDRStyle();
@@ -230,47 +180,31 @@ void Templates::plot(const Template &plot)
     TH1 *h = get(input_plots,
             Input::STOP_S,
             Input::SATOP_TW);
-    if (h && _theta_scale.stop)
-        h->Scale(_theta_scale.stop);
     channel[Channel::STOP] = h;
 
     h = get(input_plots, Input::TTJETS);
     if (h)
-    {
-        if (h && _theta_scale.ttjets)
-            h->Scale(_theta_scale.ttjets);
         channel[Channel::TTBAR] = h;
-    }
     else
     {
         h = get(input_plots, Input::TTJETS_POWHEG);
-        if (h && _theta_scale.ttjets)
-            h->Scale(_theta_scale.ttjets);
         channel[Channel::TTBAR_POWHEG] = h;
     }
 
     h = get(input_plots, Input::WJETS);;
-    if (h && _theta_scale.wjets)
-        h->Scale(_theta_scale.wjets);
     channel[Channel::WJETS] = h;
 
     h = get(input_plots, Input::ZJETS);
-    if (h && _theta_scale.zjets)
-        h->Scale(_theta_scale.zjets);
     channel[Channel::ZJETS] = h; 
 
     if (_qcd_type == QCD_FROM_DATA)
     {
         h = get(input_plots, Input::QCD_FROM_DATA);
-        if (h && _theta_scale.qcd)
-            h->Scale(_theta_scale.qcd);
         channel[Channel::QCD] = h;
     }
     else if (_qcd_type == QCD_FROM_MC)
     {
         h = get(input_plots, Input::QCD);
-        if (h && _theta_scale.qcd)
-            h->Scale(_theta_scale.qcd);
         channel[Channel::QCD] = h;
     }
 
@@ -497,14 +431,28 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
             continue;
         }
 
+        float scale = 1;
+        switch(channel->first.type())
+        {
+            case Channel::QCD: scale = _theta_scale.qcd; break;
+            case Channel::STOP: scale = _theta_scale.stop; break;
+            case Channel::TTBAR_POWHEG: // fall through
+            case Channel::TTBAR: scale = _theta_scale.ttjets; break;
+            case Channel::WJETS: scale = _theta_scale.wjets; break;
+            case Channel::ZJETS: scale = _theta_scale.zjets; break;
+            default: break;
+        }
+
         if (Channel::QCD == channel->first)
         {
-            channel->second->Scale(qcd_scale);
+            scale *= qcd_scale;
         }
         else
         {
-            channel->second->Scale(mc_scale);
+            scale *= mc_scale;
         }
+
+        channel->second->Scale(scale);
 
         legend->AddEntry(channel->second,
             static_cast<string>(channel->first).c_str(),
@@ -1164,13 +1112,3 @@ void Templates::setYaxisTitle(TH1 *h, const Template &plot)
 
     h->GetYaxis()->SetTitle(title.str().c_str());
 }
-
-ostream &operator <<(ostream &out, const Templates::ThetaScale &scale)
-{
-    return out << "wjets: " << scale.wjets << endl
-        << "zjets: " << scale.zjets << endl
-        << "stop: " << scale.stop << endl
-        << "ttjets: " << scale.ttjets << endl
-        << "qcd: " << scale.qcd;
-}
-

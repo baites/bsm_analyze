@@ -16,6 +16,7 @@
 #include "interface/Channel.h"
 #include "interface/ROOTUtil.h"
 #include "interface/Template.h"
+#include "interface/ThetaScale.h"
 
 class TCanvas;
 class TFile;
@@ -25,24 +26,6 @@ class TObject;
 class Templates
 {
     public:
-        struct ThetaScale
-        {
-            ThetaScale():
-                wjets(0),
-                zjets(0),
-                stop(0),
-                ttjets(0),
-                qcd(0)
-            {
-            }
-
-            float wjets;
-            float zjets;
-            float stop;
-            float ttjets;
-            float qcd;
-        };
-
         Templates(const std::string &input_file, const std::string &theta_scale);
         ~Templates();
 
@@ -149,7 +132,5 @@ class Templates
 
         bool _log_scale;
 };
-
-std::ostream &operator <<(std::ostream &, const Templates::ThetaScale &);
 
 #endif
