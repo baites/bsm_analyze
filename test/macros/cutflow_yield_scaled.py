@@ -96,6 +96,10 @@ def cutflow(filename, print_format = printInTextFormat):
     cutflow_table = {}
     with open(filename) as in_file:
         for line in in_file:
+            line =line.strip()
+            if line.startswith('#') or not line:
+                continue
+
             # split events into: x+error entries
             #
             channel, *events = line.split()
