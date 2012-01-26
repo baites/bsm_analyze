@@ -16,6 +16,7 @@ Template::operator string() const
         case MET: return "met";
         case MET_QCD: return "met";
         case MET_QCD_NOWEIGHT: return "met_noweight";
+        case CUTFLOW: return "cutflow";
         case HTALL: return "htall";
         case HTLEP: return "htlep";
         case HTLEP_BEFORE_HTLEP: return "htlep_before_htlep";
@@ -63,6 +64,7 @@ string Template::repr() const
         case MET: return "met";
         case MET_QCD: return "met_qcd";
         case MET_QCD_NOWEIGHT: return "met_qcd_noweight";
+        case CUTFLOW: return "cutflow";
         case HTALL: return "htall";
         case HTLEP: return "htlep";
         case HTLEP_BEFORE_HTLEP: return "htlep_before_htlep";
@@ -126,6 +128,7 @@ string Template::unit() const
         case MET: return "GeV/c";
         case MET_QCD: return "GeV/c";
         case MET_QCD_NOWEIGHT: return "GeV/c";
+        case CUTFLOW: return "";
         case HTALL: return "GeV/c";
         case HTLEP: return "GeV/c";
         case HTLEP_BEFORE_HTLEP: return "GeV/c";

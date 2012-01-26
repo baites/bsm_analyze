@@ -17,6 +17,7 @@ class Template
             MET = 0,
             MET_QCD,
             MET_QCD_NOWEIGHT,
+            CUTFLOW,
             HTALL,
             HTLEP,
             HTLEP_BEFORE_HTLEP,
