@@ -36,6 +36,7 @@ namespace bsm
     {
         public:
             Counter();
+            Counter(const Counter &);
 
             void setDelegate(CounterDelegate *);
             CounterDelegate *delegate() const;
