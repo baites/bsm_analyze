@@ -10,6 +10,8 @@
 
 #include "interface/ThetaScale.h"
 
+class Input;
+
 class Cutflow
 {
     public:
@@ -22,6 +24,9 @@ class Cutflow
         void load(const std::string &filename);
 
     private:
+        float getLuminosityScale(const Input &);      // Scale with x-section and lumi
+        float getNormalizationScale(const Input &);   // Scale from _scales
+
         ThetaScale _scales;
 };
 
