@@ -305,13 +305,21 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
             pad->SetLogy();
     }
 
-    Scales scales = getScales(channels);
+    Scales scales = (Template::CUTFLOW == plot)
+        ? getCutflowScales(channels)
+        : getScales(channels);
 
     // print the scales for mttbar
     //
     if (plot == Template::TTBAR_MASS)
     {
         cout << "Scales for mttbar" << endl;
+        cout << scales << endl;
+    }
+
+    if (plot == Template::CUTFLOW)
+    {
+        cout << "Scales for cutflow" << endl;
         cout << scales << endl;
     }
 
@@ -535,6 +543,18 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
                 {
                     output->WriteObject(mc_sum, "mttbar_mc");
                     output->WriteObject(data, "mttbar_data");
+                }
+            }
+
+            if (Template::CUTFLOW == plot)
+            {
+                saveCutflow(data, scaled_channels);
+
+                TFile *output = TFile::Open("cutflow.root", "recreate");
+                if (!output->IsZombie())
+                {
+                    output->WriteObject(mc_sum, "cutflow_mc");
+                    output->WriteObject(data, "cutflow_data");
                 }
             }
         } // end if data
@@ -1078,6 +1098,89 @@ Templates::Scales Templates::getScales(Channels &channels)
     }
 
     return scales;
+}
+
+Templates::Scales Templates::getCutflowScales(Channels &channels)
+{
+    Scales scales;
+
+    if (channels.end() != channels.find(Channel::DATA)
+        && channels[Channel::DATA]
+        && _qcd_type == QCD_FROM_DATA)
+    {
+        TH1 *data = channels[Channel::DATA];
+
+        // Add all MC samples (no QCD)
+        //
+        TH1 *mc = 0;
+        for(Channels::const_iterator channel = channels.begin();
+                channels.end() != channel;
+                ++channel)
+        {
+            if (!channel->second)
+                continue;
+
+            if (Channel::DATA == channel->first
+                || Channel::QCD == channel->first
+                || Channel::ZPRIME1000 == channel->first
+                || Channel::ZPRIME1500 == channel->first
+                || Channel::ZPRIME2000 == channel->first
+                || Channel::ZPRIME3000 == channel->first)
+
+                continue;
+     
+            if (!mc)
+                mc = dynamic_cast<TH1 *>(channel->second->Clone());
+            else
+                mc->Add(channel->second);
+        }
+
+        if (mc)
+        {
+            // mc and qcd scales computed from the mc fraction
+            //
+            int bins = data->GetXaxis()->GetNbins();
+            scales.mc = _mc_fraction * data->GetBinContent(bins)
+                / mc->GetBinContent(bins);
+
+            if (channels.end() != channels.find(Channel::QCD)
+                    && channels[Channel::QCD])
+                scales.qcd = _qcd_fraction * data->GetBinContent(bins)
+                    / channels[Channel::QCD]->GetBinContent(bins);
+
+            mc->SetDirectory(0);
+            delete mc;
+        }
+    }
+
+    return scales;
+}
+
+void Templates::saveCutflow(const TH1 *data, const Channels &bg) const
+{
+    ofstream cutflow("cutflow.txt");
+    cutflow << "data " << getCutflow(data) << endl;
+
+    for(Channels::const_iterator channel = bg.begin();
+            bg.end() != channel;
+            ++channel)
+    {
+        cutflow << channel->first.repr() << " "
+            << getCutflow(channel->second) << endl;
+    }
+}
+
+string Templates::getCutflow(const TH1 *h) const
+{
+    ostringstream out;
+    for(int bin = 1, bins = h->GetXaxis()->GetNbins() + 1;
+            bins > bin;
+            ++bin)
+
+        out << " " << fixed << h->GetBinContent(bin)
+            << "+" << h->GetBinError(bin);
+
+    return out.str();
 }
 
 ostream &operator <<(ostream &out, const Templates::Scales &scales)

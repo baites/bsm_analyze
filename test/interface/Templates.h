@@ -121,6 +121,10 @@ class Templates
         void setYaxisTitle(TH1 *h, const Template &plot);
 
         Scales getScales(Channels &);
+        Scales getCutflowScales(Channels &);
+
+        void saveCutflow(const TH1 *data, const Channels &backgrounds) const;
+        std::string getCutflow(const TH1 *h) const;
 
         Heap _heap;
         Plots _plots;
