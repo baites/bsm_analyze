@@ -12,12 +12,8 @@ import cutflow
 def run(**argv):
     cutflow_table = cutflow.load(**argv)
 
-    for key, cuts in cutflow_table.items():
-        line = "{0:<20}".format(key)
-        for events in cuts[-1:]:
-            line += "{0:<10}".format(events)
-
-        print(line)
+    for key in sorted(cutflow_table.keys()):
+        print("{0:<20} {1:<10}".format(key, cutflow_table[key][-1]))
 
 def usage(argv):
     return ("usage: {0} [log:debug_signal_p150_hlt.log] [data:folder,folder] "
