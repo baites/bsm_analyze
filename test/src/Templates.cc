@@ -153,7 +153,10 @@ void Templates::loadHistograms(TFile *file, const Input &input)
             continue;
         }
 
-        scale(histogram, input);
+        float lumi_scale = scale(histogram, input);
+        if (Template::TTBAR_MASS == plot)
+            cout << input.repr() << " lumi_scale: " << lumi_scale << endl;
+
         Templates::style(histogram, input);
 
         // store plot
@@ -338,6 +341,9 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
         }
 
         scale *= (Channel::QCD == channel->first) ? scales.qcd : scales.mc;
+
+        if (Template::TTBAR_MASS == plot)
+            cout << "scale " << channel->first.repr() << ": " << scale << endl;
 
         TH1 *h = dynamic_cast<TH1 *>(channel->second->Clone());
         _heap.push_back(h);
