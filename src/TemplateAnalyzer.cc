@@ -411,6 +411,16 @@ TemplateAnalyzer::TemplateAnalyzer():
     _synch_selector.reset(new SynchSelector());
     monitor(_synch_selector);
 
+    // Assign cutflow delegate
+    //
+    for(uint32_t cut = 0; SynchSelector::SELECTIONS > cut; ++cut)
+    {
+        Counter *counter = _synch_selector->cutflow()->cut(cut)->events().get();
+        _counters[counter] = cut;
+
+        counter->setDelegate(this);
+    }
+
     _secondary_lepton_counter =
         _synch_selector->cutflow()->cut(
                 SynchSelector::VETO_SECOND_MUON)->objects().get();
@@ -425,6 +435,10 @@ TemplateAnalyzer::TemplateAnalyzer():
         _synch_selector->cutflow()->cut(
                 SynchSelector::HTLEP)->objects().get();
     _htlep_counter->setDelegate(this);
+
+    _cutflow.reset(new H1Proxy(SynchSelector::SELECTIONS, 0,
+                SynchSelector::SELECTIONS));
+    monitor(_cutflow);
 
     _npv.reset(new H1Proxy(25, 0, 25));
     monitor(_npv);
@@ -557,6 +571,16 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
         dynamic_pointer_cast<SynchSelector>(object._synch_selector->clone());
     monitor(_synch_selector);
 
+    // Assign cutflow delegate
+    //
+    for(uint32_t cut = 0; SynchSelector::SELECTIONS > cut; ++cut)
+    {
+        Counter *counter = _synch_selector->cutflow()->cut(cut)->events().get();
+        _counters[counter] = cut;
+
+        counter->setDelegate(this);
+    }
+
     _secondary_lepton_counter =
         _synch_selector->cutflow()->cut(
                 SynchSelector::VETO_SECOND_MUON)->objects().get();
@@ -571,6 +595,9 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
         _synch_selector->cutflow()->cut(
                 SynchSelector::HTLEP)->objects().get();
     _htlep_counter->setDelegate(this);
+
+    _cutflow = dynamic_pointer_cast<H1Proxy>(object._cutflow->clone());
+    monitor(_cutflow);
 
     _npv = dynamic_pointer_cast<H1Proxy>(object._npv->clone());
     monitor(_npv);
@@ -721,6 +748,11 @@ void TemplateAnalyzer::setBtagReconstruction()
 
     _reconstructor.reset(new BtagResonanceReconstructor());
     monitor(_reconstructor);
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::cutflow() const
+{
+    return _cutflow->histogram();
 }
 
 const TemplateAnalyzer::H1Ptr TemplateAnalyzer::npv() const
@@ -936,6 +968,9 @@ bsm::TriggerDelegate *TemplateAnalyzer::getTriggerDelegate() const
 
 void TemplateAnalyzer::didCounterAdd(const Counter *counter)
 {
+    if (_counters.end() != _counters.find(counter))
+        cutflow()->fill(_counters[counter], _pileup_weight * _wjets_weight);
+
     if (counter == _secondary_lepton_counter)
         fillDrVsPtrel();
     else if (counter == _htlep_counter)
@@ -1128,6 +1163,11 @@ void TemplateAnalyzer::merge(const ObjectPtr &pointer)
     _secondary_lepton_counter->setDelegate(0);
     _leading_jet_counter->setDelegate(0);
     _htlep_counter->setDelegate(0);
+
+    // Reset counter delegates
+    //
+    for(uint32_t cut = 0; SynchSelector::SELECTIONS < cut; ++cut)
+        _synch_selector->cutflow()->cut(cut)->events().get()->setDelegate(0);
 
     Object::merge(pointer);
 }

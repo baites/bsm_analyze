@@ -11,6 +11,7 @@
 #define BSM_TEMPLATE_ANALYZER
 
 #include <iosfwd>
+#include <map>
 
 #include <boost/shared_ptr.hpp>
 
@@ -200,6 +201,8 @@ namespace bsm
 
             virtual void setBtagReconstruction();
 
+            const H1Ptr cutflow() const;
+
             const H1Ptr npv() const;
             const H1Ptr npvWithPileup() const;
             const H1Ptr njets() const;
@@ -292,6 +295,11 @@ namespace bsm
             boost::shared_ptr<SynchSelector> _synch_selector;
             boost::shared_ptr<SynchSelector> _synch_selector_with_inverted_htlep;
 
+            // map: counter pointer to SynchSelector selection
+            //
+            std::map<const Counter *, uint32_t> _counters;
+            H1ProxyPtr _cutflow;
+
             H1ProxyPtr _npv;
             H1ProxyPtr _npv_with_pileup;
             H1ProxyPtr _njets;
@@ -334,6 +342,7 @@ namespace bsm
             Counter *_htlep_counter;
 
             boost::shared_ptr<Pileup> _pileup;
+
             bool _use_pileup;
             float _pileup_weight;
 
