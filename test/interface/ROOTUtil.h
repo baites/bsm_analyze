@@ -14,10 +14,9 @@ class TH1;
 
 float getScale(const Input &input);
 
-// Scale by x-section, number of events and filter efficiency. Luminosity is
-// not taken into account
+// Scale by x-section, number of events and filter efficiency. 
 //
-void scale(TH1 *h, const Input &input);
+float scale(TH1 *h, const Input &input);
 
 std::string folder(const Input &input);
 
