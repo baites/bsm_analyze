@@ -1,9 +1,11 @@
 #!/usr/bin/env python
 #
-# Run the same executable for certain skimmed datasets
-#
 # Created by Samvel Khalatyan, Oct 04, 2011
 # Copyright 2011, All rights reserved
+
+'''
+Run the same executable for certain skimmed datasets
+'''
 
 import os
 import re
@@ -69,10 +71,7 @@ class AppController:
 
 if "__main__" == __name__:
     if 4 > len(sys.argv):
-        if sys.version_info < (2, 5):
-            print("Usage: %s datasets.txt max_process suffix executable [exec args]" % (sys.argv[0]))
-        else:
-            print("Usage: {0} datasets.txt max_process suffix executable [exec args]".format(sys.argv[0]))
+        print("Usage: {0} datasets.txt max_process suffix executable [exec args]".format(sys.argv[0]))
     else:
         app = AppController(sys.argv[1],
                 " ".join(sys.argv[4:]),
