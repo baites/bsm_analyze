@@ -119,7 +119,7 @@ void Templates::draw()
             end >= hist_template;
             ++hist_template)
     {
-        plot2D(hist_template);
+        //plot2D(hist_template);
     }
 }
 
@@ -204,10 +204,9 @@ void Templates::plot(const Template &plot)
     }
 
     channel[Channel::ZPRIME1000] = get(input_plots, Input::ZPRIME1000);
+    channel[Channel::ZPRIME1500] = get(input_plots, Input::ZPRIME1500);
     channel[Channel::ZPRIME2000] = get(input_plots, Input::ZPRIME2000);
-
-    if (Template::TTBAR_MASS == plot)
-        channel[Channel::ZPRIME3000] = get(input_plots, Input::ZPRIME3000);
+    channel[Channel::ZPRIME3000] = get(input_plots, Input::ZPRIME3000);
 
     TCanvas *canvas = draw(plot, channel);
     canvas->SaveAs(("template_" + plot.repr() + (_log_scale ? "_log" : "")
@@ -444,10 +443,22 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
 
             // Draw Zprimes: entries will be added to legend
             //
+            Channels signal_channels;
             for(Channel channel(Channel::ZPRIME1000);
                     Channel::ZPRIME3000 >= channel;
                     ++channel)
-                drawSignal(plot, channels, channel, legend);
+            {
+                TH1 *h = scaleSignal(plot, channels, channel);
+
+                if (Template::CUTFLOW == plot)
+                    signal_channels[channel] = h;
+
+                if (Channel::ZPRIME1000 == channel   
+                        || Channel::ZPRIME2000 == channel
+                        || (Template::TTBAR_MASS == plot
+                            && Channel::ZPRIME3000 == channel))
+                    drawSignal(h, channel, legend);
+            }
 
             if (_mc_error)
             {
@@ -548,7 +559,7 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
 
             if (Template::CUTFLOW == plot)
             {
-                saveCutflow(data, scaled_channels);
+                saveCutflow(data, scaled_channels, signal_channels);
 
                 TFile *output = TFile::Open("cutflow.root", "recreate");
                 if (!output->IsZombie())
@@ -563,21 +574,33 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
     return canvas;
 }
 
-void Templates::drawSignal(const Template &plot,
+TH1 *Templates::scaleSignal(const Template &plot,
         Channels &channels,
-        const Channel &channel,
-        TLegend *legend)
+        const Channel &channel)
 {
+    TH1 *h = 0;
     if (channels.end() != channels.find(channel)
             && channels[channel])
     {
-        TH1 *h = dynamic_cast<TH1 *>(channels[channel]->Clone());
+        h = dynamic_cast<TH1 *>(channels[channel]->Clone());
         _heap.push_back(h);
 
         h->SetDirectory(0);
         h->Scale(10);
         rebin(h, plot);
+    }
+    else
+        cerr << channel.repr() << " is not available" << endl;
 
+    return h;
+}
+
+void Templates::drawSignal(TH1 *h,
+        const Channel &channel,
+        TLegend *legend)
+{
+    if (h)
+    {
         legend->AddEntry(h, static_cast<string>(channel).c_str(), "fe");
 
         h->Draw("9 hist same");
@@ -842,6 +865,8 @@ TH1 *Templates::get(const InputPlots &plots,
     {
         if (plots.end() != plots.find(from))
             hist = plots.at(from);
+        else
+            cerr << "Didn't find plot: " << from << endl;
     }
     else
     {
@@ -1156,7 +1181,9 @@ Templates::Scales Templates::getCutflowScales(Channels &channels)
     return scales;
 }
 
-void Templates::saveCutflow(const TH1 *data, const Channels &bg) const
+void Templates::saveCutflow(const TH1 *data,
+        const Channels &bg,
+        const Channels &signal) const
 {
     ofstream cutflow("cutflow.txt");
     cutflow << "data " << getCutflow(data) << endl;
@@ -1168,17 +1195,31 @@ void Templates::saveCutflow(const TH1 *data, const Channels &bg) const
         cutflow << channel->first.repr() << " "
             << getCutflow(channel->second) << endl;
     }
+
+    for(Channels::const_iterator channel = signal.begin();
+            signal.end() != channel;
+            ++channel)
+    {
+        channel->second->Scale(0.1);
+        cutflow << channel->first.repr() << " "
+            << getCutflow(channel->second) << endl;
+        channel->second->Scale(10);
+    }
 }
 
 string Templates::getCutflow(const TH1 *h) const
 {
     ostringstream out;
-    for(int bin = 1, bins = h->GetXaxis()->GetNbins() + 1;
-            bins > bin;
-            ++bin)
 
-        out << " " << fixed << h->GetBinContent(bin)
-            << "+" << h->GetBinError(bin);
+    if (h)
+        for(int bin = 1, bins = h->GetXaxis()->GetNbins() + 1;
+                bins > bin;
+                ++bin)
+
+            out << " " << fixed << h->GetBinContent(bin)
+                << "+" << h->GetBinError(bin);
+    else
+        cerr << "Cutflow histogram does not exist" << endl;
 
     return out.str();
 }

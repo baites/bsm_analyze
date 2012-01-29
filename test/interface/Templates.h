@@ -113,7 +113,9 @@ class Templates
         void rebin2D(TH1 *, const Template &) const;
 
         TCanvas *draw(const Template &, Channels &);
-        void drawSignal(const Template &, Channels &, const Channel &, TLegend *);
+
+        TH1 *scaleSignal(const Template &, Channels &, const Channel &);
+        void drawSignal(TH1 *, const Channel &, TLegend *);
 
         TCanvas *draw2D(const Template &, Channels &);
         void style(TH1 *, const Input &);
@@ -123,7 +125,9 @@ class Templates
         Scales getScales(Channels &);
         Scales getCutflowScales(Channels &);
 
-        void saveCutflow(const TH1 *data, const Channels &backgrounds) const;
+        void saveCutflow(const TH1 *data,
+                         const Channels &backgrounds,
+                         const Channels &signal) const;
         std::string getCutflow(const TH1 *h) const;
 
         Heap _heap;
