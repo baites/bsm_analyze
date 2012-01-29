@@ -43,7 +43,8 @@ Templates::Templates(const std::string &input_file,
     _qcd_type(QCD_NONE),
     _pull_plots(0.0),
     _ks_chi2(false),
-    _log_scale(false)
+    _log_scale(false),
+    _raw_cutflow(false)
 {
     if (!theta_scale.empty())
     {
@@ -318,6 +319,12 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
 
     if (plot == Template::CUTFLOW)
     {
+        if (_raw_cutflow)
+        {
+            scales.mc = .96;
+            scales.qcd = 1;
+        }
+
         cout << "Scales for cutflow" << endl;
         cout << scales << endl;
     }
@@ -347,6 +354,9 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
             default: continue;
         }
 
+        if (Template::CUTFLOW == plot && _raw_cutflow)
+            scale = 1;
+
         scale *= (Channel::QCD == channel->first) ? scales.qcd : scales.mc;
 
         if (Template::TTBAR_MASS == plot)
@@ -358,6 +368,9 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
         h->SetDirectory(0);
         h->Scale(scale);
         rebin(h, plot);
+
+        if (Template::CUTFLOW == plot)
+            cout << "Add to SCALED CHANNELS: " << channel->first << endl;
 
         scaled_channels[channel->first] = h;
     }

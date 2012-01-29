@@ -71,6 +71,11 @@ class Templates
             _log_scale = value;
         }
 
+        void setRawCutflow(const bool &value)
+        {
+            _raw_cutflow = value;
+        }
+
     private:
         // Histograms groupped in channels
         //
@@ -153,6 +158,7 @@ class Templates
         bool _ks_chi2;
 
         bool _log_scale;
+        bool _raw_cutflow;
 };
 
 std::ostream &operator <<(std::ostream &, const Templates::Scales &);
