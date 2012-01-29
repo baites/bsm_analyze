@@ -31,7 +31,7 @@ def generateCDF(filename, start = 0):
         channel = plot_name.split('_')[1]
         plots["bkgd" if "mc" == channel else channel] = h
 
-    integrals = {x: integral(y, start) for x, y in plots.items()}
+    integrals = dict((x, integral(y, start)) for x, y in plots.items())
 
     print("-- Integral ".ljust(80, '-'))
     for k, v in integrals.items():
