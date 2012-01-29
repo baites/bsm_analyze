@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 #
 # Created by Samvel Khalatyan, Oct 04, 2011
 # Copyright 2011, All rights reserved
@@ -8,74 +8,33 @@ Run the same executable for certain skimmed datasets
 '''
 
 import os
-import re
-import shlex
-import subprocess
 import sys
 
-class AppController:
-    def __init__(self, datasets, executable, max_process = 0, suffix = ""):
-        self.datasets = datasets
-        self.suffix = suffix
-        self.executable = re.sub("SFX", self.suffix, executable)
-        self.processes = []
-        self.max_process = max_process if 0 <= max_process else 0
+import run_bsm
 
-    def run(self):
-        pwd = os.getcwd()
-        args = shlex.split(self.executable + " input.txt")
+def usage(argv):
+    return ("usage: {0} config.txt [config.txt]").format(argv[0])
 
-        f = open(self.datasets, 'r')
-        suffix = ("_" + self.suffix) if self.suffix else ""
-        for input in f:
-            folder = os.path.splitext(os.path.basename(input))[0]
+def main(argv = sys.argv):
+    try:
+        if 2 > len(argv):
+            raise Exception(usage(argv))
 
-            if sys.version_info < (2, 5):
-                print("Run %s" % (folder))
-            else:
-                print("Run {0}".format(folder))
+        for config in argv[1:]:
+            if not os.path.lexists(argv[1]):
+                print("configuration file does not exist: " + config,
+                        file = sys.stderr)
 
-            if not os.path.isdir(folder):
-                os.mkdir(folder)
+                continue
 
-            os.chdir(folder)
-            
-            if not os.path.islink("input.txt"):
-                os.symlink(input.strip(), "input.txt")
+            app = run_bsm.AppController(config = config)
+            app.run()
+    except Exception as error:
+        print(error, file = sys.stderr)
 
-            if not os.path.islink("jec"):
-                os.symlink("../jec", "jec")
-
-            if not os.path.islink("lib"):
-                os.symlink("../lib", "lib")
-
-            if not os.path.islink("pileup"):
-                os.symlink("../pileup", "pileup")
-
-            stdout = open("cout" + suffix +  ".log", 'w')
-            stderr = open("cerr" + suffix + ".log", 'w')
-            self.processes.append(subprocess.Popen(args, stdout = stdout, stderr = stderr))
-
-            if self.max_process == len(self.processes):
-                self.wait()
-
-            os.chdir(pwd)
-
-        self.wait()
-
-    def wait(self):
-        for process in self.processes:
-            process.wait()
-
-        self.processes = []
+        return 1
+    else:
+        return 0
 
 if "__main__" == __name__:
-    if 4 > len(sys.argv):
-        print("Usage: {0} datasets.txt max_process suffix executable [exec args]".format(sys.argv[0]))
-    else:
-        app = AppController(sys.argv[1],
-                " ".join(sys.argv[4:]),
-                max_process = int(sys.argv[2]),
-                suffix = sys.argv[3])
-
-        app.run()
+    sys.exit(main(sys.argv))
