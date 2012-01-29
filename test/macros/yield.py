@@ -9,10 +9,10 @@ import re
 import sys
 
 print_order = (
-    "zprime_m1000_w10",
-    "zprime_m1500_w15",
-    "zprime_m2000_w20",
-    "zprime_m3000_w30",
+    "zprime_1000",
+    "zprime_1500",
+    "zprime_2000",
+    "zprime_3000",
     None,
     "stop",
     "wjets",
@@ -43,10 +43,10 @@ def printInTextFormat(cutflow):
 
 def printInLatexFormat(cutflow):
     lables = {
-            "zprime_m1000_w10": "$\\Zprime$, $M=1\\TeVcc$",
-            "zprime_m1500_w15": "$\\Zprime$, $M=1.5\\TeVcc$",
-            "zprime_m2000_w20": "$\\Zprime$, $M=2\\TeVcc$",
-            "zprime_m3000_w30": "$\\Zprime$, $M=3\\TeVcc$",
+            "zprime_1000": "$\\Zprime$, $M=1\\TeVcc$",
+            "zprime_1500": "$\\Zprime$, $M=1.5\\TeVcc$",
+            "zprime_2000": "$\\Zprime$, $M=2\\TeVcc$",
+            "zprime_3000": "$\\Zprime$, $M=3\\TeVcc$",
             "stop": "Single Top",
             "wjets": "$\\W$+jets",
             "zjets": "$\\Z$+jets",
