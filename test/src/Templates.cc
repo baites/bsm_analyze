@@ -432,6 +432,8 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
     {
         cout << "MC scale for mttbar : " << mc_scale << endl;
         cout << "QCD scale for mttbar : " << qcd_scale << endl;
+        cout << "Number of QCD events before norm. : " << channels[Channel::QCD]->Integral() << endl;
+        cout << "Number of QCD events after norm. : " << (qcd_scale * channels[Channel::QCD]->Integral()) << endl;
     }
 
     // Scale/Add mc/qcd with the correct scale

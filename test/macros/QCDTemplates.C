@@ -135,7 +135,7 @@ void normalize(TH1 *hist)
 
 TLegend *createLegend(const string &text)
 {
-    TLegend *legend = new TLegend( .5, .5, .8, .88);
+    TLegend *legend = new TLegend( .62, .5, .88, .88);
     if (!text.empty())
         legend->SetHeader(text.c_str());
 
@@ -266,9 +266,9 @@ void plotQCDTemplates()
     TCanvas *canvas = new TCanvas();
     canvas->SetTitle(canvas_title.c_str());
     canvas->SetWindowSize(1200, 600);
-    canvas->Divide(2);
+    // canvas->Divide(2);
 
-    canvas->cd(1);
+    /* canvas->cd(1);
 
     htlep_s1->SetLineColor(kYellow + 1);
     htlep_s1->SetMarkerColor(kYellow + 1);
@@ -291,12 +291,12 @@ void plotQCDTemplates()
     TLegend *legend = createLegend("Electron id.");
     legend->AddEntry(htlep_s1, "Fail", "l");
     legend->AddEntry(htlep_signal, "Pass", "l");
-    legend->Draw("9");
+    legend->Draw("9");*/
 
     TLatex * label = new TLatex();
     label->SetNDC();
     label->SetTextColor(kBlack);
-    label->DrawLatex(.45, .91, "CMS MC Preliminary");
+    //label->DrawLatex(.45, .91, "CMS MC Preliminary");
 
     TH1 *mttbar_after_htlep_s1 =
         merge(input_s1, "mttbar_after_htlep", 0, QCD_CHANNELS);
@@ -309,7 +309,7 @@ void plotQCDTemplates()
     normalize(mttbar_after_htlep_s1);
     normalize(mttbar_after_htlep_signal);
 
-    canvas->cd(2);
+    // canvas->cd(2);
     mttbar_after_htlep_s1->SetLineColor(kYellow + 1);
     mttbar_after_htlep_s1->SetMarkerColor(kYellow + 1);
     mttbar_after_htlep_s1->SetLineWidth(2);    
@@ -326,14 +326,14 @@ void plotQCDTemplates()
     stack->Draw("9 nostack");
     stack->GetHistogram()->GetXaxis()->SetTitle("M_{t#bar{t}} [GeV/c^{2}]");
     stack->GetHistogram()->GetYaxis()->SetTitle("event fraction");
-    stack->GetHistogram()->GetYaxis()->SetTitleOffset(1.45);
+    stack->GetHistogram()->GetYaxis()->SetTitleOffset(1.25);
 
     legend = createLegend("Electron id.");
     legend->AddEntry(mttbar_after_htlep_s1, "Fail", "l");
     legend->AddEntry(mttbar_after_htlep_signal, "Pass", "l");
     legend->Draw("9");
 
-    label->DrawLatex(.45, .91, "CMS MC Preliminary");
+    label->DrawLatex(.58, .92, "CMS MC Preliminary");
 
     canvas->SaveAs("qcd_template_comparison.png");
     canvas->SaveAs("qcd_template_comparison.pdf");    
