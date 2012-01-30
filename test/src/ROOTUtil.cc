@@ -234,22 +234,24 @@ float getScale(const Input &input)
     return scale;
 }
 
-void scale(TH1 *h, const Input &input)
+float scale(TH1 *h, const Input &input)
 {
     using namespace std;
 
     if (!h->GetEntries())
     {
-        cerr << "didn't scale " << input << ": no entries" << endl;
+        //cerr << "didn't scale " << input << ": no entries" << endl;
 
-        return;
+        return 0;
     }
 
     float scale = getScale(input);
     if (1 == scale)
-        return;
+        return 1;
 
     h->Scale(scale * luminosity());
+
+    return scale * luminosity();
 }
 
 std::string folder(const Input &input)

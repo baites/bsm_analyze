@@ -27,6 +27,7 @@
 #include "interface/Monitor.h"
 #include "interface/StatProxy.h"
 #include "interface/TemplateAnalyzer.h"
+#include "interface/Utility.h"
 
 using namespace std;
 using namespace boost;
@@ -139,6 +140,8 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
         LorentzVector htop; // Reconstructed hadronic leg
         LorentzVector missing_energy;
 
+        CorrectedJets htop_jets;
+
         float deltaRmin;
         float deltaRlh;
         int htop_njets;
@@ -209,6 +212,15 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
                 best_solution.htop = htop;
                 best_solution.missing_energy = neutrino_p4;
                 best_solution.htop_njets = hypothesis.hadronic.size();
+
+                best_solution.htop_jets.clear();
+                for(Generator::Iterators::const_iterator jet =
+                            hypothesis.hadronic.begin();
+                        hypothesis.hadronic.end() != jet;
+                        ++jet)
+                {
+                    best_solution.htop_jets.push_back(*(*jet));
+                }
             }
         }
     }
@@ -222,6 +234,16 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
     result.ltop = best_solution.ltop;
     result.htop = best_solution.htop;
     result.htop_njets = best_solution.htop_njets;
+
+    result.htop_jets.clear();
+    for(CorrectedJets::const_iterator jet = best_solution.htop_jets.begin();
+            best_solution.htop_jets.end() != jet;
+            ++jet)
+    {
+        result.htop_jets.push_back(*jet);
+    }
+
+    sort(result.htop_jets.begin(), result.htop_jets.end(), CorrectedPtGreater()); 
 
     return result;
 }
@@ -390,6 +412,16 @@ TemplateAnalyzer::TemplateAnalyzer():
     _synch_selector->tricut()->disable();
     monitor(_synch_selector);
 
+    // Assign cutflow delegate
+    //
+    for(uint32_t cut = 0; SynchSelector::SELECTIONS > cut; ++cut)
+    {
+        Counter *counter = _synch_selector->cutflow()->cut(cut)->events().get();
+        _counters[counter] = cut;
+
+        counter->setDelegate(this);
+    }
+
     _secondary_lepton_counter =
         _synch_selector->cutflow()->cut(
                 SynchSelector::VETO_SECOND_MUON)->objects().get();
@@ -404,6 +436,10 @@ TemplateAnalyzer::TemplateAnalyzer():
         _synch_selector->cutflow()->cut(
                 SynchSelector::HTLEP)->objects().get();
     _htlep_counter->setDelegate(this);
+
+    _cutflow.reset(new H1Proxy(SynchSelector::SELECTIONS, 0,
+                SynchSelector::SELECTIONS));
+    monitor(_cutflow);
 
     _npv.reset(new H1Proxy(25, 0, 25));
     monitor(_npv);
@@ -477,6 +513,12 @@ TemplateAnalyzer::TemplateAnalyzer():
     _lepton_met_dphi_vs_met.reset(new H2Proxy(500, 0, 500, 400, 0, 4));
     monitor(_lepton_met_dphi_vs_met);
 
+    _htop_njets.reset(new H1Proxy(10, 0, 10));
+    monitor(_htop_njets);
+
+    _htop_delta_r.reset(new H1Proxy(500, 0, 5));
+    monitor(_htop_delta_r);
+
     _htop_njet_vs_m.reset(new H2Proxy(1000, 0, 1, 10, 0, 10));
     monitor(_htop_njet_vs_m);
 
@@ -530,6 +572,16 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
         dynamic_pointer_cast<SynchSelector>(object._synch_selector->clone());
     monitor(_synch_selector);
 
+    // Assign cutflow delegate
+    //
+    for(uint32_t cut = 0; SynchSelector::SELECTIONS > cut; ++cut)
+    {
+        Counter *counter = _synch_selector->cutflow()->cut(cut)->events().get();
+        _counters[counter] = cut;
+
+        counter->setDelegate(this);
+    }
+
     _secondary_lepton_counter =
         _synch_selector->cutflow()->cut(
                 SynchSelector::VETO_SECOND_MUON)->objects().get();
@@ -544,6 +596,9 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
         _synch_selector->cutflow()->cut(
                 SynchSelector::HTLEP)->objects().get();
     _htlep_counter->setDelegate(this);
+
+    _cutflow = dynamic_pointer_cast<H1Proxy>(object._cutflow->clone());
+    monitor(_cutflow);
 
     _npv = dynamic_pointer_cast<H1Proxy>(object._npv->clone());
     monitor(_npv);
@@ -623,6 +678,14 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
             object._lepton_met_dphi_vs_met->clone());
     monitor(_lepton_met_dphi_vs_met);
 
+    _htop_njets = dynamic_pointer_cast<H1Proxy>(
+            object._htop_njets->clone());
+    monitor(_htop_njets);
+
+    _htop_delta_r = dynamic_pointer_cast<H1Proxy>(
+            object._htop_delta_r->clone());
+    monitor(_htop_delta_r);
+
     _htop_njet_vs_m = dynamic_pointer_cast<H2Proxy>(
             object._htop_njet_vs_m->clone());
     monitor(_htop_njet_vs_m);
@@ -686,6 +749,11 @@ void TemplateAnalyzer::setBtagReconstruction()
 
     _reconstructor.reset(new BtagResonanceReconstructor());
     monitor(_reconstructor);
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::cutflow() const
+{
+    return _cutflow->histogram();
 }
 
 const TemplateAnalyzer::H1Ptr TemplateAnalyzer::npv() const
@@ -808,6 +876,16 @@ const TemplateAnalyzer::H2Ptr TemplateAnalyzer::leptonMetDphivsMet() const
     return _lepton_met_dphi_vs_met->histogram();
 }
 
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::htopNjets() const
+{
+    return _htop_njets->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::htopDeltaR() const
+{
+    return _htop_delta_r->histogram();
+}
+
 const TemplateAnalyzer::H2Ptr TemplateAnalyzer::htopNjetvsM() const
 {
     return _htop_njet_vs_m->histogram();
@@ -891,6 +969,9 @@ bsm::TriggerDelegate *TemplateAnalyzer::getTriggerDelegate() const
 
 void TemplateAnalyzer::didCounterAdd(const Counter *counter)
 {
+    if (_counters.end() != _counters.find(counter))
+        cutflow()->fill(_counters[counter], _pileup_weight * _wjets_weight);
+
     if (counter == _secondary_lepton_counter)
         fillDrVsPtrel();
     else if (counter == _htlep_counter)
@@ -1002,6 +1083,22 @@ void TemplateAnalyzer::process(const Event *event)
         met()->fill(pt(missing_energy), _pileup_weight * _wjets_weight);
         metNoWeight()->fill(pt(missing_energy));
 
+        if (resonance.htop_njets != int(resonance.htop_jets.size()))
+            cerr << "inconsistent number of htop jets. htop_njets: "
+                << resonance.htop_njets << " htop_jets.size(): "
+                << resonance.htop_jets.size() << endl;
+
+        htopNjets()->fill(resonance.htop_jets.size(),
+                _pileup_weight * _wjets_weight);
+
+        const ResonanceReconstructor::CorrectedJets &htop_jets =
+            resonance.htop_jets;
+        if (1 < htop_jets.size())
+        {
+            htopDeltaR()->fill(dr(*htop_jets[0].corrected_p4, *htop_jets[1].corrected_p4),
+                    _pileup_weight * _wjets_weight);
+        }
+
         htopNjetvsM()->fill(mass(resonance.htop), resonance.htop_njets,
                 _pileup_weight * _wjets_weight);
         htopPtvsM()->fill(mass(resonance.htop), pt(resonance.htop),
@@ -1067,6 +1164,11 @@ void TemplateAnalyzer::merge(const ObjectPtr &pointer)
     _secondary_lepton_counter->setDelegate(0);
     _leading_jet_counter->setDelegate(0);
     _htlep_counter->setDelegate(0);
+
+    // Reset counter delegates
+    //
+    for(uint32_t cut = 0; SynchSelector::SELECTIONS < cut; ++cut)
+        _synch_selector->cutflow()->cut(cut)->events().get()->setDelegate(0);
 
     Object::merge(pointer);
 }

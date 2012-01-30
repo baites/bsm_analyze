@@ -97,6 +97,11 @@ with open('weights.txt', 'w') as output:
     for p in res['']['el_mttbar']:
         output.write("{0}: {1}\n".format(p, res['']['el_mttbar'][p]))
 
+res = ml_fit(model, signal_prior = 'fix:0', nuisance_constraint = '')
+
+with open('nuisance_params.txt', 'w') as output:
+    output.write(str(res))
+
 limits_ele(model)
 
 if not os.path.exists("report"):

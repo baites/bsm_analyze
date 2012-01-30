@@ -12,7 +12,7 @@ CXX ?= g++
 submod = bsm_core bsm_input bsm_stat JetMETObjects bsm_analyze
 lib_submod = $(patsubst %,lib/lib%.so,${submod})
 lib_soname = bsm_test
-lib = ./lib/lib${lib_soname}.so.1.1
+lib = ./lib/lib${lib_soname}.so.1.2
 
 # Get list of all heads, sources and objects. Each source (%.cc) whould have
 # an object file

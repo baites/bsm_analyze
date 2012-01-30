@@ -20,9 +20,10 @@ Channel::operator string() const
         case WJETS: return "W#rightarrowl#nu";
         case ZJETS: return "Z/#gamma*#rightarrowl^{+}l^{-}";
         case STOP: return "Single-Top";
-        case ZPRIME1000: return "Z' 1 #pm .01 TeV/c^{2}";
-        case ZPRIME1500: return "Z' 1.5 #pm .015 TeV/c^{2}";
-        case ZPRIME2000: return "Z' 2 #pm .02 TeV/c^{2}";
+        case ZPRIME1000: return "Z' 1 TeV/c^{2}";
+        case ZPRIME1500: return "Z' 1.5 TeV/c^{2}";
+        case ZPRIME2000: return "Z' 2 TeV/c^{2}";
+        case ZPRIME3000: return "Z' 3 TeV/c^{2}";
 
         default: return "unknown";
     }
@@ -42,6 +43,7 @@ string Channel::repr() const
         case ZPRIME1000: return "zprime_1000";
         case ZPRIME1500: return "zprime_1500";
         case ZPRIME2000: return "zprime_2000";
+        case ZPRIME3000: return "zprime_3000";
 
         default: return "unknown";
     }
@@ -49,7 +51,7 @@ string Channel::repr() const
 
 Channel &Channel::operator ++()
 {
-    if (ZPRIME2000 != type());
+    if (ZPRIME3000 != type());
         _type = Type(static_cast<int>(type()) + 1);
 
     return *this;

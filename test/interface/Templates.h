@@ -16,6 +16,7 @@
 #include "interface/Channel.h"
 #include "interface/ROOTUtil.h"
 #include "interface/Template.h"
+#include "interface/ThetaScale.h"
 
 class TCanvas;
 class TFile;
@@ -25,21 +26,13 @@ class TObject;
 class Templates
 {
     public:
-        struct ThetaScale
+        struct Scales
         {
-            ThetaScale():
-                wjets(0),
-                zjets(0),
-                stop(0),
-                ttjets(0),
-                qcd(0)
+            Scales(): mc(1), qcd(1)
             {
             }
 
-            float wjets;
-            float zjets;
-            float stop;
-            float ttjets;
+            float mc;
             float qcd;
         };
 
@@ -76,6 +69,11 @@ class Templates
         void setLogScale(const bool &value)
         {
             _log_scale = value;
+        }
+
+        void setRawCutflow(const bool &value)
+        {
+            _raw_cutflow = value;
         }
 
     private:
@@ -120,10 +118,22 @@ class Templates
         void rebin2D(TH1 *, const Template &) const;
 
         TCanvas *draw(const Template &, Channels &);
+
+        TH1 *scaleSignal(const Template &, Channels &, const Channel &);
+        void drawSignal(TH1 *, const Channel &, TLegend *);
+
         TCanvas *draw2D(const Template &, Channels &);
         void style(TH1 *, const Input &);
 
         void setYaxisTitle(TH1 *h, const Template &plot);
+
+        Scales getScales(Channels &);
+        Scales getCutflowScales(Channels &);
+
+        void saveCutflow(const TH1 *data,
+                         const Channels &backgrounds,
+                         const Channels &signal) const;
+        std::string getCutflow(const TH1 *h) const;
 
         Heap _heap;
         Plots _plots;
@@ -148,8 +158,9 @@ class Templates
         bool _ks_chi2;
 
         bool _log_scale;
+        bool _raw_cutflow;
 };
 
-std::ostream &operator <<(std::ostream &, const Templates::ThetaScale &);
+std::ostream &operator <<(std::ostream &, const Templates::Scales &);
 
 #endif

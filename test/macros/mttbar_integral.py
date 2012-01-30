@@ -8,16 +8,9 @@ from __future__ import division, print_function
 import os
 import sys
 
+import root_style
+
 from ROOT import *
-
-def rootStyle(filename):
-    if os.path.isfile(filename):
-        gROOT.ProcessLine(".L {0}".format(filename))
-        ROOT.setTDRStyle()
-
-        print("Loaded ROOT style from: " + filename)
-    else:
-        print("ROOT style is not available: " + filename)
 
 def generateCDF(filename, start = 0):
     start = float(start)
@@ -38,7 +31,12 @@ def generateCDF(filename, start = 0):
         channel = plot_name.split('_')[1]
         plots["bkgd" if "mc" == channel else channel] = h
 
-    integrals = {x: integral(y, start) for x, y in plots.items()}
+    integrals = dict((x, integral(y, start)) for x, y in plots.items())
+
+    print("-- Integral ".ljust(80, '-'))
+    for k, v in integrals.items():
+        print("{0:<10} {1:<.1f}".format(k, v.Integral()))
+    print()
 
     legend = TLegend(.8, .3, .9, .5)
     legend.SetMargin(0.12)  
@@ -84,11 +82,14 @@ def generateCDF(filename, start = 0):
     pad.SetRightMargin(5)
 
     ratio.Draw("e 9")
+    ratio.GetYaxis().SetRangeUser(0, 2)
 
     canvas.Update()
 
     canvas.SaveAs("mttbar_integral.pdf")
     canvas.SaveAs("mttbar_integral.png")
+
+    raw_input("enter")
 
 def integral(h, start):
     plot = h.Clone()
@@ -166,7 +167,7 @@ def main(argv = sys.argv):
         if 2 > len(argv):
             raise Exception(usage(argv))
 
-        rootStyle("tdrstyle.C")
+        root_style.style("tdrstyle.C")
 
         generateCDF([x for x in argv[1:] if ':' not in x][0],
                     **dict((x.split(':') for x in argv[1:] if ':' in x)))

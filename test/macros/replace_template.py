@@ -79,7 +79,7 @@ def replace(templates = set(),
                 continue
 
             h = h.Clone()
-            output_file.WriteObject(h, key)
+            output_file.WriteObject(h, name)
 
     if names["missing"]:
         print("Missing templates: they were not found in file " + with_file, file = sys.stderr)

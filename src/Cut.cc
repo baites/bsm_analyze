@@ -29,6 +29,14 @@ Counter::Counter():
     _delegate = 0;
 }
 
+Counter::Counter(const Counter &counter):
+    _counts(counter._counts),
+    _is_locked(false),
+    _is_lock_on_update(false)
+{
+    _delegate = 0;
+}
+
 void Counter::setDelegate(CounterDelegate *delegate)
 {
     if (_delegate != delegate)

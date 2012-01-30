@@ -18,7 +18,7 @@ def createHistogramFilter(mass_point):
 # Code is automatically generated
 
 def histogram_filter(name):
-    plots = ["el_mttbar__zp" + str(x) for x in range(900, 4100, 100) if x != {0}]
+    plots = ["el_mttbar__zp" + str(x) for x in range(900, 4100, 10) if x != {0}]
 
     return name.startswith("el_mttbar") and not name in plots
         '''.format(mass_point), file = output)

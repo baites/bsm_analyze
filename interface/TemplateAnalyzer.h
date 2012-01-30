@@ -11,6 +11,9 @@
 #define BSM_TEMPLATE_ANALYZER
 
 #include <iosfwd>
+#include <map>
+
+#include <boost/shared_ptr.hpp>
 
 #include "bsm_stat/interface/bsm_stat_fwd.h"
 #include "bsm_input/interface/bsm_input_fwd.h"
@@ -111,6 +114,7 @@ namespace bsm
         public:
             typedef DecayGenerator<CorrectedJet> Generator;
             typedef Generator::Iterators Iterators;
+            typedef std::vector<CorrectedJet> CorrectedJets;
 
             struct Mttbar
             {
@@ -120,6 +124,8 @@ namespace bsm
                 LorentzVector neutrino;
                 LorentzVector ltop;
                 LorentzVector htop;
+
+                CorrectedJets htop_jets;
 
                 int htop_njets;
                 int solutions;
@@ -195,6 +201,8 @@ namespace bsm
 
             virtual void setBtagReconstruction();
 
+            const H1Ptr cutflow() const;
+
             const H1Ptr npv() const;
             const H1Ptr npvWithPileup() const;
             const H1Ptr njets() const;
@@ -223,6 +231,8 @@ namespace bsm
             const H2Ptr ljetMetDphivsMet() const;
             const H2Ptr leptonMetDphivsMet() const;
 
+            const H1Ptr htopNjets() const;
+            const H1Ptr htopDeltaR() const;
             const H2Ptr htopNjetvsM() const;
             const H2Ptr htopPtvsM() const;
             const H2Ptr htopPtvsNjets() const;
@@ -285,6 +295,11 @@ namespace bsm
             boost::shared_ptr<SynchSelector> _synch_selector;
             boost::shared_ptr<SynchSelector> _synch_selector_with_inverted_htlep;
 
+            // map: counter pointer to SynchSelector selection
+            //
+            std::map<const Counter *, uint32_t> _counters;
+            H1ProxyPtr _cutflow;
+
             H1ProxyPtr _npv;
             H1ProxyPtr _npv_with_pileup;
             H1ProxyPtr _njets;
@@ -313,6 +328,8 @@ namespace bsm
             H2ProxyPtr _ljet_met_dphi_vs_met;
             H2ProxyPtr _lepton_met_dphi_vs_met;
 
+            H1ProxyPtr _htop_njets;
+            H1ProxyPtr _htop_delta_r;
             H2ProxyPtr _htop_njet_vs_m;
             H2ProxyPtr _htop_pt_vs_m;
             H2ProxyPtr _htop_pt_vs_njets;
@@ -325,6 +342,7 @@ namespace bsm
             Counter *_htlep_counter;
 
             boost::shared_ptr<Pileup> _pileup;
+
             bool _use_pileup;
             float _pileup_weight;
 

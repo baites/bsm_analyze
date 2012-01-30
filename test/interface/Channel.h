@@ -23,7 +23,8 @@ class Channel
             TTBAR_POWHEG,
             ZPRIME1000,
             ZPRIME1500,
-            ZPRIME2000
+            ZPRIME2000,
+            ZPRIME3000
         };
 
         Channel(const Type &type): _type(type)

@@ -16,6 +16,7 @@ Template::operator string() const
         case MET: return "met";
         case MET_QCD: return "met";
         case MET_QCD_NOWEIGHT: return "met_noweight";
+        case CUTFLOW: return "cutflow";
         case HTALL: return "htall";
         case HTLEP: return "htlep";
         case HTLEP_BEFORE_HTLEP: return "htlep_before_htlep";
@@ -41,6 +42,8 @@ Template::operator string() const
         case LTOP_ETA: return "ltop/eta";
         case LTOP_MASS: return "ltop/mass";
         case LTOP_MT: return "ltop/mt";
+        case HTOP_NJETS: return "htop_njets";
+        case HTOP_DELTA_R: return "htop_delta_r";
         case HTOP_PT: return "htop/pt";
         case HTOP_ETA: return "htop/eta";
         case HTOP_MASS: return "htop/mass";
@@ -61,6 +64,7 @@ string Template::repr() const
         case MET: return "met";
         case MET_QCD: return "met_qcd";
         case MET_QCD_NOWEIGHT: return "met_qcd_noweight";
+        case CUTFLOW: return "cutflow";
         case HTALL: return "htall";
         case HTLEP: return "htlep";
         case HTLEP_BEFORE_HTLEP: return "htlep_before_htlep";
@@ -86,6 +90,8 @@ string Template::repr() const
         case LTOP_ETA: return "ltop_eta";
         case LTOP_MASS: return "ltop_mass";
         case LTOP_MT: return "ltop_mt";
+        case HTOP_NJETS: return "htop_njets";
+        case HTOP_DELTA_R: return "htop_delta_r";
         case HTOP_PT: return "htop_pt";
         case HTOP_ETA: return "htop_eta";
         case HTOP_MASS: return "htop_mass";
@@ -122,6 +128,7 @@ string Template::unit() const
         case MET: return "GeV/c";
         case MET_QCD: return "GeV/c";
         case MET_QCD_NOWEIGHT: return "GeV/c";
+        case CUTFLOW: return "";
         case HTALL: return "GeV/c";
         case HTLEP: return "GeV/c";
         case HTLEP_BEFORE_HTLEP: return "GeV/c";
@@ -147,6 +154,8 @@ string Template::unit() const
         case LTOP_ETA: return "";
         case LTOP_MASS: return "GeV/c^{2}";
         case LTOP_MT: return "GeV/c^{2}";
+        case HTOP_NJETS: return "";
+        case HTOP_DELTA_R: return "";
         case HTOP_PT: return "GeV/c";
         case HTOP_ETA: return "";
         case HTOP_MASS: return "GeV/c^{2}";

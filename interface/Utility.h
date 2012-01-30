@@ -10,6 +10,7 @@
 
 #include <ostream>
 #include <functional>
+#include <vector>
 
 #include <boost/shared_ptr.hpp>
 
@@ -139,6 +140,20 @@ namespace bsm
 
         private:
             PtGreater _pt_greater;
+    };
+
+    struct PtGreaterSort
+    {
+        public:
+            typedef std::vector<CorrectedJet>::const_iterator Iterator;
+
+            bool operator()(const Iterator &v1, const Iterator &v2)
+            {
+                return _pt_greater(*v1, *v2);
+            }
+
+        private:
+            CorrectedPtGreater _pt_greater;
     };
 }
 
