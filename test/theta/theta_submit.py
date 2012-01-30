@@ -10,6 +10,8 @@ import shutil
 import subprocess
 import sys
 
+import bsm_condor
+
 def createHistogramFilter(mass_point):
     with open("histogram_filter.py", "w") as output:
         print('''
@@ -22,28 +24,6 @@ def histogram_filter(name):
 
     return name.startswith("el_mttbar") and not name in plots
         '''.format(mass_point), file = output)
-
-def createCondorFile(jobs = 1, exe = "", transfer = ""):
-    if not exe:
-        raise Exception("Executable is not specified")
-
-    with open('condor.cfg', 'w') as output:
-        print('''
-universe = vanilla
-getenv = true
-Requirements = Memory >= 199 && OpSys == "LINUX" && (Arch != "DUMMY" ) && Disk > 1000000
-Should_Transfer_Files = YES
-WhenToTransferOutput = ON_EXIT
-Output = cout.log
-Error = cerr.log
-Log = clog.log
-initialdir = job.$(Process)
-transfer_input_files = {transfer}
-notify_user = 
-Executable = {exe}
-queue {jobs}
-        '''.format(jobs = jobs, exe = exe, transfer = transfer),
-        file = output)
 
 def copyAndSymlink(src, symlink):
     shutil.copy(src, "./")
@@ -103,10 +83,14 @@ def submit(mass_points = set(),
             finally:
                 os.chdir("../")
 
-        createCondorFile(jobs = len(mass_points),
-                exe = "run.sh",
-                transfer = ','.join((links.keys() - {"run.sh"})
-                    | {"histogram_filter.py"}))
+        config = bsm_condor.Config()
+        config.jobs = len(mass_points)
+        config.executable = "run.sh"
+        config.transfer_inputs = ','.join((links.keys() - {"run.sh"})
+                                            | {"histogram_filter.py"})
+
+        with open('condor.cfg', 'w') as output:
+            print(config, file = output)
 
         print("Submit {0} CONDOR jobs".format(len(mass_points)))
         with open("condor_cout.log", "w") as stdout:
