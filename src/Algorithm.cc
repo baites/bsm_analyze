@@ -454,9 +454,9 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
     {
         Generator::Hypothesis hypothesis = generator.hypothesis();
 
-        if (!isValidHadronicSide(hypothesis.hadronic)
-                || !isValidLeptonicSide(hypothesis.leptonic)
-                || !isValidNeutralSide(hypothesis.neutral))
+        if (!isValidHadronicSide(lepton, hypothesis.hadronic)
+                || !isValidLeptonicSide(lepton, hypothesis.leptonic)
+                || !isValidNeutralSide(lepton, hypothesis.neutral))
 
                 continue;
 
@@ -588,20 +588,20 @@ SimpleResonanceReconstructor::ObjectPtr SimpleResonanceReconstructor::clone() co
 
 // Private
 //
-bool SimpleResonanceReconstructor::isValidHadronicSide(const Iterators &jets)
-    const
+bool SimpleResonanceReconstructor::isValidHadronicSide(const LorentzVector &,
+        const Iterators &jets) const
 {
     return !jets.empty();
 }
 
-bool SimpleResonanceReconstructor::isValidLeptonicSide(const Iterators &jets)
-    const
+bool SimpleResonanceReconstructor::isValidLeptonicSide(const LorentzVector &,
+        const Iterators &jets) const
 {
     return !jets.empty();
 }
 
-bool SimpleResonanceReconstructor::isValidNeutralSide(const Iterators &jets)
-    const
+bool SimpleResonanceReconstructor::isValidNeutralSide(const LorentzVector &,
+        const Iterators &jets) const
 {
     return true;
 }
@@ -643,22 +643,22 @@ BtagResonanceReconstructor::ObjectPtr BtagResonanceReconstructor::clone() const
 
 // Private
 //
-bool BtagResonanceReconstructor::isValidHadronicSide(const Iterators &jets)
-    const
+bool BtagResonanceReconstructor::isValidHadronicSide(const LorentzVector &lepton,
+        const Iterators &jets) const
 {
-    return SimpleResonanceReconstructor::isValidHadronicSide(jets)
+    return SimpleResonanceReconstructor::isValidHadronicSide(lepton, jets)
         && 1 >= countBtags(jets);
 }
 
-bool BtagResonanceReconstructor::isValidLeptonicSide(const Iterators &jets)
-    const
+bool BtagResonanceReconstructor::isValidLeptonicSide(const LorentzVector &lepton,
+        const Iterators &jets) const
 {
-    return SimpleResonanceReconstructor::isValidLeptonicSide(jets)
+    return SimpleResonanceReconstructor::isValidLeptonicSide(lepton, jets)
         && 1 >= countBtags(jets);
 }
 
-bool BtagResonanceReconstructor::isValidNeutralSide(const Iterators &jets)
-    const
+bool BtagResonanceReconstructor::isValidNeutralSide(const LorentzVector &,
+        const Iterators &jets) const
 {
     return 1 > countBtags(jets);
 }
@@ -717,6 +717,68 @@ bool BtagResonanceReconstructor::isBtagJet(const Jet *jet) const
     }
 
     return false;
+}
+
+
+
+// -- DeltaR Resonance Reconstructor ------------------------------------------
+//
+uint32_t DeltaRResonanceReconstructor::id() const
+{
+    return core::ID<DeltaRResonanceReconstructor>::get();
+}
+
+DeltaRResonanceReconstructor::ObjectPtr DeltaRResonanceReconstructor::clone() const
+{
+    return ObjectPtr(new DeltaRResonanceReconstructor(*this));
+}
+
+// Private
+//
+bool DeltaRResonanceReconstructor::isValidHadronicSide(const LorentzVector &lepton,
+        const Iterators &jets) const
+{
+    bool result = SimpleResonanceReconstructor::isValidHadronicSide(lepton, jets);
+    for(Iterators::const_iterator jet = jets.begin();
+            result && jets.end() != jet;
+            ++jet)
+    {
+        if (_hadronic_dr < dr(lepton, *(*jet)->corrected_p4))
+            result = false;
+    }
+
+    return result;
+}
+
+bool DeltaRResonanceReconstructor::isValidLeptonicSide(const LorentzVector &lepton,
+        const Iterators &jets) const
+{
+    bool result = SimpleResonanceReconstructor::isValidLeptonicSide(lepton, jets);
+    for(Iterators::const_iterator jet = jets.begin();
+            result && jets.end() != jet;
+            ++jet)
+    {
+        if (_leptonic_dr < dr(lepton, *(*jet)->corrected_p4))
+            result = false;
+    }
+
+    return result;
+}
+
+bool DeltaRResonanceReconstructor::isValidNeutralSide(const LorentzVector &lepton,
+        const Iterators &jets) const
+{
+    bool result = SimpleResonanceReconstructor::isValidNeutralSide(lepton, jets);
+    for(Iterators::const_iterator jet = jets.begin();
+            result && jets.end() != jet;
+            ++jet)
+    {
+        if (_leptonic_dr > dr(lepton, *(*jet)->corrected_p4)
+                || _hadronic_dr > dr(lepton, *(*jet)->corrected_p4))
+            result = false;
+    }
+
+    return result;
 }
 
 

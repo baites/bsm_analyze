@@ -197,9 +197,15 @@ namespace bsm
             virtual void print(std::ostream &) const;
 
         protected:
-            virtual bool isValidHadronicSide(const Iterators &) const = 0;
-            virtual bool isValidLeptonicSide(const Iterators &) const = 0;
-            virtual bool isValidNeutralSide(const Iterators &) const = 0;
+            virtual bool isValidHadronicSide(const LorentzVector &,
+                                             const Iterators &) const = 0;
+
+            virtual bool isValidLeptonicSide(const LorentzVector &,
+                                             const Iterators &) const = 0;
+
+            virtual bool isValidNeutralSide(const LorentzVector &,
+                                            const Iterators &) const = 0;
+
             virtual LorentzVector getLeptonicJet(const Iterators &) const = 0;
     };
 
@@ -212,9 +218,15 @@ namespace bsm
             virtual ObjectPtr clone() const;
 
         protected:
-            virtual bool isValidHadronicSide(const Iterators &) const;
-            virtual bool isValidLeptonicSide(const Iterators &) const;
-            virtual bool isValidNeutralSide(const Iterators &) const;
+            virtual bool isValidHadronicSide(const LorentzVector &,
+                                             const Iterators &) const;
+
+            virtual bool isValidLeptonicSide(const LorentzVector &,
+                                             const Iterators &) const;
+
+            virtual bool isValidNeutralSide(const LorentzVector &,
+                                            const Iterators &) const;
+
             virtual LorentzVector getLeptonicJet(const Iterators &) const;
     };
 
@@ -227,14 +239,49 @@ namespace bsm
             virtual ObjectPtr clone() const;
 
         protected:
-            virtual bool isValidHadronicSide(const Iterators &) const;
-            virtual bool isValidLeptonicSide(const Iterators &) const;
-            virtual bool isValidNeutralSide(const Iterators &) const;
+            virtual bool isValidHadronicSide(const LorentzVector &,
+                                             const Iterators &) const;
+
+            virtual bool isValidLeptonicSide(const LorentzVector &,
+                                             const Iterators &) const;
+
+            virtual bool isValidNeutralSide(const LorentzVector &,
+                                            const Iterators &) const;
+
             virtual LorentzVector getLeptonicJet(const Iterators &) const;
 
         private:
             uint32_t countBtags(const Iterators &) const;
             bool isBtagJet(const Jet *jet) const;
+    };
+
+    class DeltaRResonanceReconstructor: public SimpleResonanceReconstructor
+    {
+        public:
+            DeltaRResonanceReconstructor():
+                _leptonic_dr(0.1),
+                _hadronic_dr(3.14)
+            {
+            }
+
+            // Object interface
+            //
+            virtual uint32_t id() const;
+            virtual ObjectPtr clone() const;
+
+        protected:
+            virtual bool isValidHadronicSide(const LorentzVector &,
+                                             const Iterators &) const;
+
+            virtual bool isValidLeptonicSide(const LorentzVector &,
+                                             const Iterators &) const;
+
+            virtual bool isValidNeutralSide(const LorentzVector &,
+                                            const Iterators &) const;
+
+        private:
+            const float _leptonic_dr;
+            const float _hadronic_dr;
     };
 
     /*
