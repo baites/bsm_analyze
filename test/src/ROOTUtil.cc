@@ -469,4 +469,3 @@ float luminosity()
     return 4328.472;
     //return 4.061545;
 }
-

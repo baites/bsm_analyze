@@ -42,6 +42,11 @@ Template::operator string() const
         case LTOP_ETA: return "ltop/eta";
         case LTOP_MASS: return "ltop/mass";
         case LTOP_MT: return "ltop/mt";
+        case LTOP_JET1_MASS: return "ltop_first_jet/mass";
+        case HTOP_JET1_MASS: return "htop_first_jet/mass";
+        case HTOP_JET2_MASS: return "htop_second_jet/mass";
+        case HTOP_JET3_MASS: return "htop_third_jet/mass";
+        case HTOP_JET4_MASS: return "htop_fourth_jet/mass";
         case HTOP_NJETS: return "htop_njets";
         case HTOP_DELTA_R: return "htop_delta_r";
         case HTOP_PT: return "htop/pt";
@@ -90,6 +95,11 @@ string Template::repr() const
         case LTOP_ETA: return "ltop_eta";
         case LTOP_MASS: return "ltop_mass";
         case LTOP_MT: return "ltop_mt";
+        case LTOP_JET1_MASS: return "ltop_jet1_mass";
+        case HTOP_JET1_MASS: return "htop_jet1_mass";
+        case HTOP_JET2_MASS: return "htop_jet2_mass";
+        case HTOP_JET3_MASS: return "htop_jet3_mass";
+        case HTOP_JET4_MASS: return "htop_jet4_mass";
         case HTOP_NJETS: return "htop_njets";
         case HTOP_DELTA_R: return "htop_delta_r";
         case HTOP_PT: return "htop_pt";
@@ -154,6 +164,11 @@ string Template::unit() const
         case LTOP_ETA: return "";
         case LTOP_MASS: return "GeV/c^{2}";
         case LTOP_MT: return "GeV/c^{2}";
+        case LTOP_JET1_MASS: return "GeV/c^{2}";
+        case HTOP_JET1_MASS: return "GeV/c^{2}";
+        case HTOP_JET2_MASS: return "GeV/c^{2}";
+        case HTOP_JET3_MASS: return "GeV/c^{2}";
+        case HTOP_JET4_MASS: return "GeV/c^{2}";
         case HTOP_NJETS: return "";
         case HTOP_DELTA_R: return "";
         case HTOP_PT: return "GeV/c";

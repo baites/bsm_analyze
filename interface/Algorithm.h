@@ -180,6 +180,9 @@ namespace bsm
                 LorentzVector htop;
 
                 CorrectedJets htop_jets;
+                CorrectedJets ltop_jets;
+
+                LorentzVector ltop_jet;
 
                 int htop_njets;
                 int solutions;

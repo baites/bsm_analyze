@@ -438,6 +438,9 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
         LorentzVector missing_energy;
 
         CorrectedJets htop_jets;
+        CorrectedJets ltop_jets;
+
+        LorentzVector ltop_jet; // Used jet in the ltop reconstruction
 
         float deltaRmin;
         float deltaRlh;
@@ -506,6 +509,7 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
                 best_solution.deltaRmin = deltaRmin;
                 best_solution.deltaRlh = deltaRlh;
                 best_solution.ltop = ltop_tmp;
+                best_solution.ltop_jet = ltop_jet;
                 best_solution.htop = htop;
                 best_solution.missing_energy = neutrino_p4;
                 best_solution.htop_njets = hypothesis.hadronic.size();
@@ -518,6 +522,15 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
                 {
                     best_solution.htop_jets.push_back(*(*jet));
                 }
+
+                best_solution.ltop_jets.clear();
+                for(Generator::Iterators::const_iterator jet =
+                            hypothesis.leptonic.begin();
+                        hypothesis.leptonic.end() != jet;
+                        ++jet)
+                {
+                    best_solution.ltop_jets.push_back(*(*jet));
+                }
             }
         }
     }
@@ -529,6 +542,7 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
     result.wlep = best_solution.missing_energy + lepton;
     result.neutrino = best_solution.missing_energy;
     result.ltop = best_solution.ltop;
+    result.ltop_jet = best_solution.ltop_jet;
     result.htop = best_solution.htop;
     result.htop_njets = best_solution.htop_njets;
 
@@ -540,7 +554,16 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
         result.htop_jets.push_back(*jet);
     }
 
+    result.ltop_jets.clear();
+    for(CorrectedJets::const_iterator jet = best_solution.ltop_jets.begin();
+            best_solution.ltop_jets.end() != jet;
+            ++jet)
+    {
+        result.ltop_jets.push_back(*jet);
+    }
+
     sort(result.htop_jets.begin(), result.htop_jets.end(), CorrectedPtGreater()); 
+    sort(result.ltop_jets.begin(), result.ltop_jets.end(), CorrectedPtGreater()); 
 
     return result;
 }

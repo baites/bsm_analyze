@@ -248,6 +248,28 @@ TemplateAnalyzer::TemplateAnalyzer():
     monitor(_ltop);
     monitor(_htop);
 
+    _htop_first_jet.reset(new P4Monitor());
+    _htop_first_jet->mass()->mutable_axis()->init(250, 0, 250);
+
+    _htop_second_jet.reset(new P4Monitor());
+    _htop_second_jet->mass()->mutable_axis()->init(100, 0, 100);
+
+    _htop_third_jet.reset(new P4Monitor());
+    _htop_third_jet->mass()->mutable_axis()->init(100, 0, 100);
+
+    _htop_fourth_jet.reset(new P4Monitor());
+    _htop_fourth_jet->mass()->mutable_axis()->init(100, 0, 100);
+
+    _ltop_first_jet.reset(new P4Monitor());
+    _ltop_first_jet->mass()->mutable_axis()->init(100, 0, 100);
+
+    monitor(_htop_first_jet);
+    monitor(_htop_second_jet);
+    monitor(_htop_third_jet);
+    monitor(_htop_fourth_jet);
+
+    monitor(_ltop_first_jet);
+
     _pileup.reset(new Pileup());
     monitor(_pileup);
 
@@ -425,6 +447,28 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
 
     monitor(_ltop);
     monitor(_htop);
+
+    _htop_first_jet =
+        dynamic_pointer_cast<P4Monitor>(object._htop_first_jet->clone());
+
+    _htop_second_jet =
+        dynamic_pointer_cast<P4Monitor>(object._htop_second_jet->clone());
+
+    _htop_third_jet =
+        dynamic_pointer_cast<P4Monitor>(object._htop_third_jet->clone());
+
+    _htop_fourth_jet =
+        dynamic_pointer_cast<P4Monitor>(object._htop_fourth_jet->clone());
+
+    _ltop_first_jet =
+        dynamic_pointer_cast<P4Monitor>(object._ltop_first_jet->clone());
+
+    monitor(_htop_first_jet);
+    monitor(_htop_second_jet);
+    monitor(_htop_third_jet);
+    monitor(_htop_fourth_jet);
+
+    monitor(_ltop_first_jet);
 
     _pileup =
         dynamic_pointer_cast<Pileup>(object._pileup->clone());
@@ -633,6 +677,31 @@ const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::htop() const
     return _htop;
 }
 
+const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::htopFirstJet() const
+{
+    return _htop_first_jet;
+}
+
+const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::htopSecondJet() const
+{
+    return _htop_second_jet;
+}
+
+const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::htopThirdJet() const
+{
+    return _htop_third_jet;
+}
+
+const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::htopFourthJet() const
+{
+    return _htop_fourth_jet;
+}
+
+const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::ltopFirstJet() const
+{
+    return _ltop_first_jet;
+}
+
 bsm::JetEnergyCorrectionDelegate
     *TemplateAnalyzer::getJetEnergyCorrectionDelegate() const
 {
@@ -810,6 +879,25 @@ void TemplateAnalyzer::process(const Event *event)
         htlepAfterHtlep()->fill(htlepValue(), _pileup_weight * _wjets_weight);
 
         solutions()->fill(resonance.solutions);
+
+        if (0 < htop_jets.size())
+            htopFirstJet()->fill(*htop_jets[0].corrected_p4,
+                    _pileup_weight * _wjets_weight);
+        
+        if (1 < htop_jets.size())
+            htopSecondJet()->fill(*htop_jets[1].corrected_p4,
+                    _pileup_weight * _wjets_weight);
+
+        if (2 < htop_jets.size())
+            htopThirdJet()->fill(*htop_jets[2].corrected_p4,
+                    _pileup_weight * _wjets_weight);
+
+        if (3 < htop_jets.size())
+            htopFourthJet()->fill(*htop_jets[3].corrected_p4,
+                    _pileup_weight * _wjets_weight);
+
+        ltopFirstJet()->fill(resonance.ltop_jet,
+                _pileup_weight * _wjets_weight);
     }
 
     // Process only events, that pass the synch selector with htlep inverted

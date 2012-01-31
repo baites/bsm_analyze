@@ -176,6 +176,13 @@ namespace bsm
             const P4MonitorPtr ltop() const;
             const P4MonitorPtr htop() const;
 
+            const P4MonitorPtr htopFirstJet() const;
+            const P4MonitorPtr htopSecondJet() const;
+            const P4MonitorPtr htopThirdJet() const;
+            const P4MonitorPtr htopFourthJet() const;
+
+            const P4MonitorPtr ltopFirstJet() const;
+
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
             SynchSelectorDelegate *getSynchSelectorDelegate() const;
             Cut2DSelectorDelegate *getCut2DSelectorDelegate() const;
@@ -287,6 +294,13 @@ namespace bsm
 
             P4MonitorPtr _ltop;
             P4MonitorPtr _htop;
+
+            P4MonitorPtr _htop_first_jet;
+            P4MonitorPtr _htop_second_jet;
+            P4MonitorPtr _htop_third_jet;
+            P4MonitorPtr _htop_fourth_jet;
+
+            P4MonitorPtr _ltop_first_jet;
 
             boost::shared_ptr<ResonanceReconstructor> _reconstructor;
     };
