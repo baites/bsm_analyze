@@ -18,10 +18,10 @@ def build_model_ele():
     model.set_signal_processes('zp*')
     model.fill_histogram_zerobins()
 
-    model.add_lognormal_uncertainty('top_rate', math.log(1.15), 'ttbar')
+    model.add_lognormal_uncertainty('top_rate', math.log(1.50), 'ttbar')
     model.add_lognormal_uncertainty('stop_rate', math.log(1.15), 'singletop')
     for p in ('wjets', 'zjets'):
-        model.add_lognormal_uncertainty('vjets_rate', math.log(1.30), p)
+        model.add_lognormal_uncertainty('vjets_rate', math.log(2.), p)
 
     model.add_lognormal_uncertainty('qcd_rate', math.log(1.5), 'eleqcd')
 
@@ -36,7 +36,7 @@ def build_model_ele():
 
 def limits_ele(model):
    plot_exp, plot_obs = bayesian_limits(model)
-   #plot_exp, plot_obs = cls_limits(model)
+   #plot_exp, plot_obs = cls_limits(model, ts = "lhclike")
 
    # zprimes are normalised to 0.1 pb, so multiply all y-values with 0.1 to get it in pb:
    #plot_exp.scale_y(10)
