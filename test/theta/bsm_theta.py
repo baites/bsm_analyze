@@ -5,13 +5,14 @@
 
 from datetime import datetime
 import os
+import re
 import shlex
 import shutil
 import subprocess
 
 import bsm_condor
 
-def createHistogramFilter(mass_point):
+def createHistogramFilter(mass_point, ban_plots = set()):
     with open("histogram_filter.py", "w") as output:
         print('''
 #!/usr/bin/env python
@@ -19,10 +20,12 @@ def createHistogramFilter(mass_point):
 # Code is automatically generated
 
 def histogram_filter(name):
-    plots = ["el_mttbar__zp" + str(x) for x in range(900, 4100, 10) if x != {0}]
+    ban_plots = [{ban}]
 
-    return name.startswith("el_mttbar") and not name in plots
-        '''.format(mass_point), file = output)
+    return name.startswith("el_mttbar") and ("zp{signal}" in name if name.startswith("el_mttbar__zp") else True) and not any(x in name for x in ban_plots)
+        '''.format(signal = mass_point,
+                    ban = ','.join('"{0}"'.format(x) for x in ban_plots) if ban_plots else ""),
+                    file = output)
 
 def copyAndSymlink(src, symlink):
     shutil.copy(src, "./")
@@ -40,7 +43,8 @@ def submit(mass_points = set(),
         hist = "theta_input.root",
         analysis = "analysis.py",
         xsec = "theory-xsecs.py",
-        run = "run.sh"):
+        run = "run.sh",
+        ban = set()):
     if not mass_points:
         raise Exception("No mass points specified")
 
@@ -48,6 +52,12 @@ def submit(mass_points = set(),
     analysis = inputRealpath("Analysis script", analysis)
     xsec = inputRealpath("Theory xsec", xsec)
     run = inputRealpath("Run script", run)
+
+    if ban:
+        if not re.match("^((\w+),)*(\w+)$", ban):
+            raise Exception("didn't understan plot names to ban: " + ban)
+
+        ban = ban.split(',')
 
     output_folder = "prod_" + datetime.now().strftime("%Y_%m_%d_%H_%M_%S")
 
@@ -78,7 +88,7 @@ def submit(mass_points = set(),
                 for f in links.keys() - {"run.sh"}:
                     os.symlink("../" + f, f)
 
-                createHistogramFilter(mass)
+                createHistogramFilter(mass, ban)
             finally:
                 os.chdir("../")
 
