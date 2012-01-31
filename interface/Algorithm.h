@@ -259,7 +259,7 @@ namespace bsm
     {
         public:
             DeltaRResonanceReconstructor():
-                _leptonic_dr(0.1),
+                _leptonic_dr(1),
                 _hadronic_dr(3.14)
             {
             }
