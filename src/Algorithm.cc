@@ -11,8 +11,10 @@
 
 #include "bsm_core/interface/ID.h"
 #include "bsm_input/interface/Algebra.h"
+#include "bsm_input/interface/Jet.pb.h"
 #include "bsm_input/interface/Physics.pb.h"
 #include "interface/Algorithm.h"
+#include "interface/Utility.h"
 
 using namespace bsm;
 
@@ -388,6 +390,310 @@ void JetIterator::operator++()
         if (_jets.end() == _jet)
             _is_valid = false;
     }
+}
+
+
+
+// -- Resonance Reconstructor -------------------------------------------------
+//
+ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
+        const LorentzVector &lepton,
+        const LorentzVector &met,
+        const SynchSelector::GoodJets &jets) const
+{
+    Mttbar result;
+
+    // Reconstruct the neutrino pZ and keep solutions in vector for later
+    // use
+    //
+    NeutrinoReconstruct neutrinoReconstruct;
+    NeutrinoReconstruct::Solutions neutrinos =
+        neutrinoReconstruct(lepton, met);
+
+    result.solutions = neutrinoReconstruct.solutions();
+
+    // Prepare generator and loop over all hypotheses of the decay
+    // (different jets assignment to leptonic/hadronic legs)
+    //
+    Generator generator;
+    generator.init(jets);
+
+    // Best Solution should have minimun value of the DeltaRmin:
+    //
+    //  DeltaRmin = DeltaR(ltop, b) + DeltaR(ltop, l) + DeltaR(ltop, nu)
+    //
+    // and maximum value of the DeltaR between leptonic and hadronic
+    // tops in case the same DeltaRmin is found:
+    //
+    //  DeltaRlh = DeltaR(ltop, htop)
+    //
+    struct Solution
+    {
+        Solution(): deltaRmin(FLT_MAX), deltaRlh(0), htop_njets(0)
+        {
+        }
+
+        LorentzVector ltop; // Reconstructed leptonic leg
+        LorentzVector htop; // Reconstructed hadronic leg
+        LorentzVector missing_energy;
+
+        CorrectedJets htop_jets;
+
+        float deltaRmin;
+        float deltaRlh;
+        int htop_njets;
+    } best_solution;
+
+    // Loop over all possible hypotheses and pick the best one
+    // Note: take into account all reconstructed neutrino solutions
+    //
+    do
+    {
+        Generator::Hypothesis hypothesis = generator.hypothesis();
+
+        if (!isValidHadronicSide(hypothesis.hadronic)
+                || !isValidLeptonicSide(hypothesis.leptonic)
+                || !isValidNeutralSide(hypothesis.neutral))
+
+                continue;
+
+        // Leptonic Top p4 = leptonP4 + nuP4 + bP4
+        // where bP4 is:
+        //  - b-tagged jet
+        //  - otherwise, the hardest jet (highest pT)
+        //
+        LorentzVector ltop = lepton;
+        LorentzVector ltop_jet = getLeptonicJet(hypothesis.leptonic);
+        ltop += ltop_jet;
+
+        // the neutrino will be taken into account later
+        //
+
+        // htop is a sum of all jet p4s assigned to the hadronic leg
+        //
+        LorentzVector htop;
+        for(Generator::Iterators::const_iterator jet =
+                    hypothesis.hadronic.begin();
+                hypothesis.hadronic.end() != jet;
+                ++jet)
+        {
+            htop += *(*jet)->corrected_p4;
+        }
+
+        // Take into account all neutrino solutions. Solutions are kept in
+        // a vector of pointer
+        //
+        for(NeutrinoReconstruct::Solutions::const_iterator neutrino =
+                    neutrinos.begin();
+                neutrinos.end() != neutrino;
+                ++neutrino)
+        {
+            const LorentzVector &neutrino_p4 = *(*neutrino);
+
+            LorentzVector ltop_tmp = ltop;
+            ltop_tmp += neutrino_p4;
+
+            const float deltaRmin = dr(ltop_tmp, ltop_jet)
+                + dr(ltop_tmp, lepton)
+                + dr(ltop_tmp, neutrino_p4);
+
+            const float deltaRlh = dr(ltop_tmp, htop);
+
+            if (deltaRmin < best_solution.deltaRmin
+                    || (deltaRmin == best_solution.deltaRmin
+                        && deltaRlh > best_solution.deltaRlh))
+            {
+                best_solution.deltaRmin = deltaRmin;
+                best_solution.deltaRlh = deltaRlh;
+                best_solution.ltop = ltop_tmp;
+                best_solution.htop = htop;
+                best_solution.missing_energy = neutrino_p4;
+                best_solution.htop_njets = hypothesis.hadronic.size();
+
+                best_solution.htop_jets.clear();
+                for(Generator::Iterators::const_iterator jet =
+                            hypothesis.hadronic.begin();
+                        hypothesis.hadronic.end() != jet;
+                        ++jet)
+                {
+                    best_solution.htop_jets.push_back(*(*jet));
+                }
+            }
+        }
+    }
+    while(generator.next());
+
+    // Best Solution is found
+    //
+    result.mttbar = best_solution.ltop + best_solution.htop;
+    result.wlep = best_solution.missing_energy + lepton;
+    result.neutrino = best_solution.missing_energy;
+    result.ltop = best_solution.ltop;
+    result.htop = best_solution.htop;
+    result.htop_njets = best_solution.htop_njets;
+
+    result.htop_jets.clear();
+    for(CorrectedJets::const_iterator jet = best_solution.htop_jets.begin();
+            best_solution.htop_jets.end() != jet;
+            ++jet)
+    {
+        result.htop_jets.push_back(*jet);
+    }
+
+    sort(result.htop_jets.begin(), result.htop_jets.end(), CorrectedPtGreater()); 
+
+    return result;
+}
+
+void ResonanceReconstructor::print(std::ostream &out) const
+{
+}
+
+
+
+// -- Simple Resonance Reconstructor ------------------------------------------ 
+//
+uint32_t SimpleResonanceReconstructor::id() const
+{
+    return core::ID<SimpleResonanceReconstructor>::get();
+}
+
+SimpleResonanceReconstructor::ObjectPtr SimpleResonanceReconstructor::clone() const
+{
+    return ObjectPtr(new SimpleResonanceReconstructor(*this));
+}
+
+// Private
+//
+bool SimpleResonanceReconstructor::isValidHadronicSide(const Iterators &jets)
+    const
+{
+    return !jets.empty();
+}
+
+bool SimpleResonanceReconstructor::isValidLeptonicSide(const Iterators &jets)
+    const
+{
+    return !jets.empty();
+}
+
+bool SimpleResonanceReconstructor::isValidNeutralSide(const Iterators &jets)
+    const
+{
+    return true;
+}
+
+bsm::LorentzVector SimpleResonanceReconstructor::getLeptonicJet(
+        const Iterators &jets) const
+{
+    const CorrectedJet *hardest_jet = 0;
+    float highest_pt = 0;
+
+    // Select the hardest jet (highest pT)
+    // Note: hypothesis keeps vector of iterators to Correcte Jets.
+    //       Corrected jet has a pointer to the original jet and
+    //       corrected P4
+    //
+    for(Iterators::const_iterator jet = jets.begin(); jets.end() != jet; ++jet)
+    {
+        const float jet_pt = pt(*(*jet)->corrected_p4);
+        if (jet_pt > highest_pt)
+            hardest_jet = &*(*jet);
+    }
+
+    return *hardest_jet->corrected_p4;
+}
+
+
+
+// -- Btag Resonance Reconstructor -------------------------------------------- 
+//
+uint32_t BtagResonanceReconstructor::id() const
+{
+    return core::ID<BtagResonanceReconstructor>::get();
+}
+
+BtagResonanceReconstructor::ObjectPtr BtagResonanceReconstructor::clone() const
+{
+    return ObjectPtr(new BtagResonanceReconstructor(*this));
+}
+
+// Private
+//
+bool BtagResonanceReconstructor::isValidHadronicSide(const Iterators &jets)
+    const
+{
+    return SimpleResonanceReconstructor::isValidHadronicSide(jets)
+        && 1 >= countBtags(jets);
+}
+
+bool BtagResonanceReconstructor::isValidLeptonicSide(const Iterators &jets)
+    const
+{
+    return SimpleResonanceReconstructor::isValidLeptonicSide(jets)
+        && 1 >= countBtags(jets);
+}
+
+bool BtagResonanceReconstructor::isValidNeutralSide(const Iterators &jets)
+    const
+{
+    return 1 > countBtags(jets);
+}
+
+bsm::LorentzVector BtagResonanceReconstructor::getLeptonicJet(
+        const Iterators &jets) const
+{
+    const CorrectedJet *hardest_jet = 0;
+    float highest_pt = 0;
+
+    // Select the hardest jet (highest pT)
+    // Note: hypothesis keeps vector of iterators to Correcte Jets.
+    //       Corrected jet has a pointer to the original jet and
+    //       corrected P4
+    //
+    for(Iterators::const_iterator jet = jets.begin(); jets.end() != jet; ++jet)
+    {
+        if (isBtagJet((*jet)->jet))
+        {
+            hardest_jet = &*(*jet);
+            break;
+        }
+
+        const float jet_pt = pt(*(*jet)->corrected_p4);
+        if (jet_pt > highest_pt)
+            hardest_jet = &*(*jet);
+    }
+
+    return *hardest_jet->corrected_p4;
+}
+
+uint32_t BtagResonanceReconstructor::countBtags(const Iterators &jets) const
+{
+    uint32_t btagged_jets = 0;
+    for(Iterators::const_iterator jet = jets.begin(); jets.end() != jet; ++jet)
+    {
+        if (isBtagJet((*jet)->jet))
+            ++btagged_jets;
+    }
+
+    return btagged_jets;
+}
+
+bool BtagResonanceReconstructor::isBtagJet(const Jet *jet) const
+{
+    typedef ::google::protobuf::RepeatedPtrField<Jet::BTag> BTags;
+
+    for(BTags::const_iterator btag = jet->btag().begin();
+            jet->btag().end() != btag;
+            ++btag)
+    {
+        if (Jet::BTag::SSVHE == btag->type())
+        {
+            return 1.74 < btag->discriminator();
+        }
+    }
+
+    return false;
 }
 
 

@@ -85,6 +85,10 @@ namespace bsm
 
     class CorrectedPtLess;
     class CorrectedPtGreater;
+
+    class ResonanceReconstructor;
+    class SimpleResonanceReconstructor;
+    class BtagResonanceReconstructor;
 }
 
 #endif
