@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
 #
-# Read Theta limits from text files and convert these to LaTeX format
-#
 # Created by Samvel Khalatyan, Dec 21, 2011
 # Copyright 2011, All rights reserved
+
+'''
+Read Theta limits from text files and convert these to LaTeX format
+'''
 
 import re
 
