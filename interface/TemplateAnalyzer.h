@@ -90,6 +90,10 @@ namespace bsm
             virtual void setSimpleDrReconstruction()
             {
             }
+
+            virtual void setHemisphereReconstruction()
+            {
+            }
     };
 
     class TemplatesOptions : public Options
@@ -108,6 +112,7 @@ namespace bsm
             void setWjetCorrection();
             void setBtagReconstruction();
             void setSimpleDrReconstruction();
+            void setHemisphereReconstruction();
 
             TemplatesDelegate *_delegate;
 
@@ -135,6 +140,7 @@ namespace bsm
 
             virtual void setBtagReconstruction();
             virtual void setSimpleDrReconstruction();
+            virtual void setHemisphereReconstruction();
 
             const H1Ptr cutflow() const;
 

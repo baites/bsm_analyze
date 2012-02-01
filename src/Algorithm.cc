@@ -783,6 +783,58 @@ bool SimpleDrResonanceReconstructor::isValidNeutralSide(const LorentzVector &lep
 
 
 
+// -- Hemisphere Resonance Reconstructor ------------------------------------------
+//
+uint32_t HemisphereResonanceReconstructor::id() const
+{
+    return core::ID<HemisphereResonanceReconstructor>::get();
+}
+
+HemisphereResonanceReconstructor::ObjectPtr HemisphereResonanceReconstructor::clone() const
+{
+    return ObjectPtr(new HemisphereResonanceReconstructor(*this));
+}
+
+// Private
+//
+bool HemisphereResonanceReconstructor::isValidHadronicSide(const LorentzVector &lepton,
+        const Iterators &jets) const
+{
+    bool result = SimpleResonanceReconstructor::isValidHadronicSide(lepton, jets);
+    for(Iterators::const_iterator jet = jets.begin();
+            result && jets.end() != jet;
+            ++jet)
+    {
+        if (_half_pi < angle(lepton, *(*jet)->corrected_p4))
+            result = false;
+    }
+
+    return result;
+}
+
+bool HemisphereResonanceReconstructor::isValidLeptonicSide(const LorentzVector &lepton,
+        const Iterators &jets) const
+{
+    bool result = SimpleResonanceReconstructor::isValidHadronicSide(lepton, jets);
+    for(Iterators::const_iterator jet = jets.begin();
+            result && jets.end() != jet;
+            ++jet)
+    {
+        if (_half_pi > angle(lepton, *(*jet)->corrected_p4))
+            result = false;
+    }
+
+    return result;
+}
+
+bool HemisphereResonanceReconstructor::isValidNeutralSide(const LorentzVector &lepton,
+        const Iterators &jets) const
+{
+    return jets.empty();
+}
+
+
+
 /*
 // Closest Jet Algorithm
 ClosestJet::ClosestJet()

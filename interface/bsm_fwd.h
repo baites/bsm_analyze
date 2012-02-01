@@ -90,6 +90,7 @@ namespace bsm
     class SimpleResonanceReconstructor;
     class BtagResonanceReconstructor;
     class SimpleDrResonanceReconstructor;
+    class HemisphereResonanceReconstructor;
 }
 
 #endif

@@ -57,6 +57,11 @@ TemplatesOptions::TemplatesOptions()
          po::value<bool>()->notifier(
              boost::bind(&TemplatesOptions::setSimpleDrReconstruction, this)),
          "Use simple delta-r based reconstruction")
+
+        ("hemisphere-reconstruction",
+         po::value<bool>()->notifier(
+             boost::bind(&TemplatesOptions::setHemisphereReconstruction, this)),
+         "Use hemisphere based reconstruction")
     ;
 }
 
@@ -103,6 +108,14 @@ void TemplatesOptions::setSimpleDrReconstruction()
         return;
 
     delegate()->setSimpleDrReconstruction();
+}
+
+void TemplatesOptions::setHemisphereReconstruction()
+{
+    if (!delegate())
+        return;
+
+    delegate()->setHemisphereReconstruction();
 }
 
 
@@ -496,6 +509,14 @@ void TemplateAnalyzer::setSimpleDrReconstruction()
     stopMonitor(_reconstructor);
 
     _reconstructor.reset(new SimpleDrResonanceReconstructor());
+    monitor(_reconstructor);
+}
+
+void TemplateAnalyzer::setHemisphereReconstruction()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new HemisphereResonanceReconstructor());
     monitor(_reconstructor);
 }
 

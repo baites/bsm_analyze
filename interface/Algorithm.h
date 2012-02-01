@@ -284,6 +284,33 @@ namespace bsm
             const float _hadronic_dr;
     };
 
+    class HemisphereResonanceReconstructor: public SimpleResonanceReconstructor
+    {
+        public:
+            HemisphereResonanceReconstructor():
+                _half_pi(3.14159265 / 2)
+            {
+            }
+
+            // Object interface
+            //
+            virtual uint32_t id() const;
+            virtual ObjectPtr clone() const;
+
+        protected:
+            virtual bool isValidHadronicSide(const LorentzVector &,
+                                             const Iterators &) const;
+
+            virtual bool isValidLeptonicSide(const LorentzVector &,
+                                             const Iterators &) const;
+
+            virtual bool isValidNeutralSide(const LorentzVector &,
+                                            const Iterators &) const;
+
+        private:
+            const float _half_pi;
+    };
+
     /*
     namespace dev 
     {
