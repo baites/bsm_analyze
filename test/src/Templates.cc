@@ -1045,6 +1045,11 @@ int Templates::rebin(const Template &plot) const
         case Template::HTOP_JET2_MASS: return 5;
         case Template::HTOP_JET3_MASS: return 5;
         case Template::HTOP_JET4_MASS: return 5;
+        case Template::LTOP_JET1_PT: return 25;
+        case Template::HTOP_JET1_PT: return 25;
+        case Template::HTOP_JET2_PT: return 25;
+        case Template::HTOP_JET3_PT: return 25;
+        case Template::HTOP_JET4_PT: return 25;
         case Template::HTOP_NJETS: return 1;
         case Template::HTOP_DELTA_R: return 25;
         case Template::HTOP_PT: return 25;
