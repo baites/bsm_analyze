@@ -86,6 +86,10 @@ namespace bsm
             virtual void setBtagReconstruction()
             {
             }
+
+            virtual void setSimpleDrReconstruction()
+            {
+            }
     };
 
     class TemplatesOptions : public Options
@@ -103,6 +107,7 @@ namespace bsm
         private:
             void setWjetCorrection();
             void setBtagReconstruction();
+            void setSimpleDrReconstruction();
 
             TemplatesDelegate *_delegate;
 
@@ -129,6 +134,7 @@ namespace bsm
             }
 
             virtual void setBtagReconstruction();
+            virtual void setSimpleDrReconstruction();
 
             const H1Ptr cutflow() const;
 
@@ -176,12 +182,12 @@ namespace bsm
             const P4MonitorPtr ltop() const;
             const P4MonitorPtr htop() const;
 
-            const P4MonitorPtr htopFirstJet() const;
-            const P4MonitorPtr htopSecondJet() const;
-            const P4MonitorPtr htopThirdJet() const;
-            const P4MonitorPtr htopFourthJet() const;
+            const P4MonitorPtr htopJet1() const;
+            const P4MonitorPtr htopJet2() const;
+            const P4MonitorPtr htopJet3() const;
+            const P4MonitorPtr htopJet4() const;
 
-            const P4MonitorPtr ltopFirstJet() const;
+            const P4MonitorPtr ltopJet1() const;
 
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
             SynchSelectorDelegate *getSynchSelectorDelegate() const;
@@ -295,12 +301,12 @@ namespace bsm
             P4MonitorPtr _ltop;
             P4MonitorPtr _htop;
 
-            P4MonitorPtr _htop_first_jet;
-            P4MonitorPtr _htop_second_jet;
-            P4MonitorPtr _htop_third_jet;
-            P4MonitorPtr _htop_fourth_jet;
+            P4MonitorPtr _htop_jet1;
+            P4MonitorPtr _htop_jet2;
+            P4MonitorPtr _htop_jet3;
+            P4MonitorPtr _htop_jet4;
 
-            P4MonitorPtr _ltop_first_jet;
+            P4MonitorPtr _ltop_jet1;
 
             boost::shared_ptr<ResonanceReconstructor> _reconstructor;
     };

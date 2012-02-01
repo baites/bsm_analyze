@@ -220,12 +220,12 @@ int main(int argc, char *argv[])
             shared_ptr<P4Canvas> ltop(new P4Canvas("ltop", "ltop"));
             shared_ptr<P4Canvas> htop(new P4Canvas("htop", "htop"));
 
-            shared_ptr<P4Canvas> htop_first_jet(new P4Canvas("htop first jet", "htop_jet1"));
-            shared_ptr<P4Canvas> htop_second_jet(new P4Canvas("htop second jet", "htop_jet2"));
-            shared_ptr<P4Canvas> htop_third_jet(new P4Canvas("htop third jet", "htop_jet3"));
-            shared_ptr<P4Canvas> htop_fourth_jet(new P4Canvas("htop fourth jet", "htop_jet4"));
+            shared_ptr<P4Canvas> htop_first_jet(new P4Canvas("htop jet1", "htop_jet1"));
+            shared_ptr<P4Canvas> htop_second_jet(new P4Canvas("htop jet2", "htop_jet2"));
+            shared_ptr<P4Canvas> htop_third_jet(new P4Canvas("htop jet3", "htop_jet3"));
+            shared_ptr<P4Canvas> htop_fourth_jet(new P4Canvas("htop jet4", "htop_jet4"));
 
-            shared_ptr<P4Canvas> ltop_first_jet(new P4Canvas("ltop first jet", "ltop_jet1"));
+            shared_ptr<P4Canvas> ltop_first_jet(new P4Canvas("ltop jet1", "ltop_jet1"));
 
             if (app->output())
             {
@@ -276,12 +276,12 @@ int main(int argc, char *argv[])
                 ltop->write(app->output().get(), *analyzer->ltop());
                 htop->write(app->output().get(), *analyzer->htop());
 
-                htop_first_jet->write(app->output().get(), *analyzer->htopFirstJet());
-                htop_second_jet->write(app->output().get(), *analyzer->htopSecondJet());
-                htop_third_jet->write(app->output().get(), *analyzer->htopThirdJet());
-                htop_fourth_jet->write(app->output().get(), *analyzer->htopFourthJet());
+                htop_first_jet->write(app->output().get(), *analyzer->htopJet1());
+                htop_second_jet->write(app->output().get(), *analyzer->htopJet2());
+                htop_third_jet->write(app->output().get(), *analyzer->htopJet3());
+                htop_fourth_jet->write(app->output().get(), *analyzer->htopJet4());
 
-                ltop_first_jet->write(app->output().get(), *analyzer->ltopFirstJet());
+                ltop_first_jet->write(app->output().get(), *analyzer->ltopJet1());
             }
 
             if (app->isInteractive())

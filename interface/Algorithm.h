@@ -255,10 +255,10 @@ namespace bsm
             bool isBtagJet(const Jet *jet) const;
     };
 
-    class DeltaRResonanceReconstructor: public SimpleResonanceReconstructor
+    class SimpleDrResonanceReconstructor: public SimpleResonanceReconstructor
     {
         public:
-            DeltaRResonanceReconstructor():
+            SimpleDrResonanceReconstructor():
                 _leptonic_dr(1),
                 _hadronic_dr(3.14)
             {

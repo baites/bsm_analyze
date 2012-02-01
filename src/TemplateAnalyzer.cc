@@ -52,6 +52,11 @@ TemplatesOptions::TemplatesOptions()
          po::value<bool>()->notifier(
              boost::bind(&TemplatesOptions::setBtagReconstruction, this)),
          "Use b-tag jets in reconstruction")
+
+        ("simple-dr-reconstruction",
+         po::value<bool>()->notifier(
+             boost::bind(&TemplatesOptions::setSimpleDrReconstruction, this)),
+         "Use simple delta-r based reconstruction")
     ;
 }
 
@@ -90,6 +95,14 @@ void TemplatesOptions::setBtagReconstruction()
         return;
 
     delegate()->setBtagReconstruction();
+}
+
+void TemplatesOptions::setSimpleDrReconstruction()
+{
+    if (!delegate())
+        return;
+
+    delegate()->setSimpleDrReconstruction();
 }
 
 
@@ -248,27 +261,27 @@ TemplateAnalyzer::TemplateAnalyzer():
     monitor(_ltop);
     monitor(_htop);
 
-    _htop_first_jet.reset(new P4Monitor());
-    _htop_first_jet->mass()->mutable_axis()->init(250, 0, 250);
+    _htop_jet1.reset(new P4Monitor());
+    _htop_jet1->mass()->mutable_axis()->init(250, 0, 250);
 
-    _htop_second_jet.reset(new P4Monitor());
-    _htop_second_jet->mass()->mutable_axis()->init(100, 0, 100);
+    _htop_jet2.reset(new P4Monitor());
+    _htop_jet2->mass()->mutable_axis()->init(100, 0, 100);
 
-    _htop_third_jet.reset(new P4Monitor());
-    _htop_third_jet->mass()->mutable_axis()->init(100, 0, 100);
+    _htop_jet3.reset(new P4Monitor());
+    _htop_jet3->mass()->mutable_axis()->init(100, 0, 100);
 
-    _htop_fourth_jet.reset(new P4Monitor());
-    _htop_fourth_jet->mass()->mutable_axis()->init(100, 0, 100);
+    _htop_jet4.reset(new P4Monitor());
+    _htop_jet4->mass()->mutable_axis()->init(100, 0, 100);
 
-    _ltop_first_jet.reset(new P4Monitor());
-    _ltop_first_jet->mass()->mutable_axis()->init(100, 0, 100);
+    _ltop_jet1.reset(new P4Monitor());
+    _ltop_jet1->mass()->mutable_axis()->init(100, 0, 100);
 
-    monitor(_htop_first_jet);
-    monitor(_htop_second_jet);
-    monitor(_htop_third_jet);
-    monitor(_htop_fourth_jet);
+    monitor(_htop_jet1);
+    monitor(_htop_jet2);
+    monitor(_htop_jet3);
+    monitor(_htop_jet4);
 
-    monitor(_ltop_first_jet);
+    monitor(_ltop_jet1);
 
     _pileup.reset(new Pileup());
     monitor(_pileup);
@@ -448,27 +461,18 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
     monitor(_ltop);
     monitor(_htop);
 
-    _htop_first_jet =
-        dynamic_pointer_cast<P4Monitor>(object._htop_first_jet->clone());
+    _htop_jet1 = dynamic_pointer_cast<P4Monitor>(object._htop_jet1->clone());
+    _htop_jet2 = dynamic_pointer_cast<P4Monitor>(object._htop_jet2->clone());
+    _htop_jet3 = dynamic_pointer_cast<P4Monitor>(object._htop_jet3->clone());
+    _htop_jet4 = dynamic_pointer_cast<P4Monitor>(object._htop_jet4->clone());
+    _ltop_jet1 = dynamic_pointer_cast<P4Monitor>(object._ltop_jet1->clone());
 
-    _htop_second_jet =
-        dynamic_pointer_cast<P4Monitor>(object._htop_second_jet->clone());
+    monitor(_htop_jet1);
+    monitor(_htop_jet2);
+    monitor(_htop_jet3);
+    monitor(_htop_jet4);
 
-    _htop_third_jet =
-        dynamic_pointer_cast<P4Monitor>(object._htop_third_jet->clone());
-
-    _htop_fourth_jet =
-        dynamic_pointer_cast<P4Monitor>(object._htop_fourth_jet->clone());
-
-    _ltop_first_jet =
-        dynamic_pointer_cast<P4Monitor>(object._ltop_first_jet->clone());
-
-    monitor(_htop_first_jet);
-    monitor(_htop_second_jet);
-    monitor(_htop_third_jet);
-    monitor(_htop_fourth_jet);
-
-    monitor(_ltop_first_jet);
+    monitor(_ltop_jet1);
 
     _pileup =
         dynamic_pointer_cast<Pileup>(object._pileup->clone());
@@ -484,6 +488,14 @@ void TemplateAnalyzer::setBtagReconstruction()
     stopMonitor(_reconstructor);
 
     _reconstructor.reset(new BtagResonanceReconstructor());
+    monitor(_reconstructor);
+}
+
+void TemplateAnalyzer::setSimpleDrReconstruction()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new SimpleDrResonanceReconstructor());
     monitor(_reconstructor);
 }
 
@@ -677,29 +689,29 @@ const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::htop() const
     return _htop;
 }
 
-const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::htopFirstJet() const
+const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::htopJet1() const
 {
-    return _htop_first_jet;
+    return _htop_jet1;
 }
 
-const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::htopSecondJet() const
+const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::htopJet2() const
 {
-    return _htop_second_jet;
+    return _htop_jet2;
 }
 
-const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::htopThirdJet() const
+const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::htopJet3() const
 {
-    return _htop_third_jet;
+    return _htop_jet3;
 }
 
-const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::htopFourthJet() const
+const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::htopJet4() const
 {
-    return _htop_fourth_jet;
+    return _htop_jet4;
 }
 
-const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::ltopFirstJet() const
+const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::ltopJet1() const
 {
-    return _ltop_first_jet;
+    return _ltop_jet1;
 }
 
 bsm::JetEnergyCorrectionDelegate
@@ -881,23 +893,22 @@ void TemplateAnalyzer::process(const Event *event)
         solutions()->fill(resonance.solutions);
 
         if (0 < htop_jets.size())
-            htopFirstJet()->fill(*htop_jets[0].corrected_p4,
+            htopJet1()->fill(*htop_jets[0].corrected_p4,
                     _pileup_weight * _wjets_weight);
         
         if (1 < htop_jets.size())
-            htopSecondJet()->fill(*htop_jets[1].corrected_p4,
+            htopJet2()->fill(*htop_jets[1].corrected_p4,
                     _pileup_weight * _wjets_weight);
 
         if (2 < htop_jets.size())
-            htopThirdJet()->fill(*htop_jets[2].corrected_p4,
+            htopJet3()->fill(*htop_jets[2].corrected_p4,
                     _pileup_weight * _wjets_weight);
 
         if (3 < htop_jets.size())
-            htopFourthJet()->fill(*htop_jets[3].corrected_p4,
+            htopJet4()->fill(*htop_jets[3].corrected_p4,
                     _pileup_weight * _wjets_weight);
 
-        ltopFirstJet()->fill(resonance.ltop_jet,
-                _pileup_weight * _wjets_weight);
+        ltopJet1()->fill(resonance.ltop_jet, _pileup_weight * _wjets_weight);
     }
 
     // Process only events, that pass the synch selector with htlep inverted

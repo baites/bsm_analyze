@@ -723,19 +723,19 @@ bool BtagResonanceReconstructor::isBtagJet(const Jet *jet) const
 
 // -- DeltaR Resonance Reconstructor ------------------------------------------
 //
-uint32_t DeltaRResonanceReconstructor::id() const
+uint32_t SimpleDrResonanceReconstructor::id() const
 {
-    return core::ID<DeltaRResonanceReconstructor>::get();
+    return core::ID<SimpleDrResonanceReconstructor>::get();
 }
 
-DeltaRResonanceReconstructor::ObjectPtr DeltaRResonanceReconstructor::clone() const
+SimpleDrResonanceReconstructor::ObjectPtr SimpleDrResonanceReconstructor::clone() const
 {
-    return ObjectPtr(new DeltaRResonanceReconstructor(*this));
+    return ObjectPtr(new SimpleDrResonanceReconstructor(*this));
 }
 
 // Private
 //
-bool DeltaRResonanceReconstructor::isValidHadronicSide(const LorentzVector &lepton,
+bool SimpleDrResonanceReconstructor::isValidHadronicSide(const LorentzVector &lepton,
         const Iterators &jets) const
 {
     bool result = SimpleResonanceReconstructor::isValidHadronicSide(lepton, jets);
@@ -750,7 +750,7 @@ bool DeltaRResonanceReconstructor::isValidHadronicSide(const LorentzVector &lept
     return result;
 }
 
-bool DeltaRResonanceReconstructor::isValidLeptonicSide(const LorentzVector &lepton,
+bool SimpleDrResonanceReconstructor::isValidLeptonicSide(const LorentzVector &lepton,
         const Iterators &jets) const
 {
     bool result = SimpleResonanceReconstructor::isValidLeptonicSide(lepton, jets);
@@ -765,7 +765,7 @@ bool DeltaRResonanceReconstructor::isValidLeptonicSide(const LorentzVector &lept
     return result;
 }
 
-bool DeltaRResonanceReconstructor::isValidNeutralSide(const LorentzVector &lepton,
+bool SimpleDrResonanceReconstructor::isValidNeutralSide(const LorentzVector &lepton,
         const Iterators &jets) const
 {
     bool result = SimpleResonanceReconstructor::isValidNeutralSide(lepton, jets);
