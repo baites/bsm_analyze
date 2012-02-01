@@ -429,7 +429,11 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
     //
     struct Solution
     {
-        Solution(): deltaRmin(FLT_MAX), deltaRlh(0), htop_njets(0)
+        Solution():
+            deltaRmin(FLT_MAX),
+            deltaRlh(0),
+            htop_njets(0),
+            valid(false)
         {
         }
 
@@ -445,6 +449,8 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
         float deltaRmin;
         float deltaRlh;
         int htop_njets;
+
+        bool valid;
     } best_solution;
 
     // Loop over all possible hypotheses and pick the best one
@@ -531,6 +537,8 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
                 {
                     best_solution.ltop_jets.push_back(*(*jet));
                 }
+
+                best_solution.valid = true;
             }
         }
     }
@@ -538,32 +546,37 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
 
     // Best Solution is found
     //
-    result.mttbar = best_solution.ltop + best_solution.htop;
-    result.wlep = best_solution.missing_energy + lepton;
-    result.neutrino = best_solution.missing_energy;
-    result.ltop = best_solution.ltop;
-    result.ltop_jet = best_solution.ltop_jet;
-    result.htop = best_solution.htop;
-    result.htop_njets = best_solution.htop_njets;
-
-    result.htop_jets.clear();
-    for(CorrectedJets::const_iterator jet = best_solution.htop_jets.begin();
-            best_solution.htop_jets.end() != jet;
-            ++jet)
+    if (best_solution.valid)
     {
-        result.htop_jets.push_back(*jet);
-    }
+        result.mttbar = best_solution.ltop + best_solution.htop;
+        result.wlep = best_solution.missing_energy + lepton;
+        result.neutrino = best_solution.missing_energy;
+        result.ltop = best_solution.ltop;
+        result.ltop_jet = best_solution.ltop_jet;
+        result.htop = best_solution.htop;
+        result.htop_njets = best_solution.htop_njets;
 
-    result.ltop_jets.clear();
-    for(CorrectedJets::const_iterator jet = best_solution.ltop_jets.begin();
-            best_solution.ltop_jets.end() != jet;
-            ++jet)
-    {
-        result.ltop_jets.push_back(*jet);
-    }
+        result.htop_jets.clear();
+        for(CorrectedJets::const_iterator jet = best_solution.htop_jets.begin();
+                best_solution.htop_jets.end() != jet;
+                ++jet)
+        {
+            result.htop_jets.push_back(*jet);
+        }
 
-    sort(result.htop_jets.begin(), result.htop_jets.end(), CorrectedPtGreater()); 
-    sort(result.ltop_jets.begin(), result.ltop_jets.end(), CorrectedPtGreater()); 
+        result.ltop_jets.clear();
+        for(CorrectedJets::const_iterator jet = best_solution.ltop_jets.begin();
+                best_solution.ltop_jets.end() != jet;
+                ++jet)
+        {
+            result.ltop_jets.push_back(*jet);
+        }
+
+        sort(result.htop_jets.begin(), result.htop_jets.end(), CorrectedPtGreater()); 
+        sort(result.ltop_jets.begin(), result.ltop_jets.end(), CorrectedPtGreater()); 
+
+        result.valid = true;
+    }
 
     return result;
 }

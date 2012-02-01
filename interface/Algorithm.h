@@ -172,6 +172,13 @@ namespace bsm
 
             struct Mttbar
             {
+                Mttbar():
+                    htop_njets(0),
+                    solutions(0),
+                    valid(false)
+                {
+                }
+
                 LorentzVector mttbar;
                 LorentzVector wlep;
                 LorentzVector whad;
@@ -186,6 +193,8 @@ namespace bsm
 
                 int htop_njets;
                 int solutions;
+
+                bool valid;
             };
 
             Mttbar run(const LorentzVector &lepton,
