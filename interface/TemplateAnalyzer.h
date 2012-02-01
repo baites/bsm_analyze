@@ -195,6 +195,10 @@ namespace bsm
 
             const P4MonitorPtr ltopJet1() const;
 
+            const H1Ptr njetsBeforeReconstruction() const;
+            const H1Ptr njet2DrLeptonJet1() const;
+            const H1Ptr njet2DrLeptonJet2() const;
+
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
             SynchSelectorDelegate *getSynchSelectorDelegate() const;
             Cut2DSelectorDelegate *getCut2DSelectorDelegate() const;
@@ -313,6 +317,10 @@ namespace bsm
             P4MonitorPtr _htop_jet4;
 
             P4MonitorPtr _ltop_jet1;
+
+            H1ProxyPtr _njets_before_reconstruction;
+            H1ProxyPtr _njet2_dr_lepton_jet1;
+            H1ProxyPtr _njet2_dr_lepton_jet2;
 
             boost::shared_ptr<ResonanceReconstructor> _reconstructor;
     };

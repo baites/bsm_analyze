@@ -227,6 +227,21 @@ int main(int argc, char *argv[])
 
             shared_ptr<P4Canvas> ltop_first_jet(new P4Canvas("ltop jet1", "ltop_jet1"));
 
+            TH1Ptr njets_before_reconstruction =
+                convert(*analyzer->njetsBeforeReconstruction());
+            njets_before_reconstruction->SetName("njets_before_reconstruction");
+            njets_before_reconstruction->GetXaxis()->SetTitle("N_{jet}^{before reconstruction}");
+
+            TH1Ptr njet2_dr_lepton_jet1 =
+                convert(*analyzer->njet2DrLeptonJet1());
+            njet2_dr_lepton_jet1->SetName("njet2_dr_lepton_jet1");
+            njet2_dr_lepton_jet1->GetXaxis()->SetTitle("#Delta R(lepton, jet1)_{N_{jets} = 2}");
+
+            TH1Ptr njet2_dr_lepton_jet2 =
+                convert(*analyzer->njet2DrLeptonJet2());
+            njet2_dr_lepton_jet2->SetName("njet2_dr_lepton_jet2");
+            njet2_dr_lepton_jet2->GetXaxis()->SetTitle("#Delta R(lepton, jet2)_{N_{jets} = 2}");
+
             if (app->output())
             {
                 cutflow->Write();
@@ -282,6 +297,10 @@ int main(int argc, char *argv[])
                 htop_fourth_jet->write(app->output().get(), *analyzer->htopJet4());
 
                 ltop_first_jet->write(app->output().get(), *analyzer->ltopJet1());
+
+                njets_before_reconstruction->Write();
+                njet2_dr_lepton_jet1->Write();
+                njet2_dr_lepton_jet2->Write();
             }
 
             if (app->isInteractive())
