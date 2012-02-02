@@ -756,7 +756,7 @@ bool SimpleDrResonanceReconstructor::isValidHadronicSide(const LorentzVector &le
             result && jets.end() != jet;
             ++jet)
     {
-        if (_hadronic_dr < dr(lepton, *(*jet)->corrected_p4))
+        if (_hadronic_dr > dr(lepton, *(*jet)->corrected_p4))
             result = false;
     }
 
@@ -787,7 +787,7 @@ bool SimpleDrResonanceReconstructor::isValidNeutralSide(const LorentzVector &lep
             ++jet)
     {
         if (_leptonic_dr > dr(lepton, *(*jet)->corrected_p4)
-                || _hadronic_dr > dr(lepton, *(*jet)->corrected_p4))
+                || _hadronic_dr < dr(lepton, *(*jet)->corrected_p4))
             result = false;
     }
 
@@ -818,7 +818,7 @@ bool HemisphereResonanceReconstructor::isValidHadronicSide(const LorentzVector &
             result && jets.end() != jet;
             ++jet)
     {
-        if (_half_pi < angle(lepton, *(*jet)->corrected_p4))
+        if (_half_pi > angle(lepton, *(*jet)->corrected_p4))
             result = false;
     }
 
@@ -828,12 +828,12 @@ bool HemisphereResonanceReconstructor::isValidHadronicSide(const LorentzVector &
 bool HemisphereResonanceReconstructor::isValidLeptonicSide(const LorentzVector &lepton,
         const Iterators &jets) const
 {
-    bool result = SimpleResonanceReconstructor::isValidHadronicSide(lepton, jets);
+    bool result = SimpleResonanceReconstructor::isValidLeptonicSide(lepton, jets);
     for(Iterators::const_iterator jet = jets.begin();
             result && jets.end() != jet;
             ++jet)
     {
-        if (_half_pi > angle(lepton, *(*jet)->corrected_p4))
+        if (_half_pi < angle(lepton, *(*jet)->corrected_p4))
             result = false;
     }
 
