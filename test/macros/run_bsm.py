@@ -132,6 +132,8 @@ class AppController:
         cout = "cout{0}.log".format(suffix)
         cerr = "cerr{0}.log".format(suffix)
 
+        print(command, file = open("command{0}.log".format(suffix), 'w'))
+
         self.process.append(subprocess.Popen(shlex.split(command),
             stdout = open(cout, "w"),
             stderr = open(cerr, "w")))
