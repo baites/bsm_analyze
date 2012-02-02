@@ -1022,6 +1022,12 @@ int Templates::rebin(const Template &plot) const
         case Template::NPV: return 1;
         case Template::NPV_NO_PU: return 1;
         case Template::NJET: return 1;
+        case Template::NJET_BEFORE_RECONSTRUCTION: return 1;
+        case Template::NJET2_DR_LEPTON_JET1_BEFORE_RECONSTRUCTION: return 2;
+        case Template::NJET2_DR_LEPTON_JET2_BEFORE_RECONSTRUCTION: return 2;
+        case Template::NJET_AFTER_RECONSTRUCTION: return 1;
+        case Template::NJET2_DR_LEPTON_JET1_AFTER_RECONSTRUCTION: return 2;
+        case Template::NJET2_DR_LEPTON_JET2_AFTER_RECONSTRUCTION: return 2;
         case Template::TTBAR_MASS: return 100;
         case Template::TTBAR_PT: return 25;
         case Template::WLEP_MT: return 25;

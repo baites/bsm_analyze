@@ -24,6 +24,12 @@ Template::operator string() const
         case NPV: return "npv_with_pileup";
         case NPV_NO_PU: return "npv";
         case NJET: return "njets";
+        case NJET_BEFORE_RECONSTRUCTION: return "njets_before_reconstruction";
+        case NJET2_DR_LEPTON_JET1_BEFORE_RECONSTRUCTION:return "njet2_dr_lepton_jet1_before_reconstruction";
+        case NJET2_DR_LEPTON_JET2_BEFORE_RECONSTRUCTION:return "njet2_dr_lepton_jet2_before_reconstruction";
+        case NJET_AFTER_RECONSTRUCTION: return "njets_after_reconstruction";
+        case NJET2_DR_LEPTON_JET1_AFTER_RECONSTRUCTION:return "njet2_dr_lepton_jet1_after_reconstruction";
+        case NJET2_DR_LEPTON_JET2_AFTER_RECONSTRUCTION:return "njet2_dr_lepton_jet2_after_reconstruction";
         case TTBAR_MASS: return "mttbar_after_htlep";
         case TTBAR_PT: return "ttbar_pt";
         case WLEP_MT: return "wlep_mt";
@@ -82,6 +88,12 @@ string Template::repr() const
         case NPV: return "npv_with_pileup";
         case NPV_NO_PU: return "npv_no_pileup";
         case NJET: return "njets";
+        case NJET_BEFORE_RECONSTRUCTION: return "njets_before_reconstruction";
+        case NJET2_DR_LEPTON_JET1_BEFORE_RECONSTRUCTION:return "njet2_dr_lepton_jet1_before_reconstruction";
+        case NJET2_DR_LEPTON_JET2_BEFORE_RECONSTRUCTION:return "njet2_dr_lepton_jet2_before_reconstruction";
+        case NJET_AFTER_RECONSTRUCTION: return "njets_after_reconstruction";
+        case NJET2_DR_LEPTON_JET1_AFTER_RECONSTRUCTION:return "njet2_dr_lepton_jet1_after_reconstruction";
+        case NJET2_DR_LEPTON_JET2_AFTER_RECONSTRUCTION:return "njet2_dr_lepton_jet2_after_reconstruction";
         case TTBAR_MASS: return "mttbar_after_htlep";
         case TTBAR_PT: return "ttbar_pt";
         case WLEP_MT: return "wlep_mt";
@@ -156,6 +168,12 @@ string Template::unit() const
         case NPV: return "";
         case NPV_NO_PU: return "";
         case NJET: return "";
+        case NJET_BEFORE_RECONSTRUCTION: return "";
+        case NJET2_DR_LEPTON_JET1_BEFORE_RECONSTRUCTION:return "";
+        case NJET2_DR_LEPTON_JET2_BEFORE_RECONSTRUCTION:return "";
+        case NJET_AFTER_RECONSTRUCTION: return "";
+        case NJET2_DR_LEPTON_JET1_AFTER_RECONSTRUCTION:return "";
+        case NJET2_DR_LEPTON_JET2_AFTER_RECONSTRUCTION:return "";
         case TTBAR_MASS: return "TeV/c^{2}";
         case TTBAR_PT: return "GeV/c";
         case WLEP_MT: return "GeV/c^{2}";

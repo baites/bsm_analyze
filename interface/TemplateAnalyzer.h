@@ -167,6 +167,14 @@ namespace bsm
             const H1Ptr met() const;
             const H1Ptr metNoWeight() const;
 
+            const H1Ptr njetsBeforeReconstruction() const;
+            const H1Ptr njet2DrLeptonJet1BeforeReconstruction() const;
+            const H1Ptr njet2DrLeptonJet2BeforeReconstruction() const;
+
+            const H1Ptr njetsAfterReconstruction() const;
+            const H1Ptr njet2DrLeptonJet1AfterReconstruction() const;
+            const H1Ptr njet2DrLeptonJet2AfterReconstruction() const;
+
             const H2Ptr ljetMetDphivsMetBeforeTricut() const;
             const H2Ptr leptonMetDphivsMetBeforeTricut() const;
             const H2Ptr ljetMetDphivsMet() const;
@@ -194,10 +202,6 @@ namespace bsm
             const P4MonitorPtr htopJet4() const;
 
             const P4MonitorPtr ltopJet1() const;
-
-            const H1Ptr njetsBeforeReconstruction() const;
-            const H1Ptr njet2DrLeptonJet1() const;
-            const H1Ptr njet2DrLeptonJet2() const;
 
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
             SynchSelectorDelegate *getSynchSelectorDelegate() const;
@@ -319,8 +323,12 @@ namespace bsm
             P4MonitorPtr _ltop_jet1;
 
             H1ProxyPtr _njets_before_reconstruction;
-            H1ProxyPtr _njet2_dr_lepton_jet1;
-            H1ProxyPtr _njet2_dr_lepton_jet2;
+            H1ProxyPtr _njet2_dr_lepton_jet1_before_reconstruction;
+            H1ProxyPtr _njet2_dr_lepton_jet2_before_reconstruction;
+
+            H1ProxyPtr _njets_after_reconstruction;
+            H1ProxyPtr _njet2_dr_lepton_jet1_after_reconstruction;
+            H1ProxyPtr _njet2_dr_lepton_jet2_after_reconstruction;
 
             boost::shared_ptr<ResonanceReconstructor> _reconstructor;
     };

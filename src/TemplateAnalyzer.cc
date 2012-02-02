@@ -299,11 +299,20 @@ TemplateAnalyzer::TemplateAnalyzer():
     _njets_before_reconstruction.reset(new H1Proxy(15, 0, 15));
     monitor(_njets_before_reconstruction);
 
-    _njet2_dr_lepton_jet1.reset(new H1Proxy(100, 0, 100));
-    monitor(_njet2_dr_lepton_jet1);
+    _njet2_dr_lepton_jet1_before_reconstruction.reset(new H1Proxy(100, 0, 10));
+    monitor(_njet2_dr_lepton_jet1_before_reconstruction);
 
-    _njet2_dr_lepton_jet2.reset(new H1Proxy(100, 0, 100));
-    monitor(_njet2_dr_lepton_jet2);
+    _njet2_dr_lepton_jet2_before_reconstruction.reset(new H1Proxy(100, 0, 10));
+    monitor(_njet2_dr_lepton_jet2_before_reconstruction);
+
+    _njets_after_reconstruction.reset(new H1Proxy(15, 0, 15));
+    monitor(_njets_after_reconstruction);
+
+    _njet2_dr_lepton_jet1_after_reconstruction.reset(new H1Proxy(100, 0, 10));
+    monitor(_njet2_dr_lepton_jet1_after_reconstruction);
+
+    _njet2_dr_lepton_jet2_after_reconstruction.reset(new H1Proxy(100, 0, 10));
+    monitor(_njet2_dr_lepton_jet2_after_reconstruction);
 
     _pileup.reset(new Pileup());
     monitor(_pileup);
@@ -500,13 +509,25 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
         dynamic_pointer_cast<H1Proxy>(object._njets_before_reconstruction->clone());
     monitor(_njets_before_reconstruction);
 
-    _njet2_dr_lepton_jet1 =
-        dynamic_pointer_cast<H1Proxy>(object._njet2_dr_lepton_jet1->clone());
-    monitor(_njet2_dr_lepton_jet1);
+    _njet2_dr_lepton_jet1_before_reconstruction =
+        dynamic_pointer_cast<H1Proxy>(object._njet2_dr_lepton_jet1_before_reconstruction->clone());
+    monitor(_njet2_dr_lepton_jet1_before_reconstruction);
 
-    _njet2_dr_lepton_jet2 =
-        dynamic_pointer_cast<H1Proxy>(object._njet2_dr_lepton_jet2->clone());
-    monitor(_njet2_dr_lepton_jet2);
+    _njet2_dr_lepton_jet2_before_reconstruction =
+        dynamic_pointer_cast<H1Proxy>(object._njet2_dr_lepton_jet2_before_reconstruction->clone());
+    monitor(_njet2_dr_lepton_jet2_before_reconstruction);
+
+    _njets_after_reconstruction =
+        dynamic_pointer_cast<H1Proxy>(object._njets_after_reconstruction->clone());
+    monitor(_njets_after_reconstruction);
+
+    _njet2_dr_lepton_jet1_after_reconstruction =
+        dynamic_pointer_cast<H1Proxy>(object._njet2_dr_lepton_jet1_after_reconstruction->clone());
+    monitor(_njet2_dr_lepton_jet1_after_reconstruction);
+
+    _njet2_dr_lepton_jet2_after_reconstruction =
+        dynamic_pointer_cast<H1Proxy>(object._njet2_dr_lepton_jet2_after_reconstruction->clone());
+    monitor(_njet2_dr_lepton_jet2_after_reconstruction);
 
     _pileup =
         dynamic_pointer_cast<Pileup>(object._pileup->clone());
@@ -761,14 +782,29 @@ const TemplateAnalyzer::H1Ptr TemplateAnalyzer::njetsBeforeReconstruction() cons
     return _njets_before_reconstruction->histogram();
 }
 
-const TemplateAnalyzer::H1Ptr TemplateAnalyzer::njet2DrLeptonJet1() const
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::njet2DrLeptonJet1BeforeReconstruction() const
 {
-    return _njet2_dr_lepton_jet1->histogram();
+    return _njet2_dr_lepton_jet1_before_reconstruction->histogram();
 }
 
-const TemplateAnalyzer::H1Ptr TemplateAnalyzer::njet2DrLeptonJet2() const
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::njet2DrLeptonJet2BeforeReconstruction() const
 {
-    return _njet2_dr_lepton_jet2->histogram();
+    return _njet2_dr_lepton_jet2_before_reconstruction->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::njetsAfterReconstruction() const
+{
+    return _njets_after_reconstruction->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::njet2DrLeptonJet1AfterReconstruction() const
+{
+    return _njet2_dr_lepton_jet1_after_reconstruction->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::njet2DrLeptonJet2AfterReconstruction() const
+{
+    return _njet2_dr_lepton_jet2_after_reconstruction->histogram();
 }
 
 bsm::JetEnergyCorrectionDelegate
@@ -875,6 +911,16 @@ void TemplateAnalyzer::process(const Event *event)
         njetsBeforeReconstruction()->fill(_synch_selector->goodJets().size(),
                     _pileup_weight * _wjets_weight);
 
+        if (2 == _synch_selector->goodJets().size())
+        {
+            const LorentzVector &el_p4 = _synch_selector->goodElectrons()[0]->physics_object().p4();
+            njet2DrLeptonJet1BeforeReconstruction()->fill(dr(el_p4, *_synch_selector->goodJets()[0].corrected_p4),
+                    _pileup_weight * _wjets_weight);
+
+            njet2DrLeptonJet2BeforeReconstruction()->fill(dr(el_p4, *_synch_selector->goodJets()[1].corrected_p4),
+                    _pileup_weight * _wjets_weight);
+        }
+
         Mttbar resonance = mttbar();
 
         if (_synch_selector->reconstruction(resonance.valid)
@@ -968,12 +1014,16 @@ void TemplateAnalyzer::process(const Event *event)
 
             ltopJet1()->fill(resonance.ltop_jet, _pileup_weight * _wjets_weight);
 
-            if (2 == _synch_selector->goodJets().size())
-            {
-                njet2DrLeptonJet1()->fill(dr(el_p4, *_synch_selector->goodJets()[0].corrected_p4),
+            njetsAfterReconstruction()->fill(_synch_selector->goodJets().size(),
                         _pileup_weight * _wjets_weight);
 
-                njet2DrLeptonJet2()->fill(dr(el_p4, *_synch_selector->goodJets()[1].corrected_p4),
+            if (2 == _synch_selector->goodJets().size())
+            {
+                const LorentzVector &el_p4 = _synch_selector->goodElectrons()[0]->physics_object().p4();
+                njet2DrLeptonJet1AfterReconstruction()->fill(dr(el_p4, *_synch_selector->goodJets()[0].corrected_p4),
+                        _pileup_weight * _wjets_weight);
+
+                njet2DrLeptonJet2AfterReconstruction()->fill(dr(el_p4, *_synch_selector->goodJets()[1].corrected_p4),
                         _pileup_weight * _wjets_weight);
             }
         }
