@@ -10,16 +10,8 @@ import sys
 
 from ROOT import *
 
+import root_style
 from compare import Compare
-
-def rootStyle(filename):
-    if os.path.lexists(filename):
-        gROOT.ProcessLine(".L {0}".format(filename))
-        ROOT.setTDRStyle()
-
-        print("Loaded ROOT style from: {0}".format(filename))
-    else:
-        print("ROOT style is not available: " + filename)
 
 def compareFiles(left, right):
     if not os.path.lexists(left):
@@ -87,7 +79,7 @@ def main(argv = sys.argv):
         if 3 > len(sys.argv):
             raise Exception(usage(argv))
 
-        rootStyle("tdrstyle.C")
+        root_style.style("tdrstyle.C")
 
         compareFiles(**dict(x.split(':') for x in sys.argv[1:] if ':' in x))
     except Exception as error:
