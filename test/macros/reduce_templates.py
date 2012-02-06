@@ -34,6 +34,13 @@ def merge(file_in, file_out):
 
             continue
 
+        h = h.Clone()
+        if not h:
+            print("failed to clone plot: " + key, file = sys.stderr)
+
+            continue
+        h.SetDirectory(out_file)
+
         if "wjets" in key:
             plot = key.replace("wjets", "zjets")
         elif "_ttbar_" in key:
@@ -49,7 +56,9 @@ def merge(file_in, file_out):
             else:
                 h.Add(h1)
 
-        out_file.WriteObject(h, key)
+        #out_file.WriteObject(h, key)
+
+    out_file.Close()
 
 def usage(argv):
     return "usage: {0} theta_input.root output.root".format(argv[0])
