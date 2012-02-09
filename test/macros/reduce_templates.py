@@ -14,7 +14,7 @@ def merge(file_in, file_out):
     if not os.path.exists(file_in):
         raise Exception("file does not exist: " + file_in)
 
-    in_file = ROOT.TFile.Open(file_in)
+    in_file = ROOT.TFile.Open(file_in, "read")
     if not in_file:
         raise Exception("failed to open input file: " + file_in)
 
@@ -56,7 +56,7 @@ def merge(file_in, file_out):
             else:
                 h.Add(h1)
 
-        #out_file.WriteObject(h, key)
+        h.Write(key)
 
     out_file.Close()
 
