@@ -31,16 +31,22 @@ def load(filename):
 
     return limits
 
-def printInTextFormat(limits, masses = set()):
+def printInTextFormat(limits, masses = set(), print_errors = False):
     '''
     print observed and expected limits in text format
 
     limits is a dictionary with two keys: observed, and expected
     '''
-    format_string = "{process:<15} {expected:<20} {observed:<20}"
+    if print_errors:
+        format_string = "{process:<15} {expected:<20} {sigma1:<20} {sigma2:<20} {observed:<20}"
+    else:
+        format_string = "{process:<15} {expected:<20} {observed:<20}"
+
     print(format_string.format(process = "Process",
                                expected = "Expected [pb]",
-                               observed = "Observed [pb]"))
+                               observed = "Observed [pb]",
+                               sigma1 = "One Sigma [pb]",
+                               sigma2 = "Two Sigma [pb]"))
 
     keys = limits["expected"].keys() & limits["observed"].keys()
     if masses:
@@ -52,11 +58,13 @@ def printInTextFormat(limits, masses = set()):
 
         values = dict(process = "Z' {0} TeV".format(key // 1000 if 0 == (key % 1000) else key / 1000),
                 expected = "{0:.2f}".format(expected[0]),
-                observed = "{0:.2f}".format(observed[0]))
+                observed = "{0:.2f}".format(observed[0]),
+                sigma1 = "{0:.2f} - {1:.2f}".format(*expected[-2:]),
+                sigma2 = "{0:.2f} - {1:.2f}".format(*expected[1:-2]))
 
         print(format_string.format(**values))
 
-def printInLatexFormat(limits, masses = set()):
+def printInLatexFormat(limits, masses = set(), print_errors = False):
     '''
     print observed and expected lmist in Latex format
 
@@ -84,7 +92,7 @@ def printInLatexFormat(limits, masses = set()):
 
     print("\\hline")
 
-def printInWikiFormat(limits, masses = set()):
+def printInWikiFormat(limits, masses = set(), print_errors = False):
     '''
     print observed and expected lmist in Wiki format
 

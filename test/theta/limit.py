@@ -12,14 +12,13 @@ import theta_limit
 
 def usage(argv):
     return ("usage: {0} [exp:exp_limit.txt] [obs:obs_limit.txt] "
-            "[format:text|latex|wiki] [mass:1000,2000]").format(argv[0])
+            "[format:text|latex|wiki] [mass:1000,2000] [errors:yes]").format(argv[0])
 
 def main(argv = sys.argv):
     try:
         args = {}
         if 1 < len(argv):
             args = dict(x.split(":") for x in argv[1:] if ":" in x)
-            #args = {k: args.get(k) for k in args.keys() & {"obs", "exp", "format"}}
 
         limits = {
                 "expected": theta_limit.load(args.get("exp", "exp_limit.txt")),
@@ -34,7 +33,7 @@ def main(argv = sys.argv):
             "text": theta_limit.printInTextFormat,
             "latex": theta_limit.printInLatexFormat,
             "wiki": theta_limit.printInWikiFormat
-        }[args.get("format", "text")](limits, mass_points)
+        }[args.get("format", "text")](limits, mass_points, args.get("errors", False))
 
     except Exception as error:
         print(error, file = sys.stderr)
