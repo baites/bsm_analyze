@@ -223,7 +223,7 @@ SynchSelector::SynchSelector():
     _cut.reset(new Comparator<logical_and<bool> >(true));
     monitor(_cut);
 
-    _leading_jet.reset(new Comparator<>(250));
+    _leading_jet.reset(new Comparator<>(150));
     monitor(_leading_jet);
 
     // Do not cut on max number of b-tagged jets by default

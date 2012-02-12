@@ -73,14 +73,16 @@ DeltaMonitor::DeltaMonitor(const DeltaMonitor &object)
     monitor(_ptrel_vs_r);
 }
 
-void DeltaMonitor::fill(const LorentzVector &p1, const LorentzVector &p2)
+void DeltaMonitor::fill(const LorentzVector &p1,
+                        const LorentzVector &p2,
+                        const float &weight)
 {
-    r()->fill(dr(p1, p2));
-    eta()->fill(bsm::eta(p1) - bsm::eta(p2));
-    phi()->fill(dphi(p1, p2));
-    ptrel()->fill(bsm::ptrel(p1, p2));
+    r()->fill(dr(p1, p2), weight);
+    eta()->fill(bsm::eta(p1) - bsm::eta(p2), weight);
+    phi()->fill(dphi(p1, p2), weight);
+    ptrel()->fill(bsm::ptrel(p1, p2), weight);
 
-    ptrel_vs_r()->fill(bsm::ptrel(p1, p2), dr(p1, p2));
+    ptrel_vs_r()->fill(bsm::ptrel(p1, p2), dr(p1, p2), weight);
 }
 
 const H1Ptr DeltaMonitor::r() const
@@ -207,73 +209,6 @@ void ElectronsMonitor::print(std::ostream &out) const
     out << setw(16) << left << " [multiplicity]" << *multiplicity() << endl;
     out << setw(16) << left << " [pt]" << *pt() << endl;
     out << setw(16) << left << " [leading pt] " << *leading_pt();
-}
-
-
-
-// Gen Particle Monitor
-//
-GenParticleMonitor::GenParticleMonitor()
-{
-    _pdg_id.reset(new H1Proxy(100, -50, 50));
-    _status.reset(new H1Proxy(10, 0, 10));
-    _pt.reset(new H1Proxy(100, 0, 100));
-
-    monitor(_pdg_id);
-    monitor(_status);
-    monitor(_pt);
-}
-
-GenParticleMonitor::GenParticleMonitor(const GenParticleMonitor &object)
-{
-    _pdg_id.reset(new H1Proxy(*object._pdg_id));
-    _status.reset(new H1Proxy(*object._status));
-    _pt.reset(new H1Proxy(*object._pt));
-
-    monitor(_pdg_id);
-    monitor(_status);
-    monitor(_pt);
-}
-
-void GenParticleMonitor::fill(const GenParticle &particle)
-{
-    pdgid()->fill(particle.id());
-    status()->fill(particle.status());
-
-    pt()->fill(bsm::pt(particle.physics_object().p4()));
-}
-
-const GenParticleMonitor::H1Ptr GenParticleMonitor::pdgid() const
-{
-    return _pdg_id->histogram();
-}
-
-const GenParticleMonitor::H1Ptr GenParticleMonitor::status() const
-{
-    return _status->histogram();
-}
-
-const GenParticleMonitor::H1Ptr GenParticleMonitor::pt() const
-{
-    return _pt->histogram();
-}
-
-uint32_t GenParticleMonitor::id() const
-{
-    return core::ID<GenParticleMonitor>::get();
-}
-
-GenParticleMonitor::ObjectPtr GenParticleMonitor::clone() const
-{
-    return ObjectPtr(new GenParticleMonitor(*this));
-}
-
-void GenParticleMonitor::print(std::ostream &out) const
-{
-    out << setw(10) << left << " [PDG id]" << *pdgid() << endl;
-    out << setw(10) << left << " [status]" << *status() << endl;
-    out << setw(10) << left << " [pt] " << *pt();
-
 }
 
 
@@ -422,6 +357,7 @@ P4Monitor::P4Monitor()
     _phi.reset(new H1Proxy(800, -4, 4));
     _mass.reset(new H1Proxy(500, 0, 500));
     _mt.reset(new H1Proxy(500, 0, 500));
+    _et.reset(new H1Proxy(100, 0, 100));
 
     monitor(_energy);
     monitor(_px);
@@ -432,6 +368,7 @@ P4Monitor::P4Monitor()
     monitor(_phi);
     monitor(_mass);
     monitor(_mt);
+    monitor(_et);
 }
 
 P4Monitor::P4Monitor(const P4Monitor &object)
@@ -445,6 +382,7 @@ P4Monitor::P4Monitor(const P4Monitor &object)
     _phi.reset(new H1Proxy(*object._phi));
     _mass.reset(new H1Proxy(*object._mass));
     _mt.reset(new H1Proxy(*object._mt));
+    _et.reset(new H1Proxy(*object._et));
 
     monitor(_energy);
     monitor(_px);
@@ -455,6 +393,7 @@ P4Monitor::P4Monitor(const P4Monitor &object)
     monitor(_phi);
     monitor(_mass);
     monitor(_mt);
+    monitor(_et);
 }
 
 void P4Monitor::fill(const LorentzVector &p4, const float &weight)
@@ -468,7 +407,9 @@ void P4Monitor::fill(const LorentzVector &p4, const float &weight)
     eta()->fill(bsm::eta(p4), weight);
     phi()->fill(bsm::phi(p4), weight);
     mass()->fill(bsm::mass(p4), weight);
+
     mt()->fill(bsm::mt(p4), weight);
+    et()->fill(bsm::et(p4), weight);
 }
 
 const H1Ptr P4Monitor::energy() const
@@ -516,6 +457,11 @@ const H1Ptr P4Monitor::mt() const
     return _mt->histogram();
 }
 
+const H1Ptr P4Monitor::et() const
+{
+    return _et->histogram();
+}
+
 uint32_t P4Monitor::id() const
 {
     return core::ID<P4Monitor>::get();
@@ -536,7 +482,67 @@ void P4Monitor::print(std::ostream &out) const
     out << setw(16) << left << " [eta]" << *eta() << endl;
     out << setw(16) << left << " [phi]" << *phi() << endl;
     out << setw(16) << left << " [mass]" << *mass() << endl;
-    out << setw(16) << left << " [mt]" << *mt();
+    out << setw(16) << left << " [mt]" << *mt() << endl;
+    out << setw(16) << left << " [et]" << *et();
+}
+
+
+
+// Gen Particle Monitor
+//
+GenParticleMonitor::GenParticleMonitor()
+{
+    _pdg_id.reset(new H1Proxy(100, -50, 50));
+    _status.reset(new H1Proxy(10, 0, 10));
+
+    monitor(_pdg_id);
+    monitor(_status);
+}
+
+GenParticleMonitor::GenParticleMonitor(const GenParticleMonitor &object):
+    P4Monitor(object)
+{
+    _pdg_id.reset(new H1Proxy(*object._pdg_id));
+    _status.reset(new H1Proxy(*object._status));
+
+    monitor(_pdg_id);
+    monitor(_status);
+}
+
+void GenParticleMonitor::fill(const GenParticle &particle)
+{
+    pdg_id()->fill(particle.id());
+    status()->fill(particle.status());
+
+    P4Monitor::fill(particle.physics_object().p4());
+}
+
+const H1Ptr GenParticleMonitor::pdg_id() const
+{
+    return _pdg_id->histogram();
+}
+
+const H1Ptr GenParticleMonitor::status() const
+{
+    return _status->histogram();
+}
+
+uint32_t GenParticleMonitor::id() const
+{
+    return core::ID<GenParticleMonitor>::get();
+}
+
+GenParticleMonitor::ObjectPtr GenParticleMonitor::clone() const
+{
+    return ObjectPtr(new GenParticleMonitor(*this));
+}
+
+void GenParticleMonitor::print(std::ostream &out) const
+{
+    out << setw(10) << left << " [PDG id]" << *pdg_id() << endl;
+    out << setw(10) << left << " [status]" << *status() << endl;
+
+    P4Monitor::print(out);
 }
 
 

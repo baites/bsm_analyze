@@ -21,474 +21,546 @@
 
 using namespace std;
 
-using bsm::DeltaCanvas;
-using bsm::ElectronCanvas;
-using bsm::JetCanvas;
-using bsm::P4Canvas;
-using bsm::MissingEnergyCanvas;
-using bsm::MuonCanvas;
-using bsm::PrimaryVertexCanvas;
+using namespace bsm;
+
+// -- Canvas Base --------------------------------------------------------------
+//
+bool Canvas::pushd(TDirectory *dir)
+{
+    TDirectory *pwd = gDirectory->GetDirectory("");
+
+    if (!dir)
+        dir = gDirectory;
+
+    TDirectory *subdir = 0;
+    TObject *object = dir->FindObject(folder().c_str());
+    if (object)
+    {
+        subdir = dynamic_cast<TDirectory *>(object);
+    }
+    else
+    {
+        subdir = dir->mkdir(folder().c_str());
+        if (!subdir)
+        {
+            cerr << "failed ot create output folder: " << folder()
+                << " in " << dir->GetName() << endl;
+        }
+    }
+
+    bool result = subdir->cd();
+    if (result)
+        _dirs.push(pwd);
+
+    return result;
+}
+
+bool Canvas::popd()
+{
+    bool result = _dirs.empty() ? false : _dirs.top()->cd();
+    if (result)
+        _dirs.pop();
+    else
+        cerr << "failed to change folder to: " << _dirs.top()->GetName()
+            << endl;
+
+    return result;
+}
+
+string Canvas::folder()
+{
+    if (_folder.empty())
+    {
+        _folder = title();
+        replace(_folder.begin(), _folder.end(), ' ', '_');
+    }
+
+    return _folder;
+}
+
+Canvas::TCanvasPtr Canvas::canvas()
+{
+    if (!_canvas)
+    {
+        ostringstream name;
+        name << "delta_canvas_" << ++Canvas::_id;
+
+        _canvas.reset(new TCanvas(name.str().c_str(), title().c_str()));
+    }
+    
+    return _canvas;
+}
+
+// Private
+//
+uint32_t Canvas::_id = 0;
+
+
+
 
 // Delta Canvas
 //
-DeltaCanvas::IDPtr DeltaCanvas::_id(new core::IDCounter());
-
-DeltaCanvas::DeltaCanvas(const string &title)
-{
-    ostringstream name;
-    name << "delta_canvas_" << DeltaCanvas::_id->add();
-
-    _canvas.reset(new TCanvas(name.str().c_str(), title.c_str(), 1024, 480));
-    _canvas->Divide(3, 2);
-}
-
 void DeltaCanvas::draw(const DeltaMonitor &monitor)
 {
-    _canvas->cd(1);
+    TCanvasPtr canvas_ = canvas();
+    canvas_->SetWindowSize(1024, 640);
+    canvas_->Divide(3, 2);
 
+    canvas_->cd(1);
     _r = convert(*monitor.r());
     _r->GetXaxis()->SetTitle("#Delta R");
     _r->Draw("hist");
 
-    _canvas->cd(2);
+    canvas_->cd(2);
     _ptrel = convert(*monitor.ptrel());
     _ptrel->GetXaxis()->SetTitle("p_{T}^{rel} [GeV/c]");
     _ptrel->Draw("hist");
 
-    _canvas->cd(3);
+    canvas_->cd(3);
     _ptrel_vs_r = convert(*monitor.ptrel_vs_r());
     _ptrel_vs_r->GetXaxis()->SetTitle("p_{T}^{rel} [GeV/c]");
     _ptrel_vs_r->GetYaxis()->SetTitle("#Delta R");
     _ptrel_vs_r->Draw("colz");
 
-    _canvas->cd(4);
+    canvas_->cd(4);
     _phi = convert(*monitor.phi());
     _phi->GetXaxis()->SetTitle("#Delta #phi [rad]");
     _phi->Draw("hist");
 
-    _canvas->cd(5);
+    canvas_->cd(5);
     _eta = convert(*monitor.eta());
     _eta->GetXaxis()->SetTitle("#Delta #eta");
     _eta->Draw("hist");
+}
+
+void DeltaCanvas::write(const DeltaMonitor &monitor, TDirectory *parent)
+{
+    if (!pushd(parent))
+        return;
+
+    _r = convert(*monitor.r());
+    _r->SetName("dr");
+    _r->Write();
+
+    _ptrel = convert(*monitor.ptrel());
+    _ptrel->SetName("ptrel");
+    _ptrel->Write();
+
+    _eta = convert(*monitor.eta());
+    _eta->SetName("deta");
+    _eta->Write();
+
+    _phi = convert(*monitor.phi());
+    _phi->SetName("dphi");
+    _phi->Write();
+
+    _ptrel_vs_r = convert(*monitor.ptrel_vs_r());
+    _ptrel_vs_r->SetName("ptrel_vs_dr");
+    _ptrel_vs_r->Write();
+
+    popd();
 }
 
 
 
 // Electron Canvas
 //
-ElectronCanvas::IDPtr ElectronCanvas::_id(new core::IDCounter());
-
-ElectronCanvas::ElectronCanvas(const string &title)
-{
-    ostringstream name;
-    name << "electron_canvas_" << ElectronCanvas::_id->add();
-
-    _canvas.reset(new TCanvas(name.str().c_str(), title.c_str(), 800, 320));
-    _canvas->Divide(3);
-}
-
 void ElectronCanvas::draw(const ElectronsMonitor &monitor)
 {
-    _canvas->cd(1);
+    TCanvasPtr canvas_ = canvas();
+    canvas_->SetWindowSize(1024, 480);
+    canvas_->Divide(3);
 
+    canvas_->cd(1);
     _multiplicity = convert(*monitor.multiplicity());
     _multiplicity->GetXaxis()->SetTitle("N_{e}");
     _multiplicity->Draw("hist");
 
-    _canvas->cd(2);
+    canvas_->cd(2);
     _leading_pt = convert(*monitor.leading_pt());
     _leading_pt->GetXaxis()->SetTitle("leading p^{e}_{T} [GeV/c]");
     _leading_pt->Draw("hist");
 
-    _canvas->cd(3);
+    canvas_->cd(3);
     _pt = convert(*monitor.pt());
     _pt->GetXaxis()->SetTitle("p^{e}_{T} [GeV/c]");
     _pt->Draw("hist");
 }
 
-
-
-// LorentzVector Canvas
-//
-P4Canvas::IDPtr P4Canvas::_id(new core::IDCounter());
-
-P4Canvas::P4Canvas(const string &title, const string &axis_subtitle):
-    _axis_subtitle(axis_subtitle)
+void ElectronCanvas::write(const ElectronsMonitor &monitor, TDirectory *parent)
 {
-    ostringstream name;
-    name << "lorentz_vector_canvas_" << P4Canvas::_id->add();
-
-    _name = name.str();
-    _title = title;
-}
-
-void P4Canvas::draw(const P4Monitor &monitor)
-{
-    if (!_canvas)
-    {
-        _canvas.reset(new TCanvas(_name.c_str(), _title.c_str(), 800, 480));
-        _canvas->Divide(3, 2);
-    }
-
-    _canvas->cd(1);
-    _pt = convert(*monitor.pt());
-    _pt->SetName("pt");
-    string title = "p_{T}";
-    if (!_axis_subtitle.empty())
-        title += "^{" + _axis_subtitle + "}";
-    title += " [GeV/c]";
-    _pt->GetXaxis()->SetTitle(title.c_str());
-    _pt->Draw("hist");
-
-    _canvas->cd(2);
-    _eta = convert(*monitor.eta());
-    _eta->SetName("eta");
-    title = "#eta";
-    if (!_axis_subtitle.empty())
-        title += "^{" + _axis_subtitle + "}";
-    _eta->GetXaxis()->SetTitle(title.c_str());
-    _eta->Draw("hist");
-
-    _canvas->cd(3);
-    _phi = convert(*monitor.phi());
-    _phi->SetName("phi");
-    title = "#phi";
-    if (!_axis_subtitle.empty())
-        title += "^{" + _axis_subtitle + "}";
-    title += " [rad]";
-    _phi->GetXaxis()->SetTitle(title.c_str());
-    _phi->Draw("hist");
-
-    _canvas->cd(4);
-    _mass = convert(*monitor.mass());
-    _mass->SetName("mass");
-    title = "M";
-    if (!_axis_subtitle.empty())
-        title += "^{" + _axis_subtitle + "}";
-    title += " [GeV/c^{2}]";
-    _mass->GetXaxis()->SetTitle(title.c_str());
-    _mass->Draw("hist");
-
-    _canvas->cd(5);
-    _mass = convert(*monitor.mt());
-    _mass->SetName("mt");
-    _mass->SetName("mass");
-    title = "M_{T}";
-    if (!_axis_subtitle.empty())
-        title += "^{" + _axis_subtitle + "}";
-    title += " [GeV/c^{2}]";
-    _mass->GetXaxis()->SetTitle(title.c_str());
-    _mass->Draw("hist");
-}
-
-void P4Canvas::write(TDirectory *dir, const P4Monitor &monitor)
-{
-    string subdir_name = _title;
-    replace(subdir_name.begin(), subdir_name.end(), ' ', '_');
-
-    TDirectory *subdir = 0;
-    TObject *object = dir->FindObject(subdir_name.c_str());
-    if (object)
-    {
-        subdir = dynamic_cast<TDirectory *>(object);
-    }
-    else
-    {
-        subdir = dir->mkdir(subdir_name.c_str());
-        if (!subdir)
-        {
-            cerr << "failed ot create output folder: " << subdir_name
-                << " in " << dir->GetName() << endl;
-
-            return;
-        }
-    }
-
-    subdir->cd();
-
-    _energy = convert(*monitor.energy());
-    _energy->SetName("energy");
-    string title = "E";
-    if (!_axis_subtitle.empty())
-        title += "^{" + _axis_subtitle + "}";
-    title += " [GeV]";
-    _energy->GetXaxis()->SetTitle(title.c_str());
-    _energy->Write();
-
-    _px = convert(*monitor.px());
-    _px->SetName("px");
-    title = "p_{X}";
-    if (!_axis_subtitle.empty())
-        title += "^{" + _axis_subtitle + "}";
-    title += " [GeV/c]";
-    _px->GetXaxis()->SetTitle(title.c_str());
-    _px->Write();
-
-    _py = convert(*monitor.py());
-    _py->SetName("py");
-    title = "p_{Y}";
-    if (!_axis_subtitle.empty())
-        title += "^{" + _axis_subtitle + "}";
-    title += " [GeV/c]";
-    _py->GetXaxis()->SetTitle(title.c_str());
-    _py->Write();
-
-    _pz = convert(*monitor.pz());
-    _pz->SetName("pz");
-    title = "p_{Z}";
-    if (!_axis_subtitle.empty())
-        title += "^{" + _axis_subtitle + "}";
-    title += " [GeV/c]";
-    _pz->GetXaxis()->SetTitle(title.c_str());
-    _pz->Write();
-
-    _pt = convert(*monitor.pt());
-    _pt->SetName("pt");
-    title = "p_{T}";
-    if (!_axis_subtitle.empty())
-        title += "^{" + _axis_subtitle + "}";
-    title += " [GeV/c]";
-    _pt->GetXaxis()->SetTitle(title.c_str());
-    _pt->Write();
-
-    _eta = convert(*monitor.eta());
-    _eta->SetName("eta");
-    title = "#eta";
-    if (!_axis_subtitle.empty())
-        title += "^{" + _axis_subtitle + "}";
-    _eta->GetXaxis()->SetTitle(title.c_str());
-    _eta->Write();
-
-    _phi = convert(*monitor.phi());
-    _phi->SetName("phi");
-    title = "#phi";
-    if (!_axis_subtitle.empty())
-        title += "^{" + _axis_subtitle + "}";
-    title += " [rad]";
-    _phi->GetXaxis()->SetTitle(title.c_str());
-    _phi->Write();
-
-    _mass = convert(*monitor.mass());
-    _mass->SetName("mass");
-    title = "M";
-    if (!_axis_subtitle.empty())
-        title += "^{" + _axis_subtitle + "}";
-    title += " [GeV/c^{2}]";
-    _mass->GetXaxis()->SetTitle(title.c_str());
-    _mass->Write();
-
-    _mt = convert(*monitor.mt());
-    _mt->SetName("mt");
-    title = "M_{T}";
-    if (!_axis_subtitle.empty())
-        title += "^{" + _axis_subtitle + "}";
-    title += " [GeV/c^{2}]";
-    _mt->GetXaxis()->SetTitle(title.c_str());
-    _mt->Write();
-}
-
-
-
-// MissingEnergy Canvas
-//
-MissingEnergyCanvas::IDPtr MissingEnergyCanvas::_id(new core::IDCounter());
-
-MissingEnergyCanvas::MissingEnergyCanvas(const string &title)
-{
-    ostringstream name;
-    name << "missing_energy_canvas_" << MissingEnergyCanvas::_id->add();
-
-    _canvas.reset(new TCanvas(name.str().c_str(), title.c_str(), 640, 480));
-    _canvas->Divide(2, 2);
-}
-
-void MissingEnergyCanvas::draw(const MissingEnergyMonitor &monitor)
-{
-    _canvas->cd(1);
-    _pt = convert(*monitor.pt());
-    _pt->GetXaxis()->SetTitle("p^{MET}_{T} [GeV/c]");
-    _pt->Draw("hist");
-
-    _canvas->cd(2);
-    _x = convert(*monitor.x());
-    _x->GetXaxis()->SetTitle("X^{MET} [cm]");
-    _x->Draw("hist");
-
-    _canvas->cd(3);
-    _y = convert(*monitor.y());
-    _y->GetXaxis()->SetTitle("Y^{MET} [cm]");
-    _y->Draw("hist");
-
-    _canvas->cd(4);
-    _z = convert(*monitor.z());
-    _z->GetXaxis()->SetTitle("Z^{MET} [cm]");
-    _z->Draw("hist");
-}
-
-
-
-// Muon Canvas
-//
-MuonCanvas::IDPtr MuonCanvas::_id(new core::IDCounter());
-
-MuonCanvas::MuonCanvas(const string &title)
-{
-    ostringstream name;
-    name << "muon_canvas_" << MuonCanvas::_id->add();
-
-    _canvas.reset(new TCanvas(name.str().c_str(), title.c_str(), 800, 320));
-    _canvas->Divide(3);
-}
-
-void MuonCanvas::draw(const MuonsMonitor &monitor)
-{
-    _canvas->cd(1);
+    if (!pushd(parent))
+        return;
 
     _multiplicity = convert(*monitor.multiplicity());
-    _multiplicity->GetXaxis()->SetTitle("N_{#mu}");
-    _multiplicity->Draw("hist");
+    _multiplicity->SetName("multiplicity");
+    _multiplicity->Write();
 
-    _canvas->cd(2);
     _leading_pt = convert(*monitor.leading_pt());
-    _leading_pt->GetXaxis()->SetTitle("leading p^{#mu}_{T} [GeV/c]");
-    _leading_pt->Draw("hist");
+    _leading_pt->SetName("leading_pt");
+    _leading_pt->Write();
 
-    _canvas->cd(3);
     _pt = convert(*monitor.pt());
-    _pt->GetXaxis()->SetTitle("p^{#mu}_{T} [GeV/c]");
-    _pt->Draw("hist");
+    _pt->SetName("pt");
+    _pt->Write();
+
+    popd();
 }
 
 
 
 // Jet Canvas
 //
-JetCanvas::IDPtr JetCanvas::_id(new core::IDCounter());
-
-JetCanvas::JetCanvas(const string &title)
-{
-    ostringstream name;
-    name << "jet_canvas_" << JetCanvas::_id->add();
-
-    _name = name.str();
-    _title = title;
-}
-
 void JetCanvas::draw(const JetsMonitor &monitor)
 {
-    if (!_canvas)
-    {
-        _canvas.reset(new TCanvas(_name.c_str(), _title.c_str(), 1024, 640));
-        _canvas->Divide(3, 2);
-    }
+    TCanvasPtr canvas_ = canvas();
+    canvas_->SetWindowSize(1024, 640);
+    canvas_->Divide(3, 2);
 
-    _canvas->cd(1);
+    canvas_->cd(1);
     _multiplicity = convert(*monitor.multiplicity());
     _multiplicity->GetXaxis()->SetTitle("N_{jet}");
     _multiplicity->Draw("hist");
 
-    _canvas->cd(4);
+    canvas_->cd(4);
     _children = convert(*monitor.children());
     _children->GetXaxis()->SetTitle("N_{children}");
     _children->Draw("hist");
 
-    _canvas->cd(2);
+    canvas_->cd(2);
     _leading_pt = convert(*monitor.leading_pt());
     _leading_pt->GetXaxis()->SetTitle("leading p^{jet}_{T} [GeV/c]");
     _leading_pt->Draw("hist");
 
-    _canvas->cd(5);
+    canvas_->cd(5);
     _leading_uncorrected_pt = convert(*monitor.leading_uncorrected_pt());
     _leading_uncorrected_pt->GetXaxis()->SetTitle("leading uncorrected p^{jet}_{T} [GeV/c]");
     _leading_uncorrected_pt->Draw("hist");
 
-    _canvas->cd(3);
+    canvas_->cd(3);
     _pt = convert(*monitor.pt());
     _pt->GetXaxis()->SetTitle("p^{jet}_{T} [GeV/c]");
     _pt->Draw("hist");
 
-    _canvas->cd(6);
+    canvas_->cd(6);
     _uncorrected_pt = convert(*monitor.uncorrected_pt());
     _uncorrected_pt->GetXaxis()->SetTitle("Uncorrected p^{jet}_{T} [GeV/c]");
     _uncorrected_pt->Draw("hist");
 }
 
-void JetCanvas::write(TDirectory *dir, const JetsMonitor &monitor)
+void JetCanvas::write(const JetsMonitor &monitor, TDirectory *parent)
 {
-    string subdir_name = _title;
-    replace(subdir_name.begin(), subdir_name.end(), ' ', '_');
-
-    TDirectory *subdir = 0;
-    TObject *object = dir->FindObject(subdir_name.c_str());
-    if (object)
-    {
-        subdir = dynamic_cast<TDirectory *>(object);
-    }
-    else
-    {
-        subdir = dir->mkdir(subdir_name.c_str());
-        if (!subdir)
-        {
-            cerr << "failed ot create output folder: " << subdir_name
-                << " in " << dir->GetName() << endl;
-
-            return;
-        }
-    }
-
-    subdir->cd();
+    if (!pushd(parent))
+        return;
 
     _multiplicity = convert(*monitor.multiplicity());
-    _multiplicity->GetXaxis()->SetTitle("N_{jet}");
+    _multiplicity->SetName("multiplicity");
     _multiplicity->Write();
 
     _leading_pt = convert(*monitor.leading_pt());
-    _leading_pt->GetXaxis()->SetTitle("leading p^{jet}_{T} [GeV/c]");
+    _leading_pt->SetName("leading_pt");
     _leading_pt->Write();
 
     _pt = convert(*monitor.pt());
-    _pt->GetXaxis()->SetTitle("p^{jet}_{T} [GeV/c]");
+    _pt->SetName("pt");
     _pt->Write();
 
     _children = convert(*monitor.children());
-    _children->GetXaxis()->SetTitle("N_{children}");
+    _children->SetName("children");
     _children->Write();
+
+    popd();
+}
+
+
+
+// LorentzVector Canvas
+//
+void P4Canvas::draw(const P4Monitor &monitor)
+{
+    TCanvasPtr canvas_ = canvas();
+    canvas_->SetWindowSize(1024, 640);
+    canvas_->Divide(3, 2);
+
+    canvas_->cd(1);
+    _pt = convert(*monitor.pt());
+    _pt->SetName("pt");
+    string title = "p_{T}";
+    if (!axis_subtitle().empty())
+        title += "^{" + axis_subtitle() + "}";
+    title += " [GeV/c]";
+    _pt->GetXaxis()->SetTitle(title.c_str());
+    _pt->Draw("hist");
+
+    canvas_->cd(2);
+    _eta = convert(*monitor.eta());
+    _eta->SetName("eta");
+    title = "#eta";
+    if (!axis_subtitle().empty())
+        title += "^{" + axis_subtitle() + "}";
+    _eta->GetXaxis()->SetTitle(title.c_str());
+    _eta->Draw("hist");
+
+    canvas_->cd(3);
+    _phi = convert(*monitor.phi());
+    _phi->SetName("phi");
+    title = "#phi";
+    if (!axis_subtitle().empty())
+        title += "^{" + axis_subtitle() + "}";
+    title += " [rad]";
+    _phi->GetXaxis()->SetTitle(title.c_str());
+    _phi->Draw("hist");
+
+    canvas_->cd(4);
+    _mass = convert(*monitor.mass());
+    _mass->SetName("mass");
+    title = "M";
+    if (!axis_subtitle().empty())
+        title += "^{" + axis_subtitle() + "}";
+    title += " [GeV/c^{2}]";
+    _mass->GetXaxis()->SetTitle(title.c_str());
+    _mass->Draw("hist");
+
+    canvas_->cd(5);
+    _mass = convert(*monitor.mt());
+    _mass->SetName("mt");
+    _mass->SetName("mass");
+    title = "M_{T}";
+    if (!axis_subtitle().empty())
+        title += "^{" + axis_subtitle() + "}";
+    title += " [GeV/c^{2}]";
+    _mass->GetXaxis()->SetTitle(title.c_str());
+    _mass->Draw("hist");
+}
+
+void P4Canvas::write(const P4Monitor &monitor, TDirectory *parent)
+{
+    if (!pushd(parent))
+        return;
+
+    _energy = convert(*monitor.energy());
+    _energy->SetName("energy");
+    _energy->Write();
+
+    _px = convert(*monitor.px());
+    _px->SetName("px");
+    _px->Write();
+
+    _py = convert(*monitor.py());
+    _py->SetName("py");
+    _py->Write();
+
+    _pz = convert(*monitor.pz());
+    _pz->SetName("pz");
+    _pz->Write();
+
+    _pt = convert(*monitor.pt());
+    _pt->SetName("pt");
+    _pt->Write();
+
+    _eta = convert(*monitor.eta());
+    _eta->SetName("eta");
+    _eta->Write();
+
+    _phi = convert(*monitor.phi());
+    _phi->SetName("phi");
+    _phi->Write();
+
+    _mass = convert(*monitor.mass());
+    _mass->SetName("mass");
+    _mass->Write();
+
+    _mt = convert(*monitor.mt());
+    _mt->SetName("mt");
+    _mt->Write();
+
+    _et = convert(*monitor.et());
+    _et->SetName("et");
+    _et->Write();
+
+    popd();
+}
+
+
+
+// GenParticle Canvas
+//
+void GenParticleCanvas::draw(const GenParticleMonitor &monitor)
+{
+    P4Canvas::draw(monitor);
+}
+
+void GenParticleCanvas::write(const GenParticleMonitor &monitor, TDirectory *parent)
+{
+    P4Canvas::write(monitor, parent);
+
+    if (!pushd(parent))
+        return;
+
+    _pdg_id = convert(*monitor.pdg_id());
+    _pdg_id->SetName("pdg_id");
+    _pdg_id->Write();
+
+    _status = convert(*monitor.status());
+    _status->SetName("status");
+    _status->Write();
+
+    popd();
+}
+
+
+
+// MissingEnergy Canvas
+//
+void MissingEnergyCanvas::draw(const MissingEnergyMonitor &monitor)
+{
+    TCanvasPtr canvas_ = canvas();
+    canvas_->SetWindowSize(800, 640);
+    canvas_->Divide(2, 2);
+
+    canvas_->cd(1);
+    _pt = convert(*monitor.pt());
+    _pt->GetXaxis()->SetTitle("p^{MET}_{T} [GeV/c]");
+    _pt->Draw("hist");
+
+    canvas_->cd(2);
+    _x = convert(*monitor.x());
+    _x->GetXaxis()->SetTitle("X^{MET} [cm]");
+    _x->Draw("hist");
+
+    canvas_->cd(3);
+    _y = convert(*monitor.y());
+    _y->GetXaxis()->SetTitle("Y^{MET} [cm]");
+    _y->Draw("hist");
+
+    canvas_->cd(4);
+    _z = convert(*monitor.z());
+    _z->GetXaxis()->SetTitle("Z^{MET} [cm]");
+    _z->Draw("hist");
+}
+
+void MissingEnergyCanvas::write(const MissingEnergyMonitor &monitor, TDirectory *parent)
+{
+    if (!pushd(parent))
+        return;
+
+    _pt = convert(*monitor.pt());
+    _pt->SetName("pt");
+    _pt->Write();
+
+    _x = convert(*monitor.x());
+    _x->SetName("x");
+    _x->Write();
+
+    _y = convert(*monitor.y());
+    _y->SetName("y");
+    _y->Write();
+
+    _z = convert(*monitor.z());
+    _z->SetName("z");
+    _z->Write();
+
+    popd();
+}
+
+
+
+// Muon Canvas
+//
+void MuonCanvas::draw(const MuonsMonitor &monitor)
+{
+    TCanvasPtr canvas_ = canvas();
+    canvas_->SetWindowSize(1024, 480);
+    canvas_->Divide(3);
+
+    canvas_->cd(1);
+    _multiplicity = convert(*monitor.multiplicity());
+    _multiplicity->GetXaxis()->SetTitle("N_{#mu}");
+    _multiplicity->Draw("hist");
+
+    canvas_->cd(2);
+    _leading_pt = convert(*monitor.leading_pt());
+    _leading_pt->GetXaxis()->SetTitle("leading p^{#mu}_{T} [GeV/c]");
+    _leading_pt->Draw("hist");
+
+    canvas_->cd(3);
+    _pt = convert(*monitor.pt());
+    _pt->GetXaxis()->SetTitle("p^{#mu}_{T} [GeV/c]");
+    _pt->Draw("hist");
+}
+
+void MuonCanvas::write(const MuonsMonitor &monitor, TDirectory *parent)
+{
+    if (!pushd(parent))
+        return;
+
+    _multiplicity = convert(*monitor.multiplicity());
+    _multiplicity->SetName("multiplicity");
+    _multiplicity->Write();
+
+    _leading_pt = convert(*monitor.leading_pt());
+    _leading_pt->SetName("leading_pt");
+    _leading_pt->Write();
+
+    _pt = convert(*monitor.pt());
+    _pt->SetName("pt");
+    _pt->Write();
+
+    popd();
 }
 
 
 
 // PrimaryVertex Canvas
 //
-PrimaryVertexCanvas::IDPtr PrimaryVertexCanvas::_id(new core::IDCounter());
-
-PrimaryVertexCanvas::PrimaryVertexCanvas(const string &title)
-{
-    ostringstream name;
-    name << "primary_vertex_canvas_" << PrimaryVertexCanvas::_id->add();
-
-    _canvas.reset(new TCanvas(name.str().c_str(), title.c_str(), 640, 480));
-    _canvas->Divide(2, 2);
-}
-
 void PrimaryVertexCanvas::draw(const PrimaryVerticesMonitor &monitor)
 {
-    _canvas->cd(1);
+    TCanvasPtr canvas_ = canvas();
+    canvas_->SetWindowSize(800, 640);
+    canvas_->Divide(2, 2);
+
+    canvas_->cd(1);
     _multiplicity = convert(*monitor.multiplicity());
     _multiplicity->GetXaxis()->SetTitle("N_{PV}");
     _multiplicity->Draw("hist");
 
-    _canvas->cd(2);
+    canvas_->cd(2);
     _x = convert(*monitor.x());
     _x->GetXaxis()->SetTitle("X^{PV} [cm]");
     _x->Draw("hist");
 
-    _canvas->cd(3);
+    canvas_->cd(3);
     _y = convert(*monitor.y());
     _y->GetXaxis()->SetTitle("Y^{PV} [cm]");
     _y->Draw("hist");
 
-    _canvas->cd(4);
+    canvas_->cd(4);
     _z = convert(*monitor.z());
     _z->GetXaxis()->SetTitle("Z^{PV} [cm]");
     _z->Draw("hist");
+}
+
+
+void PrimaryVertexCanvas::write(const PrimaryVerticesMonitor &monitor, TDirectory *parent)
+{
+    if (!pushd(parent))
+        return;
+
+    _multiplicity = convert(*monitor.multiplicity());
+    _multiplicity->SetName("multiplicity");
+    _multiplicity->Write();
+
+    _x = convert(*monitor.x());
+    _x->SetName("x");
+    _x->Write();
+
+    _y = convert(*monitor.y());
+    _y->SetName("y");
+    _y->Write();
+
+    _z = convert(*monitor.z());
+    _z->SetName("z");
+    _z->Write();
+
+    popd();
 }

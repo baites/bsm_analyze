@@ -79,14 +79,14 @@ int main(int argc, char *argv[])
 
             if (app->output())
             {
-                reco_leading_jet_canvas->write(app->output().get(),
-                        *analyzer->recoLeadingJetMonitor());
+                reco_leading_jet_canvas->write(*analyzer->recoLeadingJetMonitor(),
+                        app->output().get());
 
-                hlt_leading_jet_canvas->write(app->output().get(),
-                        *analyzer->hltLeadingJetMonitor());
+                hlt_leading_jet_canvas->write(*analyzer->hltLeadingJetMonitor(),
+                        app->output().get());
 
-                selected_hlt_leading_jet_canvas->write(app->output().get(),
-                        *analyzer->selectedHltLeadingJetMonitor());
+                selected_hlt_leading_jet_canvas->write(*analyzer->selectedHltLeadingJetMonitor(),
+                        app->output().get());
             }
             
             if (app->isInteractive())

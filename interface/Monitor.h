@@ -36,7 +36,9 @@ namespace bsm
             DeltaMonitor();
             DeltaMonitor(const DeltaMonitor &);
 
-            void fill(const LorentzVector &, const LorentzVector &);
+            void fill(const LorentzVector &,
+                        const LorentzVector &,
+                        const float &weight = 1);
 
             const H1Ptr r() const;
             const H1Ptr eta() const;
@@ -98,39 +100,6 @@ namespace bsm
             H1ProxyPtr _leading_pt;
     };
 
-    class GenParticleMonitor : public core::Object
-    {
-        public:
-            typedef boost::shared_ptr<stat::H1> H1Ptr;
-
-            GenParticleMonitor();
-            GenParticleMonitor(const GenParticleMonitor &);
-            
-            void fill(const GenParticle &);
-
-            const H1Ptr pdgid() const;
-            const H1Ptr status() const;
-            const H1Ptr pt() const;
-
-            // Object interface
-            //
-            virtual uint32_t id() const;
-
-            virtual ObjectPtr clone() const;
-            using Object::merge;
-
-            virtual void print(std::ostream &) const;
-
-        private:
-            // Prevent copying
-            //
-            GenParticleMonitor &operator =(const GenParticleMonitor &);
-
-            H1ProxyPtr _pdg_id;
-            H1ProxyPtr _status;
-            H1ProxyPtr _pt;
-    };
-
     class JetsMonitor : public core::Object
     {
         public:
@@ -189,6 +158,7 @@ namespace bsm
             const H1Ptr mass() const;
 
             const H1Ptr mt() const;
+            const H1Ptr et() const;
 
             // Object interface
             //
@@ -215,6 +185,31 @@ namespace bsm
             H1ProxyPtr _mass;
 
             H1ProxyPtr _mt;
+            H1ProxyPtr _et;
+    };
+
+    class GenParticleMonitor : public P4Monitor
+    {
+        public:
+            GenParticleMonitor();
+            GenParticleMonitor(const GenParticleMonitor &);
+            
+            void fill(const GenParticle &);
+
+            const H1Ptr pdg_id() const;
+            const H1Ptr status() const;
+
+            // Object interface
+            //
+            virtual uint32_t id() const;
+
+            virtual ObjectPtr clone() const;
+
+            virtual void print(std::ostream &) const;
+
+        private:
+            H1ProxyPtr _pdg_id;
+            H1ProxyPtr _status;
     };
 
     class MissingEnergyMonitor : public core::Object

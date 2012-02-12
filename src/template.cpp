@@ -303,23 +303,23 @@ int main(int argc, char *argv[])
                 njet2_dr_lepton_jet1_after_reconstruction->Write();
                 njet2_dr_lepton_jet2_after_reconstruction->Write();
 
-                first_jet->write(app->output().get(), *analyzer->firstJet());
-                second_jet->write(app->output().get(), *analyzer->secondJet());
-                third_jet->write(app->output().get(), *analyzer->thirdJet());
+                first_jet->write(*analyzer->firstJet(), app->output().get());
+                second_jet->write(*analyzer->secondJet(), app->output().get());
+                third_jet->write(*analyzer->thirdJet(), app->output().get());
 
-                electron->write(app->output().get(), *analyzer->electron());
-                electron_before_tricut->write(app->output().get(),
-                        *analyzer->electronBeforeTricut());
+                electron->write(*analyzer->electron(), app->output().get());
+                electron_before_tricut->write(*analyzer->electronBeforeTricut(),
+                        app->output().get());
 
-                ltop->write(app->output().get(), *analyzer->ltop());
-                htop->write(app->output().get(), *analyzer->htop());
+                ltop->write(*analyzer->ltop(), app->output().get());
+                htop->write(*analyzer->htop(), app->output().get());
 
-                htop_first_jet->write(app->output().get(), *analyzer->htopJet1());
-                htop_second_jet->write(app->output().get(), *analyzer->htopJet2());
-                htop_third_jet->write(app->output().get(), *analyzer->htopJet3());
-                htop_fourth_jet->write(app->output().get(), *analyzer->htopJet4());
+                htop_first_jet->write(*analyzer->htopJet1(), app->output().get());
+                htop_second_jet->write(*analyzer->htopJet2(), app->output().get());
+                htop_third_jet->write(*analyzer->htopJet3(), app->output().get());
+                htop_fourth_jet->write(*analyzer->htopJet4(), app->output().get());
 
-                ltop_first_jet->write(app->output().get(), *analyzer->ltopJet1());
+                ltop_first_jet->write(*analyzer->ltopJet1(), app->output().get());
             }
 
             if (app->isInteractive())
