@@ -375,9 +375,6 @@ void HadronicTopAnalyzer::process(const Event *event)
 
             const float mass_ = mass(resonance.htop);
 
-            if (0 < mass_)
-                return;
-
             top()->fill(resonance.htop, _pileup_weight);
 
             const ResonanceReconstructor::CorrectedJets &htop_jets =
