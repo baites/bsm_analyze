@@ -166,9 +166,9 @@ ElectronsMonitor::ElectronsMonitor(const ElectronsMonitor &object)
     monitor(_leading_pt);
 }
 
-void ElectronsMonitor::fill(const Electrons &electrons)
+void ElectronsMonitor::fill(const Electrons &electrons, const float &weight)
 {
-    multiplicity()->fill(electrons.size());
+    multiplicity()->fill(electrons.size(), weight);
 
     float max_el_pt = 0;
     float el_pt = 0;
@@ -178,7 +178,7 @@ void ElectronsMonitor::fill(const Electrons &electrons)
     {
         el_pt = bsm::pt(electron->physics_object().p4());
 
-        pt()->fill(el_pt);
+        pt()->fill(el_pt, weight);
 
         if (el_pt <= max_el_pt)
             continue;
@@ -187,7 +187,7 @@ void ElectronsMonitor::fill(const Electrons &electrons)
     }
 
     if (max_el_pt)
-        leading_pt()->fill(max_el_pt);
+        leading_pt()->fill(max_el_pt, weight);
 }
 
 const H1Ptr ElectronsMonitor::multiplicity() const
@@ -260,9 +260,9 @@ JetsMonitor::JetsMonitor(const JetsMonitor &object)
     monitor(_children);
 }
 
-void JetsMonitor::fill(const Jets &jets)
+void JetsMonitor::fill(const Jets &jets, const float &weight)
 {
-    multiplicity()->fill(jets.size());
+    multiplicity()->fill(jets.size(), weight);
 
     float max_jet_pt = 0;
     float max_jet_uncorrected_pt = 0;
@@ -272,18 +272,18 @@ void JetsMonitor::fill(const Jets &jets)
             jets.end() != jet;
             ++jet)
     {
-        children()->fill(jet->child().size());
+        children()->fill(jet->child().size(), weight);
 
         jet_pt = bsm::pt(jet->physics_object().p4());
         jet_uncorrected_pt = 0;
 
-        pt()->fill(jet_pt);
+        pt()->fill(jet_pt, weight);
 
         if (jet->has_uncorrected_p4())
         {
             jet_uncorrected_pt = bsm::pt(jet->uncorrected_p4());
 
-            uncorrected_pt()->fill(jet_uncorrected_pt);
+            uncorrected_pt()->fill(jet_uncorrected_pt, weight);
         }
 
         if (jet_pt <= max_jet_pt)
@@ -296,7 +296,7 @@ void JetsMonitor::fill(const Jets &jets)
     if (max_jet_pt)
     {
         leading_pt()->fill(max_jet_pt);
-        leading_uncorrected_pt()->fill(max_jet_uncorrected_pt);
+        leading_uncorrected_pt()->fill(max_jet_uncorrected_pt, weight);
     }
 }
 
@@ -520,12 +520,12 @@ GenParticleMonitor::GenParticleMonitor(const GenParticleMonitor &object):
     monitor(_status);
 }
 
-void GenParticleMonitor::fill(const GenParticle &particle)
+void GenParticleMonitor::fill(const GenParticle &particle, const float &weight)
 {
-    pdg_id()->fill(particle.id());
-    status()->fill(particle.status());
+    pdg_id()->fill(particle.id(), weight);
+    status()->fill(particle.status(), weight);
 
-    P4Monitor::fill(particle.physics_object().p4());
+    P4Monitor::fill(particle.physics_object().p4(), weight);
 }
 
 const H1Ptr GenParticleMonitor::pdg_id() const
@@ -586,9 +586,9 @@ MissingEnergyMonitor::MissingEnergyMonitor(const MissingEnergyMonitor &object)
     monitor(_z);
 }
 
-void MissingEnergyMonitor::fill(const MissingEnergy &missing_energy)
+void MissingEnergyMonitor::fill(const MissingEnergy &missing_energy, const float &weight)
 {
-    pt()->fill(bsm::pt(missing_energy.p4()));
+    pt()->fill(bsm::pt(missing_energy.p4()), weight);
 }
 
 const H1Ptr MissingEnergyMonitor::pt() const
@@ -655,9 +655,9 @@ MuonsMonitor::MuonsMonitor(const MuonsMonitor &object)
     monitor(_leading_pt);
 }
 
-void MuonsMonitor::fill(const Muons &muons)
+void MuonsMonitor::fill(const Muons &muons, const float &weight)
 {
-    multiplicity()->fill(muons.size());
+    multiplicity()->fill(muons.size(), weight);
 
     float max_muon_pt = 0;
     float muon_pt = 0;
@@ -667,7 +667,7 @@ void MuonsMonitor::fill(const Muons &muons)
     {
         muon_pt = bsm::pt(muon->physics_object().p4());
 
-        pt()->fill(muon_pt);
+        pt()->fill(muon_pt, weight);
 
         if (muon_pt <= max_muon_pt)
             continue;
@@ -676,7 +676,7 @@ void MuonsMonitor::fill(const Muons &muons)
     }
 
     if (max_muon_pt)
-        leading_pt()->fill(max_muon_pt);
+        leading_pt()->fill(max_muon_pt, weight);
 }
 
 const H1Ptr MuonsMonitor::multiplicity() const
@@ -742,17 +742,18 @@ PrimaryVerticesMonitor::PrimaryVerticesMonitor(const PrimaryVerticesMonitor &obj
     monitor(_z);
 }
 
-void PrimaryVerticesMonitor::fill(const PrimaryVertices &primary_vertices)
+void PrimaryVerticesMonitor::fill(const PrimaryVertices &primary_vertices,
+        const float &weight)
 {
-    multiplicity()->fill(primary_vertices.size());
+    multiplicity()->fill(primary_vertices.size(), weight);
 
     for(PrimaryVertices::const_iterator primary_vertex = primary_vertices.begin();
             primary_vertices.end() != primary_vertex;
             ++primary_vertex)
     {
-        x()->fill(primary_vertex->vertex().x());
-        y()->fill(primary_vertex->vertex().y());
-        z()->fill(primary_vertex->vertex().z());
+        x()->fill(primary_vertex->vertex().x(), weight);
+        y()->fill(primary_vertex->vertex().y(), weight);
+        z()->fill(primary_vertex->vertex().z(), weight);
     }
 }
 
