@@ -16,7 +16,7 @@ class Label(object):
         my_label = Label()
         my_label.label = "This is a generic label"
         ...
-        my_label.Draw()
+        my_label.draw()
     '''
 
     def __init__(self):
