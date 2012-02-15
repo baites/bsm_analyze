@@ -117,6 +117,7 @@ class HadronicTopTemplates(root.template.Templates):
                 "/jet2": self.process_plot_jet,
                 "/jet3": self.process_plot_jet,
                 "/jet1_parton": self.process_plot_parton,
+                "/jet2_parton": self.process_plot_parton,
                 "/jet1_vs_jet2": self.process_plot_jet_vs_jet
             }.get(template.path.split(':', 1)[1],
                   lambda plot: None)(template)
@@ -156,7 +157,7 @@ class HadronicTopTemplates(root.template.Templates):
         self.plots.append(plot)
 
     def process_plot_parton(self, plot):
-        self.set_title_all(plot, "jet1 parton")
+        self.set_title_all(plot, plot.path.split("/")[-1])
         self.rebin_all(plot, self.parton_rebin)
 
         self.plots.append(plot)
