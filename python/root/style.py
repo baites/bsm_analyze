@@ -61,9 +61,7 @@ def tdr():
 
     # For the statistics box:
     style.SetOptFile(0)
-    style.SetOptStat(0) # To display the mean and RMS:   SetOptStat("mr");
-    style.SetOptStat(1111)
-    style.SetOptStat(False)
+    style.SetOptStat(False) # To display the mean and RMS:   SetOptStat("mr");
     style.SetStatColor(ROOT.kWhite)
     style.SetStatFont(42)
     style.SetStatFontSize(0.035)
@@ -132,3 +130,5 @@ def tdr():
     style.SetLegendBorderSize(0)
 
     style.cd()
+
+    return style
