@@ -69,24 +69,29 @@ int main(int argc, char *argv[])
             boost::shared_ptr<TRint>
                 root(new TRint("app", &empty_argc, empty_argv));
 
-            TH1Ptr njets = convert(*analyzer->njets());
-            njets->SetName("njets");
-            njets->Write();
-
-            TH2Ptr njets_vs_mass = convert(*analyzer->njets_vs_mass());
-            njets_vs_mass->SetName("njets_vs_mass");
-            njets_vs_mass->Write();
-
-            TH2Ptr pt_vs_mass = convert(*analyzer->pt_vs_mass());
-            pt_vs_mass->SetName("pt_vs_mass");
-            pt_vs_mass->Write();
-
-            TH2Ptr njets_vs_pt = convert(*analyzer->njets_vs_pt());
-            njets_vs_pt->SetName("njets_vs_pt");
-            njets_vs_pt->Write();
-
             shared_ptr<P4Canvas> top(new P4Canvas("top", "top"));
             top->write(*analyzer->top(), app->output().get());
+
+            if (top->pushd(app->output().get()))
+            {
+                TH1Ptr njets = convert(*analyzer->njets());
+                njets->SetName("njets");
+                njets->Write();
+
+                TH2Ptr njets_vs_mass = convert(*analyzer->njets_vs_mass());
+                njets_vs_mass->SetName("njets_vs_mass");
+                njets_vs_mass->Write();
+
+                TH2Ptr pt_vs_mass = convert(*analyzer->pt_vs_mass());
+                pt_vs_mass->SetName("pt_vs_mass");
+                pt_vs_mass->Write();
+
+                TH2Ptr njets_vs_pt = convert(*analyzer->njets_vs_pt());
+                njets_vs_pt->SetName("njets_vs_pt");
+                njets_vs_pt->Write();
+
+                top->popd();
+            }
 
             shared_ptr<P4Canvas> jet1(new P4Canvas("jet1", "jet1"));
             jet1->write(*analyzer->jet1(), app->output().get());
@@ -100,8 +105,19 @@ int main(int argc, char *argv[])
             shared_ptr<P4Canvas> jet4(new P4Canvas("jet4", "jet4"));
             jet4->write(*analyzer->jet4(), app->output().get());
 
-            shared_ptr<GenParticleCanvas> jet1_parton(new GenParticleCanvas("jet1_parton", "jet1_parton"));
+            shared_ptr<GenParticleCanvas> jet1_parton(
+                    new GenParticleCanvas("jet1_parton", "jet1_parton"));
             jet1_parton->write(*analyzer->jet1_parton(), app->output().get());
+
+            shared_ptr<GenParticleCanvas> jet2_parton(
+                    new GenParticleCanvas("jet2_parton", "jet2_parton"));
+            jet2_parton->write(*analyzer->jet2_parton(), app->output().get());
+
+            shared_ptr<DeltaCanvas> jet1_parton_vs_jet2_parton(
+                    new DeltaCanvas("jet1_parton_vs_jet2_parton"));
+            jet1_parton_vs_jet2_parton->write(
+                    *analyzer->jet1_parton_vs_jet2_parton(),
+                    app->output().get());
 
             shared_ptr<DeltaCanvas> jet1_vs_jet2(new DeltaCanvas("jet1_vs_jet2"));
             jet1_vs_jet2->write(*analyzer->jet1_vs_jet2(), app->output().get());

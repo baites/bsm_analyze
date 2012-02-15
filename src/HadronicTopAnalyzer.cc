@@ -125,7 +125,18 @@ HadronicTopAnalyzer::HadronicTopAnalyzer():
     _jet1_parton->mass()->mutable_axis()->init(200, 0, 200);
     _jet1_parton->mt()->mutable_axis()->init(200, 0, 200);
 
+    _jet2_parton.reset(new GenParticleMonitor());
+    _jet2_parton->mass()->mutable_axis()->init(200, 0, 200);
+    _jet2_parton->mt()->mutable_axis()->init(200, 0, 200);
+
     monitor(_jet1_parton);
+    monitor(_jet2_parton);
+
+    _jet1_parton_vs_jet2_parton.reset(new DeltaMonitor());
+    _jet1_parton_vs_jet2_parton->ptrel()->mutable_axis()->init(100, 0, 100);
+    _jet1_parton_vs_jet2_parton->ptrel_vs_r()->mutable_xAxis()->init(100, 0, 100);
+
+    monitor(_jet1_parton_vs_jet2_parton);
 
     _jet1_vs_jet2.reset(new DeltaMonitor());
     _jet1_vs_jet2->ptrel()->mutable_axis()->init(100, 0, 100);
@@ -187,6 +198,13 @@ HadronicTopAnalyzer::HadronicTopAnalyzer(const HadronicTopAnalyzer &object):
 
     _jet1_parton = dynamic_pointer_cast<GenParticleMonitor>(object._jet1_parton->clone());
     monitor(_jet1_parton);
+
+    _jet2_parton = dynamic_pointer_cast<GenParticleMonitor>(object._jet2_parton->clone());
+    monitor(_jet2_parton);
+
+    _jet1_parton_vs_jet2_parton = dynamic_pointer_cast<DeltaMonitor>(
+            object._jet1_parton_vs_jet2_parton->clone());
+    monitor(_jet1_parton_vs_jet2_parton);
 
     _jet1_vs_jet2 = dynamic_pointer_cast<DeltaMonitor>(object._jet1_vs_jet2->clone());
     monitor(_jet1_vs_jet2);
@@ -253,6 +271,17 @@ const HadronicTopAnalyzer::P4MonitorPtr HadronicTopAnalyzer::jet4() const
 const HadronicTopAnalyzer::GenParticleMonitorPtr HadronicTopAnalyzer::jet1_parton() const
 {
     return _jet1_parton;
+}
+
+const HadronicTopAnalyzer::GenParticleMonitorPtr HadronicTopAnalyzer::jet2_parton() const
+{
+    return _jet2_parton;
+}
+
+const HadronicTopAnalyzer::DeltaMonitorPtr
+    HadronicTopAnalyzer::jet1_parton_vs_jet2_parton() const
+{
+    return _jet1_parton_vs_jet2_parton;
 }
 
 const HadronicTopAnalyzer::DeltaMonitorPtr HadronicTopAnalyzer::jet1_vs_jet2() const
@@ -395,9 +424,8 @@ void HadronicTopAnalyzer::process(const Event *event)
                 jet1()->fill(jet1_p4, _pileup_weight);
 
                 const Jet *raw_jet1 = htop_jets[0].jet;
-
                 if (raw_jet1->has_gen_parton())
-                    jet1_parton()->fill(raw_jet1->gen_parton());
+                    jet1_parton()->fill(raw_jet1->gen_parton(), _pileup_weight);
             
                 if (1 < njets_)
                 {
@@ -405,6 +433,18 @@ void HadronicTopAnalyzer::process(const Event *event)
                     jet2()->fill(jet2_p4, _pileup_weight);
 
                     jet1_vs_jet2()->fill(jet1_p4, jet2_p4, _pileup_weight);
+
+                    const Jet *raw_jet2 = htop_jets[1].jet;
+                    if (raw_jet2->has_gen_parton())
+                    {
+                        jet2_parton()->fill(raw_jet2->gen_parton(), _pileup_weight);
+
+                        if (raw_jet1->has_gen_parton())
+                            jet1_parton_vs_jet2_parton()->fill(
+                                    raw_jet1->gen_parton().physics_object().p4(),
+                                    raw_jet2->gen_parton().physics_object().p4(),
+                                    _pileup_weight);
+                    }
 
                     if (2 < njets_)
                     {
