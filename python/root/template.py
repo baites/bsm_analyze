@@ -279,7 +279,10 @@ class Templates(object):
 
         canvases = []
         for plot in self.plots:
-            canvases.append(self.draw_plot(plot))
+            c = self.draw_plot(plot)
+
+            if c:
+                canvases.append(c)
 
         return canvases
 
@@ -304,16 +307,16 @@ class Templates(object):
 
         c = ROOT.TCanvas()
 
-        if plot.dim == 2:
-            plot.hist.GetZaxis().SetLabelSize(0)
+        if template.dim == 2:
+            template.hist.GetZaxis().SetLabelSize(0)
 
-            plot.hist.Draw("colz 9")
+            template.hist.Draw("colz 9")
        
-        elif plot.dim == 1:
-            plot.hist.Draw("hist 9")
+        elif template.dim == 1:
+            template.hist.Draw("hist 9")
 
         else:
-            plot.hist.Draw()
+            template.hist.Draw()
 
         return c
 
