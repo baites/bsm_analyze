@@ -46,15 +46,17 @@ using bsm::H2Ptr;
 DeltaMonitor::DeltaMonitor()
 {
     _r.reset(new H1Proxy(50, 0, 5));
-    _eta.reset(new H1Proxy(200, -5, 5));
-    _phi.reset(new H1Proxy(160, -4, 4));
-    _ptrel.reset(new H1Proxy(50, 0, 10));
-    _ptrel_vs_r.reset(new H2Proxy(50, 0, 10, 50, 0, 5));
+    _eta.reset(new H1Proxy(100, -5, 5));
+    _phi.reset(new H1Proxy(80, -4, 4));
+    _ptrel.reset(new H1Proxy(100, 0, 10));
+    _angle.reset(new H1Proxy(80, -4, 4));
+    _ptrel_vs_r.reset(new H2Proxy(100, 0, 10, 50, 0, 5));
 
     monitor(_r);
     monitor(_eta);
     monitor(_phi);
     monitor(_ptrel);
+    monitor(_angle);
     monitor(_ptrel_vs_r);
 }
 
@@ -64,12 +66,14 @@ DeltaMonitor::DeltaMonitor(const DeltaMonitor &object)
     _eta.reset(new H1Proxy(*object._eta));
     _phi.reset(new H1Proxy(*object._phi));
     _ptrel.reset(new H1Proxy(*object._ptrel));
+    _angle.reset(new H1Proxy(*object._angle));
     _ptrel_vs_r.reset(new H2Proxy(*object._ptrel_vs_r));
 
     monitor(_r);
     monitor(_eta);
     monitor(_phi);
     monitor(_ptrel);
+    monitor(_angle);
     monitor(_ptrel_vs_r);
 }
 
@@ -81,6 +85,7 @@ void DeltaMonitor::fill(const LorentzVector &p1,
     eta()->fill(bsm::eta(p1) - bsm::eta(p2), weight);
     phi()->fill(dphi(p1, p2), weight);
     ptrel()->fill(bsm::ptrel(p1, p2), weight);
+    angle()->fill(bsm::angle(p1, p2), weight);
 
     ptrel_vs_r()->fill(bsm::ptrel(p1, p2), dr(p1, p2), weight);
 }
@@ -105,6 +110,11 @@ const H1Ptr DeltaMonitor::ptrel() const
     return _ptrel->histogram();
 }
 
+const H1Ptr DeltaMonitor::angle() const
+{
+    return _angle->histogram();
+}
+
 const H2Ptr DeltaMonitor::ptrel_vs_r() const
 {
     return _ptrel_vs_r->histogram();
@@ -126,6 +136,7 @@ void DeltaMonitor::print(std::ostream &out) const
     out << setw(15) << left << " [eta]" << *eta() << endl;
     out << setw(15) << left << " [phi] " << *phi() << endl;
     out << setw(15) << left << " [pTrel]" << *ptrel() << endl;
+    out << setw(15) << left << " [angle]" << *angle() << endl;
     out << setw(14) << left << " [pTrel vs R]" << *ptrel_vs_r();
 }
 

@@ -44,6 +44,7 @@ namespace bsm
             const H1Ptr eta() const;
             const H1Ptr phi() const;
             const H1Ptr ptrel() const;
+            const H1Ptr angle() const;
             const H2Ptr ptrel_vs_r() const;
 
             // Object interface
@@ -64,6 +65,7 @@ namespace bsm
             H1ProxyPtr _eta;
             H1ProxyPtr _phi;
             H1ProxyPtr _ptrel;
+            H1ProxyPtr _angle;
             H2ProxyPtr _ptrel_vs_r;
     };
 

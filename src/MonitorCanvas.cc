@@ -154,6 +154,10 @@ void DeltaCanvas::write(const DeltaMonitor &monitor, TDirectory *parent)
     _phi->SetName("dphi");
     _phi->Write();
 
+    _angle = convert(*monitor.angle());
+    _angle->SetName("angle");
+    _angle->Write();
+
     _ptrel_vs_r = convert(*monitor.ptrel_vs_r());
     _ptrel_vs_r->SetName("ptrel_vs_dr");
     _ptrel_vs_r->Write();
