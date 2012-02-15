@@ -25,7 +25,14 @@ class HadronicTopTemplates(root.template.Templates):
             "pz": "p_{z}",
             "pt": "p_{T}",
             "eta": "#eta",
-            "phi": "#phi"
+            "phi": "#phi",
+            "pdg_id": "ID_{PDG}",
+            "status": "status",
+            "dr": "#Delta R",
+            "ptrel": "p^{rel}_{T}",
+            "deta": "#Delta #eta",
+            "dphi": "#Delta #phi",
+            "angle": "#alpha"
             }
 
     units = {
@@ -37,7 +44,9 @@ class HadronicTopTemplates(root.template.Templates):
             "py": "[GeV/c]",
             "pz": "[GeV/c]",
             "pt": "[GeV/c]",
-            "phi": "[rad]"
+            "phi": "[rad]",
+            "ptrel": "[GeV/c]",
+            "dphi": "[rad]"
             }
 
     top_rebin = {
@@ -53,7 +62,7 @@ class HadronicTopTemplates(root.template.Templates):
             "et": 5
             }
 
-    jets_rebin = {
+    jet_rebin = {
             "energy": 5,
             "px": 5,
             "py": 5,
@@ -64,6 +73,26 @@ class HadronicTopTemplates(root.template.Templates):
             "mass": 10,
             "mt": 10,
             "et": 5
+            }
+
+    parton_rebin = {
+            "energy": 5,
+            "px": 5,
+            "py": 5,
+            "pz": 5,
+            "pt": 25,
+            "eta": 50,
+            "phi": 10,
+            "mass": 10,
+            "mt": 10,
+            "et": 5
+            }
+
+    jet_vs_jet_rebin = {
+            "ptrel": 5,
+            "dr": 5,
+            "deta": 5,
+            "dphi": 5
             }
 
     def __init__(self):
@@ -86,7 +115,9 @@ class HadronicTopTemplates(root.template.Templates):
                 "/top": self.process_plot_top,
                 "/jet1": self.process_plot_jet,
                 "/jet2": self.process_plot_jet,
-                "/jet3": self.process_plot_jet
+                "/jet3": self.process_plot_jet,
+                "/jet1_parton": self.process_plot_parton,
+                "/jet1_vs_jet2": self.process_plot_jet_vs_jet
             }.get(template.path.split(':', 1)[1],
                   lambda plot: None)(template)
 
@@ -98,22 +129,6 @@ class HadronicTopTemplates(root.template.Templates):
             or (not self.use_folders and path not in self.ban_folders)):
 
             root.template.find_plots(folder, path, callback)
-
-    def draw_plot(self, template):
-        canvas = root.template.Templates.draw_plot(self, template)
-        canvas.labels = []
-
-        for obj in [
-                root.label.CMSSimulationLabel(),
-                root.label.LuminosityLabel(4328.472)
-                ]:
-
-            obj.draw()
-            canvas.labels.append(obj)
-
-        canvas.Update()
-
-        return canvas
 
     def process_plot_top(self, plot):
         self.set_title_all(plot, "htop")
@@ -136,7 +151,19 @@ class HadronicTopTemplates(root.template.Templates):
 
     def process_plot_jet(self, plot):
         self.set_title_all(plot, plot.path.split("/")[-1])
-        self.rebin_all(plot, self.top_rebin)
+        self.rebin_all(plot, self.jet_rebin)
+
+        self.plots.append(plot)
+
+    def process_plot_parton(self, plot):
+        self.set_title_all(plot, "jet1 parton")
+        self.rebin_all(plot, self.parton_rebin)
+
+        self.plots.append(plot)
+
+    def process_plot_jet_vs_jet(self, plot):
+        self.set_title_all(plot, plot.path.split('/')[-1])
+        self.rebin_all(plot, self.jet_vs_jet_rebin)
 
         self.plots.append(plot)
 
