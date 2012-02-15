@@ -87,6 +87,7 @@ namespace bsm
         private:
             TH1Ptr _r;
             TH1Ptr _ptrel;
+            TH1Ptr _angle;
             TH2Ptr _ptrel_vs_r;
             TH1Ptr _eta;
             TH1Ptr _phi;

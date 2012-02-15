@@ -44,6 +44,7 @@ namespace bsm
             const H1Ptr eta() const;
             const H1Ptr phi() const;
             const H1Ptr ptrel() const;
+            const H1Ptr angle() const;
             const H2Ptr ptrel_vs_r() const;
 
             // Object interface
@@ -64,6 +65,7 @@ namespace bsm
             H1ProxyPtr _eta;
             H1ProxyPtr _phi;
             H1ProxyPtr _ptrel;
+            H1ProxyPtr _angle;
             H2ProxyPtr _ptrel_vs_r;
     };
 
@@ -75,7 +77,7 @@ namespace bsm
             ElectronsMonitor();
             ElectronsMonitor(const ElectronsMonitor &);
 
-            void fill(const Electrons &);
+            void fill(const Electrons &, const float &weigth = 1);
 
             const H1Ptr multiplicity() const;
             const H1Ptr pt() const;
@@ -108,7 +110,7 @@ namespace bsm
             JetsMonitor();
             JetsMonitor(const JetsMonitor &);
             
-            void fill(const Jets &);
+            void fill(const Jets &, const float &weight = 1);
 
             const H1Ptr multiplicity() const;
             const H1Ptr pt() const;
@@ -194,7 +196,7 @@ namespace bsm
             GenParticleMonitor();
             GenParticleMonitor(const GenParticleMonitor &);
             
-            void fill(const GenParticle &);
+            void fill(const GenParticle &, const float &weight = 1);
 
             const H1Ptr pdg_id() const;
             const H1Ptr status() const;
@@ -218,7 +220,7 @@ namespace bsm
             MissingEnergyMonitor();
             MissingEnergyMonitor(const MissingEnergyMonitor &);
             
-            void fill(const MissingEnergy &);
+            void fill(const MissingEnergy &, const float &weight = 1);
 
             const H1Ptr pt() const;
             const H1Ptr x() const;
@@ -253,7 +255,7 @@ namespace bsm
             MuonsMonitor();
             MuonsMonitor(const MuonsMonitor &);
             
-            void fill(const Muons &);
+            void fill(const Muons &, const float &weight = 1);
 
             const H1Ptr multiplicity() const;
             const H1Ptr pt() const;
@@ -287,7 +289,7 @@ namespace bsm
             PrimaryVerticesMonitor();
             PrimaryVerticesMonitor(const PrimaryVerticesMonitor &);
             
-            void fill(const PrimaryVertices &);
+            void fill(const PrimaryVertices &, const float &weight = 1);
 
             const H1Ptr multiplicity() const;
             const H1Ptr x() const;

@@ -71,6 +71,9 @@ namespace bsm
             const P4MonitorPtr jet4() const;
 
             const GenParticleMonitorPtr jet1_parton() const;
+            const GenParticleMonitorPtr jet2_parton() const;
+
+            const DeltaMonitorPtr jet1_parton_vs_jet2_parton() const;
 
             const DeltaMonitorPtr jet1_vs_jet2() const;
             const DeltaMonitorPtr jet1_vs_jet3() const;
@@ -124,6 +127,9 @@ namespace bsm
             P4MonitorPtr _jet4;
 
             GenParticleMonitorPtr _jet1_parton;
+            GenParticleMonitorPtr _jet2_parton;
+
+            DeltaMonitorPtr _jet1_parton_vs_jet2_parton;
 
             DeltaMonitorPtr _jet1_vs_jet2;
             DeltaMonitorPtr _jet1_vs_jet3;
