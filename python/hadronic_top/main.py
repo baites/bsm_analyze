@@ -31,16 +31,11 @@ def main(argv = sys.argv):
 
         root.style.tdr()
 
-        templates = Templates(argv[1])
-        templates.use_folders = ["jet1", "top"]
+        templates = Templates()
+        templates.use_folders = ["jet1", "top" ]
+        templates.ban_plots = [ "px", "py", "pz", "phi" ]
 
-        templates.jets_rebin["mass"] = 1
-        templates.jets_rebin["mt"] = 1
-
-        templates.top_rebin["mass"] = 1
-        templates.top_rebin["mt"] = 1
-
-        templates.load()
+        templates.load(argv[1])
 
         if not templates:
             raise Exception("failed to laod templates")

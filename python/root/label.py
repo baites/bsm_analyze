@@ -16,7 +16,7 @@ class Label(object):
         my_label = Label()
         my_label.label = "This is a generic label"
         ...
-        my_label.Draw()
+        my_label.draw()
     '''
 
     def __init__(self):
@@ -34,14 +34,11 @@ class Label(object):
         '''
 
         if self:
-            self.label.SetHeader(header)
+            self.label.SetTitle(header)
         else:
-            self._label = ROOT.TLegend(0, 0.9, 1, 1);
+            self._label = ROOT.TLatex()
 
-            self.label.SetFillColor(10)
-            self.label.SetMargin(0.12);
-            self.label.SetTextAlign(32)
-            self.label.SetTextSize(0.12)
+            self.label.SetTextSize(0.10)
 
             '''
             recursion to absorb Set Header procedure if it is changed in future,
@@ -53,6 +50,11 @@ class Label(object):
     @label.deleter
     def label(self):
         del self._label
+
+    def draw(self):
+        self.label.DrawLatex(self.label.GetX(),
+                             self.label.GetY(),
+                             self.label.GetTitle())
 
     def __nonzero__(self):
         '''
@@ -83,11 +85,19 @@ class CMSLabel(Label):
         Label.__init__(self)
         self.label = "CMS Preliminary #sqrt{s} = 7 TeV"
 
-        self.label.SetX1(.53)
-        self.label.SetY1(.91)
+        self.label.SetX(.53)
+        self.label.SetY(.91)
 
-        self.label.SetX2(.88)
-        self.label.SetY2(.96)
+class CMSSimulationLabel(CMSLabel):
+    '''
+    CMS Simulation Label with experiment energy, specific size and location,
+    etc.
+    '''
+
+    def __init__(self):
+        CMSLabel.__init__(self)
+
+        self.label = "CMS Simulation Preliminary"
 
 class LuminosityLabel(Label):
     '''
@@ -99,19 +109,20 @@ class LuminosityLabel(Label):
         self.label = ("L = {0:.2f}".format(luminosity / 1000) +
                         " fb^{-1}, e+jets")
 
-        self.label.SetX1(.22)
-        self.label.SetY1(.91)
-
-        self.label.SetX2(.5)
-        self.label.SetY2(.96)
+        self.label.SetX(.02)
+        self.label.SetY(.56)
 
 if "__main__" == __name__:
-    cms = CMSLabel()
-    print(cms)
+    label = CMSLabel()
+    print(label)
     print()
 
-    luminosity = LuminosityLabel(4330)
-    print(luminosity)
+    label = CMSSimulationLabel()
+    print(label)
+    print()
+
+    label = LuminosityLabel(4330)
+    print(label)
     print()
 
     label = Label()
