@@ -29,11 +29,17 @@ def main(argv = sys.argv):
         if 2 > len(argv):
             raise Exception("input is not specified")
 
-        root.style.tdr()
+        style = root.style.tdr()
+        style.SetOptStat(111111)
+        style.cd()
 
         templates = Templates()
-        templates.use_folders = ["jet1", "top" ]
+        #templates.use_folders = ["jet1", "jet2", "top", "jet1_parton" ]
+        templates.use_folders = ["top", "jet1_vs_jet2", "jet1", "jet1_parton", "jet2_parton"]
         templates.ban_plots = [ "px", "py", "pz", "phi" ]
+
+        templates.parton_rebin["mass"] = 1
+        templates.parton_rebin["mt"] = 1
 
         templates.load(argv[1])
 
