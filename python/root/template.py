@@ -11,6 +11,7 @@ import os
 import sys
 
 import label
+import root.tfile
 
 import ROOT
 
@@ -258,18 +259,15 @@ class Templates(object):
         if not os.path.exists(filename):
             raise Exception("input file does not exist: " + filename)
 
-        in_file = ROOT.TFile.Open(filename)
-        if not in_file:
-            raise Exception("failed to open input file: " + filename)
-
-        # Scan file recursively for plots
-        find_plots(in_file,
-                   "",
-                   callback = {
-                       "plot": self.process_plot,
-                       "folder": self.process_folder
-                       }
-                   )
+        with root.tfile.topen(filename) as in_file:
+            # Scan file recursively for plots
+            find_plots(in_file,
+                       "",
+                       callback = {
+                           "plot": self.process_plot,
+                           "folder": self.process_folder
+                           }
+                       )
 
     def draw(self):
         '''
