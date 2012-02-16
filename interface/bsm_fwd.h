@@ -91,6 +91,8 @@ namespace bsm
     class BtagResonanceReconstructor;
     class SimpleDrResonanceReconstructor;
     class HemisphereResonanceReconstructor;
+
+    struct GenResonance;
 }
 
 #endif
