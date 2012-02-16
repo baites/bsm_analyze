@@ -136,6 +136,41 @@ int main(int argc, char *argv[])
 
             shared_ptr<DeltaCanvas> jet3_vs_jet4(new DeltaCanvas("jet3_vs_jet4"));
             jet3_vs_jet4->write(*analyzer->jet3_vs_jet4(), app->output().get());
+
+            // Gen particles
+            //
+            shared_ptr<P4Canvas> gen_top(new P4Canvas("gen_top", "gen_top"));
+            gen_top->write(*analyzer->gen_top(), app->output().get());
+
+            if (gen_top->pushd(app->output().get()))
+            {
+                TH1Ptr njets = convert(*analyzer->njets_gen());
+                njets->SetName("njets");
+                njets->Write();
+
+                TH2Ptr njets_vs_mass = convert(*analyzer->njets_gen_vs_gen_mass());
+                njets_vs_mass->SetName("njets_vs_mass");
+                njets_vs_mass->Write();
+
+                TH2Ptr pt_vs_mass = convert(*analyzer->pt_gen_vs_gen_mass());
+                pt_vs_mass->SetName("pt_vs_mass");
+                pt_vs_mass->Write();
+
+                TH2Ptr njets_vs_pt = convert(*analyzer->njets_gen_vs_gen_pt());
+                njets_vs_pt->SetName("njets_vs_pt");
+                njets_vs_pt->Write();
+
+                gen_top->popd();
+            }
+
+            shared_ptr<P4Canvas> gen_jet1(new P4Canvas("gen_jet1", "gen_jet1"));
+            gen_jet1->write(*analyzer->gen_jet1(), app->output().get());
+
+            shared_ptr<P4Canvas> gen_jet2(new P4Canvas("gen_jet2", "gen_jet2"));
+            gen_jet2->write(*analyzer->gen_jet2(), app->output().get());
+
+            shared_ptr<P4Canvas> gen_jet3(new P4Canvas("gen_jet3", "gen_jet3"));
+            gen_jet3->write(*analyzer->gen_jet3(), app->output().get());
         }
     }
     catch(const std::exception &error)

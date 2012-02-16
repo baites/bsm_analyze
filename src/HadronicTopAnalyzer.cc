@@ -18,8 +18,8 @@
 #include "bsm_stat/interface/H2.h"
 #include "interface/Algorithm.h"
 #include "interface/CorrectedJet.h"
-#include "interface/Monitor.h"
 #include "interface/Pileup.h"
+#include "interface/Resonance.h"
 #include "interface/StatProxy.h"
 #include "interface/HadronicTopAnalyzer.h"
 #include "interface/Utility.h"
@@ -166,6 +166,38 @@ HadronicTopAnalyzer::HadronicTopAnalyzer():
     monitor(_pt_vs_mass);
     monitor(_njets_vs_pt);
 
+    // Gen particles
+    //
+    _gen_top.reset(new P4Monitor());
+
+    _gen_jet1.reset(new P4Monitor());
+    _gen_jet1->mass()->mutable_axis()->init(200, 0, 200);
+    _gen_jet1->mt()->mutable_axis()->init(200, 0, 200);
+
+    _gen_jet2.reset(new P4Monitor());
+    _gen_jet2->mass()->mutable_axis()->init(100, 0, 100);
+    _gen_jet2->mt()->mutable_axis()->init(100, 0, 100);
+
+    _gen_jet3.reset(new P4Monitor());
+    _gen_jet3->mass()->mutable_axis()->init(100, 0, 100);
+    _gen_jet3->mt()->mutable_axis()->init(100, 0, 100);
+
+    monitor(_gen_top);
+    monitor(_gen_jet1);
+    monitor(_gen_jet2);
+    monitor(_gen_jet3);
+
+    _njets_gen.reset(new H1Proxy(10, 0, 10));
+    monitor(_njets_gen);
+
+    _njets_gen_vs_gen_mass.reset(new H2Proxy(10, 0, 10, 500, 0, 500));
+    _pt_gen_vs_gen_mass.reset(new H2Proxy(500, 0, 500, 500, 0, 500));
+    _njets_gen_vs_gen_pt.reset(new H2Proxy(10, 0, 10, 500, 0, 500));
+
+    monitor(_njets_gen_vs_gen_mass);
+    monitor(_pt_gen_vs_gen_mass);
+    monitor(_njets_gen_vs_gen_pt);
+
     _pileup.reset(new Pileup());
     monitor(_pileup);
 
@@ -235,6 +267,32 @@ HadronicTopAnalyzer::HadronicTopAnalyzer(const HadronicTopAnalyzer &object):
 
     _njets_vs_pt = dynamic_pointer_cast<H2Proxy>(object._njets_vs_pt->clone());
     monitor(_njets_vs_pt);
+
+    // Gen Particles
+    //
+    _gen_top = dynamic_pointer_cast<P4Monitor>(object._gen_top->clone());
+    monitor(_gen_top);
+
+    _gen_jet1 = dynamic_pointer_cast<P4Monitor>(object._gen_jet1->clone());
+    monitor(_gen_jet1);
+
+    _gen_jet2 = dynamic_pointer_cast<P4Monitor>(object._gen_jet2->clone());
+    monitor(_gen_jet2);
+
+    _gen_jet3 = dynamic_pointer_cast<P4Monitor>(object._gen_jet3->clone());
+    monitor(_gen_jet3);
+
+    _njets_gen = dynamic_pointer_cast<H1Proxy>(object._njets_gen->clone());
+    monitor(_njets_gen);
+
+    _njets_gen_vs_gen_mass = dynamic_pointer_cast<H2Proxy>(object._njets_gen_vs_gen_mass->clone());
+    monitor(_njets_gen_vs_gen_mass);
+
+    _pt_gen_vs_gen_mass = dynamic_pointer_cast<H2Proxy>(object._pt_gen_vs_gen_mass->clone());
+    monitor(_pt_gen_vs_gen_mass);
+
+    _njets_gen_vs_gen_pt = dynamic_pointer_cast<H2Proxy>(object._njets_gen_vs_gen_pt->clone());
+    monitor(_njets_gen_vs_gen_pt);
 
     _pileup = dynamic_pointer_cast<Pileup>(object._pileup->clone());
     monitor(_pileup);
@@ -334,6 +392,46 @@ const HadronicTopAnalyzer::H2Ptr HadronicTopAnalyzer::njets_vs_pt() const
     return _njets_vs_pt->histogram();
 }
 
+const HadronicTopAnalyzer::P4MonitorPtr HadronicTopAnalyzer::gen_top() const
+{
+    return _gen_top;
+}
+
+const HadronicTopAnalyzer::P4MonitorPtr HadronicTopAnalyzer::gen_jet1() const
+{
+    return _gen_jet1;
+}
+
+const HadronicTopAnalyzer::P4MonitorPtr HadronicTopAnalyzer::gen_jet2() const
+{
+    return _gen_jet2;
+}
+
+const HadronicTopAnalyzer::P4MonitorPtr HadronicTopAnalyzer::gen_jet3() const
+{
+    return _gen_jet3;
+}
+
+const HadronicTopAnalyzer::H1Ptr HadronicTopAnalyzer::njets_gen() const
+{
+    return _njets_gen->histogram();
+}
+
+const HadronicTopAnalyzer::H2Ptr HadronicTopAnalyzer::njets_gen_vs_gen_mass() const
+{
+    return _njets_gen_vs_gen_mass->histogram();
+}
+
+const HadronicTopAnalyzer::H2Ptr HadronicTopAnalyzer::pt_gen_vs_gen_mass() const
+{
+    return _pt_gen_vs_gen_mass->histogram();
+}
+
+const HadronicTopAnalyzer::H2Ptr HadronicTopAnalyzer::njets_gen_vs_gen_pt() const
+{
+    return _njets_gen_vs_gen_pt->histogram();
+}
+
 bsm::JetEnergyCorrectionDelegate
     *HadronicTopAnalyzer::getJetEnergyCorrectionDelegate() const
 {
@@ -402,6 +500,50 @@ void HadronicTopAnalyzer::process(const Event *event)
                         && resonance.htop_jets.size() >= _htop_njets.max))
                 return;
 
+            // Generator plots
+            //
+            GenResonance gen_resonance(event);
+            if (gen_resonance.htop)
+            {
+                gen_top()->fill(*gen_resonance.htop, _pileup_weight);
+
+                const float gen_mass_ = mass(*gen_resonance.htop);
+                const float gen_jets_ = gen_resonance.whtop_jets.size();
+                const float gen_pt_ = pt(*gen_resonance.htop);
+
+                njets_gen()->fill(gen_jets_, _pileup_weight);
+                njets_gen_vs_gen_mass()->fill(gen_jets_,
+                                              gen_mass_,
+                                              _pileup_weight);
+
+                pt_gen_vs_gen_mass()->fill(gen_pt_,
+                                           gen_mass_,
+                                           _pileup_weight);
+
+                njets_gen_vs_gen_pt()->fill(gen_jets_,
+                                            gen_pt_,
+                                            _pileup_weight);
+
+                if (0 < gen_jets_)
+                {
+                    gen_jet1()->fill(*gen_resonance.whtop_jets[0],
+                                     _pileup_weight);
+                    if (1 < gen_jets_)
+                    {
+                        gen_jet2()->fill(*gen_resonance.whtop_jets[1],
+                                         _pileup_weight);
+                        if (2 < gen_jets_)
+                        {
+                            gen_jet3()->fill(*gen_resonance.whtop_jets[2],
+                                             _pileup_weight);
+                        }
+                    }
+                }
+            }
+
+
+            // Reconstructed plots
+            //
             const float mass_ = mass(resonance.htop);
 
             top()->fill(resonance.htop, _pileup_weight);

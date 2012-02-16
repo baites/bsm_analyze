@@ -14,6 +14,7 @@
 #include "interface/bsm_fwd.h"
 
 #include "interface/Analyzer.h"
+#include "interface/Monitor.h"
 
 namespace bsm
 {
@@ -88,6 +89,17 @@ namespace bsm
             const H2Ptr pt_vs_mass() const;
             const H2Ptr njets_vs_pt() const;
 
+                // Gen Particles
+            const P4MonitorPtr gen_top() const;
+            const P4MonitorPtr gen_jet1() const;
+            const P4MonitorPtr gen_jet2() const;
+            const P4MonitorPtr gen_jet3() const;
+
+            const H1Ptr njets_gen() const;
+            const H2Ptr njets_gen_vs_gen_mass() const;
+            const H2Ptr pt_gen_vs_gen_mass() const;
+            const H2Ptr njets_gen_vs_gen_pt() const;
+
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
             SynchSelectorDelegate *getSynchSelectorDelegate() const;
             PileupDelegate *getPileupDelegate() const;
@@ -109,9 +121,6 @@ namespace bsm
             virtual void print(std::ostream &) const;
 
         private:
-            typedef boost::shared_ptr<H1Proxy> H1ProxyPtr;
-            typedef boost::shared_ptr<H2Proxy> H2ProxyPtr;
-
             typedef ResonanceReconstructor::Mttbar Mttbar;
 
             Mttbar mttbar() const;
@@ -143,6 +152,18 @@ namespace bsm
             H2ProxyPtr _njets_vs_mass;
             H2ProxyPtr _pt_vs_mass;
             H2ProxyPtr _njets_vs_pt;
+
+            // Generator particles
+            //
+            P4MonitorPtr _gen_top;
+            P4MonitorPtr _gen_jet1;
+            P4MonitorPtr _gen_jet2;
+            P4MonitorPtr _gen_jet3;
+
+            H1ProxyPtr _njets_gen;
+            H2ProxyPtr _njets_gen_vs_gen_mass;
+            H2ProxyPtr _pt_gen_vs_gen_mass;
+            H2ProxyPtr _njets_gen_vs_gen_pt;
 
             boost::shared_ptr<Pileup> _pileup;
 
