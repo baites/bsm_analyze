@@ -409,7 +409,6 @@ TemplateAnalyzer::TemplateAnalyzer():
     _apply_wjet_correction(false)
 {
     _synch_selector.reset(new SynchSelector());
-    _synch_selector->tricut()->disable();
     monitor(_synch_selector);
 
     // Assign cutflow delegate
