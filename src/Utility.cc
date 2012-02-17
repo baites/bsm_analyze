@@ -81,11 +81,21 @@ bool PtLess::operator()(const P4Ptr &v1, const P4Ptr &v2)
     return pt_less(*v1, *v2);
 }
 
+bool PtLess::operator()(const LorentzVector *v1, const LorentzVector *v2)
+{
+    return pt_less(*v1, *v2);
+}
+
 
 
 // PtGreater
 //
 bool PtGreater::operator()(const P4Ptr &v1, const P4Ptr &v2)
+{
+    return pt_greater(*v1, *v2);
+}
+
+bool PtGreater::operator()(const LorentzVector *v1, const LorentzVector *v2)
 {
     return pt_greater(*v1, *v2);
 }
