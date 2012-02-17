@@ -34,6 +34,7 @@ then
 
         export ${library_path}="${!library_path}:${CODE}/lib:${CODE}/test/lib"
         export PATH="${CODE}/bin:${CODE}/test/bin:${PATH}"
+        export PYTHONPATH="${CODE}/python:${PYTHONPATH}"
 
         if [[ "Linux" == "`uname`" ]]
         then

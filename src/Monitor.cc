@@ -46,15 +46,17 @@ using bsm::H2Ptr;
 DeltaMonitor::DeltaMonitor()
 {
     _r.reset(new H1Proxy(50, 0, 5));
-    _eta.reset(new H1Proxy(200, -5, 5));
-    _phi.reset(new H1Proxy(160, -4, 4));
-    _ptrel.reset(new H1Proxy(50, 0, 10));
-    _ptrel_vs_r.reset(new H2Proxy(50, 0, 10, 50, 0, 5));
+    _eta.reset(new H1Proxy(100, -5, 5));
+    _phi.reset(new H1Proxy(80, -4, 4));
+    _ptrel.reset(new H1Proxy(100, 0, 10));
+    _angle.reset(new H1Proxy(80, -4, 4));
+    _ptrel_vs_r.reset(new H2Proxy(100, 0, 10, 50, 0, 5));
 
     monitor(_r);
     monitor(_eta);
     monitor(_phi);
     monitor(_ptrel);
+    monitor(_angle);
     monitor(_ptrel_vs_r);
 }
 
@@ -64,23 +66,28 @@ DeltaMonitor::DeltaMonitor(const DeltaMonitor &object)
     _eta.reset(new H1Proxy(*object._eta));
     _phi.reset(new H1Proxy(*object._phi));
     _ptrel.reset(new H1Proxy(*object._ptrel));
+    _angle.reset(new H1Proxy(*object._angle));
     _ptrel_vs_r.reset(new H2Proxy(*object._ptrel_vs_r));
 
     monitor(_r);
     monitor(_eta);
     monitor(_phi);
     monitor(_ptrel);
+    monitor(_angle);
     monitor(_ptrel_vs_r);
 }
 
-void DeltaMonitor::fill(const LorentzVector &p1, const LorentzVector &p2)
+void DeltaMonitor::fill(const LorentzVector &p1,
+                        const LorentzVector &p2,
+                        const float &weight)
 {
-    r()->fill(dr(p1, p2));
-    eta()->fill(bsm::eta(p1) - bsm::eta(p2));
-    phi()->fill(dphi(p1, p2));
-    ptrel()->fill(bsm::ptrel(p1, p2));
+    r()->fill(dr(p1, p2), weight);
+    eta()->fill(bsm::eta(p1) - bsm::eta(p2), weight);
+    phi()->fill(dphi(p1, p2), weight);
+    ptrel()->fill(bsm::ptrel(p1, p2), weight);
+    angle()->fill(bsm::angle(p1, p2), weight);
 
-    ptrel_vs_r()->fill(bsm::ptrel(p1, p2), dr(p1, p2));
+    ptrel_vs_r()->fill(bsm::ptrel(p1, p2), dr(p1, p2), weight);
 }
 
 const H1Ptr DeltaMonitor::r() const
@@ -101,6 +108,11 @@ const H1Ptr DeltaMonitor::phi() const
 const H1Ptr DeltaMonitor::ptrel() const
 {
     return _ptrel->histogram();
+}
+
+const H1Ptr DeltaMonitor::angle() const
+{
+    return _angle->histogram();
 }
 
 const H2Ptr DeltaMonitor::ptrel_vs_r() const
@@ -124,6 +136,7 @@ void DeltaMonitor::print(std::ostream &out) const
     out << setw(15) << left << " [eta]" << *eta() << endl;
     out << setw(15) << left << " [phi] " << *phi() << endl;
     out << setw(15) << left << " [pTrel]" << *ptrel() << endl;
+    out << setw(15) << left << " [angle]" << *angle() << endl;
     out << setw(14) << left << " [pTrel vs R]" << *ptrel_vs_r();
 }
 
@@ -153,9 +166,9 @@ ElectronsMonitor::ElectronsMonitor(const ElectronsMonitor &object)
     monitor(_leading_pt);
 }
 
-void ElectronsMonitor::fill(const Electrons &electrons)
+void ElectronsMonitor::fill(const Electrons &electrons, const float &weight)
 {
-    multiplicity()->fill(electrons.size());
+    multiplicity()->fill(electrons.size(), weight);
 
     float max_el_pt = 0;
     float el_pt = 0;
@@ -165,7 +178,7 @@ void ElectronsMonitor::fill(const Electrons &electrons)
     {
         el_pt = bsm::pt(electron->physics_object().p4());
 
-        pt()->fill(el_pt);
+        pt()->fill(el_pt, weight);
 
         if (el_pt <= max_el_pt)
             continue;
@@ -174,7 +187,7 @@ void ElectronsMonitor::fill(const Electrons &electrons)
     }
 
     if (max_el_pt)
-        leading_pt()->fill(max_el_pt);
+        leading_pt()->fill(max_el_pt, weight);
 }
 
 const H1Ptr ElectronsMonitor::multiplicity() const
@@ -207,73 +220,6 @@ void ElectronsMonitor::print(std::ostream &out) const
     out << setw(16) << left << " [multiplicity]" << *multiplicity() << endl;
     out << setw(16) << left << " [pt]" << *pt() << endl;
     out << setw(16) << left << " [leading pt] " << *leading_pt();
-}
-
-
-
-// Gen Particle Monitor
-//
-GenParticleMonitor::GenParticleMonitor()
-{
-    _pdg_id.reset(new H1Proxy(100, -50, 50));
-    _status.reset(new H1Proxy(10, 0, 10));
-    _pt.reset(new H1Proxy(100, 0, 100));
-
-    monitor(_pdg_id);
-    monitor(_status);
-    monitor(_pt);
-}
-
-GenParticleMonitor::GenParticleMonitor(const GenParticleMonitor &object)
-{
-    _pdg_id.reset(new H1Proxy(*object._pdg_id));
-    _status.reset(new H1Proxy(*object._status));
-    _pt.reset(new H1Proxy(*object._pt));
-
-    monitor(_pdg_id);
-    monitor(_status);
-    monitor(_pt);
-}
-
-void GenParticleMonitor::fill(const GenParticle &particle)
-{
-    pdgid()->fill(particle.id());
-    status()->fill(particle.status());
-
-    pt()->fill(bsm::pt(particle.physics_object().p4()));
-}
-
-const GenParticleMonitor::H1Ptr GenParticleMonitor::pdgid() const
-{
-    return _pdg_id->histogram();
-}
-
-const GenParticleMonitor::H1Ptr GenParticleMonitor::status() const
-{
-    return _status->histogram();
-}
-
-const GenParticleMonitor::H1Ptr GenParticleMonitor::pt() const
-{
-    return _pt->histogram();
-}
-
-uint32_t GenParticleMonitor::id() const
-{
-    return core::ID<GenParticleMonitor>::get();
-}
-
-GenParticleMonitor::ObjectPtr GenParticleMonitor::clone() const
-{
-    return ObjectPtr(new GenParticleMonitor(*this));
-}
-
-void GenParticleMonitor::print(std::ostream &out) const
-{
-    out << setw(10) << left << " [PDG id]" << *pdgid() << endl;
-    out << setw(10) << left << " [status]" << *status() << endl;
-    out << setw(10) << left << " [pt] " << *pt();
-
 }
 
 
@@ -314,9 +260,9 @@ JetsMonitor::JetsMonitor(const JetsMonitor &object)
     monitor(_children);
 }
 
-void JetsMonitor::fill(const Jets &jets)
+void JetsMonitor::fill(const Jets &jets, const float &weight)
 {
-    multiplicity()->fill(jets.size());
+    multiplicity()->fill(jets.size(), weight);
 
     float max_jet_pt = 0;
     float max_jet_uncorrected_pt = 0;
@@ -326,18 +272,18 @@ void JetsMonitor::fill(const Jets &jets)
             jets.end() != jet;
             ++jet)
     {
-        children()->fill(jet->child().size());
+        children()->fill(jet->child().size(), weight);
 
         jet_pt = bsm::pt(jet->physics_object().p4());
         jet_uncorrected_pt = 0;
 
-        pt()->fill(jet_pt);
+        pt()->fill(jet_pt, weight);
 
         if (jet->has_uncorrected_p4())
         {
             jet_uncorrected_pt = bsm::pt(jet->uncorrected_p4());
 
-            uncorrected_pt()->fill(jet_uncorrected_pt);
+            uncorrected_pt()->fill(jet_uncorrected_pt, weight);
         }
 
         if (jet_pt <= max_jet_pt)
@@ -350,7 +296,7 @@ void JetsMonitor::fill(const Jets &jets)
     if (max_jet_pt)
     {
         leading_pt()->fill(max_jet_pt);
-        leading_uncorrected_pt()->fill(max_jet_uncorrected_pt);
+        leading_uncorrected_pt()->fill(max_jet_uncorrected_pt, weight);
     }
 }
 
@@ -422,6 +368,7 @@ P4Monitor::P4Monitor()
     _phi.reset(new H1Proxy(800, -4, 4));
     _mass.reset(new H1Proxy(500, 0, 500));
     _mt.reset(new H1Proxy(500, 0, 500));
+    _et.reset(new H1Proxy(100, 0, 100));
 
     monitor(_energy);
     monitor(_px);
@@ -432,6 +379,7 @@ P4Monitor::P4Monitor()
     monitor(_phi);
     monitor(_mass);
     monitor(_mt);
+    monitor(_et);
 }
 
 P4Monitor::P4Monitor(const P4Monitor &object)
@@ -445,6 +393,7 @@ P4Monitor::P4Monitor(const P4Monitor &object)
     _phi.reset(new H1Proxy(*object._phi));
     _mass.reset(new H1Proxy(*object._mass));
     _mt.reset(new H1Proxy(*object._mt));
+    _et.reset(new H1Proxy(*object._et));
 
     monitor(_energy);
     monitor(_px);
@@ -455,6 +404,7 @@ P4Monitor::P4Monitor(const P4Monitor &object)
     monitor(_phi);
     monitor(_mass);
     monitor(_mt);
+    monitor(_et);
 }
 
 void P4Monitor::fill(const LorentzVector &p4, const float &weight)
@@ -468,7 +418,9 @@ void P4Monitor::fill(const LorentzVector &p4, const float &weight)
     eta()->fill(bsm::eta(p4), weight);
     phi()->fill(bsm::phi(p4), weight);
     mass()->fill(bsm::mass(p4), weight);
+
     mt()->fill(bsm::mt(p4), weight);
+    et()->fill(bsm::et(p4), weight);
 }
 
 const H1Ptr P4Monitor::energy() const
@@ -516,6 +468,11 @@ const H1Ptr P4Monitor::mt() const
     return _mt->histogram();
 }
 
+const H1Ptr P4Monitor::et() const
+{
+    return _et->histogram();
+}
+
 uint32_t P4Monitor::id() const
 {
     return core::ID<P4Monitor>::get();
@@ -536,7 +493,67 @@ void P4Monitor::print(std::ostream &out) const
     out << setw(16) << left << " [eta]" << *eta() << endl;
     out << setw(16) << left << " [phi]" << *phi() << endl;
     out << setw(16) << left << " [mass]" << *mass() << endl;
-    out << setw(16) << left << " [mt]" << *mt();
+    out << setw(16) << left << " [mt]" << *mt() << endl;
+    out << setw(16) << left << " [et]" << *et();
+}
+
+
+
+// Gen Particle Monitor
+//
+GenParticleMonitor::GenParticleMonitor()
+{
+    _pdg_id.reset(new H1Proxy(100, -50, 50));
+    _status.reset(new H1Proxy(10, 0, 10));
+
+    monitor(_pdg_id);
+    monitor(_status);
+}
+
+GenParticleMonitor::GenParticleMonitor(const GenParticleMonitor &object):
+    P4Monitor(object)
+{
+    _pdg_id.reset(new H1Proxy(*object._pdg_id));
+    _status.reset(new H1Proxy(*object._status));
+
+    monitor(_pdg_id);
+    monitor(_status);
+}
+
+void GenParticleMonitor::fill(const GenParticle &particle, const float &weight)
+{
+    pdg_id()->fill(particle.id(), weight);
+    status()->fill(particle.status(), weight);
+
+    P4Monitor::fill(particle.physics_object().p4(), weight);
+}
+
+const H1Ptr GenParticleMonitor::pdg_id() const
+{
+    return _pdg_id->histogram();
+}
+
+const H1Ptr GenParticleMonitor::status() const
+{
+    return _status->histogram();
+}
+
+uint32_t GenParticleMonitor::id() const
+{
+    return core::ID<GenParticleMonitor>::get();
+}
+
+GenParticleMonitor::ObjectPtr GenParticleMonitor::clone() const
+{
+    return ObjectPtr(new GenParticleMonitor(*this));
+}
+
+void GenParticleMonitor::print(std::ostream &out) const
+{
+    out << setw(10) << left << " [PDG id]" << *pdg_id() << endl;
+    out << setw(10) << left << " [status]" << *status() << endl;
+
+    P4Monitor::print(out);
 }
 
 
@@ -569,9 +586,9 @@ MissingEnergyMonitor::MissingEnergyMonitor(const MissingEnergyMonitor &object)
     monitor(_z);
 }
 
-void MissingEnergyMonitor::fill(const MissingEnergy &missing_energy)
+void MissingEnergyMonitor::fill(const MissingEnergy &missing_energy, const float &weight)
 {
-    pt()->fill(bsm::pt(missing_energy.p4()));
+    pt()->fill(bsm::pt(missing_energy.p4()), weight);
 }
 
 const H1Ptr MissingEnergyMonitor::pt() const
@@ -638,9 +655,9 @@ MuonsMonitor::MuonsMonitor(const MuonsMonitor &object)
     monitor(_leading_pt);
 }
 
-void MuonsMonitor::fill(const Muons &muons)
+void MuonsMonitor::fill(const Muons &muons, const float &weight)
 {
-    multiplicity()->fill(muons.size());
+    multiplicity()->fill(muons.size(), weight);
 
     float max_muon_pt = 0;
     float muon_pt = 0;
@@ -650,7 +667,7 @@ void MuonsMonitor::fill(const Muons &muons)
     {
         muon_pt = bsm::pt(muon->physics_object().p4());
 
-        pt()->fill(muon_pt);
+        pt()->fill(muon_pt, weight);
 
         if (muon_pt <= max_muon_pt)
             continue;
@@ -659,7 +676,7 @@ void MuonsMonitor::fill(const Muons &muons)
     }
 
     if (max_muon_pt)
-        leading_pt()->fill(max_muon_pt);
+        leading_pt()->fill(max_muon_pt, weight);
 }
 
 const H1Ptr MuonsMonitor::multiplicity() const
@@ -725,17 +742,18 @@ PrimaryVerticesMonitor::PrimaryVerticesMonitor(const PrimaryVerticesMonitor &obj
     monitor(_z);
 }
 
-void PrimaryVerticesMonitor::fill(const PrimaryVertices &primary_vertices)
+void PrimaryVerticesMonitor::fill(const PrimaryVertices &primary_vertices,
+        const float &weight)
 {
-    multiplicity()->fill(primary_vertices.size());
+    multiplicity()->fill(primary_vertices.size(), weight);
 
     for(PrimaryVertices::const_iterator primary_vertex = primary_vertices.begin();
             primary_vertices.end() != primary_vertex;
             ++primary_vertex)
     {
-        x()->fill(primary_vertex->vertex().x());
-        y()->fill(primary_vertex->vertex().y());
-        z()->fill(primary_vertex->vertex().z());
+        x()->fill(primary_vertex->vertex().x(), weight);
+        y()->fill(primary_vertex->vertex().y(), weight);
+        z()->fill(primary_vertex->vertex().z(), weight);
     }
 }
 

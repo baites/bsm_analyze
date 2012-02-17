@@ -86,6 +86,14 @@ namespace bsm
             virtual void setBtagReconstruction()
             {
             }
+
+            virtual void setSimpleDrReconstruction()
+            {
+            }
+
+            virtual void setHemisphereReconstruction()
+            {
+            }
     };
 
     class TemplatesOptions : public Options
@@ -103,81 +111,12 @@ namespace bsm
         private:
             void setWjetCorrection();
             void setBtagReconstruction();
+            void setSimpleDrReconstruction();
+            void setHemisphereReconstruction();
 
             TemplatesDelegate *_delegate;
 
             DescriptionPtr _description;
-    };
-
-    class ResonanceReconstructor: public core::Object
-    {
-        public:
-            typedef DecayGenerator<CorrectedJet> Generator;
-            typedef Generator::Iterators Iterators;
-            typedef std::vector<CorrectedJet> CorrectedJets;
-
-            struct Mttbar
-            {
-                LorentzVector mttbar;
-                LorentzVector wlep;
-                LorentzVector whad;
-                LorentzVector neutrino;
-                LorentzVector ltop;
-                LorentzVector htop;
-
-                CorrectedJets htop_jets;
-
-                int htop_njets;
-                int solutions;
-            };
-
-            Mttbar run(const LorentzVector &lepton,
-                       const LorentzVector &met,
-                       const SynchSelector::GoodJets &) const;
-
-            // Object interface
-            //
-            virtual void print(std::ostream &) const;
-
-        protected:
-            virtual bool isValidHadronicSide(const Iterators &) const = 0;
-            virtual bool isValidLeptonicSide(const Iterators &) const = 0;
-            virtual bool isValidNeutralSide(const Iterators &) const = 0;
-            virtual LorentzVector getLeptonicJet(const Iterators &) const = 0;
-    };
-
-    class SimpleResonanceReconstructor: public ResonanceReconstructor
-    {
-        public:
-            // Object interface
-            //
-            virtual uint32_t id() const;
-            virtual ObjectPtr clone() const;
-
-        protected:
-            virtual bool isValidHadronicSide(const Iterators &) const;
-            virtual bool isValidLeptonicSide(const Iterators &) const;
-            virtual bool isValidNeutralSide(const Iterators &) const;
-            virtual LorentzVector getLeptonicJet(const Iterators &) const;
-    };
-
-    class BtagResonanceReconstructor: public SimpleResonanceReconstructor
-    {
-        public:
-            // Object interface
-            //
-            virtual uint32_t id() const;
-            virtual ObjectPtr clone() const;
-
-        protected:
-            virtual bool isValidHadronicSide(const Iterators &) const;
-            virtual bool isValidLeptonicSide(const Iterators &) const;
-            virtual bool isValidNeutralSide(const Iterators &) const;
-            virtual LorentzVector getLeptonicJet(const Iterators &) const;
-
-        private:
-            uint32_t countBtags(const Iterators &) const;
-            bool isBtagJet(const Jet *jet) const;
     };
 
     class TemplateAnalyzer : public Analyzer,
@@ -200,6 +139,8 @@ namespace bsm
             }
 
             virtual void setBtagReconstruction();
+            virtual void setSimpleDrReconstruction();
+            virtual void setHemisphereReconstruction();
 
             const H1Ptr cutflow() const;
 
@@ -226,6 +167,14 @@ namespace bsm
             const H1Ptr met() const;
             const H1Ptr metNoWeight() const;
 
+            const H1Ptr njetsBeforeReconstruction() const;
+            const H1Ptr njet2DrLeptonJet1BeforeReconstruction() const;
+            const H1Ptr njet2DrLeptonJet2BeforeReconstruction() const;
+
+            const H1Ptr njetsAfterReconstruction() const;
+            const H1Ptr njet2DrLeptonJet1AfterReconstruction() const;
+            const H1Ptr njet2DrLeptonJet2AfterReconstruction() const;
+
             const H2Ptr ljetMetDphivsMetBeforeTricut() const;
             const H2Ptr leptonMetDphivsMetBeforeTricut() const;
             const H2Ptr ljetMetDphivsMet() const;
@@ -246,6 +195,13 @@ namespace bsm
 
             const P4MonitorPtr ltop() const;
             const P4MonitorPtr htop() const;
+
+            const P4MonitorPtr htopJet1() const;
+            const P4MonitorPtr htopJet2() const;
+            const P4MonitorPtr htopJet3() const;
+            const P4MonitorPtr htopJet4() const;
+
+            const P4MonitorPtr ltopJet1() const;
 
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
             SynchSelectorDelegate *getSynchSelectorDelegate() const;
@@ -358,6 +314,21 @@ namespace bsm
 
             P4MonitorPtr _ltop;
             P4MonitorPtr _htop;
+
+            P4MonitorPtr _htop_jet1;
+            P4MonitorPtr _htop_jet2;
+            P4MonitorPtr _htop_jet3;
+            P4MonitorPtr _htop_jet4;
+
+            P4MonitorPtr _ltop_jet1;
+
+            H1ProxyPtr _njets_before_reconstruction;
+            H1ProxyPtr _njet2_dr_lepton_jet1_before_reconstruction;
+            H1ProxyPtr _njet2_dr_lepton_jet2_before_reconstruction;
+
+            H1ProxyPtr _njets_after_reconstruction;
+            H1ProxyPtr _njet2_dr_lepton_jet1_after_reconstruction;
+            H1ProxyPtr _njet2_dr_lepton_jet2_after_reconstruction;
 
             boost::shared_ptr<ResonanceReconstructor> _reconstructor;
     };

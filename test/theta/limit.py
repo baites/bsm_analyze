@@ -1,95 +1,46 @@
 #!/usr/bin/env python3
 #
-# Read Theta limits from text files and convert these to LaTeX format
-#
 # Created by Samvel Khalatyan, Dec 21, 2011
 # Copyright 2011, All rights reserved
 
-import re
+'''
+Read Theta limits from text files and convert these to LaTeX format
+'''
+import sys
 
-def getLimits(filename):
-    limits = {}
-    with open(filename, 'r') as input:
-        for line in input:
-            if line.startswith('#'):
-                continue
+import theta_limit
 
-            # Line convention
-            # Observed: mass, central
-            # Expected: mass, central, low_two_sigma, high_two_sigma, low_one_sigma, high_one_sigma
-            #
-            mass, *values = [float(x) for x in re.split("\s+", line.strip())]
+def usage(argv):
+    return ("usage: {0} [exp:exp_limit.txt] [obs:obs_limit.txt] "
+            "[format:text|latex|wiki] [mass:1000,2000] [errors:yes]").format(argv[0])
 
-            limits[int(mass)] = values
+def main(argv = sys.argv):
+    try:
+        args = {}
+        if 1 < len(argv):
+            args = dict(x.split(":") for x in argv[1:] if ":" in x)
 
-    return limits
+        limits = {
+                "expected": theta_limit.load(args.get("exp", "exp_limit.txt")),
+                "observed": theta_limit.load(args.get("obs", "obs_limit.txt"))
+                }
+
+        mass_points = args.get("mass", set())
+        if mass_points:
+            mass_points = set(int(x) for x in mass_points.split(','))
+
+        {
+            "text": theta_limit.printInTextFormat,
+            "latex": theta_limit.printInLatexFormat,
+            "wiki": theta_limit.printInWikiFormat
+        }[args.get("format", "text")](limits, mass_points, args.get("errors", False))
+
+    except Exception as error:
+        print(error, file = sys.stderr)
+
+        return 1
+    else:
+        return 0
 
 if "__main__" == __name__:
-    expected_limits = getLimits("exp_limit.txt")
-    print("Expected Limits")
-    for k,v in expected_limits.items():
-        print("{0}: {1}".format(k, ' '.join(map(str, v))))
-    print("")
-
-    observed_limits = getLimits("obs_limit.txt")
-    print("Observed Limits")
-    for k,v in observed_limits.items():
-        print("{0}: {1}".format(k, v[0]))
-    print("")
-
-    print("\\hline")
-    print("Process & Expected [pb] & Central 1$\\sigma$ & Central 2$\\sigma$ & Observed [pb] \\\\")
-    print("\\hline")
-    print("\\hline")
-    for key in sorted(expected_limits.keys()):
-        if not key in observed_limits:
-            print("key {} is not present in the observed limits".format(key))
-            continue
-
-        expected = expected_limits[key]
-        observed = observed_limits[key]
-
-        print("$\\Zprime$ ($M = {0}~\TeVcc$) & {1:.2f} & {2} & {3} & {4:.2f} \\\\".format(
-            key // 1000 if 0 == (key % 1000) else key / 1000,
-            expected[0],
-            '-'.join(["{0:.2f}".format(x) for x in expected[-2:]]),
-            '-'.join(["{0:.2f}".format(x) for x in expected[-4:-2]]),
-            observed[0]))
-    print("\\hline")
-
-    print()
-    print("| Process | Expected [pb] | Central 1sigma | Central 2sigma | Observed [pb] |")
-    for key in sorted(expected_limits.keys()):
-        if not key in observed_limits:
-            print("key {} is not present in the observed limits".format(key))
-            continue
-
-        expected = expected_limits[key]
-        observed = observed_limits[key]
-
-        print("| Zprime (M = {0}~\TeVcc) | {1:.2f} | {2} | {3} | {4:.2f} |".format(
-            key // 1000 if 0 == (key % 1000) else key / 1000,
-            expected[0],
-            '-'.join(["{0:.2f}".format(x) for x in expected[-2:]]),
-            '-'.join(["{0:.2f}".format(x) for x in expected[-4:-2]]),
-            observed[0]))
-
-    print()
-    format_string = "{process:<15} {expected:<20} {observed:<20}"
-    print(format_string.format(process = "Process",
-                               expected = "Expected [pb]",
-                               observed = "Observed [pb]"))
-
-    for key in sorted(expected_limits.keys()):
-        if not key in observed_limits:
-            print("key {} is not present in the observed limits".format(key))
-            continue
-
-        expected = expected_limits[key]
-        observed = observed_limits[key]
-
-        values = dict(process = "Z' {0} TeV".format(key // 1000 if 0 == (key % 1000) else key / 1000),
-                expected = "{0:.2f}".format(expected[0]),
-                observed = "{0:.2f}".format(observed[0]))
-
-        print(format_string.format(**values))
+    sys.exit(main())

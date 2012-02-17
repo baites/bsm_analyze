@@ -112,6 +112,7 @@ namespace bsm
                 HTLEP,
                 TRICUT,
                 MET,
+                RECONSTRUCTION,
                 LTOP,
 
                 SELECTIONS // this item should always be the last one
@@ -131,6 +132,8 @@ namespace bsm
             CutPtr htlep() const;
             CutPtr tricut() const;
             CutPtr met() const;
+            CutPtr reconstruction() const;
+            CutPtr ltop() const;
 
             // Test if muon passes the selector
             //
@@ -152,6 +155,9 @@ namespace bsm
             bool qcdTemplate() const;
 
             Cut2DSelectorDelegate *getCut2DSelectorDelegate() const;
+
+            bool reconstruction(const bool &value); // apply reconstruction cut
+            bool ltop(const float &value); // apply ltop cut
 
             // SynchSelectorDelegate interface
             //
@@ -251,6 +257,8 @@ namespace bsm
             CutPtr _htlep;
             CutPtr _tricut;
             CutPtr _met;
+            CutPtr _reconstruction;
+            CutPtr _ltop;
 
             bool _qcd_template;
 

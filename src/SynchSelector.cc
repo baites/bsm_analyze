@@ -223,7 +223,7 @@ SynchSelector::SynchSelector():
     _cut.reset(new Comparator<logical_and<bool> >(true));
     monitor(_cut);
 
-    _leading_jet.reset(new Comparator<>(250));
+    _leading_jet.reset(new Comparator<>(150));
     monitor(_leading_jet);
 
     // Do not cut on max number of b-tagged jets by default
@@ -248,6 +248,12 @@ SynchSelector::SynchSelector():
 
     _met.reset(new Comparator<>(50));
     monitor(_met);
+
+    _reconstruction.reset(new Comparator<logical_and<bool> >(true));
+    monitor(_reconstruction);
+
+    _ltop.reset(new Comparator<>(100));
+    monitor(_ltop);
 }
 
 SynchSelector::SynchSelector(const SynchSelector &object):
@@ -317,6 +323,13 @@ SynchSelector::SynchSelector(const SynchSelector &object):
 
     _met = dynamic_pointer_cast<Cut>(object.met()->clone());
     monitor(_met);
+
+    _reconstruction =
+        dynamic_pointer_cast<Cut>(object.reconstruction()->clone());
+    monitor(_reconstruction);
+
+    _ltop = dynamic_pointer_cast<Cut>(object.ltop()->clone());
+    monitor(_ltop);
 }
 
 SynchSelector::~SynchSelector()
@@ -356,6 +369,16 @@ SynchSelector::CutPtr SynchSelector::tricut() const
 SynchSelector::CutPtr SynchSelector::met() const
 {
     return _met;
+}
+
+SynchSelector::CutPtr SynchSelector::reconstruction() const
+{
+    return _reconstruction;
+}
+
+SynchSelector::CutPtr SynchSelector::ltop() const
+{
+    return _ltop;
 }
 
 bool SynchSelector::apply(const Event *event)
@@ -596,11 +619,30 @@ void SynchSelector::print(std::ostream &out) const
     _cutflow->cut(HTLEP)->setName("hTlep");
     _cutflow->cut(TRICUT)->setName("tri-cut");
     _cutflow->cut(MET)->setName("MET");
+    _cutflow->cut(RECONSTRUCTION)->setName("reconstruction");
     _cutflow->cut(LTOP)->setName("pt(ltop)");
 
     out << "Cutflow [" << _lepton_mode << ": " << _cut_mode << "]" << endl;
     out << *_cutflow << endl;
     out << endl;
+}
+
+bool SynchSelector::reconstruction(const bool &value)
+{
+    if (reconstruction()->isDisabled())
+        return true;
+
+    return reconstruction()->apply(value)
+        && (_cutflow->apply(RECONSTRUCTION), true);
+}
+
+bool SynchSelector::ltop(const float &value)
+{
+    if (ltop()->isDisabled())
+        return true;
+
+    return ltop()->apply(value)
+        && (_cutflow->apply(LTOP), true);
 }
 
 // Private

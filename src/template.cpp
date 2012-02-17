@@ -17,6 +17,7 @@
 #include <TRint.h>
 
 #include "bsm_stat/interface/Utility.h"
+#include "interface/Algorithm.h"
 #include "interface/AppController.h"
 #include "interface/Cut2DSelector.h"
 #include "interface/JetEnergyCorrections.h"
@@ -219,6 +220,43 @@ int main(int argc, char *argv[])
             shared_ptr<P4Canvas> ltop(new P4Canvas("ltop", "ltop"));
             shared_ptr<P4Canvas> htop(new P4Canvas("htop", "htop"));
 
+            shared_ptr<P4Canvas> htop_first_jet(new P4Canvas("htop jet1", "htop_jet1"));
+            shared_ptr<P4Canvas> htop_second_jet(new P4Canvas("htop jet2", "htop_jet2"));
+            shared_ptr<P4Canvas> htop_third_jet(new P4Canvas("htop jet3", "htop_jet3"));
+            shared_ptr<P4Canvas> htop_fourth_jet(new P4Canvas("htop jet4", "htop_jet4"));
+
+            shared_ptr<P4Canvas> ltop_first_jet(new P4Canvas("ltop jet1", "ltop_jet1"));
+
+            TH1Ptr njets_before_reconstruction =
+                convert(*analyzer->njetsBeforeReconstruction());
+            njets_before_reconstruction->SetName("njets_before_reconstruction");
+            njets_before_reconstruction->GetXaxis()->SetTitle("N_{jet}^{before reconstruction}");
+
+            TH1Ptr njet2_dr_lepton_jet1_before_reconstruction =
+                convert(*analyzer->njet2DrLeptonJet1BeforeReconstruction());
+            njet2_dr_lepton_jet1_before_reconstruction->SetName("njet2_dr_lepton_jet1_before_reconstruction");
+            njet2_dr_lepton_jet1_before_reconstruction->GetXaxis()->SetTitle("#Delta R(lepton, jet1)_{N_{jets} = 2}");
+
+            TH1Ptr njet2_dr_lepton_jet2_before_reconstruction =
+                convert(*analyzer->njet2DrLeptonJet2BeforeReconstruction());
+            njet2_dr_lepton_jet2_before_reconstruction->SetName("njet2_dr_lepton_jet2_before_reconstruction");
+            njet2_dr_lepton_jet2_before_reconstruction->GetXaxis()->SetTitle("#Delta R(lepton, jet2)_{N_{jets} = 2}");
+
+            TH1Ptr njets_after_reconstruction =
+                convert(*analyzer->njetsAfterReconstruction());
+            njets_after_reconstruction->SetName("njets_after_reconstruction");
+            njets_after_reconstruction->GetXaxis()->SetTitle("N_{jet}^{after reconstruction}");
+
+            TH1Ptr njet2_dr_lepton_jet1_after_reconstruction =
+                convert(*analyzer->njet2DrLeptonJet1AfterReconstruction());
+            njet2_dr_lepton_jet1_after_reconstruction->SetName("njet2_dr_lepton_jet1_after_reconstruction");
+            njet2_dr_lepton_jet1_after_reconstruction->GetXaxis()->SetTitle("#Delta R(lepton, jet1)_{N_{jets} = 2}");
+
+            TH1Ptr njet2_dr_lepton_jet2_after_reconstruction =
+                convert(*analyzer->njet2DrLeptonJet2AfterReconstruction());
+            njet2_dr_lepton_jet2_after_reconstruction->SetName("njet2_dr_lepton_jet2_after_reconstruction");
+            njet2_dr_lepton_jet2_after_reconstruction->GetXaxis()->SetTitle("#Delta R(lepton, jet2)_{N_{jets} = 2}");
+
             if (app->output())
             {
                 cutflow->Write();
@@ -257,16 +295,31 @@ int main(int argc, char *argv[])
                 htop_pt_vs_njets->Write();
                 htop_pt_vs_ltop_pt->Write();
 
-                first_jet->write(app->output().get(), *analyzer->firstJet());
-                second_jet->write(app->output().get(), *analyzer->secondJet());
-                third_jet->write(app->output().get(), *analyzer->thirdJet());
+                njets_before_reconstruction->Write();
+                njet2_dr_lepton_jet1_before_reconstruction->Write();
+                njet2_dr_lepton_jet2_before_reconstruction->Write();
 
-                electron->write(app->output().get(), *analyzer->electron());
-                electron_before_tricut->write(app->output().get(),
-                        *analyzer->electronBeforeTricut());
+                njets_after_reconstruction->Write();
+                njet2_dr_lepton_jet1_after_reconstruction->Write();
+                njet2_dr_lepton_jet2_after_reconstruction->Write();
 
-                ltop->write(app->output().get(), *analyzer->ltop());
-                htop->write(app->output().get(), *analyzer->htop());
+                first_jet->write(*analyzer->firstJet(), app->output().get());
+                second_jet->write(*analyzer->secondJet(), app->output().get());
+                third_jet->write(*analyzer->thirdJet(), app->output().get());
+
+                electron->write(*analyzer->electron(), app->output().get());
+                electron_before_tricut->write(*analyzer->electronBeforeTricut(),
+                        app->output().get());
+
+                ltop->write(*analyzer->ltop(), app->output().get());
+                htop->write(*analyzer->htop(), app->output().get());
+
+                htop_first_jet->write(*analyzer->htopJet1(), app->output().get());
+                htop_second_jet->write(*analyzer->htopJet2(), app->output().get());
+                htop_third_jet->write(*analyzer->htopJet3(), app->output().get());
+                htop_fourth_jet->write(*analyzer->htopJet4(), app->output().get());
+
+                ltop_first_jet->write(*analyzer->ltopJet1(), app->output().get());
             }
 
             if (app->isInteractive())

@@ -23,23 +23,52 @@ print_order = (
     "data"
 )
 
-def printInTextFormat(cutflow):
-    line_length = 20 + 15 * len(list(cutflow.values())[0])
+selection = (
+    "pre-selection",
+    "trigger",
+    "scraping",
+    "HBHE noise",
+    "primary vertex",
+    "jets",
+    "lepton",
+    "veto 2nd electron",
+    "veto 2nd muon",
+    "2D cut",
+    "leading jet",
+    "max btag",
+    "min btag",
+    "htlep",
+    "tricut",
+    "met",
+    "reconstruction",
+    "ltop"
+)
+
+def printInTextFormat(cutflow, names):
+    line_length = 20 + 25 * len(list(cutflow.values())[0])
+    print("{0:>20} ".format("channel"), end = "")
+    for x in names:
+        print("     {0:<20}".format(x), end = "")
+    print()
+    print("-" * line_length)
+
     for key in print_order:
         if not key:
             print("-" * line_length)
         else:
             if key in cutflow.keys():
-                line = "{0:>20}".format(key)
+                line = "{0:>20} ".format(key)
                 for events, err in cutflow[key]:
                     if "data" == key:
-                        line += " {0:>7.0f}        ".format(events)
+                        subline = "{0:>7.0f}".format(events)
                     else:
-                        line += " {0:>7.0f} + {1:<5.0f}".format(events, err)
+                        subline = "{0:>7.0f} + {1:<5.0f}".format(events, err)
+
+                    line += "{0:<25}".format(subline)
 
                 print(line)
 
-def printInLatexFormat(cutflow):
+def printInLatexFormat(cutflow, names):
     lables = {
             "zprime_1000": "$\\Zprime$, $M=1\\TeVcc$",
             "zprime_1500": "$\\Zprime$, $M=1.5\\TeVcc$",
@@ -54,6 +83,13 @@ def printInLatexFormat(cutflow):
             "qcd": "QCD data-driven",
             "mc": "Total MC"
             }
+
+    print("${0:>20}$ ".format(names[0]), end = "")
+    for x in names[1:]:
+        print("& ${0:>20}$ ".format(x), end = "")
+    print(" \\\\\n")
+    print("\\hline")
+    print("\\hline")
 
     for cutflow in ({k: v[:-3] for k, v in cutflow.items()}, {k: v[-3:] for k, v in cutflow.items()}):
         keys = lables.keys() & cutflow.keys()
@@ -73,7 +109,11 @@ def printInLatexFormat(cutflow):
 
         print()
 
-def printInWikiFormat(cutflow):
+def printInWikiFormat(cutflow, names):
+    for x in names:
+        print("| *{0:>20}* |".format(x), end = "")
+    print()
+
     for key in print_order:
         if key in cutflow.keys():
             line = "| {0:>20} |".format(key)
@@ -87,7 +127,7 @@ def printInWikiFormat(cutflow):
 
             print(line)
 
-def cutflow(filename, print_format = printInTextFormat):
+def cutflow(filename, print_format = printInTextFormat, colz = None):
     if not os.path.lexists(filename):
         raise Exception("input file does not exist: " + filename)
 
@@ -132,10 +172,20 @@ def cutflow(filename, print_format = printInTextFormat):
     else:
         cutflow_table["background"] = cuts
 
-    print_format({k: v[-8:-6] + v[-4:] for k, v in cutflow_table.items()})
+    cutflow_names = list(selection)
+
+    # keep only user defined colz
+    #
+    if colz:
+        cutflow_names = [cutflow_names[x] for x in colz]
+
+        for k, v in cutflow_table.items():
+            cutflow_table[k] = [v[x] for x in colz]
+
+    print_format(cutflow_table, cutflow_names)
 
 def usage(argv):
-    return "usage: {0} cutflow.txt [format:(latex|wiki|txt)]".format(argv[0])
+    return "usage: {0} cutflow.txt [format:(latex|wiki|txt)] [colz:-1,-2]".format(argv[0])
 
 def main(argv = sys.argv):
     try:
@@ -148,11 +198,17 @@ def main(argv = sys.argv):
                 "latex": printInLatexFormat
                 }
 
-        user_format = dict(x.split(':') for x in argv[1:] if ':' in x).get("format", "text")
+        args = dict(x.split(':') for x in argv[1:] if ':' in x)
+        user_format = args.get("format", "text")
         if user_format not in print_format:
             raise Exception("supported print formats: " + ", ".join(print_format.keys()))
 
-        cutflow([x for x in argv[1:] if ':' not in x][0], print_format[user_format])
+        colz = args.get("colz", None)
+        if colz:
+            colz = [int(x) for x in colz.split(',')]
+
+        cutflow([x for x in argv[1:] if ':' not in x][0], print_format[user_format], colz)
+
     except Exception as error:
         print(error, file = sys.stderr)
 
