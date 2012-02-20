@@ -162,16 +162,59 @@ void ResonanceDumpAnalyzer::process(const Event *event)
                     ++jet)
             {
                 _log << setw(width) << right << " "
-                    << *jet->corrected_p4 << endl;
+                    << (*_format)(*jet->corrected_p4) << endl;
+            }
+
+            _log << "-- Gen Particles ----" << endl;
+
+            typedef vector<TopQuark> TopQuarks;
+            typedef ::google::protobuf::RepeatedPtrField<GenParticle>
+                GenParticles;
+
+            TopQuarks top_quarks = gen_resonance(event);
+            for(TopQuarks::const_iterator top_quark = top_quarks.begin();
+                    top_quarks.end() != top_quark;
+                    ++top_quark)
+            {
+                _log << setw(width) << right << "top: "
+                    << (*_format)(top_quark->gen_particle()->physics_object().p4()) << endl;
+
+                for(GenParticles::const_iterator child =
+                            top_quark->gen_particle()->child().begin();
+                        top_quark->gen_particle()->child().end()
+                            != child;
+                        ++child)
+                {
+                    if (24 == abs(child->id()))
+                        continue;
+
+                    _log << setw(width - 2) << right << child->id()
+                        << ": " << (*_format)(child->physics_object().p4()) << endl;
+                }
+
+                if (top_quark->wboson())
+                {
+                    for(GenParticles::const_iterator child =
+                                top_quark->wboson()->gen_particle()->child().begin();
+                            top_quark->wboson()->gen_particle()->child().end()
+                                != child;
+                            ++child)
+                    {
+                        _log << setw(width - 2) << right << child->id()
+                            << ": " << (*_format)(child->physics_object().p4())
+                            << endl;
+                    }
+                }
             }
             _log << "-- Reconstructed Resonance ----" << endl;
             _log << setw(width) << right << "lepton: " << 
-                    (SynchSelector::ELECTRON == _synch_selector->leptonMode()
+                    (*_format)(SynchSelector::ELECTRON == _synch_selector->leptonMode()
                     ? (*_synch_selector->goodElectrons().begin())->physics_object().p4()
                     : (*_synch_selector->goodMuons().begin())->physics_object().p4())
                 << endl;
 
-            _log << setw(width) << right << "met: " << resonance.neutrino << endl;
+            _log << setw(width) << right << "met: "
+                << (*_format)(resonance.neutrino) << endl;
 
             for(ResonanceReconstructor::LorentzVectors::const_iterator p4 =
                         resonance.neutrinos.begin();
@@ -184,7 +227,7 @@ void ResonanceDumpAnalyzer::process(const Event *event)
                 else
                     _log << "met(s): ";
 
-                _log << *p4 << endl;
+                _log << (*_format)(*p4) << endl;
             }
 
             for(ResonanceReconstructor::CorrectedJets::const_iterator jet =
@@ -198,7 +241,7 @@ void ResonanceDumpAnalyzer::process(const Event *event)
                 else
                     _log << "ltop jets: ";
 
-                _log << *jet->corrected_p4 << endl;
+                _log << (*_format)(*jet->corrected_p4) << endl;
             }
 
             for(ResonanceReconstructor::CorrectedJets::const_iterator jet =
@@ -212,7 +255,7 @@ void ResonanceDumpAnalyzer::process(const Event *event)
                 else
                     _log << "htop jets: ";
 
-                _log << *jet->corrected_p4 << endl;
+                _log << (*_format)(*jet->corrected_p4) << endl;
             }
             _log << endl;
 
