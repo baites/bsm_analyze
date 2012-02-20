@@ -90,9 +90,9 @@ class HadronicTopTemplates(root.template.Templates):
 
     jet_vs_jet_rebin = {
             "ptrel": 5,
-            "dr": 5,
-            "deta": 5,
-            "dphi": 5
+            "dr": 1,
+            "deta": 1,
+            "dphi": 1
             }
 
     ttbar_rebin = {
@@ -101,18 +101,18 @@ class HadronicTopTemplates(root.template.Templates):
             "py": 5,
             "pz": 5,
             "pt": 25,
-            "eta": 50,
+            "eta": 25,
             "phi": 10,
-            "mass": 10,
+            "mass": 25,
             "mt": 10,
             "et": 5
             }
 
     ttbar_delta_rebin = {
             "ptrel": 5,
-            "dr": 5,
-            "deta": 5,
-            "dphi": 5
+            "dr": 1,
+            "deta": 1,
+            "dphi": 1
             }
 
     def __init__(self):
@@ -138,7 +138,9 @@ class HadronicTopTemplates(root.template.Templates):
                 "/jet3": self.process_plot_jet,
                 "/jet1_parton": self.process_plot_parton,
                 "/jet2_parton": self.process_plot_parton,
+
                 "/jet1_vs_jet2": self.process_plot_jet_vs_jet,
+                "/jet1_parton_vs_jet2_parton": self.process_plot_parton_vs_parton,
 
                 "/gen_top": self.process_plot_gen_top,
 
@@ -191,6 +193,12 @@ class HadronicTopTemplates(root.template.Templates):
         self.plots.append(plot)
 
     def process_plot_jet_vs_jet(self, plot):
+        self.set_title_all(plot, plot.path.split('/')[-1])
+        self.rebin_all(plot, self.jet_vs_jet_rebin)
+
+        self.plots.append(plot)
+
+    def process_plot_parton_vs_parton(self, plot):
         self.set_title_all(plot, plot.path.split('/')[-1])
         self.rebin_all(plot, self.jet_vs_jet_rebin)
 
