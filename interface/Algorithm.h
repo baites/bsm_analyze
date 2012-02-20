@@ -169,6 +169,7 @@ namespace bsm
             typedef DecayGenerator<CorrectedJet> Generator;
             typedef Generator::Iterators Iterators;
             typedef std::vector<CorrectedJet> CorrectedJets;
+            typedef std::vector<LorentzVector> LorentzVectors;
 
             struct Mttbar
             {
@@ -182,7 +183,8 @@ namespace bsm
                 LorentzVector mttbar;
                 LorentzVector wlep;
                 LorentzVector whad;
-                LorentzVector neutrino;
+                LorentzVector neutrino;     // Selected MET solution
+                LorentzVectors neutrinos;   // All MET solutions
                 LorentzVector ltop;
                 LorentzVector htop;
 
