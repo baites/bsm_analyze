@@ -35,8 +35,6 @@ using bsm::HadronicTopAnalyzer;
 //
 HadronicTopOptions::HadronicTopOptions()
 {
-    _delegate = 0;
-
     _description.reset(new po::options_description("Hadronic Top Options"));
     _description->add_options()
         ("htop-jets",
@@ -44,17 +42,6 @@ HadronicTopOptions::HadronicTopOptions()
              boost::bind(&HadronicTopOptions::setHtopNjets, this, _1)),
          "Use events with certain number of jets in reconstructed hadronic tops")
     ;
-}
-
-void HadronicTopOptions::setDelegate(HadronicTopDelegate *delegate)
-{
-    if (_delegate != delegate)
-        _delegate = delegate;
-}
-
-HadronicTopDelegate *HadronicTopOptions::delegate() const
-{
-    return _delegate;
 }
 
 // Options interface

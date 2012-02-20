@@ -1,7 +1,7 @@
 // Study hadronic top
 //
-// Created by Samvel Khalatyan, Feb 09, 2011
-// Copyright 2011, All rights reserved
+// Created by Samvel Khalatyan, Feb 09, 2012
+// Copyright 2012, All rights reserved
 
 #ifndef BSM_HADRONIC_TOP_ANALYZER
 #define BSM_HADRONIC_TOP_ANALYZER
@@ -15,6 +15,7 @@
 #include "interface/bsm_fwd.h"
 
 #include "interface/Analyzer.h"
+#include "interface/DelegateManager.h"
 #include "interface/Monitor.h"
 
 namespace bsm
@@ -31,13 +32,12 @@ namespace bsm
             }
     };
 
-    class HadronicTopOptions : public Options
+    class HadronicTopOptions:
+        public Options, 
+        public DelegateManager<HadronicTopDelegate>
     {
         public:
             HadronicTopOptions();
-
-            void setDelegate(HadronicTopDelegate *);
-            HadronicTopDelegate *delegate() const;
 
             // Options interface
             //
@@ -46,12 +46,12 @@ namespace bsm
         private:
             void setHtopNjets(const std::string &);
 
-            HadronicTopDelegate *_delegate;
-
             DescriptionPtr _description;
     };
 
-    class HadronicTopAnalyzer : public Analyzer, public HadronicTopDelegate
+    class HadronicTopAnalyzer:
+        public Analyzer,
+        public HadronicTopDelegate
     {
         public:
             typedef boost::shared_ptr<stat::H1> H1Ptr;
