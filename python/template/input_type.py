@@ -7,6 +7,8 @@ Copyright 2011, All rights reserved
 
 from __future__ import division
 
+import base_type
+
 class InputData(object):
     '''
     Container for cross-section and number of events in the Monte-Carlo sample.
@@ -31,7 +33,7 @@ class InputData(object):
     def events(self):
         return self.__events
 
-class InputType(object):
+class InputType(base_type.BaseType):
     '''
     Input with type. It holds information about allowed inputs, cross-section,
     and number of processed events.
@@ -95,11 +97,13 @@ class InputType(object):
         "zprime_m1000_w10": InputData(1.0, 207992),
         "zprime_m1500_w15": InputData(1.0, 168383),
         "zprime_m2000_w20": InputData(1.0, 179315),
-        "zprime_m3000_w30": InputData(1.0, 195410)
+        "zprime_m3000_w30": InputData(1.0, 195410),
+
+        "data": InputData(1, 1)
     }
 
     def __init__(self, input_type):
-        self.type = input_type
+        base_type.BaseType.__init__(self, input_type, "input_type")
 
     @property
     def events(self):
@@ -108,29 +112,6 @@ class InputType(object):
     @property
     def xsection(self):
         return self.inputs[self.type].xsection
-
-    @property
-    def type(self):
-        '''
-        Get Input type
-        '''
-
-        return self.__type
-
-    @type.setter
-    def type(self, value):
-        '''
-        Set type only if it is defined in the inputs keys
-        '''
-
-        if value not in self:
-            raise AttributeError("unsupported type {0}".format(value))
-        else:
-            self.__type = value
-
-    @type.deleter
-    def type(self):
-        del self.__type
 
     def __str__(self):
         '''
