@@ -55,14 +55,17 @@ class InputType(object):
     however, the prefered way to add more channels is through inheritance:
 
         import InputType
-        import copy
 
         class InputTypeWithQCD(InputType):
-            inputs = copy.deepcopy(InputType.inputs)
-            inputs.update({
-                "qcd_bctoe_pt20to30": InputData(123, 123456789)
-            })
-            qcd_bctoe_pt20to30 = InputType("qcd_bctoe_pt20to30")
+            inputs = {
+                "qcd": InputData(102030, 112233)
+            }
+
+            def __contains__(self, value):
+                # look-up of new channels in new inputs; otherwise delegate
+                # to superclass
+
+                return value in self.inputs or InputType.__contains__(self, value)
 
     use read-only properties to automatically access data for given input:
 
@@ -112,7 +115,7 @@ class InputType(object):
         Get Input type
         '''
 
-        return self._type
+        return self.__type
 
     @type.setter
     def type(self, value):
@@ -120,14 +123,14 @@ class InputType(object):
         Set type only if it is defined in the inputs keys
         '''
 
-        if value not in self.inputs:
+        if value not in self:
             raise AttributeError("unsupported type {0}".format(value))
         else:
-            self._type = value
+            self.__type = value
 
     @type.deleter
     def type(self):
-        del self._type
+        del self.__type
 
     def __str__(self):
         '''
@@ -144,6 +147,16 @@ class InputType(object):
                         XSection = data.xsection,
                         Events = data.events
                     )
+
+    def __contains__(self, value):
+        '''
+        Look up for type among supported channels. Child chlasses should
+        overload this method to add new channels
+        '''
+
+        return value in self.inputs
+
+# ------------------------------------------------------------------------------
 
 if "__main__" == __name__:
     # create supported input and print on screen
@@ -185,17 +198,43 @@ if "__main__" == __name__:
     finally:
         print("-" * 50)
 
-    # add new types through copy of inputs
+    # add new channels through inheritance and delegation
+    try:
+        class InputTypeWithQCD(InputType):
+            inputs = {
+                "qcd": InputData(10203040, 11223344)
+            }
+
+            def __contains__(self, value):
+                return value in self.inputs or InputType.__contains__(self, value)
+
+        qcd = InputTypeWithQCD("qcd")
+        print(qcd)
+    except AttributeError as error:
+        print(error)
+    finally:
+        print("-" * 50)
+
+    # confirm that original list of inputs is not modified
+    try:
+        qcd = InputType("qcd")
+        print(qcd)
+    except AttributeError as error:
+        print(error)
+    finally:
+        print("-" * 50)
+
+    # add new types through inheritance and copy
     try:
         import copy
 
-        class InputTypeWithQCD(InputType):
+        class InputTypeWithBCQCD(InputType):
             inputs = copy.deepcopy(InputType.inputs)
             inputs.update({
                 "qcd_bc": InputData(102030, 112233)
             })
 
-        qcd_bc = InputTypeWithQCD("qcd_bc")
+        qcd_bc = InputTypeWithBCQCD("qcd_bc")
         print(qcd_bc)
     except AttributeError as error:
         print(error)
