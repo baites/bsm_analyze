@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Created by Samvel Khalatyan, Oct 04, 2011
 # Copyright 2011, All rights reserved
@@ -6,6 +6,8 @@
 '''
 Run the same executable for certain skimmed datasets
 '''
+
+from __future__ import print_function
 
 import os
 import sys
