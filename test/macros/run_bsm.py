@@ -1,7 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Created by Samvel Khalatyan, Jan 27, 2011
 # Copyright 2011, All rights reserved
+
+from __future__ import print_function
 
 import os
 import re
@@ -51,7 +53,7 @@ class RunDatasets:
         return iter(self.datasets.items())
 
 class AppController:
-    def __init__(self, *, config):
+    def __init__(self, config):
         self.config = run_bsm_config.RunConfig()
         self.config.load(config)
 
