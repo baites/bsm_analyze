@@ -35,11 +35,20 @@ def main(argv = sys.argv):
 
         templates = Templates()
         #templates.use_folders = ["jet1", "jet2", "top", "jet1_parton" ]
-        templates.use_folders = ["top", "jet1_vs_jet2", "jet1", "jet1_parton", "jet2_parton"]
-        templates.ban_plots = [ "px", "py", "pz", "phi" ]
+        #templates.use_folders = ["top", "jet1_vs_jet2", "jet1", "jet2", "jet1_parton", "jet2_parton"]
+        #templates.use_folders = ["ttbar_reco_delta", "ttbar_gen_delta"]
+        #templates.use_folders = ["ttbar_reco", "ttbar_gen"]
+        #templates.use_folders = ["top", "gen_top"]
+        #templates.use_folders = ["jet1", "jet1_parton"]
+        #templates.use_folders = ["jet2", "jet2_parton"]
+        templates.use_folders = ["jet1_vs_jet2", "jet1_parton_vs_jet2_parton"]
+        #templates.use_folders = ["ttbar_reco", "ttbar_gen", "ttbar_reco_delta", "ttbar_gen_delta"]
+        templates.ban_plots = [ "px", "py", "pz", "phi", "ptrel"]
 
         templates.parton_rebin["mass"] = 1
         templates.parton_rebin["mt"] = 1
+
+        templates.ttbar_rebin["eta"] = 25
 
         templates.load(argv[1])
 

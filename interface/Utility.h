@@ -114,6 +114,7 @@ namespace bsm
             typedef boost::shared_ptr<LorentzVector> P4Ptr;
 
             virtual bool operator()(const P4Ptr &v1, const P4Ptr &v2);
+            virtual bool operator()(const LorentzVector *v1, const LorentzVector *v2);
     };
 
     struct PtGreater
@@ -121,7 +122,8 @@ namespace bsm
         public:
             typedef boost::shared_ptr<LorentzVector> P4Ptr;
 
-            bool operator()(const P4Ptr &v1, const P4Ptr &v2);
+            virtual bool operator()(const P4Ptr &v1, const P4Ptr &v2);
+            virtual bool operator()(const LorentzVector *v1, const LorentzVector *v2);
     };
 
     struct CorrectedPtLess

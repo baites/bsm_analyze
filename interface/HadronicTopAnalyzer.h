@@ -1,11 +1,12 @@
 // Study hadronic top
 //
-// Created by Samvel Khalatyan, Feb 09, 2011
-// Copyright 2011, All rights reserved
+// Created by Samvel Khalatyan, Feb 09, 2012
+// Copyright 2012, All rights reserved
 
 #ifndef BSM_HADRONIC_TOP_ANALYZER
 #define BSM_HADRONIC_TOP_ANALYZER
 
+#include <sstream>
 #include <string>
 
 #include <boost/shared_ptr.hpp>
@@ -14,6 +15,7 @@
 #include "interface/bsm_fwd.h"
 
 #include "interface/Analyzer.h"
+#include "interface/DelegateManager.h"
 #include "interface/Monitor.h"
 
 namespace bsm
@@ -30,13 +32,12 @@ namespace bsm
             }
     };
 
-    class HadronicTopOptions : public Options
+    class HadronicTopOptions:
+        public Options, 
+        public DelegateManager<HadronicTopDelegate>
     {
         public:
             HadronicTopOptions();
-
-            void setDelegate(HadronicTopDelegate *);
-            HadronicTopDelegate *delegate() const;
 
             // Options interface
             //
@@ -45,12 +46,12 @@ namespace bsm
         private:
             void setHtopNjets(const std::string &);
 
-            HadronicTopDelegate *_delegate;
-
             DescriptionPtr _description;
     };
 
-    class HadronicTopAnalyzer : public Analyzer, public HadronicTopDelegate
+    class HadronicTopAnalyzer:
+        public Analyzer,
+        public HadronicTopDelegate
     {
         public:
             typedef boost::shared_ptr<stat::H1> H1Ptr;
@@ -90,15 +91,22 @@ namespace bsm
             const H2Ptr njets_vs_pt() const;
 
                 // Gen Particles
-            const P4MonitorPtr gen_top() const;
-            const P4MonitorPtr gen_jet1() const;
-            const P4MonitorPtr gen_jet2() const;
-            const P4MonitorPtr gen_jet3() const;
+            const GenParticleMonitorPtr gen_top() const;
+            const GenParticleMonitorPtr gen_jet1() const;
+            const GenParticleMonitorPtr gen_jet2() const;
+            const GenParticleMonitorPtr gen_jet3() const;
 
             const H1Ptr njets_gen() const;
             const H2Ptr njets_gen_vs_gen_mass() const;
             const H2Ptr pt_gen_vs_gen_mass() const;
             const H2Ptr njets_gen_vs_gen_pt() const;
+
+                // TTbar system
+            const P4MonitorPtr ttbar_reco() const;
+            const P4MonitorPtr ttbar_gen() const;
+
+            const DeltaMonitorPtr ttbar_reco_delta() const;
+            const DeltaMonitorPtr ttbar_gen_delta() const;
 
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
             SynchSelectorDelegate *getSynchSelectorDelegate() const;
@@ -118,6 +126,7 @@ namespace bsm
             //
             virtual uint32_t id() const;
             virtual ObjectPtr clone() const;
+            void merge(const ObjectPtr &);
             virtual void print(std::ostream &) const;
 
         private:
@@ -155,15 +164,24 @@ namespace bsm
 
             // Generator particles
             //
-            P4MonitorPtr _gen_top;
-            P4MonitorPtr _gen_jet1;
-            P4MonitorPtr _gen_jet2;
-            P4MonitorPtr _gen_jet3;
+            GenParticleMonitorPtr _gen_top;
+            GenParticleMonitorPtr _gen_jet1;
+            GenParticleMonitorPtr _gen_jet2;
+            GenParticleMonitorPtr _gen_jet3;
 
             H1ProxyPtr _njets_gen;
             H2ProxyPtr _njets_gen_vs_gen_mass;
             H2ProxyPtr _pt_gen_vs_gen_mass;
             H2ProxyPtr _njets_gen_vs_gen_pt;
+
+
+            // TTbar system
+            //
+            P4MonitorPtr _ttbar_reco;
+            P4MonitorPtr _ttbar_gen;
+
+            DeltaMonitorPtr _ttbar_reco_delta;
+            DeltaMonitorPtr _ttbar_gen_delta;
 
             boost::shared_ptr<Pileup> _pileup;
 
@@ -176,6 +194,8 @@ namespace bsm
                 uint32_t min;
                 uint32_t max;
             } _htop_njets;
+
+            std::ostringstream _log;
     };
 }
 

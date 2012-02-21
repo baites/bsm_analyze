@@ -412,6 +412,14 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
 
     result.solutions = neutrinoReconstruct.solutions();
 
+    for(NeutrinoReconstruct::Solutions::const_iterator neutrino =
+                neutrinos.begin();
+            neutrinos.end() != neutrino;
+            ++neutrino)
+    {
+        result.neutrinos.push_back(**neutrino);
+    }
+
     // Prepare generator and loop over all hypotheses of the decay
     // (different jets assignment to leptonic/hadronic legs)
     //

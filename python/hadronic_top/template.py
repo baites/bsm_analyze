@@ -90,9 +90,29 @@ class HadronicTopTemplates(root.template.Templates):
 
     jet_vs_jet_rebin = {
             "ptrel": 5,
-            "dr": 5,
-            "deta": 5,
-            "dphi": 5
+            "dr": 1,
+            "deta": 1,
+            "dphi": 1
+            }
+
+    ttbar_rebin = {
+            "energy": 5,
+            "px": 5,
+            "py": 5,
+            "pz": 5,
+            "pt": 25,
+            "eta": 25,
+            "phi": 10,
+            "mass": 25,
+            "mt": 10,
+            "et": 5
+            }
+
+    ttbar_delta_rebin = {
+            "ptrel": 5,
+            "dr": 1,
+            "deta": 1,
+            "dphi": 1
             }
 
     def __init__(self):
@@ -118,7 +138,17 @@ class HadronicTopTemplates(root.template.Templates):
                 "/jet3": self.process_plot_jet,
                 "/jet1_parton": self.process_plot_parton,
                 "/jet2_parton": self.process_plot_parton,
-                "/jet1_vs_jet2": self.process_plot_jet_vs_jet
+
+                "/jet1_vs_jet2": self.process_plot_jet_vs_jet,
+                "/jet1_parton_vs_jet2_parton": self.process_plot_parton_vs_parton,
+
+                "/gen_top": self.process_plot_gen_top,
+
+                "/ttbar_reco": self.process_plot_ttbar,
+                "/ttbar_gen": self.process_plot_ttbar,
+
+                "/ttbar_reco_delta": self.process_plot_ttbar_delta,
+                "/ttbar_gen_delta": self.process_plot_ttbar_delta,
             }.get(template.path.split(':', 1)[1],
                   lambda plot: None)(template)
 
@@ -165,6 +195,43 @@ class HadronicTopTemplates(root.template.Templates):
     def process_plot_jet_vs_jet(self, plot):
         self.set_title_all(plot, plot.path.split('/')[-1])
         self.rebin_all(plot, self.jet_vs_jet_rebin)
+
+        self.plots.append(plot)
+
+    def process_plot_parton_vs_parton(self, plot):
+        self.set_title_all(plot, plot.path.split('/')[-1])
+        self.rebin_all(plot, self.jet_vs_jet_rebin)
+
+        self.plots.append(plot)
+
+    def process_plot_gen_top(self, plot):
+        self.set_title_all(plot, "gen_htop")
+        self.rebin_all(plot, self.top_rebin)
+
+        if "njets" == plot.name:
+            integral = plot.hist.Integral()
+
+            print("{0:->80}".format(" Generated Hadronic top Njets composition --"))
+            print(" {0:>3}    {1}".format("bin", "percent"))
+            print("-" * 80)
+            for b, percent in dict(
+                    (x, plot.hist.GetBinContent(plot.hist.FindBin(x)) / integral)
+                        for x in range(1, 10)).items():
+                print(" {0:>3} .. {1:.2f} %".format(b, percent))
+            print("-" * 80)
+            print()
+
+        self.plots.append(plot)
+
+    def process_plot_ttbar(self, plot):
+        self.set_title_all(plot, plot.path.split("/")[-1])
+        self.rebin_all(plot, self.ttbar_rebin)
+
+        self.plots.append(plot)
+
+    def process_plot_ttbar_delta(self, plot):
+        self.set_title_all(plot, plot.path.split('/')[-1])
+        self.rebin_all(plot, self.ttbar_delta_rebin)
 
         self.plots.append(plot)
 

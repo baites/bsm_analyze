@@ -19,7 +19,7 @@
 #include "interface/Algorithm.h"
 #include "interface/CorrectedJet.h"
 #include "interface/Pileup.h"
-#include "interface/Resonance.h"
+#include "interface/GenResonance.h"
 #include "interface/StatProxy.h"
 #include "interface/HadronicTopAnalyzer.h"
 #include "interface/Utility.h"
@@ -35,8 +35,6 @@ using bsm::HadronicTopAnalyzer;
 //
 HadronicTopOptions::HadronicTopOptions()
 {
-    _delegate = 0;
-
     _description.reset(new po::options_description("Hadronic Top Options"));
     _description->add_options()
         ("htop-jets",
@@ -44,17 +42,6 @@ HadronicTopOptions::HadronicTopOptions()
              boost::bind(&HadronicTopOptions::setHtopNjets, this, _1)),
          "Use events with certain number of jets in reconstructed hadronic tops")
     ;
-}
-
-void HadronicTopOptions::setDelegate(HadronicTopDelegate *delegate)
-{
-    if (_delegate != delegate)
-        _delegate = delegate;
-}
-
-HadronicTopDelegate *HadronicTopOptions::delegate() const
-{
-    return _delegate;
 }
 
 // Options interface
@@ -168,17 +155,17 @@ HadronicTopAnalyzer::HadronicTopAnalyzer():
 
     // Gen particles
     //
-    _gen_top.reset(new P4Monitor());
+    _gen_top.reset(new GenParticleMonitor());
 
-    _gen_jet1.reset(new P4Monitor());
+    _gen_jet1.reset(new GenParticleMonitor());
     _gen_jet1->mass()->mutable_axis()->init(200, 0, 200);
     _gen_jet1->mt()->mutable_axis()->init(200, 0, 200);
 
-    _gen_jet2.reset(new P4Monitor());
+    _gen_jet2.reset(new GenParticleMonitor());
     _gen_jet2->mass()->mutable_axis()->init(100, 0, 100);
     _gen_jet2->mt()->mutable_axis()->init(100, 0, 100);
 
-    _gen_jet3.reset(new P4Monitor());
+    _gen_jet3.reset(new GenParticleMonitor());
     _gen_jet3->mass()->mutable_axis()->init(100, 0, 100);
     _gen_jet3->mt()->mutable_axis()->init(100, 0, 100);
 
@@ -197,6 +184,23 @@ HadronicTopAnalyzer::HadronicTopAnalyzer():
     monitor(_njets_gen_vs_gen_mass);
     monitor(_pt_gen_vs_gen_mass);
     monitor(_njets_gen_vs_gen_pt);
+
+    // TTbar system
+    //
+    _ttbar_reco.reset(new P4Monitor());
+    _ttbar_reco->mass()->mutable_axis()->init(3000, 500, 3500);
+
+    _ttbar_gen.reset(new P4Monitor());
+    _ttbar_gen->mass()->mutable_axis()->init(3000, 500, 3500);
+
+    monitor(_ttbar_reco);
+    monitor(_ttbar_gen);
+
+    _ttbar_reco_delta.reset(new DeltaMonitor());
+    _ttbar_gen_delta.reset(new DeltaMonitor());
+
+    monitor(_ttbar_reco_delta);
+    monitor(_ttbar_gen_delta);
 
     _pileup.reset(new Pileup());
     monitor(_pileup);
@@ -270,16 +274,16 @@ HadronicTopAnalyzer::HadronicTopAnalyzer(const HadronicTopAnalyzer &object):
 
     // Gen Particles
     //
-    _gen_top = dynamic_pointer_cast<P4Monitor>(object._gen_top->clone());
+    _gen_top = dynamic_pointer_cast<GenParticleMonitor>(object._gen_top->clone());
     monitor(_gen_top);
 
-    _gen_jet1 = dynamic_pointer_cast<P4Monitor>(object._gen_jet1->clone());
+    _gen_jet1 = dynamic_pointer_cast<GenParticleMonitor>(object._gen_jet1->clone());
     monitor(_gen_jet1);
 
-    _gen_jet2 = dynamic_pointer_cast<P4Monitor>(object._gen_jet2->clone());
+    _gen_jet2 = dynamic_pointer_cast<GenParticleMonitor>(object._gen_jet2->clone());
     monitor(_gen_jet2);
 
-    _gen_jet3 = dynamic_pointer_cast<P4Monitor>(object._gen_jet3->clone());
+    _gen_jet3 = dynamic_pointer_cast<GenParticleMonitor>(object._gen_jet3->clone());
     monitor(_gen_jet3);
 
     _njets_gen = dynamic_pointer_cast<H1Proxy>(object._njets_gen->clone());
@@ -293,6 +297,18 @@ HadronicTopAnalyzer::HadronicTopAnalyzer(const HadronicTopAnalyzer &object):
 
     _njets_gen_vs_gen_pt = dynamic_pointer_cast<H2Proxy>(object._njets_gen_vs_gen_pt->clone());
     monitor(_njets_gen_vs_gen_pt);
+
+    _ttbar_reco = dynamic_pointer_cast<P4Monitor>(object._ttbar_reco->clone());
+    monitor(_ttbar_reco);
+
+    _ttbar_gen = dynamic_pointer_cast<P4Monitor>(object._ttbar_gen->clone());
+    monitor(_ttbar_gen);
+
+    _ttbar_reco_delta = dynamic_pointer_cast<DeltaMonitor>(object._ttbar_reco_delta->clone());
+    monitor(_ttbar_reco_delta);
+
+    _ttbar_gen_delta = dynamic_pointer_cast<DeltaMonitor>(object._ttbar_gen_delta->clone());
+    monitor(_ttbar_gen_delta);
 
     _pileup = dynamic_pointer_cast<Pileup>(object._pileup->clone());
     monitor(_pileup);
@@ -392,22 +408,22 @@ const HadronicTopAnalyzer::H2Ptr HadronicTopAnalyzer::njets_vs_pt() const
     return _njets_vs_pt->histogram();
 }
 
-const HadronicTopAnalyzer::P4MonitorPtr HadronicTopAnalyzer::gen_top() const
+const HadronicTopAnalyzer::GenParticleMonitorPtr HadronicTopAnalyzer::gen_top() const
 {
     return _gen_top;
 }
 
-const HadronicTopAnalyzer::P4MonitorPtr HadronicTopAnalyzer::gen_jet1() const
+const HadronicTopAnalyzer::GenParticleMonitorPtr HadronicTopAnalyzer::gen_jet1() const
 {
     return _gen_jet1;
 }
 
-const HadronicTopAnalyzer::P4MonitorPtr HadronicTopAnalyzer::gen_jet2() const
+const HadronicTopAnalyzer::GenParticleMonitorPtr HadronicTopAnalyzer::gen_jet2() const
 {
     return _gen_jet2;
 }
 
-const HadronicTopAnalyzer::P4MonitorPtr HadronicTopAnalyzer::gen_jet3() const
+const HadronicTopAnalyzer::GenParticleMonitorPtr HadronicTopAnalyzer::gen_jet3() const
 {
     return _gen_jet3;
 }
@@ -430,6 +446,26 @@ const HadronicTopAnalyzer::H2Ptr HadronicTopAnalyzer::pt_gen_vs_gen_mass() const
 const HadronicTopAnalyzer::H2Ptr HadronicTopAnalyzer::njets_gen_vs_gen_pt() const
 {
     return _njets_gen_vs_gen_pt->histogram();
+}
+
+const HadronicTopAnalyzer::P4MonitorPtr HadronicTopAnalyzer::ttbar_reco() const
+{
+    return _ttbar_reco;
+}
+
+const HadronicTopAnalyzer::P4MonitorPtr HadronicTopAnalyzer::ttbar_gen() const
+{
+    return _ttbar_gen;
+}
+
+const HadronicTopAnalyzer::DeltaMonitorPtr HadronicTopAnalyzer::ttbar_reco_delta() const
+{
+    return _ttbar_reco_delta;
+}
+
+const HadronicTopAnalyzer::DeltaMonitorPtr HadronicTopAnalyzer::ttbar_gen_delta() const
+{
+    return _ttbar_gen_delta;
 }
 
 bsm::JetEnergyCorrectionDelegate
@@ -502,45 +538,60 @@ void HadronicTopAnalyzer::process(const Event *event)
 
             // Generator plots
             //
-            GenResonance gen_resonance(event);
-            if (gen_resonance.htop)
+            typedef vector<TopQuark> TopQuarks;
+
+            TopQuarks top_quarks = gen_resonance(event);
+            if (2 != top_quarks.size())
+                _log << "found " << top_quarks.size() << " tops" << endl;
+            else
             {
-                gen_top()->fill(*gen_resonance.htop, _pileup_weight);
+                uint32_t wlep = 0;
+                TopQuarks::const_iterator gen_htop = top_quarks.end();
 
-                const float gen_mass_ = mass(*gen_resonance.htop);
-                const float gen_jets_ = gen_resonance.whtop_jets.size();
-                const float gen_pt_ = pt(*gen_resonance.htop);
-
-                njets_gen()->fill(gen_jets_, _pileup_weight);
-                njets_gen_vs_gen_mass()->fill(gen_jets_,
-                                              gen_mass_,
-                                              _pileup_weight);
-
-                pt_gen_vs_gen_mass()->fill(gen_pt_,
-                                           gen_mass_,
-                                           _pileup_weight);
-
-                njets_gen_vs_gen_pt()->fill(gen_jets_,
-                                            gen_pt_,
-                                            _pileup_weight);
-
-                if (0 < gen_jets_)
+                LorentzVector ttbar_gen_p4;
+                for(TopQuarks::const_iterator top_quark = top_quarks.begin();
+                        top_quarks.end() != top_quark;
+                        ++top_quark)
                 {
-                    gen_jet1()->fill(*gen_resonance.whtop_jets[0],
-                                     _pileup_weight);
-                    if (1 < gen_jets_)
+                    if (top_quark->wboson())
                     {
-                        gen_jet2()->fill(*gen_resonance.whtop_jets[1],
-                                         _pileup_weight);
-                        if (2 < gen_jets_)
-                        {
-                            gen_jet3()->fill(*gen_resonance.whtop_jets[2],
-                                             _pileup_weight);
-                        }
+                        if (top_quark->wboson()->is_leptonic_decay())
+                            ++wlep;
+                        else
+                            gen_htop = top_quark;
                     }
-                }
-            }
 
+                    ttbar_gen_p4 += top_quark->gen_particle()->physics_object().p4();
+                }
+
+                if (1 != wlep)
+                {
+                    _log << "Found " << wlep
+                        << " leptonically decaying W-bosons "
+                        << (gen_htop == top_quarks.end() ? "without" : "with")
+                        << " htop" << endl;
+                }
+                else if (gen_htop != top_quarks.end())
+                {
+                    gen_top()->fill(*gen_htop->gen_particle(), _pileup_weight);
+
+                    const uint32_t njets_ =
+                        gen_htop->gen_particle()->child().size() - 1
+                            + gen_htop->wboson()->gen_particle()->child().size();;;;
+                    const float pt_ = pt(gen_htop->gen_particle()->physics_object().p4());
+                    const float mass_ = mass(gen_htop->gen_particle()->physics_object().p4());
+
+                    njets_gen()->fill(njets_, _pileup_weight);
+                    njets_gen_vs_gen_mass()->fill(njets_, mass_, _pileup_weight);
+                    pt_gen_vs_gen_mass()->fill(pt_, mass_, _pileup_weight);
+                    njets_gen_vs_gen_pt()->fill(njets_, pt_, _pileup_weight);
+                }
+
+                ttbar_gen()->fill(ttbar_gen_p4, _pileup_weight);
+                ttbar_gen_delta()->fill(top_quarks[0].gen_particle()->physics_object().p4(),
+                        top_quarks[1].gen_particle()->physics_object().p4(),
+                        _pileup_weight);
+            }
 
             // Reconstructed plots
             //
@@ -559,6 +610,9 @@ void HadronicTopAnalyzer::process(const Event *event)
             njets_vs_mass()->fill(njets_, mass_, _pileup_weight);
             pt_vs_mass()->fill(pt_, mass_, _pileup_weight);
             njets_vs_pt()->fill(njets_, pt_, _pileup_weight);
+
+            ttbar_reco()->fill(resonance.htop + resonance.ltop, _pileup_weight);
+            ttbar_reco_delta()->fill(resonance.htop, resonance.ltop, _pileup_weight);
 
             if (0 < njets_)
             {
@@ -624,9 +678,28 @@ HadronicTopAnalyzer::ObjectPtr HadronicTopAnalyzer::clone() const
     return ObjectPtr(new HadronicTopAnalyzer(*this));
 }
 
+void HadronicTopAnalyzer::merge(const ObjectPtr &pointer)
+{
+    if (pointer->id() != id())
+        return;
+
+    boost::shared_ptr<HadronicTopAnalyzer> object =
+        dynamic_pointer_cast<HadronicTopAnalyzer>(pointer);
+
+    if (!object)
+        return;
+
+    Object::merge(pointer);
+
+    if (!object->_log.str().empty())
+        _log << object->_log.str() << endl;
+}
+
 void HadronicTopAnalyzer::print(std::ostream &out) const
 {
     out << *_synch_selector << endl;
+
+    clog << _log.str() << endl;
 }
 
 // Private

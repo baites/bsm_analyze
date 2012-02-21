@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
 
             // Gen particles
             //
-            shared_ptr<P4Canvas> gen_top(new P4Canvas("gen_top", "gen_top"));
+            shared_ptr<GenParticleCanvas> gen_top(new GenParticleCanvas("gen_top", "gen_top"));
             gen_top->write(*analyzer->gen_top(), app->output().get());
 
             if (gen_top->pushd(app->output().get()))
@@ -163,14 +163,26 @@ int main(int argc, char *argv[])
                 gen_top->popd();
             }
 
-            shared_ptr<P4Canvas> gen_jet1(new P4Canvas("gen_jet1", "gen_jet1"));
+            shared_ptr<GenParticleCanvas> gen_jet1(new GenParticleCanvas("gen_jet1", "gen_jet1"));
             gen_jet1->write(*analyzer->gen_jet1(), app->output().get());
 
-            shared_ptr<P4Canvas> gen_jet2(new P4Canvas("gen_jet2", "gen_jet2"));
+            shared_ptr<GenParticleCanvas> gen_jet2(new GenParticleCanvas("gen_jet2", "gen_jet2"));
             gen_jet2->write(*analyzer->gen_jet2(), app->output().get());
 
-            shared_ptr<P4Canvas> gen_jet3(new P4Canvas("gen_jet3", "gen_jet3"));
+            shared_ptr<GenParticleCanvas> gen_jet3(new GenParticleCanvas("gen_jet3", "gen_jet3"));
             gen_jet3->write(*analyzer->gen_jet3(), app->output().get());
+
+            shared_ptr<P4Canvas> ttbar_reco(new P4Canvas("ttbar_reco", "ttbar_reco"));
+            ttbar_reco->write(*analyzer->ttbar_reco(), app->output().get());
+
+            shared_ptr<P4Canvas> ttbar_gen(new P4Canvas("ttbar_gen", "ttbar_gen"));
+            ttbar_gen->write(*analyzer->ttbar_gen(), app->output().get());
+
+            shared_ptr<DeltaCanvas> ttbar_reco_delta(new DeltaCanvas("ttbar_reco_delta", "ttbar_reco_delta"));
+            ttbar_reco_delta->write(*analyzer->ttbar_reco_delta(), app->output().get());
+
+            shared_ptr<DeltaCanvas> ttbar_gen_delta(new DeltaCanvas("ttbar_gen_delta", "ttbar_gen_delta"));
+            ttbar_gen_delta->write(*analyzer->ttbar_gen_delta(), app->output().get());
         }
     }
     catch(const std::exception &error)
