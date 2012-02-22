@@ -11,7 +11,7 @@ import os
 import sys
 
 import label
-import root.tfile
+import tfile
 
 import ROOT
 
@@ -85,56 +85,54 @@ def find_plots(directory, path, callback):
 class Template(object):
     '''
     Container for template. User should be using next properties to
-    access/store template information:
+    access information:
 
         path    path in file to the template (string path w.r.t. file)
-        name    template name (aka Key in TDirectory)
+        name    template name
         dim     template dimension (is set automatically when histogram is set)
         hist    template object
 
-    Note, only 1D, 2D and 3D plots are supported
+    Only 1D, 2D and 3D plots are supported. Only several properties have
+    write access:
+
+        path
+        hist
+
+    The others are automatically extracted from histogram object
     '''
 
-    def __init__(self):
-        self.path = ""
-        self.name = ""
-        self.dim = None
-        self.hist = None
+    def __init__(self, hist = None, path = "", clone = False):
+        self.__clone = clone
+
+        self.hist = hist # name and dimension are automatically set
+        self.path = path
 
     @property
     def path(self):
         '''
-        Full path to tempalte in file including filename, e.g.:
+        Full path to template in file including filename, e.g.:
 
             input_file.root:/path/to/template
         '''
 
-        return self._path
+        return self.__path
 
     @path.setter
     def path(self, value):
-        self._path = value
+        self.__path = value
 
     @path.deleter
     def path(self, value):
-        del self._path
+        del self.__path
 
 
     @property
     def name(self):
         '''
-        Tempalte name
+        Template name
         '''
 
-        return self._name
-
-    @name.setter
-    def name(self, value):
-        self._name = value
-
-    @name.deleter
-    def name(self, value):
-        del self._name
+        return self.__name
 
 
     @property
@@ -143,29 +141,7 @@ class Template(object):
         Template dimension
         '''
 
-        return self._dim
-
-    @dim.setter
-    def dim(self, value):
-        '''
-        Set template dimension. Object will be invalidated if an attempt is
-        made to set unsupported dimention
-        '''
-
-        if value in [1, 2, 3]:
-            self._dim = value
-        else:
-            # invalidate object
-            self._dim = None
-            self._hist = None
-
-    @dim.deleter
-    def dim(self):
-        '''
-        Remove dimension property
-        '''
-
-        del seld._dim
+        return self.__dim
 
 
     @property
@@ -174,23 +150,33 @@ class Template(object):
         Template histogram object
         '''
 
-        return self._hist
+        return self.__hist
 
     @hist.setter
     def hist(self, obj):
         '''
-        Set hist object only in case it has supported Dimension, othewise
-        set hist to None
+        Set hist object only in case it has a supported Dimension value.
+        Othewise, set hist to None
         '''
 
         if obj:
-            self.dim = obj.GetDimension()
-            if self.dim:
-                self._hist = obj
-                self.name = obj.GetName()
+            dim = obj.GetDimension()
+            if dim not in [1, 2, 3]:
+                raise ValueError(
+                        "unsupported template dimension {0}".format(dim))
+
+            self.__dim = dim
+            self.__name = obj.GetName()
+
+            if self.__clone:
+                obj = obj.Clone()
+                obj.SetDirectory(0)
+
+            self.__hist = obj
         else:
-            self._dim = None
-            self._hist = None
+            self.__name = ""
+            self.__dim = None
+            self.__hist = None
 
     @hist.deleter
     def hist(self):
@@ -198,7 +184,7 @@ class Template(object):
         Remove hist property
         '''
 
-        del self._hist
+        del self.__hist
 
     def __nonzero__(self):
         '''
@@ -221,20 +207,24 @@ class Template(object):
         '''
 
         if self:
-            return "<{dim}D {name!r} in {path!r} at 0x{id:x}>".format(
+            format_string = "<{Class} {name!r} {dim}D in {path!r} at 0x{ID:x}>"
+        else:
+            format_string = "<{Class} invalid template at 0x{ID:x}>"
+
+        return format_string.format(
+                    Class = self.__class__.__name__,
                     dim = self.dim,
                     name = self.name,
                     path = self.path,
-                    id = id(self))
-        else:
-            return "<invalid template at 0x{0:x}>".format(id(self))
+                    ID = id(self))
 
     # restrict properties of the template
     __slots__ = [
-            "_path",
-            "_name",
-            "_dim",
-            "_hist"
+            "__path",
+            "__name",
+            "__dim",
+            "__hist",
+            "__clone"
             ]
 
 class Templates(object):
@@ -339,20 +329,123 @@ class Templates(object):
                     "-")
 
 if "__main__" == __name__:
-    a = Template()
-    print(a)
-    print()
+    import unittest
+    import ROOT
 
-    h = ROOT.TH1F("hist_1d", "hist_1d", 10, 0, 10)
-    a.hist = h
-    print(a)
-    print()
+    class TestTemplate(unittest.TestCase):
+        def test_template_path(self):
+            template = Template()
+            self.assertEqual(template.path, "")
 
-    h = ROOT.TH2F("hist_2d", "hist_2d", 10, 0, 10, 10, 0, 10)
-    a.hist = h
-    print(a)
-    print()
+        def test_template_name(self):
+            template = Template()
+            self.assertEqual(template.name, "")
 
+        def test_template_dim(self):
+            template = Template()
+            self.assertEqual(template.dim, None)
+
+        def test_template_hist(self):
+            template = Template()
+            self.assertEqual(template.hist, None)
+
+        def test_template_hist_no_clone(self):
+            template = Template()
+            hist = ROOT.TH1F("hist_1d", "hist_1d", 10, 0, 10)
+            template.hist = hist
+
+            self.assertEqual(template.hist, hist)
+
+        def test_template_hist_clone(self):
+            template = Template(clone = True)
+            hist = ROOT.TH1F("hist_1d", "hist_1d", 10, 0, 10)
+            template.hist = hist
+
+            self.assertNotEqual(template.hist, hist)
+
+        def test_hist_1d_path(self):
+            template = Template()
+            template.hist = ROOT.TH1F("hist_1d", "hist_1d", 10, 0, 10)
+
+            self.assertEqual(template.path, "")
+
+        def test_hist_1d_name(self):
+            template = Template()
+            template.hist = ROOT.TH1F("hist_1d", "hist_1d", 10, 0, 10)
+
+            self.assertEqual(template.name, "hist_1d")
+
+        def test_hist_1d_dim(self):
+            template = Template()
+            template.hist = ROOT.TH1F("hist_1d", "hist_1d", 10, 0, 10)
+
+            self.assertEqual(template.dim, 1)
+
+        def test_hist_1d_hist(self):
+            template = Template()
+            hist = ROOT.TH1F("hist_1d", "hist_1d", 10, 0, 10)
+            template.hist = hist
+
+            self.assertEqual(template.hist, hist)
+
+        def test_hist_2d_path(self):
+            template = Template()
+            template.hist = ROOT.TH2F("hist_2d", "hist_2d", 10, 0, 10, 10, 0, 10)
+
+            self.assertEqual(template.path, "")
+
+        def test_hist_2d_name(self):
+            template = Template()
+            template.hist = ROOT.TH2F("hist_2d", "hist_2d", 10, 0, 10, 10, 0, 10)
+
+            self.assertEqual(template.name, "hist_2d")
+
+        def test_hist_2d_dim(self):
+            template = Template()
+            template.hist = ROOT.TH2F("hist_2d", "hist_2d", 10, 0, 10, 10, 0, 10)
+
+            self.assertEqual(template.dim, 2)
+
+        def test_hist_2d_hist(self):
+            template = Template()
+            hist = ROOT.TH2F("hist_2d", "hist_2d", 10, 0, 10, 10, 0, 10)
+            template.hist = hist
+
+            self.assertEqual(template.hist, hist)
+
+        def test_hist_3d_path(self):
+            template = Template()
+            template.hist = ROOT.TH3F("hist_3d", "hist_3d",
+                    10, 0, 10, 10, 0, 10, 10, 0, 10)
+
+            self.assertEqual(template.path, "")
+
+        def test_hist_3d_name(self):
+            template = Template()
+            template.hist = ROOT.TH3F("hist_3d", "hist_3d",
+                    10, 0, 10, 10, 0, 10, 10, 0, 10)
+
+            self.assertEqual(template.name, "hist_3d")
+
+        def test_hist_3d_dim(self):
+            template = Template()
+            template.hist = ROOT.TH3F("hist_3d", "hist_3d",
+                    10, 0, 10, 10, 0, 10, 10, 0, 10)
+
+            self.assertEqual(template.dim, 3)
+
+        def test_hist_3d_hist(self):
+            template = Template()
+            hist = ROOT.TH3F("hist_3d", "hist_3d",
+                    10, 0, 10, 10, 0, 10, 10, 0, 10)
+            template.hist = hist
+
+            self.assertEqual(template.hist, hist)
+
+    unittest.main()
+
+    '''
     templates = Templates()
     templates.load("output_signal_p150_hlt.root")
     print(templates)
+    '''
