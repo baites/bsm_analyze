@@ -7,7 +7,7 @@ Copyright 2011, All rights reserved
 
 from __future__ import division
 
-import base_type
+from base_type import BaseType
 
 class InputData(object):
     '''
@@ -33,7 +33,7 @@ class InputData(object):
     def events(self):
         return self.__events
 
-class InputType(base_type.BaseType):
+class InputType(BaseType):
     '''
     Input with type. It holds information about allowed inputs, cross-section,
     and number of processed events.
@@ -59,15 +59,10 @@ class InputType(base_type.BaseType):
         import InputType
 
         class InputTypeWithQCD(InputType):
-            input_types = {
+            input_types = InputType.input_types.copy()
+            inptu_types.update({
                 "qcd": InputData(102030, 112233)
-            }
-
-            def __contains__(self, value):
-                # look-up of new channels in new input_types; otherwise delegate
-                # to superclass
-
-                return value in self.input_types or InputType.__contains__(self, value)
+            })
 
     use read-only properties to automatically access data for given input:
 
@@ -103,15 +98,15 @@ class InputType(base_type.BaseType):
     }
 
     def __init__(self, input_type):
-        base_type.BaseType.__init__(self, input_type, "input_type")
+        BaseType.__init__(self, input_type, "input_type")
 
     @property
     def events(self):
-        return self.input_types[self.type].events
+        return self.data.events
 
     @property
     def xsection(self):
-        return self.input_types[self.type].xsection
+        return self.data.xsection
 
     def __str__(self):
         '''
@@ -119,7 +114,7 @@ class InputType(base_type.BaseType):
         '''
 
         # cache
-        data = self.input_types[self.type]
+        data = self.data
         return ("<{Class} {Type!r} xsec {XSection} events {Events:.0f} K "
                 "at 0x{ID:x}>").format(
                         Class = self.__class__.__name__,
@@ -129,13 +124,18 @@ class InputType(base_type.BaseType):
                         Events = data.events / 1000
                     )
 
+    @property
+    def data(self):
+        return self.input_types[self.type]
+
     def __contains__(self, value):
         '''
         Look up for type among supported channels. Child chlasses should
         overload this method to add new channels
         '''
 
-        return value in self.input_types
+        return (value in self.input_types or
+                BaseType.__contains__(self, value))
 
 # ------------------------------------------------------------------------------
 
@@ -179,38 +179,10 @@ if "__main__" == __name__:
     finally:
         print("-" * 50)
 
-    # add new channels through inheritance and delegation
-    try:
-        class InputTypeWithQCD(InputType):
-            input_types = {
-                "qcd": InputData(10203040, 11223344)
-            }
-
-            def __contains__(self, value):
-                return value in self.input_types or InputType.__contains__(self, value)
-
-        qcd = InputTypeWithQCD("qcd")
-        print(qcd)
-    except AttributeError as error:
-        print(error)
-    finally:
-        print("-" * 50)
-
-    # confirm that original list of input_types is not modified
-    try:
-        qcd = InputType("qcd")
-        print(qcd)
-    except AttributeError as error:
-        print(error)
-    finally:
-        print("-" * 50)
-
     # add new types through inheritance and copy
     try:
-        import copy
-
         class InputTypeWithBCQCD(InputType):
-            input_types = copy.deepcopy(InputType.input_types)
+            input_types = InputType.input_types.copy()
             input_types.update({
                 "qcd_bc": InputData(102030, 112233)
             })
