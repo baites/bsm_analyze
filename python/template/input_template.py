@@ -11,7 +11,7 @@ import ROOT
 
 from input_type import InputType
 
-class Input(InputType):
+class InputTemplate(InputType):
     '''
     Container for input plot and type. Each input plot is cloned and
     automatically scaled to cross-section, luminosity and Monte-Carlo
@@ -31,7 +31,7 @@ class Input(InputType):
         if "data" == self.type:
             self.__scale = 1
         else:
-            self.__scale = self.xsection * Input.luminosity() / self.events
+            self.__scale = self.xsection * InputTemplate.luminosity() / self.events
 
         self.__plot = plot.Clone()
         self.plot.SetDirectory(0)
@@ -49,7 +49,7 @@ class Input(InputType):
     @property
     def scale(self):
         '''
-        Input scale factor
+        InputTemplate scale factor
         '''
 
         return self.__scale
@@ -77,7 +77,7 @@ class Input(InputType):
 
 if "__main__" == __name__:
     '''
-    Test Input class with:
+    Test InputTemplate class with:
 
         - create random plot
         - create randomly picked input type with above plot
@@ -98,7 +98,7 @@ if "__main__" == __name__:
 
         # Create random input
         import random
-        input_ = Input(random.choice(InputType.input_types.keys()), plot)
+        input_ = InputTemplate(random.choice(InputType.input_types.keys()), plot)
 
         # Prepare canvas for drawing
         canvas = ROOT.TCanvas()
@@ -126,13 +126,13 @@ if "__main__" == __name__:
         print('-' * 80)
 
     try:
-        print("{0:-<80}".format("-- Expand Input types with QCD, Create plot, "
+        print("{0:-<80}".format("-- Expand InputTemplate types with QCD, Create plot, "
                                 "random fill, scale, draw "))
 
         from input_type import InputData
 
-        class InputWithQCD(Input):
-            input_types = Input.input_types.copy()
+        class InputTemplateWithQCD(InputTemplate):
+            input_types = InputTemplate.input_types.copy()
             input_types.update({
                 "qcd": InputData(2.361e8 * 1.06e-2, 35729669)
             })
@@ -144,12 +144,12 @@ if "__main__" == __name__:
 
         # Create and draw qcd
         canvas2.cd(1)
-        qcd = InputWithQCD("qcd", plot)
+        qcd = InputTemplateWithQCD("qcd", plot)
         qcd.plot.Draw("hist 9")
 
         # Create and draw ttbar
         canvas2.cd(2)
-        ttbar = InputWithQCD("ttbar", plot)
+        ttbar = InputTemplateWithQCD("ttbar", plot)
         ttbar.plot.Draw("hist 9")
 
         canvas2.Update()
