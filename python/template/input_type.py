@@ -120,13 +120,13 @@ class InputType(base_type.BaseType):
 
         # cache
         data = self.input_types[self.type]
-        return ("<{Class} {Type} xsec {XSection} events {Events} "
+        return ("<{Class} {Type!r} xsec {XSection} events {Events:.0f} K "
                 "at 0x{ID:x}>").format(
                         Class = self.__class__.__name__,
                         ID = id(self),
                         Type = self.type,
                         XSection = data.xsection,
-                        Events = data.events
+                        Events = data.events / 1000
                     )
 
     def __contains__(self, value):
