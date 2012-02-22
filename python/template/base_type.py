@@ -64,7 +64,7 @@ class BaseType(object):
         Do not allow any type by default
         '''
 
-        return false
+        return False
 
     def __str__(self):
         '''
