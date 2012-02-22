@@ -41,14 +41,14 @@ class InputType(base_type.BaseType):
     The supported channel is defined by inputs class dictionary keys. User may
     add more input type by expanding it, e.g.:
 
-        InputType.inputs.update({
+        InputType.input_types.update({
             "qcd_bctoe_pt20to30": InputData(123, 123456789)
         })
         qcd_bctoe_pt20to30 = InputType("qcd_bctoe_pt20to30")
 
     or disable/pop specific channels:
 
-        InputType.inputs.pop("qcd_bctoe_pt20to30")
+        InputType.input_types.pop("qcd_bctoe_pt20to30")
         try:
             qcd_bctoe_pt20to30 = InputType("qcd_bctoe_pt20to30")
         except AttributeError as error:
@@ -59,25 +59,25 @@ class InputType(base_type.BaseType):
         import InputType
 
         class InputTypeWithQCD(InputType):
-            inputs = {
+            input_types = {
                 "qcd": InputData(102030, 112233)
             }
 
             def __contains__(self, value):
-                # look-up of new channels in new inputs; otherwise delegate
+                # look-up of new channels in new input_types; otherwise delegate
                 # to superclass
 
-                return value in self.inputs or InputType.__contains__(self, value)
+                return value in self.input_types or InputType.__contains__(self, value)
 
     use read-only properties to automatically access data for given input:
 
         xsection    Monte-Carlo cross-section for given type
         events      Number of processed events in the Monte-Carlo sample
 
-    type can be only set/changed if it is specified in the inputs
+    type can be only set/changed if it is specified in the input_types
     '''
 
-    inputs = {
+    input_types = {
         # Use NNLO x-section: 163 instead of NLO: 157.5 or LO: 94.76
         "ttbar": InputData(163 * 1.0, 3701947),
 
@@ -107,11 +107,11 @@ class InputType(base_type.BaseType):
 
     @property
     def events(self):
-        return self.inputs[self.type].events
+        return self.input_types[self.type].events
 
     @property
     def xsection(self):
-        return self.inputs[self.type].xsection
+        return self.input_types[self.type].xsection
 
     def __str__(self):
         '''
@@ -119,7 +119,7 @@ class InputType(base_type.BaseType):
         '''
 
         # cache
-        data = self.inputs[self.type]
+        data = self.input_types[self.type]
         return ("<{Class} {Type} xsec {XSection} events {Events} "
                 "at 0x{ID:x}>").format(
                         Class = self.__class__.__name__,
@@ -135,7 +135,7 @@ class InputType(base_type.BaseType):
         overload this method to add new channels
         '''
 
-        return value in self.inputs
+        return value in self.input_types
 
 # ------------------------------------------------------------------------------
 
@@ -155,9 +155,9 @@ if "__main__" == __name__:
     finally:
         print("-" * 50)
 
-    # expand list of supported inputs and create type
+    # expand list of supported input_types and create type
     try:
-        InputType.inputs.update({
+        InputType.input_types.update({
             "qcd_bc": InputData(102030, 112233)
         })
 
@@ -169,7 +169,7 @@ if "__main__" == __name__:
         print("-" * 50)
 
     # remove newly added input type and check if type can still be created
-    InputType.inputs.pop("qcd_bc")
+    InputType.input_types.pop("qcd_bc")
 
     try:
         qcd_bc = InputType("qcd_bc")
@@ -182,12 +182,12 @@ if "__main__" == __name__:
     # add new channels through inheritance and delegation
     try:
         class InputTypeWithQCD(InputType):
-            inputs = {
+            input_types = {
                 "qcd": InputData(10203040, 11223344)
             }
 
             def __contains__(self, value):
-                return value in self.inputs or InputType.__contains__(self, value)
+                return value in self.input_types or InputType.__contains__(self, value)
 
         qcd = InputTypeWithQCD("qcd")
         print(qcd)
@@ -196,7 +196,7 @@ if "__main__" == __name__:
     finally:
         print("-" * 50)
 
-    # confirm that original list of inputs is not modified
+    # confirm that original list of input_types is not modified
     try:
         qcd = InputType("qcd")
         print(qcd)
@@ -210,8 +210,8 @@ if "__main__" == __name__:
         import copy
 
         class InputTypeWithBCQCD(InputType):
-            inputs = copy.deepcopy(InputType.inputs)
-            inputs.update({
+            input_types = copy.deepcopy(InputType.input_types)
+            input_types.update({
                 "qcd_bc": InputData(102030, 112233)
             })
 
@@ -222,7 +222,7 @@ if "__main__" == __name__:
     finally:
         print("-" * 50)
 
-    # confirm that original list of inputs is not modified
+    # confirm that original list of input_types is not modified
     try:
         qcd_bc = InputType("qcd_bc")
         print(qcd_bc)
