@@ -5,38 +5,33 @@ Created by Samvel Khalatyan, Feb 21, 2012
 Copyright 2011, All rights reserved
 '''
 
-from __future__ import division, print_function
+from __future__ import division
 
-import ROOT
-
+from root.template import Template
 from input_type import InputType
 
-class InputTemplate(InputType):
+class InputTemplate(InputType, Template):
     '''
     Container for input plot and type. Each input plot is cloned and
     automatically scaled to cross-section, luminosity and Monte-Carlo
     number of processed events
     '''
 
-    def __init__(self, input_type_, plot):
+    def __init__(self, input_type, template):
         '''
         Initialize object with input type and histogram. Histogram will be
         cloned and automatically scaled to x-section, luminosity and 
         number of Monte-Carlo processed events
         '''
 
-        InputType.__init__(self, input_type_)
+        InputType.__init__(self, input_type)
 
         # cache scale factor for future fast access
-        if "data" == self.type:
-            self.__scale = 1
-        else:
-            self.__scale = self.xsection * InputTemplate.luminosity() / self.events
+        self.__scale = (self.xsection * self.luminosity() /
+                        self.events) if self.events else 1
 
-        self.__plot = plot.Clone()
-        self.plot.SetDirectory(0)
-
-        self.plot.Scale(self.scale)
+        # histogram will be scaled upon set and scale factor need to be set
+        Template.__init__(self, template.hist, template.path)
 
     @staticmethod
     def luminosity():
@@ -55,112 +50,136 @@ class InputTemplate(InputType):
         return self.__scale
 
     @property
-    def plot(self):
+    def hist(self):
         '''
-        Access plot
+        Redefine hist property to make it scalable when set
         '''
 
-        return self.__plot
+        # route to superclass
+        return Template.hist.__get__(self, self.__class__)
+
+    @hist.setter
+    def hist(self, obj):
+        '''
+        Automatically scale histogram when new plot is set
+        '''
+
+        # let super-class work on the histogram
+        Template.hist.__set__(self, obj)
+
+        # auto-scale plot if it was set
+        if self.hist:
+            self.hist.Scale(self.scale)
 
     def __str__(self):
         '''
         Add lumi and scale numbers to InputType pretty print
         '''
 
-        front, back = InputType.__str__(self).split(" at ", 1)
-
-        return (front +
-                " lumi {lumi:.1f} fb-1 scale {scale:.2f} at ".format(
-                        lumi = self.luminosity() / 1000,
-                        scale = self.scale) +
-                back)
+        return ("<{Class} lumi {lumi:.1f} fb-1 scale {scale:.2f} at 0x{ID:x}>\n"
+                "  + {InputTypeStr}\n"
+                "  + {TemplateStr}").format(
+                    Class = self.__class__.__name__,
+                    lumi = self.luminosity() / 1000,
+                    scale = self.scale,
+                    InputTypeStr = InputType.__str__(self),
+                    TemplateStr = Template.__str__(self),
+                    ID = id(self))
 
 if "__main__" == __name__:
-    '''
-    Test InputTemplate class with:
+    import unittest
+    import ROOT
+    import random
 
-        - create random plot
-        - create randomly picked input type with above plot
-        - plot original histogram and input
-        - print input with scale factors, etc.
-    '''
+    # Prepare function for later random fill
+    my_gaus = ROOT.TF1("my_gaus", "gaus(0)", 0, 100)
+    my_gaus.SetParameters(1, 50, 10)
 
-    try:
-        print("{0:-<80}".format("-- Create plot, random fill, scale, draw "))
+    # Create plot and randomly fill with above function
+    plot = ROOT.TH1F("plot", "plot", 100, 0, 100);
+    plot.FillRandom("my_gaus", 10000)
 
-        # Prepare function for later random fill
-        my_gaus = ROOT.TF1("my_gaus", "gaus(0)", 0, 100)
-        my_gaus.SetParameters(1, 50, 10)
+    class TestInputTemplate(unittest.TestCase):
+        def test_empty_template_type(self):
+            input_type = random.choice(InputType.input_types.keys())
+            template = InputTemplate(input_type, Template())
+            self.assertEqual(template.type, input_type)
 
-        # Create plot and randomly fill with above function
-        plot = ROOT.TH1F("plot", "plot", 100, 0, 100);
-        plot.FillRandom("my_gaus", 10000)
+        def test_empty_template_path(self):
+            input_type = random.choice(InputType.input_types.keys())
+            template = InputTemplate(input_type, Template())
+            self.assertEqual(template.path, "")
 
-        # Create random input
-        import random
-        input_ = InputTemplate(random.choice(InputType.input_types.keys()), plot)
+        def test_empty_template_name(self):
+            input_type = random.choice(InputType.input_types.keys())
+            template = InputTemplate(input_type, Template())
+            self.assertEqual(template.name, "")
 
-        # Prepare canvas for drawing
-        canvas = ROOT.TCanvas()
-        canvas.SetWindowSize(800, 480)
-        canvas.Divide(2)
+        def test_empty_template_dim(self):
+            input_type = random.choice(InputType.input_types.keys())
+            template = InputTemplate(input_type, Template())
+            self.assertEqual(template.dim, None)
 
-        # Draw original plot
-        canvas.cd(1)
-        plot.Draw("hist 9")
+        def test_empty_template_hist(self):
+            input_type = random.choice(InputType.input_types.keys())
+            template = InputTemplate(input_type, Template())
+            self.assertEqual(template.hist, None)
 
-        # Draw input plot (it should be scaled)
-        canvas.cd(2)
-        input_.plot.Draw("hist 9")
+        def test_template_path(self):
+            input_type = random.choice(InputType.input_types.keys())
+            template = InputTemplate(input_type,
+                                     Template(plot, "path", clone = True))
+            self.assertEqual(template.path, "path")
 
-        canvas.Update()
+        def test_template_name(self):
+            input_type = random.choice(InputType.input_types.keys())
+            template = InputTemplate(input_type, Template(plot, clone = True))
+            self.assertEqual(template.name, "plot")
 
-        # print input
-        print(input_)
+        def test_template_dim(self):
+            input_type = random.choice(InputType.input_types.keys())
+            template = InputTemplate(input_type, Template(plot, clone = True))
+            self.assertEqual(template.dim, 1)
 
-        raw_input("enter")
+        def test_template_hist(self):
+            input_type = random.choice(InputType.input_types.keys())
+            template = InputTemplate(input_type, Template(plot, clone = True))
+            self.assertEqual(template.hist.GetTitle(), "plot")
 
-    except AttributeError as error:
-        print(error)
-    finally:
-        print('-' * 80)
+        def test_template_hist_object(self):
+            input_type = random.choice(InputType.input_types.keys())
+            template = InputTemplate(input_type, Template(plot, clone = True))
+            self.assertNotEqual(template.hist, plot)
 
-    try:
-        print("{0:-<80}".format("-- Expand InputTemplate types with QCD, Create plot, "
-                                "random fill, scale, draw "))
+        def test_template_analytical_scale(self):
+            input_type = random.choice(InputType.input_types.keys())
+            template = InputTemplate(input_type, Template(plot, clone = True))
+            self.assertEqual(template.xsection * template.luminosity() /
+                                 template.events,
+                             template.scale)
 
-        from input_type import InputData
+        def test_template_graphical_scale(self):
+            input_type = random.choice(InputType.input_types.keys())
+            template = InputTemplate(input_type, Template(plot, clone = True))
+            self.assertEqual(int(1000 *
+                                 template.hist.Integral() / plot.Integral()),
+                             int(1000 * template.scale))
 
-        class InputTemplateWithQCD(InputTemplate):
-            input_types = InputTemplate.input_types.copy()
-            input_types.update({
-                "qcd": InputData(2.361e8 * 1.06e-2, 35729669)
-            })
+    from input_type import InputData
+    class InputTemplateWithQCD(InputTemplate):
+        input_types = InputTemplate.input_types.copy()
+        input_types.update({
+            "qcd": InputData(2.361e8 * 1.06e-2, 35729669)
+        })
 
-        # Prepare canvas for drawing
-        canvas2 = ROOT.TCanvas()
-        canvas2.SetWindowSize(800, 480)
-        canvas2.Divide(2)
+    class TestInputTemplateWithQCD(unittest.TestCase):
+        def test_template_qcd(self):
+            template = InputTemplateWithQCD("qcd", Template(plot, clone = True))
+            self.assertEqual(template.type, "qcd")
 
-        # Create and draw qcd
-        canvas2.cd(1)
-        qcd = InputTemplateWithQCD("qcd", plot)
-        qcd.plot.Draw("hist 9")
+        def test_template_ttbar(self):
+            template = InputTemplateWithQCD("ttbar",
+                                            Template(plot, clone = True))
+            self.assertEqual(template.type, "ttbar")
 
-        # Create and draw ttbar
-        canvas2.cd(2)
-        ttbar = InputTemplateWithQCD("ttbar", plot)
-        ttbar.plot.Draw("hist 9")
-
-        canvas2.Update()
-
-        # print input
-        print(qcd)
-        print(ttbar)
-
-        raw_input("enter")
-
-    except AttributeError as error:
-        print(error)
-    finally:
-        print('-' * 80)
+    unittest.main()
