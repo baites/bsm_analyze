@@ -28,13 +28,19 @@ class BaseType(object):
     be saved. If not, then random variable is used for this
     '''
 
-    def __init__(self, obj_type, attribute_name = None):
+    def __init__(self, obj_type, attribute_name = None, fixed = True):
         if attribute_name:
             self.__attribute_name = "__{0}".format(attribute_name)
         else:
             self.__attribute_name = "__{0:x}".format(random.getrandbits(128))
 
+        # allow type to be set first
+        self.__fixed = False
+
         self.type = obj_type
+
+        # fix type if asked to
+        self.__fixed = fixed
 
     @property
     def type(self):
@@ -50,6 +56,9 @@ class BaseType(object):
         Type attribute is only set if allowed by __contains__ method
         '''
 
+        if self.__fixed:
+            raise AttributeError("can not change fixed type")
+
         if value not in self:
             raise AttributeError("unsupported type {0}".format(value))
         else:
@@ -57,6 +66,10 @@ class BaseType(object):
 
     @type.deleter
     def type(self):
+        '''
+        Remove type attribute
+        '''
+
         delattr(self, self.__attribute_name)
 
     def __contains__(self, value):
@@ -79,34 +92,91 @@ class BaseType(object):
 
 if "__main__" == __name__:
     class Human(BaseType):
+        '''
+        Example of BaseType inheritance and type policy definition
+        '''
+
         genders = set(["male", "female"])
 
-        def __init__(self, gender):
-            BaseType.__init__(self, gender)
+        def __init__(self, gender, fixed = True):
+            '''
+            Initialize type with gender value and make type dynamically
+            fixable. Note, the actual type value will be saved in random
+            variable
+            '''
+
+            BaseType.__init__(self, gender, fixed = fixed)
 
         def __contains__(self, value):
+            '''
+            Look up for defined type in the list of allowed values
+            '''
+
             return value in self.genders
 
-    try:
-        male = Human("male")
-        print(male)
-    except AttributeError as error:
-        print(error)
-    finally:
-        print("-" * 80)
+    import unittest
 
-    try:
-        female = Human("female")
-        print(female)
-    except AttributeError as error:
-        print(error)
-    finally:
-        print("-" * 80)
-    
-    try:
-        ape = Human("ape")
-        print(ape)
-    except AttributeError as error:
-        print(error)
-    finally:
-        print("-" * 80)
+    class TestBase(unittest.TestCase):
+        '''
+        Test BaseType functionality
+        '''
+
+        def test_empty(self):
+            '''
+            By default BaseType does not allow any type to be set
+            '''
+
+            self.assertRaises(AttributeError, BaseType, "hello")
+
+    class TestHuman(unittest.TestCase):
+        def test_male(self):
+            '''
+            Try to create male (allowed) Human type
+            '''
+
+            human = Human("male")
+            self.assertEqual(human.type, "male")
+
+        def test_female(self):
+            '''
+            Try to create female (allowed) Human type
+            '''
+
+            human = Human("female")
+            self.assertEqual(human.type, "female")
+
+        def test_ape(self):
+            '''
+            Try to create non-existing ape Human type
+            '''
+
+            self.assertRaises(AttributeError, Human, "ape")
+
+        def test_fixed(self):
+            '''
+            Try to change fixed Human type
+            '''
+
+            human = Human("male")
+            try:
+                human.type = "female"
+            except AttributeError:
+                pass
+
+            self.assertEqual(human.type, "male")
+
+        def test_not_fixed(self):
+            '''
+            Try to change non-fixed Human type
+            '''
+
+            human = Human("male", fixed = False)
+            try:
+                human.type = "female"
+            except AttributeError:
+                pass
+
+            self.assertEqual(human.type, "female")
+
+
+    unittest.main()
