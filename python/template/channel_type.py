@@ -6,6 +6,7 @@ Copyright 2011, All rights reserved
 '''
 
 from base_type import BaseType
+from input_type import InputType
 
 class ChannelType(BaseType):
     '''
@@ -14,27 +15,47 @@ class ChannelType(BaseType):
     (single top)
     '''
 
-    # Generate allowed channel types from input types and merge single tops
-    # into one channel
-    channel_types = set([
-            "ttbar",
-            "zjets",
-            "wjets",
-            "stop",
-            "data",
-            "zprime_m1000_w10",
-            "zprime_m1500_w15",
-            "zprime_m2000_w20",
-            "zprime_m3000_w30",
-            "zprime_m4000_w40"
-            ])
+    # List all supported channel types. Values of dictionary specify what
+    # Input type may be added to Channel type
+    channel_types = {
+            "ttbar": ["ttbar"],
+            "zjets": ["zjets"],
+            "wjets": ["wjets"],
+            "stop": [x for x in InputType.input_types.keys()
+                        if x.startswith("stop_") or x.startswith("satop_")],
+            "data": [x for x in InputType.input_types.keys()
+                        if x.startswith("rereco_") or x.startswith("prompt_")],
+            "zprime_m1000_w10": ["zprime_m1000_w10"],
+            "zprime_m1500_w15": ["zprime_m1500_w15"],
+            "zprime_m2000_w20": ["zprime_m2000_w20"],
+            "zprime_m3000_w30": ["zprime_m3000_w30"],
+            "zprime_m4000_w40": ["zprime_m4000_w40"]
+            }
 
     def __init__(self, channel_type):
+        '''
+        Initialize channel with specific type
+        '''
+
         BaseType.__init__(self, channel_type, "channel_type")
 
+    @property
+    def allowed_inputs(self):
+        '''
+        Access allowed input types
+        '''
+
+        return self.channel_types[self.type]
+
     def __contains__(self, value):
+        '''
+        Check if specific type is allowed
+        '''
+
         return (value in self.channel_types or
                 BaseType.__contains__(self, value))
+
+
 
 if "__main__" == __name__:
     import unittest
