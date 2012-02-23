@@ -178,5 +178,4 @@ if "__main__" == __name__:
 
             self.assertEqual(human.type, "female")
 
-
     unittest.main()
