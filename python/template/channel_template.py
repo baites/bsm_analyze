@@ -7,6 +7,7 @@ Copyright 2011, All rights reserved
 
 from root.template import Template
 from channel_type import ChannelType
+from base_style import Style
 from channel_style import ChannelStyle
 
 class ChannelTemplate(ChannelType, ChannelStyle, Template):
@@ -134,6 +135,20 @@ class ChannelTemplate(ChannelType, ChannelStyle, Template):
                     ChannelTypeStr = ChannelType.__str__(self),
                     TemplateStr = Template.__str__(self),
                     ID = id(self))
+
+    def __contains__(self, value):
+
+        return (ChannelType.__contains__(self, value) and
+                ChannelStyle.__contains__(self, value))
+
+class MCChannelTemplate(ChannelTemplate):
+    channel_types = {
+            "mc": ["ttbar", "zjets", "wjets", "stop"]
+            }
+
+    channel_styles = {
+            "mc": Style(fill = False)
+            }
 
 if "__main__" == __name__:
     import random
