@@ -88,6 +88,8 @@ class InputTemplate(InputType, Template):
                     TemplateStr = Template.__str__(self),
                     ID = id(self))
 
+
+
 class InputTemplatesLoader(InputType, Templates):
     rebin = {
         "cutflow": 1,
