@@ -66,7 +66,7 @@ def find_plots(directory, path, callback):
             h.SetDirectory(0)
 
             plot = Template()
-            plot.path = folder.GetPath()
+            plot.filename, plot.path = folder.GetPath().rstrip('/').split(':')
             plot.hist = h
 
             plot_callback(plot)
@@ -87,32 +87,56 @@ class Template(object):
     Container for template. User should be using next properties to
     access information:
 
-        path    path in file to the template (string path w.r.t. file)
-        name    template name
-        dim     template dimension (is set automatically when histogram is set)
-        hist    template object
+        filename    file from which template was loaded
+        path        path in file to the template (string path w.r.t. file)
+        name        template name
+        dim         template dimension (is set automatically when histogram
+                    is set)
+        hist        template object
 
     Only 1D, 2D and 3D plots are supported. Only several properties have
     write access:
 
+        filename
         path
         hist
 
     The others are automatically extracted from histogram object
     '''
 
-    def __init__(self, hist = None, path = "", clone = False):
+    def __init__(self, hist = None, filename = "", path = "", clone = False):
         self.__clone = clone
 
         self.hist = hist # name and dimension are automatically set
+        self.filename = filename
         self.path = path
+
+    @property
+    def filename(self):
+        '''
+        Filename where template was loaded form
+
+            input_file.root
+        '''
+
+        return self.__filename
+
+    @filename.setter
+    def filename(self, value):
+        self.__filename = value
+
+    @filename.deleter
+    def filename(self, value):
+        del self.__filename
+
+
 
     @property
     def path(self):
         '''
-        Full path to template in file including filename, e.g.:
+        Path to template in file, e.g.:
 
-            input_file.root:/path/to/template
+            /path/to/template
         '''
 
         return self.__path
@@ -220,6 +244,7 @@ class Template(object):
 
     # restrict properties of the template
     __slots__ = [
+            "__filename",
             "__path",
             "__name",
             "__dim",
@@ -249,7 +274,7 @@ class Templates(object):
         if not os.path.exists(filename):
             raise Exception("input file does not exist: " + filename)
 
-        with root.tfile.topen(filename) as in_file:
+        with tfile.topen(filename) as in_file:
             # Scan file recursively for plots
             find_plots(in_file,
                        "",
