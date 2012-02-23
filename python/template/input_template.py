@@ -10,8 +10,9 @@ from __future__ import division
 from root.template import Template, Templates
 
 from input_type import InputType
+from input_rebin import InputRebin
 
-class InputTemplate(InputType, Template):
+class InputTemplate(InputType, Template, InputRebin):
     '''
     Container for input plot and type. Each input plot is cloned and
     automatically scaled to cross-section, luminosity and Monte-Carlo
@@ -73,6 +74,16 @@ class InputTemplate(InputType, Template):
         if self.hist:
             self.hist.Scale(self.scale)
 
+            rebins = self.rebin
+            if 2 < len(rebins):
+                self.hist.RebinZ(rebins[-1])
+            
+            if 1 < len(rebins):
+                self.hist.RebinY(rebins[1])
+                self.hist.RebinX(rebins[0])
+            else:
+                self.hist.Rebin(rebins[0])
+            
     def __str__(self):
         '''
         Add lumi and scale numbers to InputType pretty print
@@ -91,46 +102,6 @@ class InputTemplate(InputType, Template):
 
 
 class InputTemplatesLoader(InputType, Templates):
-    rebin = {
-        "cutflow": 1,
-        "npv": 1,
-        "npv_with_pileup": 1,
-        "njets": 1,
-        "d0": 1,
-        "htlep": 1,
-        "htall": 1,
-        "htlep_after_htlep": 1,
-        "htlep_before_htlep": 1,
-        "htlep_before_htlep_qcd_noweight": 1,
-        "solutions": 1,
-        "mttbar_before_htlep": 1,
-        "mttbar_after_htlep": 100,
-        "dr_vs_ptrel": 0,
-        "ttbar_pt": 1,
-        "wlep_mt": 1,
-        "whad_mt": 1,
-        "wlep_mass": 1,
-        "whad_mass": 1,
-        "met": 1,
-        "met_noweight": 1,
-        "ljet_met_dphi_vs_met_before_tricut": 0,
-        "lepton_met_dphi_vs_met_before_tricut": 0,
-        "ljet_met_dphi_vs_met": 0,
-        "lepton_met_dphi_vs_met": 0,
-        "htop_njets": 1,
-        "htop_delta_r": 1,
-        "htop_njet_vs_m": 0,
-        "htop_pt_vs_m": 0,
-        "htop_pt_vs_njets": 0,
-        "htop_pt_vs_ltop_pt": 0,
-        "njets_before_reconstruction": 1,
-        "njet2_dr_lepton_jet1_before_reconstruction": 1,
-        "njet2_dr_lepton_jet2_before_reconstruction": 1,
-        "njets_after_reconstruction": 1,
-        "njet2_dr_lepton_jet1_after_reconstruction": 1,
-        "njet2_dr_lepton_jet2_after_reconstruction": 1,
-    }
-
     def __init__(self, input_type):
         InputType.__init__(self, input_type)
         Templates.__init__(self)
@@ -154,11 +125,7 @@ class InputTemplatesLoader(InputType, Templates):
 
             or (not self.use_plots and template.name not in self.ban_plots)):
 
-            rebin = self.rebin.get(template.name, 0)
-            if rebin and 1 != rebin:
-                template.hist.Rebin(rebin)
-
-            self.input_templates[template.path.rstrip('/') + '/' +
+            self.input_templates[template.path + '/' +
                                  template.name] = InputTemplate(self.type,
                                                                 template)
 
