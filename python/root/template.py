@@ -108,6 +108,9 @@ class Template(object):
             if directory:
                 directory = directory.GetPath().rstrip("/")
                 self.__filename, self.__path = directory.rsplit(':', 1)
+            else:
+                self.__filename = ""
+                self.__path = ""
 
             self.__dimension = dim
             self.__name = obj.GetName()
