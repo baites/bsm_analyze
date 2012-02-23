@@ -16,12 +16,14 @@ class Style(object):
                  color = 1, # black by default
                  marker_size = 0.5,
                  line_width = 2,
-                 line_style = None):
+                 line_style = None,
+                 fill = True):
 
         self.__color = color
         self.__marker_size = marker_size
         self.__line_width = line_width
         self.__line_style = line_style
+        self.__fill = fill
 
     @property
     def color(self):
@@ -29,7 +31,7 @@ class Style(object):
         Histogram color. It should be applied to:
             - marker
             - line
-            - fill
+            - fill (if fill flag is set)
         '''
 
         return self.__color
@@ -57,6 +59,25 @@ class Style(object):
         '''
 
         return self.__line_style
+
+    @property
+    def fill(self):
+        '''
+        Indicate whether histogram should be filled with specified color
+        '''
+
+        return self.__fill
+
+    def apply(self, plot):
+        plot.SetLineColor(self.color)
+        if self.fill:
+            plot.SetFillColor(self.color)
+
+        plot.SetMarkerSize(self.marker_size)
+        plot.SetLineWidth(self.line_width)
+
+        if self.line_style:
+            plot.SetLineStyle(self.line_style)
 
     def __str__(self):
         return ("<{Class} color {color} marker size {marker_size} "
