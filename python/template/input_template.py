@@ -104,7 +104,7 @@ class InputTemplatesLoader(InputType, Templates):
         "htlep_before_htlep_qcd_noweight": 1,
         "solutions": 1,
         "mttbar_before_htlep": 1,
-        "mttbar_after_htlep": 50,
+        "mttbar_after_htlep": 100,
         "dr_vs_ptrel": 0,
         "ttbar_pt": 1,
         "wlep_mt": 1,
