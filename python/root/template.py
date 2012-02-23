@@ -13,6 +13,8 @@ import sys
 import label
 import tfile
 
+import ROOT
+
 class Template(object):
     '''
     ROOT Histogram wrapper with additional information saved:
@@ -103,7 +105,9 @@ class Template(object):
                 raise ValueError("unsupported template dimension {0}".format(dim))
 
             directory = obj.GetDirectory()
-            self.__filename, self.__path = directory.GetPath().rsplit(':', 1) if directory else "", ""
+            if directory:
+                directory = directory.GetPath().rstrip("/")
+                self.__filename, self.__path = directory.rsplit(':', 1)
 
             self.__dimension = dim
             self.__name = obj.GetName()
@@ -298,17 +302,8 @@ class Templates(object):
                 if not plot_callback:
                     continue
 
-                h = obj.Clone()
-                if not h:
-                    print("failed to clone object", file = sys.stderr)
-
-                    continue
-
-                h.SetDirectory(0)
-
-                plot = Template()
-                plot.filename, plot.path = folder.GetPath().rstrip('/').split(':')
-                plot.hist = h
+                plot = Template(clone = True)
+                plot.hist = obj
 
                 plot_callback(plot)
 
@@ -345,7 +340,6 @@ class Templates(object):
 
 if "__main__" == __name__:
     import unittest
-    import ROOT
 
     class TestTemplate(unittest.TestCase):
         def test_template_path(self):
