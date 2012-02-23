@@ -8,6 +8,10 @@ Copyright 2011, All rights reserved
 import random
 
 class Style(object):
+    '''
+    Minimalistic style for plots
+    '''
+
     def __init__(self,
                  color = 1, # black by default
                  marker_size = 0.5,
@@ -21,18 +25,37 @@ class Style(object):
 
     @property
     def color(self):
+        '''
+        Histogram color. It should be applied to:
+            - marker
+            - line
+            - fill
+        '''
+
         return self.__color
 
     @property
     def marker_size(self):
+        '''
+        Marker size
+        '''
+
         return self.__marker_size
 
     @property
     def line_width(self):
+        '''
+        Width of the bar lines
+        '''
+
         return self.__line_width
 
     @property
     def line_style(self):
+        '''
+        Style of the bar lines
+        '''
+
         return self.__line_style
 
     def __str__(self):
@@ -45,7 +68,58 @@ class Style(object):
                         line_width = self.line_width)
 
 class BaseStyle(object):
+    '''
+    Base for all histogram styles. It can be set to certain values that are
+    allowed by __contains__ method. Child classes should overload above
+    method, e.g.:
+
+        class HumanStyle(BaseStyle):
+            human_styles = set(["male", "female"])
+
+            def __init__(self, style):
+                BaseStyle.__init__(self, style)
+
+            def __contains__(self, style):
+                # Test if style is allowed
+                return (style in self.human_styles or
+                        BaseStyle.__contains__(self, style))
+
+    By default, BaseStyle does not allow any style to be set. The value of
+    current style can be fixed if instance was created with fixed parameter
+    set to True. Otherwise, style can be later changed, e.g.:
+
+        class HumanStyle(BaseStyle):
+            ...
+
+            def __init__(self, style):
+                BaseStyle.__init__(self, style, fixed = False)
+
+            ...
+
+        human = HumanStyle("male")
+        human.style = "female"
+
+    Child classes may also define attribute name for stored current style,
+    e.g.:
+
+        class HumanStyle(BaseStyle):
+            ...
+
+            def __init__(self, style):
+                BaseStyle.__init__(self, style, attribute_name = "human_style")
+
+            ...
+
+    Otherwise a random variable name is used.
+    '''
+
     def __init__(self, obj_style, attribute_name = None, fixed = True):
+        '''
+        Initialize style with value if allowed by __contains__, store in
+        a variable with attribute_name (or random name if not set), and
+        fix style if fixed argument is set to True
+        '''
+
         if attribute_name:
             self.__attribute_name = "__{0}".format(attribute_name)
         else:
@@ -62,7 +136,7 @@ class BaseStyle(object):
     @property
     def style(self):
         '''
-        Get style value
+        Get current style
         '''
 
         return getattr(self, self.__attribute_name)
@@ -70,7 +144,8 @@ class BaseStyle(object):
     @style.setter
     def style(self, value):
         '''
-        Style attribute is only set if allowed by __contains__ method
+        Style attribute is only set if allowed by __contains__ method and not
+        fixed
         '''
 
         if self.__fixed:
