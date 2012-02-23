@@ -13,6 +13,8 @@ from input_template import InputTemplatesLoader
 from channel_type import ChannelType
 from channel_template import ChannelTemplate
 
+import root.style
+
 import ROOT
 
 def usage(argv):
@@ -22,6 +24,10 @@ def main(argv = sys.argv):
     try:
         if 2 > len(argv):
             raise RuntimeError(usage(argv))
+
+        style = root.style.tdr()
+        style.SetOptStat(111111)
+        style.cd()
 
         #folders_to_use = ["", "htop", "ltop"]
         #plots_to_load = ["mttbar_after_htlep", "mass", "mt"]
