@@ -87,12 +87,14 @@ class ComparisonCanvas(object):
     Canvas is automatically created on acesss
     '''
 
-    def __init__(self):
+    def __init__(self, lazy_init = False):
         '''
         Initialize with empty canvas
         '''
 
         self.__canvas = None
+        if not lazy_init:
+            self.canvas
 
     @property
     def canvas(self):
@@ -118,6 +120,8 @@ class ComparisonCanvas(object):
             pad.SetBottomMargin(0.3)
             pad.SetRightMargin(5)
             pad.SetGrid()
+
+            canvas.cd(1)
 
             self.__canvas = canvas
 
@@ -147,7 +151,7 @@ if "__main__" == __name__:
     plot2.FillRandom("my_gaus2", 10000)
 
     class ComparePlots(ComparisonCanvas):
-        @ratio
+        @compare
         def ratio(self, first, second):
             ratio = first.Clone()
             ratio.SetDirectory(0)
@@ -168,7 +172,8 @@ if "__main__" == __name__:
             stack.Draw("nostack hist 9")
 
             canvas.cd(2)
-            self.ratio(first, second).Draw("e 9")
+            ratio = self.ratio(first, second)
+            ratio.Draw("e 9")
 
             canvas.Update()
             
