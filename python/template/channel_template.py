@@ -7,8 +7,9 @@ Copyright 2011, All rights reserved
 
 from root.template import Template
 from channel_type import ChannelType
+from channel_style import ChannelStyle
 
-class ChannelTemplate(ChannelType, Template):
+class ChannelTemplate(ChannelType, ChannelStyle, Template):
     '''
     Channel with type and template. ChannelTemplate knows what input types
     can be added to it (the policy is defined by allowed_inputs property).
@@ -28,6 +29,7 @@ class ChannelTemplate(ChannelType, Template):
         '''
 
         ChannelType.__init__(self, channel_type)
+        ChannelStyle.__init__(self, self.type)
         Template.__init__(self)
 
         self.__input_templates = []         # track added input templates
@@ -103,6 +105,7 @@ class ChannelTemplate(ChannelType, Template):
 
             # Store newly created histogram in Template class
             Template.hist.__set__(self, hist)
+            self.channel_style.apply(self.hist)
 
         return hist
 
