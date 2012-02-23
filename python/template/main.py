@@ -9,11 +9,12 @@ from __future__ import print_function
 
 import sys
 
-from input_template import InputTemplatesLoader
+from input_template import InputTemplate,InputTemplatesLoader
 from channel_type import ChannelType
 from channel_template import ChannelTemplate
 
 import root.style
+import root.label
 
 import ROOT
 
@@ -84,6 +85,10 @@ def main(argv = sys.argv):
             stack.Add(channel.hist)
 
         stack.Draw("9 hist")
+
+        labels = [root.label.CMSLabel(), root.label.LuminosityLabel(InputTemplate.luminosity())]
+        for x in labels:
+            x.draw()
 
         canvas.Update()
 
