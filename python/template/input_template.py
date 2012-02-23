@@ -7,7 +7,7 @@ Copyright 2011, All rights reserved
 
 from __future__ import division
 
-from root.template import Template, Templates, find_plots
+from root.template import Template, Templates
 
 from input_type import InputType
 
@@ -33,9 +33,7 @@ class InputTemplate(InputType, Template):
 
         # histogram will be scaled upon set and scale factor need to be set
         Template.__init__(self,
-                          hist = template.hist,
-                          filename = template.filename,
-                          path = template.path)
+                          template = template)
 
     @staticmethod
     def luminosity():
@@ -169,7 +167,7 @@ class InputTemplatesLoader(InputType, Templates):
 
             or (not self.use_folders and path not in self.ban_folders)):
 
-            find_plots(folder, path, callback)
+            self.find_plots(folder, path, callback)
 
 if "__main__" == __name__:
     import unittest
@@ -203,7 +201,7 @@ if "__main__" == __name__:
         def test_empty_template_dim(self):
             input_type = random.choice(InputType.input_types.keys())
             template = InputTemplate(input_type, Template())
-            self.assertEqual(template.dim, None)
+            self.assertEqual(template.dimension, None)
 
         def test_empty_template_hist(self):
             input_type = random.choice(InputType.input_types.keys())
@@ -213,8 +211,9 @@ if "__main__" == __name__:
         def test_template_path(self):
             input_type = random.choice(InputType.input_types.keys())
             template = InputTemplate(input_type,
-                                     Template(plot, "path", clone = True))
-            self.assertEqual(template.path, "path")
+                                     template = Template(plot,
+                                                         clone = True))
+            self.assertEqual(template.path, "")
 
         def test_template_name(self):
             input_type = random.choice(InputType.input_types.keys())
@@ -224,7 +223,7 @@ if "__main__" == __name__:
         def test_template_dim(self):
             input_type = random.choice(InputType.input_types.keys())
             template = InputTemplate(input_type, Template(plot, clone = True))
-            self.assertEqual(template.dim, 1)
+            self.assertEqual(template.dimension, 1)
 
         def test_template_hist(self):
             input_type = random.choice(InputType.input_types.keys())
@@ -259,12 +258,15 @@ if "__main__" == __name__:
 
     class TestInputTemplateWithQCD(unittest.TestCase):
         def test_template_qcd(self):
-            template = InputTemplateWithQCD("qcd", Template(plot, clone = True))
+            template = InputTemplateWithQCD("qcd",
+                                            template = Template(plot,
+                                                                clone = True))
             self.assertEqual(template.type, "qcd")
 
         def test_template_ttbar(self):
             template = InputTemplateWithQCD("ttbar",
-                                            Template(plot, clone = True))
+                                            template = Template(plot,
+                                                                clone = True))
             self.assertEqual(template.type, "ttbar")
 
     unittest.main()

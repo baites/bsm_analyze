@@ -170,7 +170,7 @@ if "__main__" == __name__:
         def test_empty_template_dim(self):
             channel_type = random.choice(ChannelType.channel_types.keys())
             template = ChannelTemplate(channel_type)
-            self.assertEqual(template.dim, None)
+            self.assertEqual(template.dimension, None)
 
         def test_empty_template_hist(self):
             channel_type = random.choice(ChannelType.channel_types.keys())
