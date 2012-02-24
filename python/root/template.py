@@ -170,15 +170,6 @@ class Template(object):
                     path = self.path,
                     ID = id(self))
 
-    __slots__ = [
-            "__filename",
-            "__path",
-            "__name",
-            "__dimension",
-            "__hist",
-            "__clone"
-            ]
-
 
 
 class Templates(object):
