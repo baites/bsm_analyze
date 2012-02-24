@@ -30,7 +30,7 @@ class ChannelTemplate(ChannelType, ChannelStyle, Template):
         '''
 
         ChannelType.__init__(self, channel_type)
-        ChannelStyle.__init__(self, self.type)
+        ChannelStyle.__init__(self, channel_type)
         Template.__init__(self)
 
         self.__input_templates = []         # track added input templates
@@ -62,8 +62,9 @@ class ChannelTemplate(ChannelType, ChannelStyle, Template):
             self.input_templates.append(input_template)
             self.__input_template_types.add(input_template.type)
 
-            # Reset histogram
-            Template.hist.__set__(self, None)
+            # Reset histogram only if was previously created
+            if Template.hist.__get__(self, self.__class__):
+                Template.hist.__set__(self, None)
 
     @property
     def input_templates(self):
@@ -106,6 +107,11 @@ class ChannelTemplate(ChannelType, ChannelStyle, Template):
 
             # Store newly created histogram in Template class
             Template.hist.__set__(self, hist)
+
+            # Copy filename and path
+            self._Template__filename = template.filename
+            self._Template__path = template.path
+
             self.channel_style.apply(self.hist)
 
         return hist
