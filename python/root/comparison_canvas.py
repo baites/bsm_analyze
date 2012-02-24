@@ -28,13 +28,14 @@ def compare(function):
 
         axis = ratio.GetYaxis()
         axis.SetTitleSize(0.08)
-        axis.SetTitleOffset(0.5)
+        axis.SetTitleOffset(0.9)
         axis.SetNdivisions(4)
 
         for axis in ratio.GetYaxis(), ratio.GetXaxis():
             axis.SetLabelSize(0.09)
 
-        ratio.SetMarkerSize(0.5)
+        ratio.SetMarkerSize(1)
+        ratio.SetMarkerStyle(20)
         ratio.SetLineWidth(2)
         ratio.SetLineColor(ROOT.kGray + 2)
         ratio.SetMarkerColor(ROOT.kBlack)
