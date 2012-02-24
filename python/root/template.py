@@ -26,8 +26,9 @@ class Template(object):
         hist        plot object
 
     All attributes are automatically extracted from plot. Filename and
-    path are obtained using TH1::GetDirectory() and will be set to
-    empty strings if Histogram is any part is missin.
+    path are obtained using TH1::GetDirectory() if available.
+    
+    The template is invalidated if invalid (None) histogram is assigned.
 
     Only 1D, 2D and 3D plots are supported.
     '''
@@ -41,10 +42,14 @@ class Template(object):
         self.__clone = clone
 
         if template:
-            self.hist = template.hist
             self.__filename = template.filename
             self.__path = template.path
+
+            self.hist = template.hist
         else:
+            self.__filename = ""
+            self.__path = ""
+
             self.hist = hist
 
     @property
@@ -108,9 +113,6 @@ class Template(object):
             if directory:
                 directory = directory.GetPath().rstrip("/")
                 self.__filename, self.__path = directory.rsplit(':', 1)
-            else:
-                self.__filename = ""
-                self.__path = ""
 
             self.__dimension = dim
             self.__name = obj.GetName()
