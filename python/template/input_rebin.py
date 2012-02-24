@@ -55,6 +55,8 @@ class InputRebin(object):
         "njets_after_reconstruction": [1],
         "njet2_dr_lepton_jet[1]_after_reconstruction": 1,
         "njet2_dr_lepton_jet2_after_reconstruction": [1],
+        "/ltop/mass": [25],
+        "/htop/mass": [25],
             }
 
     @property
