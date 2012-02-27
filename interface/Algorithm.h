@@ -218,6 +218,10 @@ namespace bsm
                                             const Iterators &) const = 0;
 
             virtual LorentzVector getLeptonicJet(const Iterators &) const = 0;
+
+            virtual float getHadronicDiscriminator(
+                    const LorentzVector &ltop,
+                    const LorentzVector &htop) const;
     };
 
     class SimpleResonanceReconstructor: public ResonanceReconstructor
@@ -320,6 +324,20 @@ namespace bsm
 
         private:
             const float _half_pi;
+    };
+
+    class SimpleResonanceReconstructorWithMass: public SimpleResonanceReconstructor
+    {
+        public:
+            // Object interface
+            //
+            virtual uint32_t id() const;
+            virtual ObjectPtr clone() const;
+
+        protected:
+            virtual float getHadronicDiscriminator(
+                    const LorentzVector &ltop,
+                    const LorentzVector &htop) const;
     };
 }
 
