@@ -317,6 +317,38 @@ HadronicTopAnalyzer::HadronicTopAnalyzer(const HadronicTopAnalyzer &object):
     monitor(_reconstructor);
 }
 
+void HadronicTopAnalyzer::setBtagReconstruction()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new BtagResonanceReconstructor());
+    monitor(_reconstructor);
+}
+
+void HadronicTopAnalyzer::setSimpleDrReconstruction()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new SimpleDrResonanceReconstructor());
+    monitor(_reconstructor);
+}
+
+void HadronicTopAnalyzer::setHemisphereReconstruction()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new HemisphereResonanceReconstructor());
+    monitor(_reconstructor);
+}
+
+void HadronicTopAnalyzer::setSimpleReconstructionWithMass()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new SimpleResonanceReconstructorWithMass());
+    monitor(_reconstructor);
+}
+
 const HadronicTopAnalyzer::P4MonitorPtr HadronicTopAnalyzer::top() const
 {
     return _top;

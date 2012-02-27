@@ -17,6 +17,7 @@
 #include "interface/Analyzer.h"
 #include "interface/DelegateManager.h"
 #include "interface/Monitor.h"
+#include "interface/TemplateAnalyzer.h"
 
 namespace bsm
 {
@@ -51,7 +52,8 @@ namespace bsm
 
     class HadronicTopAnalyzer:
         public Analyzer,
-        public HadronicTopDelegate
+        public HadronicTopDelegate,
+        public TemplatesDelegate
     {
         public:
             typedef boost::shared_ptr<stat::H1> H1Ptr;
@@ -63,6 +65,11 @@ namespace bsm
 
             HadronicTopAnalyzer();
             HadronicTopAnalyzer(const HadronicTopAnalyzer &);
+
+            virtual void setBtagReconstruction();
+            virtual void setSimpleDrReconstruction();
+            virtual void setHemisphereReconstruction();
+            virtual void setSimpleReconstructionWithMass();
 
             // Histograms
             //
