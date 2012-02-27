@@ -62,6 +62,11 @@ TemplatesOptions::TemplatesOptions()
          po::value<bool>()->notifier(
              boost::bind(&TemplatesOptions::setHemisphereReconstruction, this)),
          "Use hemisphere based reconstruction")
+
+        ("reconstruction-with-mass",
+         po::value<bool>()->notifier(
+             boost::bind(&TemplatesOptions::setSimpleReconstructionWithMass, this)),
+         "Use simple delta-r based reconstruction with htop mass constrain")
     ;
 }
 
@@ -116,6 +121,14 @@ void TemplatesOptions::setHemisphereReconstruction()
         return;
 
     delegate()->setHemisphereReconstruction();
+}
+
+void TemplatesOptions::setSimpleReconstructionWithMass()
+{
+    if (!delegate())
+        return;
+
+    delegate()->setSimpleReconstructionWithMass();
 }
 
 
@@ -559,6 +572,14 @@ void TemplateAnalyzer::setHemisphereReconstruction()
     stopMonitor(_reconstructor);
 
     _reconstructor.reset(new HemisphereResonanceReconstructor());
+    monitor(_reconstructor);
+}
+
+void TemplateAnalyzer::setSimpleReconstructionWithMass()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new SimpleResonanceReconstructorWithMass());
     monitor(_reconstructor);
 }
 

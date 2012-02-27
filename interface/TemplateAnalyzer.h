@@ -94,6 +94,10 @@ namespace bsm
             virtual void setHemisphereReconstruction()
             {
             }
+
+            virtual void setSimpleReconstructionWithMass()
+            {
+            }
     };
 
     class TemplatesOptions : public Options
@@ -113,6 +117,7 @@ namespace bsm
             void setBtagReconstruction();
             void setSimpleDrReconstruction();
             void setHemisphereReconstruction();
+            void setSimpleReconstructionWithMass();
 
             TemplatesDelegate *_delegate;
 
@@ -141,6 +146,7 @@ namespace bsm
             virtual void setBtagReconstruction();
             virtual void setSimpleDrReconstruction();
             virtual void setHemisphereReconstruction();
+            virtual void setSimpleReconstructionWithMass();
 
             const H1Ptr cutflow() const;
 
