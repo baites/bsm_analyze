@@ -8,8 +8,9 @@ Copyright 2011, All rights reserved
 from __future__ import division
 
 import math
+import types
 
-class StatError(object):
+class StatError(property):
     '''
     Wrapper around histogram property that acts like property but allows to
     intercept get/set operations and alter histogram errors on fly, e.g.:
@@ -67,13 +68,22 @@ class StatError(object):
     This way 4.5% + 5% + 10% error will be added.
     '''
 
-    def __init__(self, percent):
+    def __init__(self, percent, fget = None, fset = None, fdel = None, doc = None):
         '''
         Initialize erorr descriptor
         '''
 
         self.__percent = percent / 100
         self.__wrapped = None   # property object to be wrapped
+
+        self.__fget = fget
+        self.__fset = fset
+        self.__fdel = fget
+
+        if self.__fget and not doc:
+            self.__doc__ = self.__fget.__doc__
+        else:
+            self.__doc__ = doc
 
     def __call__(self, wrapped):
         '''
@@ -101,56 +111,93 @@ class StatError(object):
 
                 ...
         '''
-        self.__wrapped = wrapped
+
+        if isinstance(wrapped, property):
+            self.__wrapped = wrapped
+            self.__fget = None
+            self.__fset = None
+            self.__gdel = None
+
+        else:
+            self.__fget = wrapped
+
+            if not self.__doc__:
+                self.__doc__ = wrapped.__doc__
 
         return self
 
     # Property interface
-    def __get__(self, *parg, **karg):
+    def __get__(self, instance, owner):
         '''
         Route property get operation to property
         '''
 
-        return self.__wrapped.__get__(*parg, **karg)
+        if self.__wrapped:
+            return self.__wrapped.__get__(instance, owner)
+        elif not instance:
+            return self
+        elif self.__fget:
+            return self.__fget(instance)
+        else:
+            raise AttributeError("Attribute fetch is not allowed")
 
-    def __set__(self, *parg, **karg):
+    def __set__(self, instance, value):
         '''
         Route property set operation to property
         '''
 
-        self.__wrapped.__set__(*parg, **karg)
+        if self.__wrapped:
+            self.__wrapped.__set__(instance, value)
+        elif self.__fset:
+            self.__fset(instance, value)
+        else:
+            raise AttributeError("Attribute set is not allowed")
 
-    def __delete__(self, *parg, **karg):
+    def __delete__(self, instance):
         '''
         Route property delete operation to property
         '''
 
-        self.__wrapped.__delete__(*parg, **karg)
+        if self.__wrapped:
+            self.__wrapped.__delete__(instance)
+        elif self.__fdel:
+            self.__fdel(instance)
+        else:
+            raise AttributeError("Attribute delete is not allowed")
 
-    def getter(self, *parg, **karg):
+    def getter(self, obj):
         '''
         Set property getter function
         '''
 
-        self.__wrapped = self.__wrapped.getter(*parg, **karg)
+        if self.__wrapped:
+            self.__wrapped = self.__wrapped.getter(obj)
+        else:
+            self.__fget = obj
 
         return self
 
-    def setter(self, *parg, **karg):
+    def setter(self, obj):
         '''
         Set property setter function
         '''
 
-        self.__wrapped = self.__wrapped.setter(*parg, **karg)
+        if self.__wrapped:
+            self.__wrapped = self.__wrapped.setter(obj)
+        else:
+            self.__fset = obj
 
         return self
 
-    def deleter(self, *parg, **karg):
+    def deleter(self, obj):
         '''
         Set property remove function
         '''
 
-        self.__wrapped = self.__wrapped.deleter(*parg, **karg)
+        if self.__wrapped:
+            self.__wrapped = self.__wrapped.deleter(obj)
+        else:
+            self.__fdel = obj
 
         return self
 
@@ -273,6 +320,54 @@ if "__main__" == __name__:
         def hist(self, *parg, **karg):
             HistNoErrorChange.hist.__set__(self, *parg, **karg)
 
+    class ErrorStatAsPropertyReadOnly(HistNoErrorChange):
+        '''
+        The read-only property does not make sence in this example because
+        histogram is assigned in constructor to read-only hist
+        '''
+
+        def __init__(self):
+            HistNoErrorChange.__init__(self)
+
+        @StatError(5)
+        def hist(self):
+            '''
+            StatError is property
+            '''
+
+            return self.__hist
+
+    class ErrorStatAsProperty(HistNoErrorChange):
+        def __init__(self):
+            HistNoErrorChange.__init__(self)
+
+        @StatError(5)
+        def hist(self):
+            '''
+            StatError is property
+            '''
+
+            return self.__hist
+
+        @hist.setter
+        def hist(self, obj):
+            self.__hist = obj
+
+    class DoubleErrorStatAsProperty(ErrorStatAsProperty):
+        def __init__(self):
+            ErrorStatAsProperty.__init__(self)
+
+        @StatError(5)
+        @StatError(10)
+        def hist(self):
+            return ErrorStatAsProperty.hist.__get__(instance, instance.__class__)
+
+        @hist.setter
+        def hist(self, obj):
+            ErrorStatAsProperty.hist.__set__(instance, obj)
+
+
+
     # Unit tests
     class TestHistNoErrorChange(unittest.TestCase):
         def setUp(self):
@@ -308,5 +403,20 @@ if "__main__" == __name__:
                                             (0.04 ** 2 +
                                              0.045 ** 2 +
                                              0.1 ** 2))))
+
+    class TestErrorStatAsPropertyReadOnly(unittest.TestCase):
+        def test_get(self):
+            self.assertRaises(AttributeError, lambda: ErrorStatAsPropertyReadOnly())
+
+    class TestErrorStatAsProperty(unittest.TestCase):
+        def setUp(self):
+            self.__hist = ErrorStatAsProperty()
+
+        def test_doc(self):
+            # documentation will be accessable only to PyDoc
+            self.assertEqual(self.__hist.hist.__doc__, None)
+
+        def test_del(self):
+            self.assertRaises(AttributeError, lambda obj: obj.hist.__del__(), self)
 
     unittest.main()
