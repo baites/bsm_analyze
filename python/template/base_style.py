@@ -17,13 +17,13 @@ class Style(object):
                  marker_size = 0.5,
                  line_width = 2,
                  line_style = None,
-                 fill = True):
+                 fill_style = 1001):
 
         self.__color = color
         self.__marker_size = marker_size
         self.__line_width = line_width
         self.__line_style = line_style
-        self.__fill = fill
+        self.__fill_style = fill_style
 
     @property
     def color(self):
@@ -61,17 +61,18 @@ class Style(object):
         return self.__line_style
 
     @property
-    def fill(self):
+    def fill_style(self):
         '''
         Indicate whether histogram should be filled with specified color
         '''
 
-        return self.__fill
+        return self.__fill_style
 
     def apply(self, plot):
         plot.SetLineColor(self.color)
-        if self.fill:
-            plot.SetFillColor(self.color)
+        plot.SetFillColor(self.color)
+
+        plot.SetFillStyle(self.fill_style)
 
         plot.SetMarkerSize(self.marker_size)
         plot.SetLineWidth(self.line_width)
@@ -81,12 +82,13 @@ class Style(object):
 
     def __str__(self):
         return ("<{Class} color {color} marker size {marker_size} "
-                "line width {line_width} at 0x{ID:x}>").format(
+                "line width {line_width} fill {fill} at 0x{ID:x}>").format(
                         Class = self.__class__.__name__,
                         ID = id(self),
                         color = self.color,
                         marker_size = self.marker_size,
-                        line_width = self.line_width)
+                        line_width = self.line_width,
+                        fill = self.__fill_style)
 
 class BaseStyle(object):
     '''
