@@ -7,7 +7,7 @@ Copyright 2011, All rights reserved
 
 from __future__ import division
 
-import base_type
+from base_type import BaseType
 
 class InputData(object):
     '''
@@ -22,31 +22,46 @@ class InputData(object):
     '''
 
     def __init__(self, xsection, events):
+        '''
+        Initialialize Data with cross-section and number of processed events
+        '''
+
         self.__xsection = xsection
         self.__events = events
 
     @property
     def xsection(self):
+        '''
+        Monte-Carlo cross-section for specific input
+        '''
+
         return self.__xsection
 
     @property
     def events(self):
+        '''
+        Number of processed events for current input
+        '''
+
         return self.__events
 
-class InputType(base_type.BaseType):
-    '''
-    Input with type. It holds information about allowed inputs, cross-section,
-    and number of processed events.
 
-    The supported channel is defined by inputs class dictionary keys. User may
-    add more input type by expanding it, e.g.:
+
+class InputType(BaseType):
+    '''
+    Basic Monte-Carlo input with type and corresponding cross-section and
+    number of processed events.
+
+    The supported type is defined by class input_types dictionary keys.
+    User may add more types by expanding it, e.g.:
 
         InputType.input_types.update({
             "qcd_bctoe_pt20to30": InputData(123, 123456789)
         })
         qcd_bctoe_pt20to30 = InputType("qcd_bctoe_pt20to30")
 
-    or disable/pop specific channels:
+    This way all instances of InputType will receive new type. In similar
+    way specific type can be removed from all instances:
 
         InputType.input_types.pop("qcd_bctoe_pt20to30")
         try:
@@ -54,38 +69,59 @@ class InputType(base_type.BaseType):
         except AttributeError as error:
             print(error) # fill print error message as channel is not available
 
-    however, the prefered way to add more channels is through inheritance:
+    Note: this is a dangerous, b/c instances of InputTypes will be affected
+          by this change and will break the code. Make sure types are removed
+          before any instances are created
 
-        import InputType
+    On the contrary, the prefered way to add more channels is through
+    inheritance:
+
+        from input_type import InputType
 
         class InputTypeWithQCD(InputType):
-            input_types = {
+            # shallow-copy dictionary
+            input_types = InputType.input_types.copy()
+
+            # add new type(s)
+            input_types.update({
                 "qcd": InputData(102030, 112233)
-            }
+            })
 
-            def __contains__(self, value):
-                # look-up of new channels in new input_types; otherwise delegate
-                # to superclass
+    Now, the original class InputType is not affected and all instances
+    of INputTypeWithQCd may have newly added type: qcd
 
-                return value in self.input_types or InputType.__contains__(self, value)
+    Use read-only properties to access input data for given input:
 
-    use read-only properties to automatically access data for given input:
-
+        data        Pair of cross-sectiona and number of processed events
         xsection    Monte-Carlo cross-section for given type
         events      Number of processed events in the Monte-Carlo sample
+        type        Input type
 
-    type can be only set/changed if it is specified in the input_types
+    Type can not be changed after it is set at object instantiation
     '''
 
     input_types = {
         # Use NNLO x-section: 163 instead of NLO: 157.5 or LO: 94.76
         "ttbar": InputData(163 * 1.0, 3701947),
+        "ttbar_powheg": InputData(163 * 1.0, 16330372),
+
+        "ttbar_scale_up": InputData(163 * 1.0, 930483),
+        "ttbar_scale_down": InputData(163 * 1.0, 967055),
+
+        "ttbar_matching_up": InputData(163 * 1.0, 1057479),
+        "ttbar_matching_down": InputData(163 * 1.0, 1065323),
 
         # Use NLO x-section: 3048 instead of LO: 2475
         "zjets": InputData(3048 * 1.0, 36277961),
 
         # Use NLO x-section: 31314 instead of LO: 27770
         "wjets": InputData(31314 * 1.0, 77105816),
+
+        "wjets_scale_up": InputData(31314 * 1.0, 9784907),
+        "wjets_scale_down": InputData(31314 * 1.0, 10022324),
+
+        "wjets_matching_up": InputData(31314 * 1.0, 10461655),
+        "wjets_matching_down": InputData(31314 * 1.0, 9956679),
 
         "stop_s": InputData(3.19 * 1.0, 259971),
         "stop_t": InputData(41.92 * 1.0, 3900171),
@@ -94,24 +130,50 @@ class InputType(base_type.BaseType):
         "satop_t": InputData(22.65 * 1.0, 1944826),
         "satop_tw": InputData(7.87 * 1.0, 809984),
 
-        "zprime_m1000_w10": InputData(1.0, 207992),
-        "zprime_m1500_w15": InputData(1.0, 168383),
-        "zprime_m2000_w20": InputData(1.0, 179315),
-        "zprime_m3000_w30": InputData(1.0, 195410),
+        "zprime_m1000_w10": InputData(5.0, 207992),
+        "zprime_m1500_w15": InputData(5.0, 168383),
+        "zprime_m2000_w20": InputData(5.0, 179315),
+        "zprime_m3000_w30": InputData(5.0, 195410),
+        "zprime_m4000_w40": InputData(5.0, 180381),
 
-        "data": InputData(1, 1)
+        # zero number of events will indicate: do-not scale
+        "rereco_2011a_may10": InputData(1, 0),
+        "rereco_2011a_aug05": InputData(1, 0),
+        "prompt_2011a_v4": InputData(1, 0),
+        "prompt_2011a_v6": InputData(1, 0),
+        "prompt_2011b_v1": InputData(1, 0),
     }
 
     def __init__(self, input_type):
-        base_type.BaseType.__init__(self, input_type, "input_type")
+        '''
+        Initialize with user defined input type
+        '''
+
+        BaseType.__init__(self, input_type, "input_type")
+
+    @property
+    def data(self):
+        '''
+        Access data container for current type
+        '''
+
+        return self.input_types[self.type]
 
     @property
     def events(self):
-        return self.input_types[self.type].events
+        '''
+        Extract number of processed Monte-Carlo events
+        '''
+
+        return self.data.events
 
     @property
     def xsection(self):
-        return self.input_types[self.type].xsection
+        '''
+        Exract Monte-Carlo cross-section for given type
+        '''
+
+        return self.data.xsection
 
     def __str__(self):
         '''
@@ -119,14 +181,14 @@ class InputType(base_type.BaseType):
         '''
 
         # cache
-        data = self.input_types[self.type]
-        return ("<{Class} {Type} xsec {XSection} events {Events} "
+        data = self.data
+        return ("<{Class} {Type!r} xsec {XSection} events {Events:.0f} K "
                 "at 0x{ID:x}>").format(
                         Class = self.__class__.__name__,
                         ID = id(self),
                         Type = self.type,
                         XSection = data.xsection,
-                        Events = data.events
+                        Events = data.events / 1000
                     )
 
     def __contains__(self, value):
@@ -135,98 +197,176 @@ class InputType(base_type.BaseType):
         overload this method to add new channels
         '''
 
-        return value in self.input_types
+        return (value in self.input_types or
+                BaseType.__contains__(self, value))
 
-# ------------------------------------------------------------------------------
+
 
 if "__main__" == __name__:
-    # create supported input and print on screen
-    try:
-        ttbar = InputType("ttbar")
-        print(ttbar)
-    finally:
-        print("-" * 50)
+    import unittest
 
-    # attempt to create unsupported input
-    try:
-        qcd = InputType("qcd")
-    except AttributeError as error:
-        print(error)
-    finally:
-        print("-" * 50)
+    class InputTypeWithBCQCD(InputType):
+        # shallow copy
+        input_types = InputType.input_types.copy()
 
-    # expand list of supported input_types and create type
-    try:
-        InputType.input_types.update({
+        # add new type
+        input_types.update({
             "qcd_bc": InputData(102030, 112233)
         })
 
-        qcd_bc = InputType("qcd_bc")
-        print(qcd_bc)
-    except AttributeError as error:
-        print(error)
-    finally:
-        print("-" * 50)
+    class TestInputType(unittest.TestCase):
+        '''
+        Test InputType functionality
+        '''
 
-    # remove newly added input type and check if type can still be created
-    InputType.input_types.pop("qcd_bc")
+        def test_ttbar(self):
+            input_type = InputType("ttbar")
+            self.assertEqual(input_type.type, "ttbar")
 
-    try:
-        qcd_bc = InputType("qcd_bc")
-        print(qcd_bc)
-    except AttributeError as error:
-        print(error)
-    finally:
-        print("-" * 50)
+        def test_ttbar_powheg(self):
+            input_type = InputType("ttbar_powheg")
+            self.assertEqual(input_type.type, "ttbar_powheg")
 
-    # add new channels through inheritance and delegation
-    try:
-        class InputTypeWithQCD(InputType):
-            input_types = {
-                "qcd": InputData(10203040, 11223344)
-            }
+        def test_ttbar_scale_up(self):
+            input_type = InputType("ttbar_scale_up")
+            self.assertEqual(input_type.type, "ttbar_scale_up")
 
-            def __contains__(self, value):
-                return value in self.input_types or InputType.__contains__(self, value)
+        def test_ttbar_scale_down(self):
+            input_type = InputType("ttbar_scale_down")
+            self.assertEqual(input_type.type, "ttbar_scale_down")
 
-        qcd = InputTypeWithQCD("qcd")
-        print(qcd)
-    except AttributeError as error:
-        print(error)
-    finally:
-        print("-" * 50)
+        def test_ttbar_matching_up(self):
+            input_type = InputType("ttbar_matching_up")
+            self.assertEqual(input_type.type, "ttbar_matching_up")
 
-    # confirm that original list of input_types is not modified
-    try:
-        qcd = InputType("qcd")
-        print(qcd)
-    except AttributeError as error:
-        print(error)
-    finally:
-        print("-" * 50)
+        def test_ttbar_matching_down(self):
+            input_type = InputType("ttbar_matching_down")
+            self.assertEqual(input_type.type, "ttbar_matching_down")
 
-    # add new types through inheritance and copy
-    try:
-        import copy
+        def test_zjets(self):
+            input_type = InputType("zjets")
+            self.assertEqual(input_type.type, "zjets")
 
-        class InputTypeWithBCQCD(InputType):
-            input_types = copy.deepcopy(InputType.input_types)
-            input_types.update({
+        def test_wjets(self):
+            input_type = InputType("wjets")
+            self.assertEqual(input_type.type, "wjets")
+
+        def test_wjets_scale_up(self):
+            input_type = InputType("wjets_scale_up")
+            self.assertEqual(input_type.type, "wjets_scale_up")
+
+        def test_wjets_scale_down(self):
+            input_type = InputType("wjets_scale_down")
+            self.assertEqual(input_type.type, "wjets_scale_down")
+
+        def test_wjets_matching_up(self):
+            input_type = InputType("wjets_matching_up")
+            self.assertEqual(input_type.type, "wjets_matching_up")
+
+        def test_wjets_matching_down(self):
+            input_type = InputType("wjets_matching_down")
+            self.assertEqual(input_type.type, "wjets_matching_down")
+
+        def test_stop_s(self):
+            input_type = InputType("stop_s")
+            self.assertEqual(input_type.type, "stop_s")
+
+        def test_stop_t(self):
+            input_type = InputType("stop_t")
+            self.assertEqual(input_type.type, "stop_t")
+
+        def test_stop_tw(self):
+            input_type = InputType("stop_tw")
+            self.assertEqual(input_type.type, "stop_tw")
+
+        def test_satop_s(self):
+            input_type = InputType("satop_s")
+            self.assertEqual(input_type.type, "satop_s")
+
+        def test_satop_t(self):
+            input_type = InputType("satop_t")
+            self.assertEqual(input_type.type, "satop_t")
+
+        def test_satop_tw(self):
+            input_type = InputType("satop_tw")
+            self.assertEqual(input_type.type, "satop_tw")
+
+        def test_zprime_m1000_w10(self):
+            input_type = InputType("zprime_m1000_w10")
+            self.assertEqual(input_type.type, "zprime_m1000_w10")
+
+        def test_zprime_m1500_w15(self):
+            input_type = InputType("zprime_m1500_w15")
+            self.assertEqual(input_type.type, "zprime_m1500_w15")
+
+        def test_zprime_m2000_w20(self):
+            input_type = InputType("zprime_m2000_w20")
+            self.assertEqual(input_type.type, "zprime_m2000_w20")
+
+        def test_zprime_m3000_w30(self):
+            input_type = InputType("zprime_m3000_w30")
+            self.assertEqual(input_type.type, "zprime_m3000_w30")
+
+        def test_zprime_m4000_w40(self):
+            input_type = InputType("zprime_m4000_w40")
+            self.assertEqual(input_type.type, "zprime_m4000_w40")
+
+        def test_rereco_2011a_may10(self):
+            input_type = InputType("rereco_2011a_may10")
+            self.assertEqual(input_type.type, "rereco_2011a_may10")
+
+        def test_rereco_2011a_aug05(self):
+            input_type = InputType("rereco_2011a_aug05")
+            self.assertEqual(input_type.type, "rereco_2011a_aug05")
+
+        def test_prompt_2011a_v4(self):
+            input_type = InputType("prompt_2011a_v4")
+            self.assertEqual(input_type.type, "prompt_2011a_v4")
+
+        def test_prompt_2011a_v6(self):
+            input_type = InputType("prompt_2011a_v6")
+            self.assertEqual(input_type.type, "prompt_2011a_v6")
+
+        def test_prompt_2011b_v1(self):
+            input_type = InputType("prompt_2011b_v1")
+            self.assertEqual(input_type.type, "prompt_2011b_v1")
+
+        def test_qcd(self):
+            self.assertRaises(AttributeError, InputType, "qcd")
+
+        def test_expand_input_types(self):
+            # Add new type
+            InputType.input_types.update({
                 "qcd_bc": InputData(102030, 112233)
             })
 
-        qcd_bc = InputTypeWithBCQCD("qcd_bc")
-        print(qcd_bc)
-    except AttributeError as error:
-        print(error)
-    finally:
-        print("-" * 50)
+            # prove that new type exists
+            input_type = InputType("qcd_bc")
+            self.assertEqual(input_type.type, "qcd_bc")
 
-    # confirm that original list of input_types is not modified
-    try:
-        qcd_bc = InputType("qcd_bc")
-        print(qcd_bc)
-    except AttributeError as error:
-        print(error)
-    finally:
-        print("-" * 50)
+            # remove newly added type
+            InputType.input_types.pop("qcd_bc")
+
+            # confirm that new type does not exist any more
+            self.assertRaises(AttributeError, InputType, "qcd_bc")
+
+    class TestInputTypeWithBCQCD(unittest.TestCase):
+        '''
+        Test InputTypeWithBCQCD functionality
+        '''
+
+        def test_create_new_type(self):
+            # Create new type
+            input_type = InputTypeWithBCQCD("qcd_bc")
+            self.assertEqual(input_type.type, "qcd_bc")
+
+        def test_input_type(self):
+            # demonstrate that new type ditn't chane original InputType
+            self.assertRaises(AttributeError, InputType, "qcd_bc")
+
+        def test_ttbar_with_new_type(self):
+            # Demonstrate that old types are still available
+            input_type = InputTypeWithBCQCD("ttbar")
+            self.assertEqual(input_type.type, "ttbar")
+
+    unittest.main()

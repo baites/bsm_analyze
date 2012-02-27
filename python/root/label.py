@@ -11,70 +11,75 @@ import ROOT
 
 class Label(object):
     '''
-    The most generic legend by managing label proprty, e.g.:
+    ROOT Legend wrapper to automatically set its style. It tracks one
+    property to set legend header.
 
-        my_label = Label()
+    Usage:
+
+        # box coordinates: x1, y1, x2, y2
+        my_label = Label([.1, .1, .5, .5])
         my_label.label = "This is a generic label"
         ...
         my_label.draw()
+
+    A Legend object is automatically created when accessed
     '''
 
-    def __init__(self):
-        self._label = None
+    def __init__(self, box_coordinates):
+        '''
+        Initialize label with empty label and box coordinates
+        '''
+
+        self.__label = None
+        self.__box_coordinates = box_coordinates
 
     @property
     def label(self):
-        return self._label
+        '''
+        Access legend: automatically create object if it does not exist
+        '''
+        
+        if not self.__label:
+            label = ROOT.TLegend(*self.__box_coordinates)
+
+            label.SetTextSize(0.04)
+            label.SetMargin(0.12);
+            label.SetFillColor(10);
+            label.SetBorderSize(0);
+
+            self.__label = label
+
+        return self.__label
 
     @label.setter
     def label(self, header):
         '''
-        Set label header. Label object will be automatically created if it
-        does not exist yet
+        Set label header
         '''
 
-        if self:
-            self.label.SetTitle(header)
-        else:
-            self._label = ROOT.TLatex()
-
-            self.label.SetTextSize(0.10)
-
-            '''
-            recursion to absorb Set Header procedure if it is changed in future,
-            for example if some logic or setup is added
-            '''
-
-            self.label = header
+        self.label.SetHeader(header)
 
     @label.deleter
     def label(self):
-        del self._label
+        del self.__label
+
 
     def draw(self):
-        self.label.DrawLatex(self.label.GetX(),
-                             self.label.GetY(),
-                             self.label.GetTitle())
-
-    def __nonzero__(self):
         '''
-        Python 2.x hook
+        Draw label object
         '''
 
-        return self.__bool__()
-
-    def __bool__(self):
-        return bool(self.label)
+        self.label.Draw("9")
 
     def __str__(self):
         '''
         Nice print for label with class name and header if any is set
         '''
 
-        return "<{klass} {header!r} at 0x{id:x}>".format(
-                klass = self.__class__.__name__,
+        return "<{Class} {header!r} at 0x{ID:x}>".format(
+                Class = self.__class__.__name__,
                 header = self.label.GetHeader() if self else "",
-                id = id(self))
+                ID = id(self))
 
 class CMSLabel(Label):
     '''
@@ -82,11 +87,9 @@ class CMSLabel(Label):
     '''
 
     def __init__(self):
-        Label.__init__(self)
-        self.label = "CMS Preliminary #sqrt{s} = 7 TeV"
+        Label.__init__(self, [.20, .91, 1, .96])
 
-        self.label.SetX(.53)
-        self.label.SetY(.91)
+        self.label = "CMS Preliminary #sqrt{s} = 7 TeV"
 
 class CMSSimulationLabel(CMSLabel):
     '''
@@ -105,30 +108,7 @@ class LuminosityLabel(Label):
     '''
 
     def __init__(self, luminosity):
-        Label.__init__(self)
+        Label.__init__(self, [.70, .91, 1, .96])
         self.label = ("L = {0:.2f}".format(luminosity / 1000) +
                         " fb^{-1}, e+jets")
-
-        self.label.SetX(.02)
-        self.label.SetY(.56)
-
-if "__main__" == __name__:
-    label = CMSLabel()
-    print(label)
-    print()
-
-    label = CMSSimulationLabel()
-    print(label)
-    print()
-
-    label = LuminosityLabel(4330)
-    print(label)
-    print()
-
-    label = Label()
-    print(label)
-    print()
-
-    label.label = "Test label"
-    print(label)
-    print()
+        self.label.SetTextSize(.03)

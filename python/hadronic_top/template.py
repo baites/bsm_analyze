@@ -159,7 +159,7 @@ class HadronicTopTemplates(root.template.Templates):
 
             or (not self.use_folders and path not in self.ban_folders)):
 
-            root.template.find_plots(folder, path, callback)
+            self.find_plots(folder, path, callback)
 
     def process_plot_top(self, plot):
         self.set_title_all(plot, "htop")
