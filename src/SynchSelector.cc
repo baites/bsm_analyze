@@ -234,7 +234,7 @@ SynchSelector::SynchSelector():
 
     // Do not cut on min number of b-tagged jets by default
     //
-    _min_btag.reset(new Comparator<>(1));
+    _min_btag.reset(new Comparator<std::greater_equal<float> >(1));
     _min_btag->disable();
     monitor(_min_btag);
 
