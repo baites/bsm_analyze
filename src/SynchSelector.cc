@@ -58,6 +58,16 @@ SynchSelectorOptions::SynchSelectorOptions()
              boost::bind(&SynchSelectorOptions::setMinBtag, this, _1)),
          "minimum number of b-tagged jets in event")
 
+        ("max-toptags",
+         po::value<float>()->notifier(
+             boost::bind(&SynchSelectorOptions::setMaxToptag, this, _1)),
+         "maximum number of top-tagged jets in event")
+
+        ("min-toptags",
+         po::value<float>()->notifier(
+             boost::bind(&SynchSelectorOptions::setMinToptag, this, _1)),
+         "minimum number of top-tagged jets in event")
+
         ("electron-pt",
          po::value<float>()->notifier(
              boost::bind(&SynchSelectorOptions::setElectronPt, this, _1)),
@@ -155,6 +165,22 @@ void SynchSelectorOptions::setMinBtag(const float &value)
     delegate()->setMinBtag(value);
 }
 
+void SynchSelectorOptions::setMaxToptag(const float &value)
+{
+    if (!delegate())
+        return;
+
+    delegate()->setMaxToptag(value);
+}
+
+void SynchSelectorOptions::setMinToptag(const float &value)
+{
+    if (!delegate())
+        return;
+
+    delegate()->setMinToptag(value);
+}
+
 void SynchSelectorOptions::setElectronPt(const float & value)
 {
     if (!delegate()) return;    
@@ -228,15 +254,27 @@ SynchSelector::SynchSelector():
 
     // Do not cut on max number of b-tagged jets by default
     //
-    _max_btag.reset(new Comparator<less<float> >(3));
+    _max_btag.reset(new Comparator<less_equal<float> >(3));
     _max_btag->disable();
     monitor(_max_btag);
 
     // Do not cut on min number of b-tagged jets by default
     //
-    _min_btag.reset(new Comparator<>(1));
+    _min_btag.reset(new Comparator<greater_equal<float> >(1));
     _min_btag->disable();
     monitor(_min_btag);
+
+    // Do not cut on max number of top-tagged jets by default
+    //
+    _max_toptag.reset(new Comparator<less_equal<float> >(3));
+    _max_toptag->disable();
+    monitor(_max_toptag);
+
+    // Do not cut on min number of top-tagged jets by default
+    //
+    _min_toptag.reset(new Comparator<greater_equal<float> >(1));
+    _min_toptag->disable();
+    monitor(_min_toptag);
 
     _htlep.reset(new Comparator<>(150));
     monitor(_htlep);
@@ -315,6 +353,12 @@ SynchSelector::SynchSelector(const SynchSelector &object):
     _min_btag = dynamic_pointer_cast<Cut>(object.minBtag()->clone());
     monitor(_min_btag);
 
+    _max_toptag = dynamic_pointer_cast<Cut>(object.maxToptag()->clone());
+    monitor(_max_btag);
+
+    _min_toptag = dynamic_pointer_cast<Cut>(object.minToptag()->clone());
+    monitor(_min_toptag);
+
     _htlep = dynamic_pointer_cast<Cut>(object.htlep()->clone());
     monitor(_htlep);
 
@@ -354,6 +398,16 @@ SynchSelector::CutPtr SynchSelector::maxBtag() const
 SynchSelector::CutPtr SynchSelector::minBtag() const
 {
     return _min_btag;
+}
+
+SynchSelector::CutPtr SynchSelector::maxToptag() const
+{
+    return _max_toptag;
+}
+
+SynchSelector::CutPtr SynchSelector::minToptag() const
+{
+    return _min_toptag;
 }
 
 SynchSelector::CutPtr SynchSelector::htlep() const
@@ -407,6 +461,8 @@ bool SynchSelector::apply(const Event *event)
             && leadingJetCut()
             && maxBtags()
             && minBtags()
+            && maxToptags()
+            && minToptags()
             && htlepCut(event)
             && missingEnergy(event)
             && triangularCut(event);
@@ -423,6 +479,8 @@ bool SynchSelector::apply(const Event *event)
         && leadingJetCut()
         && maxBtags()
         && minBtags()
+        && maxToptags()
+        && minToptags()
         && htlepCut(event)
         && triangularCut(event)
         && missingEnergy(event);
@@ -518,6 +576,18 @@ void SynchSelector::setMinBtag(const float &value)
     _min_btag->enable();
 }
 
+void SynchSelector::setMaxToptag(const float &value)
+{
+    _max_toptag->setValue(value);
+    _max_toptag->enable();
+}
+
+void SynchSelector::setMinToptag(const float &value)
+{
+    _min_toptag->setValue(value);
+    _min_toptag->enable();
+}
+
 void SynchSelector::setElectronPt(const float &value)
 {
     _electron_selector->cut(ElectronSelector::PT)->setValue(value);
@@ -609,12 +679,20 @@ void SynchSelector::print(std::ostream &out) const
     _cutflow->cut(LEADING_JET)->setName("Leading Jet");
 
     ostringstream max_btag;
-    max_btag << "btagged jets < " << maxBtag()->value();
+    max_btag << "btagged jets <= " << maxBtag()->value();
     _cutflow->cut(MAX_BTAG)->setName(max_btag.str());
 
     ostringstream min_btag;
-    min_btag << "btagged jets > " << minBtag()->value();
+    min_btag << "btagged jets >= " << minBtag()->value();
     _cutflow->cut(MIN_BTAG)->setName(min_btag.str());
+
+    ostringstream max_toptag;
+    max_toptag << "btagged jets <= " << maxToptag()->value();
+    _cutflow->cut(MAX_TOPTAG)->setName(max_toptag.str());
+
+    ostringstream min_toptag;
+    min_toptag << "btagged jets >= " << minToptag()->value();
+    _cutflow->cut(MIN_TOPTAG)->setName(min_toptag.str());
 
     _cutflow->cut(HTLEP)->setName("hTlep");
     _cutflow->cut(TRICUT)->setName("tri-cut");
@@ -868,6 +946,63 @@ bool SynchSelector::minBtags()
 
     return minBtag()->apply(btags)
         && (_cutflow->apply(MIN_BTAG), true);
+}
+
+bool SynchSelector::maxToptags()
+{
+    if (maxToptag()->isDisabled())
+        return true;
+
+    uint32_t toptags = 0;
+    for(GoodJets::const_iterator jet = _good_jets.begin();
+            _good_jets.end() != jet;
+            ++jet)
+    {
+        if (!jet->jet->has_toptag())
+            return true;
+
+        const Jet_TopTag & toptag = jet->jet->toptag();
+        if (
+            toptag.n_subjets() > 2 &&
+            toptag.min_mass() > 50 &&
+            toptag.top_mass() > 140 &&
+            toptag.top_mass() < 250
+        ) ++toptags;
+    }
+
+    return maxToptag()->apply(toptags)
+        && (_cutflow->apply(MAX_TOPTAG), true);
+}
+
+bool SynchSelector::minToptags()
+{
+    if (minToptag()->isDisabled())
+        return true;
+
+    uint32_t toptags = 0;
+    for(GoodJets::const_iterator jet = _good_jets.begin();
+            _good_jets.end() != jet;
+            ++jet)
+    {
+        if (!jet->jet->has_toptag())
+            return true;
+
+        const Jet_TopTag & toptag = jet->jet->toptag();
+        if (
+            toptag.n_subjets() > 2 &&
+            toptag.min_mass() > 50 &&
+            toptag.top_mass() > 140 &&
+            toptag.top_mass() < 250
+        ) ++toptags;
+        //cout << "subjets: " << toptag.n_subjets();
+        //cout << "min mass: " << toptag.min_mass();
+        //cout << "top mass: " << toptag.top_mass() << endl;
+    }
+
+    //cout << "toptags: " << toptags << "flag: " << (minToptag()->apply(toptags)) << endl << endl;
+
+    return minToptag()->apply(toptags)
+        && (_cutflow->apply(MIN_TOPTAG), true);
 }
 
 bool SynchSelector::htlepCut(const Event *event)

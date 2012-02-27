@@ -46,6 +46,8 @@ namespace bsm
             virtual void setLeadingJetPt(const float &) {}
             virtual void setMaxBtag(const float &) {}
             virtual void setMinBtag(const float &) {}
+            virtual void setMaxToptag(const float &) {}
+            virtual void setMinToptag(const float &) {}
             virtual void setElectronPt(const float &) {}
             virtual void setQCDTemplate(const bool &) {}
     };
@@ -69,6 +71,8 @@ namespace bsm
             void setLeadingJetPt(const float &);
             void setMaxBtag(const float &);
             void setMinBtag(const float &);
+            void setMaxToptag(const float &);
+            void setMinToptag(const float &);
             void setElectronPt(const float &);
             void setQCDTemplate(const bool &);
 
@@ -109,6 +113,8 @@ namespace bsm
                 LEADING_JET,
                 MAX_BTAG,
                 MIN_BTAG,
+                MAX_TOPTAG,
+                MIN_TOPTAG,
                 HTLEP,
                 TRICUT,
                 MET,
@@ -129,6 +135,8 @@ namespace bsm
             CutPtr leadingJet() const;
             CutPtr maxBtag() const;
             CutPtr minBtag() const;
+            CutPtr maxToptag() const;
+            CutPtr minToptag() const;
             CutPtr htlep() const;
             CutPtr tricut() const;
             CutPtr met() const;
@@ -166,6 +174,8 @@ namespace bsm
             virtual void setLeadingJetPt(const float &);
             virtual void setMaxBtag(const float &);
             virtual void setMinBtag(const float &);
+            virtual void setMaxToptag(const float &);
+            virtual void setMinToptag(const float &);
             virtual void setElectronPt(const float &);
             virtual void setQCDTemplate(const bool &);
 
@@ -215,6 +225,8 @@ namespace bsm
             bool leadingJetCut();
             bool maxBtags();
             bool minBtags();
+            bool maxToptags();
+            bool minToptags();
             bool htlepCut(const Event *);
 
             void selectGoodPrimaryVertices(const Event *);
@@ -254,6 +266,8 @@ namespace bsm
             CutPtr _leading_jet;
             CutPtr _max_btag;
             CutPtr _min_btag;
+            CutPtr _max_toptag;
+            CutPtr _min_toptag;
             CutPtr _htlep;
             CutPtr _tricut;
             CutPtr _met;

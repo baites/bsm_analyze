@@ -43,15 +43,64 @@ Templates::Templates(const std::string &input_file,
     _qcd_type(QCD_NONE),
     _pull_plots(0.0),
     _ks_chi2(false),
-    _log_scale(false),
-    _raw_cutflow(false)
+    _log_scale(false)
 {
     if (!theta_scale.empty())
     {
-        _theta_scale.load(theta_scale);
+        if (!fs::exists(theta_scale))
+        {
+            cerr << "theta scale file does not exist: " << theta_scale << endl;
+        }
+        else
+        {
+            ifstream in(theta_scale.c_str());
+            if (!in.is_open())
+            {
+                cerr << "failed to open theta scale file: " << theta_scale
+                    << endl;
+            }
+            else
+            {
+                char buf[512];
+                while(in.getline(buf, 512))
+                {
+                    string input(buf);
 
-        cout << "Loaded theta scales: " << endl;
-        cout << _theta_scale << endl;
+                    smatch matches;
+                    regex pattern("^(wjets|zjets|singletop|ttbar|eleqcd):\\s+(\\d+\\.\\d+)$", regex_constants::icase | regex_constants::perl);
+                    if (!regex_match(input, matches, pattern))
+                    {
+                        cerr << "didn't understand line: " << buf << endl;
+                    }
+                    else
+                    {
+                        float scale = lexical_cast<float>(matches[2]);
+                        if ("wjets" == matches[1])
+                        {
+                            _theta_scale.wjets = scale;
+                        }
+                        else if ("zjets" == matches[1])
+                        {
+                            _theta_scale.zjets = scale;
+                        }
+                        else if ("singletop" == matches[1])
+                        {
+                            _theta_scale.stop = scale;
+                        }
+                        else if ("ttbar" == matches[1])
+                        {
+                            _theta_scale.ttjets = scale;
+                        }
+                        else if ("eleqcd" == matches[1])
+                        {
+                            _theta_scale.qcd = scale;
+                        }
+                    }
+                }
+
+                cout << "Read Theta scales" << endl << _theta_scale << endl;
+            }
+        }
     }
 
     setTDRStyle();
@@ -106,7 +155,7 @@ void Templates::draw()
         normalize();
 
     for(Template hist_template(Template::MET), end(Template::HTOP_MT);
-    //for(Template hist_template(Template::TTBAR_MASS), end(Template::TTBAR_MASS);
+    //for(Template hist_template(Template::MET), end(Template::WLEP_MT);
             end >= hist_template;
             ++hist_template)
     {
@@ -115,13 +164,13 @@ void Templates::draw()
 
     // 2D plot
     //
-    for(Template hist_template(Template::DPHI_ELECTRON_VS_MET),
+    /*for(Template hist_template(Template::DPHI_ELECTRON_VS_MET),
                 end(Template::DPHI_JET_VS_MET_BEFORE_TRICUT);
             end >= hist_template;
             ++hist_template)
     {
-        //plot2D(hist_template);
-    }
+        plot2D(hist_template);
+    }*/
 }
 
 // Privates
@@ -154,10 +203,7 @@ void Templates::loadHistograms(TFile *file, const Input &input)
             continue;
         }
 
-        float lumi_scale = scale(histogram, input);
-        if (Template::TTBAR_MASS == plot)
-            cout << input.repr() << " lumi_scale: " << lumi_scale << endl;
-
+        scale(histogram, input);
         Templates::style(histogram, input);
 
         // store plot
@@ -168,8 +214,10 @@ void Templates::loadHistograms(TFile *file, const Input &input)
 
 void Templates::plot(const Template &plot)
 {
-    if (plot == Template::MET_QCD
-            || plot == Template::MET_QCD_NOWEIGHT)
+    if (
+        plot == Template::MET_QCD ||
+        plot == Template::MET_QCD_NOWEIGHT
+    )
         return;
 
     const InputPlots &input_plots = _plots[plot];
@@ -179,35 +227,45 @@ void Templates::plot(const Template &plot)
             Input::RERECO_2011A_MAY10,
             Input::PROMPT_2011B_V1);
 
-    channel[Channel::STOP] = get(input_plots, Input::STOP_S, Input::SATOP_TW);
+    TH1 *h = get(input_plots,
+            Input::STOP_S,
+            Input::SATOP_TW);
+    if (h && _theta_scale.stop)
+        h->Scale(_theta_scale.stop);
+    channel[Channel::STOP] = h;
 
-    TH1 *h = get(input_plots, Input::TTJETS);
-    if (h)
-        channel[Channel::TTBAR] = h;
-    else
-    {
-        h = get(input_plots, Input::TTJETS_POWHEG);
-        channel[Channel::TTBAR_POWHEG] = h;
-    }
+    h = get(input_plots, Input::TTJETS);
+    if (h && _theta_scale.ttjets)
+        h->Scale(_theta_scale.ttjets);
+    channel[Channel::TTBAR] = h;
 
-    channel[Channel::WJETS] = get(input_plots, Input::WJETS);
-    channel[Channel::ZJETS] = get(input_plots, Input::ZJETS); 
+    h = get(input_plots, Input::WJETS);;
+    if (h && _theta_scale.wjets)
+        h->Scale(_theta_scale.wjets);
+    channel[Channel::WJETS] = h;
+
+    h = get(input_plots, Input::ZJETS);
+    if (h && _theta_scale.zjets)
+        h->Scale(_theta_scale.zjets);
+    channel[Channel::ZJETS] = h; 
 
     if (_qcd_type == QCD_FROM_DATA)
     {
         h = get(input_plots, Input::QCD_FROM_DATA);
+        if (h && _theta_scale.qcd)
+            h->Scale(_theta_scale.qcd);
         channel[Channel::QCD] = h;
     }
     else if (_qcd_type == QCD_FROM_MC)
     {
         h = get(input_plots, Input::QCD);
+        if (h && _theta_scale.qcd)
+            h->Scale(_theta_scale.qcd);
         channel[Channel::QCD] = h;
     }
 
     channel[Channel::ZPRIME1000] = get(input_plots, Input::ZPRIME1000);
-    channel[Channel::ZPRIME1500] = get(input_plots, Input::ZPRIME1500);
     channel[Channel::ZPRIME2000] = get(input_plots, Input::ZPRIME2000);
-    channel[Channel::ZPRIME3000] = get(input_plots, Input::ZPRIME3000);
 
     TCanvas *canvas = draw(plot, channel);
     canvas->SaveAs(("template_" + plot.repr() + (_log_scale ? "_log" : "")
@@ -276,348 +334,315 @@ void Templates::plot2D(const Template &plot)
 
 TCanvas *Templates::draw(const Template &plot, Channels &channels)
 {
-    // Create Canvas, assign name and prepare pads
-    //
     ostringstream name;
     name << "canvas" << _heap.size();
     TCanvas *canvas = new TCanvas(name.str().c_str(), "", 800, 700);
     _heap.push_back(canvas);
 
+    TPad *pad1 = 0, *pad2 = 0;
+    TVirtualPad *pad = 0;
+
     if (_pull_plots)
-    {
-        canvas->Divide(1, 2);
-        TVirtualPad *pad = canvas->cd(1);
-        pad->SetPad(0, 0.25, 1, 1);
+    { 
+        pad1 = new TPad("pad1", "histogram", 0.01, 0.25, 0.99, 0.99);
+        _heap.push_back(pad1);
+        pad1->Draw();
 
-        pad = canvas->cd(2);
-        pad->SetPad(0, 0, 1, 0.25);
-        pad->SetTopMargin(10);
-        pad->SetRightMargin(10);
-        pad->SetGrid();
-    }
+        pad2 = new TPad("pad2", "ratio", 0.01,0.01,0.99,0.24);
+        _heap.push_back(pad2);
+        pad2->Draw();
+    
+        pad = pad1->cd();
+    } 
+    else
+        pad = canvas->cd(1);
 
-    {
-        TVirtualPad *pad = canvas->cd(1);
-        pad->SetTopMargin(10);
-        pad->SetRightMargin(10);
+    pad->SetRightMargin(10);
+    pad->SetTopMargin(10);
 
-        if (_log_scale)
-            pad->SetLogy();
-    }
-
-    Scales scales = (Template::CUTFLOW == plot)
-        ? getCutflowScales(channels)
-        : getScales(channels);
-
-    // print the scales for mttbar
+    // Read data histogram
     //
-    if (plot == Template::TTBAR_MASS)
-    {
-        cout << "Scales for mttbar" << endl;
-        cout << scales << endl;
-    }
-
-    if (plot == Template::CUTFLOW)
-    {
-        if (_raw_cutflow)
-        {
-            scales.mc = .96;
-            scales.qcd = 1;
-        }
-
-        cout << "Scales for cutflow" << endl;
-        cout << scales << endl;
-    }
-
-    // Scale all templates
+    TH1 *data = 0;
+    if (
+        channels.end() != channels.find(Channel::DATA) && 
+        channels[Channel::DATA]
+    )
+        data = channels[Channel::DATA];
+    
+    // Read background histogram
     //
-    Channels scaled_channels;
+    TH1 * mc_sigma = 0;
+    bool isclone = false;
+    
     for(Channels::const_iterator channel = channels.begin();
             channels.end() != channel;
             ++channel)
     {
         if (!channel->second)
-            continue;
-
-        float scale = 1;
-        switch(channel->first.type())
         {
-            case Channel::QCD: scale = _theta_scale.qcd; break;
-            case Channel::STOP: scale = _theta_scale.stop; break;
-            case Channel::TTBAR_POWHEG: // fall through
-            case Channel::TTBAR: scale = _theta_scale.ttjets; break;
-            case Channel::WJETS: scale = _theta_scale.wjets; break;
-            case Channel::ZJETS: scale = _theta_scale.zjets; break;
+            cerr << channel->first << " is not available" << endl;
 
-            // Skip all other channels
-            //
-            default: continue;
+            continue;
         }
 
-        if (Template::CUTFLOW == plot && _raw_cutflow)
-            scale = 1;
+        if (Channel::DATA == channel->first
+            || Channel::QCD == channel->first
+            || Channel::ZPRIME1000 == channel->first
+            || Channel::ZPRIME1500 == channel->first
+            || Channel::ZPRIME2000 == channel->first)
+        {
+            continue;
+        }            
+ 
+        if (!isclone)
+        {
+            mc_sigma = dynamic_cast<TH1 *>(channel->second->Clone());
+            _heap.push_back(mc_sigma);
+            isclone = true;
+            continue;
+        }
+        
+        mc_sigma->Add(channel->second);
+    }    
 
-        scale *= (Channel::QCD == channel->first) ? scales.qcd : scales.mc;
+    // mc and qcd scales computed from the mc fraction
+    //
+    float mc_scale = 1.0;
+    float qcd_scale = 1.0;
 
-        if (Template::TTBAR_MASS == plot)
-            cout << "scale " << channel->first.repr() << ": " << scale << endl;
-
-        TH1 *h = dynamic_cast<TH1 *>(channel->second->Clone());
-        _heap.push_back(h);
-
-        h->SetDirectory(0);
-        h->Scale(scale);
-        rebin(h, plot);
-
-        if (Template::CUTFLOW == plot)
-            cout << "Add to SCALED CHANNELS: " << channel->first << endl;
-
-        scaled_channels[channel->first] = h;
+    if (_qcd_type == QCD_FROM_DATA)
+    {
+        mc_scale = _mc_fraction*data->Integral()/mc_sigma->Integral();
+        qcd_scale = _qcd_fraction*data->Integral()/channels[Channel::QCD]->Integral();
     }
 
-    // Stack all histograms: MC + QCD
+    // print the scales for mttbar
     //
+    if (plot == Template::TTBAR_MASS)
+    {
+        cout << "MC scale for mttbar : " << mc_scale << endl;
+        cout << "QCD scale for mttbar : " << qcd_scale << endl;
+    }
+
+    // Scale/Add mc/qcd with the correct scale
+    //
+    mc_sigma->Scale(mc_scale);
+    mc_sigma->Add(channels[Channel::QCD], qcd_scale);    
+
+    // Add systematics
+    //
+    TH1 * mc = (TH1*) mc_sigma->Clone();
+    for(int bin = 1, bins = mc->GetNbinsX(); bins >= bin; ++bin)
+    {
+        mc->SetBinError(bin, sqrt(pow(mc->GetBinError(bin), 2)
+                    + pow(mc->GetBinContent(bin) * 0.045, 2)
+                    + pow(mc->GetBinContent(bin) * 0.04, 2)));
+    }
+
+    float ks = 0;
+    if (data) ks = data->KolmogorovTest(mc);
+
+    // Rebin histogram
+    rebin(data, plot);
+    rebin(mc_sigma, plot);
+
+    for(int bin = 1, bins = mc_sigma->GetNbinsX(); bins >= bin; ++bin)
+    {
+        mc_sigma->SetBinError(bin, sqrt(pow(mc_sigma->GetBinError(bin), 2)
+                    + pow(mc_sigma->GetBinContent(bin) * 0.045, 2)
+                    + pow(mc_sigma->GetBinContent(bin) * 0.04, 2)));
+    }
+
+    float chi2 = 0;
+    if (data) chi2 = data->Chi2Test(mc_sigma, "UW");
+
     THStack *stack = new THStack();
     _heap.push_back(stack);
 
     TLegend *legend = createLegend();
 
-    // Calculate MC sum with correct scales
-    //
-    TH1 *mc_sum = 0;
-    for(Channels::const_iterator channel = scaled_channels.begin();
-            scaled_channels.end() != channel;
+    for(Channels::const_iterator channel = channels.begin();
+            channels.end() != channel;
             ++channel)
     {
+        if (!channel->second)
+        {
+            cerr << channel->first << " is not available" << endl;
+            continue;
+        }
+
+        if (Channel::DATA == channel->first
+                || Channel::ZPRIME1000 == channel->first
+                || Channel::ZPRIME1500 == channel->first
+                || Channel::ZPRIME2000 == channel->first)
+        {
+            continue;
+        }
+
+        if (Channel::QCD == channel->first)
+        {
+            channel->second->Scale(qcd_scale);
+        }
+        else
+        {
+            channel->second->Scale(mc_scale);
+        }
+
         legend->AddEntry(channel->second,
             static_cast<string>(channel->first).c_str(),
             "fe");
             
+        rebin(channel->second, plot);
         stack->Add(channel->second);
-
-        if (Channel::QCD == channel->first)
-            continue;
-
-        if (mc_sum)
-            mc_sum->Add(channel->second);
-        else
-        {
-            mc_sum = dynamic_cast<TH1 *>(channel->second->Clone());
-            _heap.push_back(mc_sum);
-
-            mc_sum->SetDirectory(0);
-        }
     }
 
-    if (mc_sum)
+    if (data) data->Draw("9");
+    
+    stack->Draw("9 hist same");
+
+    // Z'
+    //
+    TH1 *hist = 0;
+    if (channels.end() != channels.find(Channel::ZPRIME1000)
+            && channels[Channel::ZPRIME1000])
     {
-        // Add Trigger and Luminositry errors: only applicable to MC
-        //
-        for(int bin = 1, bins = mc_sum->GetNbinsX(); bins >= bin; ++bin)
+        hist = channels[Channel::ZPRIME1000];
+        hist->Scale(10);
+        rebin(hist, plot);
+
+        legend->AddEntry(hist, "Z' 1 TeV/c^{2}", "fe");
+
+        hist->Draw("9 hist same");
+    }
+
+    if (channels.end() != channels.find(Channel::ZPRIME1500)
+            && channels[Channel::ZPRIME1500])
+    {
+        hist = channels[Channel::ZPRIME1500];
+        hist->Scale(10);
+        rebin(hist, plot);
+
+        legend->AddEntry(hist, "Z' 1.5 TeV/c^{2}", "fe");
+
+        hist->Draw("9 hist same");
+    }
+
+    if (channels.end() != channels.find(Channel::ZPRIME2000)
+            && channels[Channel::ZPRIME2000])
+    {
+        hist = channels[Channel::ZPRIME2000];
+        hist->Scale(10);
+        rebin(hist, plot);
+
+        legend->AddEntry(hist, "Z' 2 TeV/c^{2}", "fe");
+
+        hist->Draw("9 hist same");
+    }
+
+    if (_log_scale)
+        pad->SetLogy();
+
+    legend->Draw("9");
+
+    // Adjust plot to max
+    //
+    {
+        int mc_bin = mc_sigma->GetMaximumBin();
+        float max_y = max(data->GetBinContent(data->GetMaximumBin()),
+                mc_sigma->GetBinContent(mc_bin) + mc_sigma->GetBinError(mc_bin));
+
+        data->GetYaxis()->SetRangeUser(0, max_y * 1.2);
+    }
+
+    if (_mc_error)
+    {
+        mc_sigma->SetMarkerSize(0);
+        mc_sigma->SetLineColor(1);
+        mc_sigma->SetLineWidth(2);
+        mc_sigma->SetFillColor(1);
+        mc_sigma->SetFillStyle(3004);
+        mc_sigma->Draw("9 e2 same");
+
+        legend->AddEntry(mc_sigma, "Uncertainty", "fe");
+    }
+
+    legend->AddEntry(data,
+            static_cast<string>(Channel(Channel::DATA)).c_str(),
+            "lpe");
+
+    data->GetXaxis()->SetLabelSize(0.04);
+    data->GetXaxis()->SetTitleOffset(1.1);
+    data->GetYaxis()->SetLabelSize(0.04);
+    data->GetYaxis()->SetTitleOffset(1.7);
+    data->SetMarkerStyle(20);
+    data->SetMarkerSize(1);
+
+    setYaxisTitle(data, plot);
+    data->Draw("9 same");
+    data->Draw("axis same");
+
+    if (data && _ks_chi2) histTestLegend(ks, chi2);
+
+    cmsLegend();
+
+    if (_pull_plots)
+    {
+        pad = pad2->cd();
+        pad->SetRightMargin(10);
+        pad->SetTopMargin(10);
+
+        TH1F *dat = (TH1F*) data->Clone();
+
+        // Background sustraction to data (spetial treatment for errors)
+        for (Int_t i = 1; i <= dat->GetNbinsX()+1; ++i)
         {
-            mc_sum->SetBinError(bin, sqrt(pow(mc_sum->GetBinError(bin), 2)
-                        + pow(mc_sum->GetBinContent(bin) * 0.045, 2)
-                        + pow(mc_sum->GetBinContent(bin) * 0.04, 2)));
+            float value = 0.0, error = 0.0;
+            if (mc_sigma->GetBinContent(i) > 0.0)
+            {
+                value = (dat->GetBinContent(i) - mc_sigma->GetBinContent(i))/mc_sigma->GetBinContent(i);
+                error = sqrt(dat->GetBinContent(i)+pow(mc_sigma->GetBinError(i),2))/mc_sigma->GetBinContent(i);
+            }
+            else
+                value = error = 0.0;
+            dat->SetBinContent(i, value);
+            dat->SetBinError(i, error);
         }
 
-        // Add QCD
-        //
-        mc_sum->Add(scaled_channels[Channel::QCD]);
+        float ymax = dat->GetBinContent(dat->GetMaximumBin());
+        float ymin = dat->GetBinContent(dat->GetMinimumBin());
+ 
+        if (ymax > _pull_plots) ymax = _pull_plots;
+        if (ymin < -_pull_plots) ymin = -_pull_plots;  
 
-        TH1 *data = dynamic_cast<TH1 *>(channels[Channel::DATA]->Clone());
-        if (data)
+        for (Int_t i=1; i<=dat->GetNbinsX(); ++i)
         {
-            _heap.push_back(data);
-            data->SetDirectory(0);
+            Float_t value = 1.05 * (dat->GetBinContent(i) + dat->GetBinError(i));
+            if (value > _pull_plots) value = _pull_plots;
+            ymax = max(ymax, value);
+            value = 1.05 * (dat->GetBinContent(i) - dat->GetBinError(i));
+            if (value < -_pull_plots) value = -_pull_plots;        
+            ymin = min(ymin, value);
+        }
 
-            rebin(data, plot);
+        dat->GetXaxis()->SetTitle("");
+        dat->GetXaxis()->SetLabelSize(0.0);
+        dat->GetYaxis()->SetTitle("Pull");
+        dat->GetYaxis()->SetTitleOffset(0.5);
+        dat->GetYaxis()->SetTitleSize(0.11);
+        dat->GetYaxis()->SetRangeUser(ymin,ymax);
+        dat->GetYaxis()->SetLabelSize(0.09);
+        dat->GetYaxis()->SetNdivisions(8);
+ 
+        // draw bkg sustracted background
+        dat->SetLineWidth(2);
+        dat->Draw("9 e");
+ 
+        pad2->SetGrid();
+    }
 
-            data->GetXaxis()->SetLabelSize(0.04);
-            data->GetXaxis()->SetTitleOffset(1.1);
-            data->GetYaxis()->SetLabelSize(0.04);
-            data->GetYaxis()->SetTitleOffset(1.7);
-            data->SetMarkerStyle(20);
-            data->SetMarkerSize(1);
-            setYaxisTitle(data, plot);
-
-            mc_sum->SetMarkerSize(0);
-            mc_sum->SetLineColor(1);
-            mc_sum->SetLineWidth(2);
-            mc_sum->SetFillColor(1);
-            mc_sum->SetFillStyle(3004);
-
-            data->Draw("9 axis");
-            stack->Draw("9 hist same");
-
-            int mc_max_bin = mc_sum->GetMaximumBin();
-            int data_max_bin = data->GetMaximumBin();
-            data->GetYaxis()->SetRangeUser(0, 1.2 * max(mc_sum->GetBinContent(mc_max_bin) + mc_sum->GetBinError(mc_max_bin), 
-                data->GetBinContent(data_max_bin) + data->GetBinError(data_max_bin)));
-
-            // Draw Zprimes: entries will be added to legend
-            //
-            Channels signal_channels;
-            for(Channel channel(Channel::ZPRIME1000);
-                    Channel::ZPRIME3000 >= channel;
-                    ++channel)
-            {
-                TH1 *h = scaleSignal(plot, channels, channel);
-
-                if (Template::CUTFLOW == plot)
-                    signal_channels[channel] = h;
-
-                if (Channel::ZPRIME1000 == channel   
-                        || Channel::ZPRIME2000 == channel
-                        || (Template::TTBAR_MASS == plot
-                            && Channel::ZPRIME3000 == channel))
-                    drawSignal(h, channel, legend);
-            }
-
-            if (_mc_error)
-            {
-                legend->AddEntry(mc_sum, "Uncertainty", "fe");
-
-                mc_sum->Draw("9 e2 same");
-            }
-
-            legend->AddEntry(data,
-                    static_cast<string>(Channel(Channel::DATA)).c_str(),
-                    "lpe");
-
-            data->Draw("9 same");
-
-            legend->Draw("9");
-
-            cmsLegend();
-
-            if (_pull_plots)
-            {
-                TH1 *ratio = dynamic_cast<TH1*>(data->Clone());
-                _heap.push_back(ratio);
-
-                ratio->SetDirectory(0);
-
-                // Background sustraction to data (special treatment for errors)
-                // Note: include overflow bin
-                //
-                for (int i = 1, bins = data->GetNbinsX() + 1; i <= bins; ++i)
-                {
-                    float value = 0;
-                    float error = 0;
-
-                    if (mc_sum->GetBinContent(i) > 0.0)
-                    {
-                        value = (data->GetBinContent(i) - mc_sum->GetBinContent(i)) 
-                            / mc_sum->GetBinContent(i);
-
-                        error = sqrt(data->GetBinContent(i) 
-                                + pow(mc_sum->GetBinError(i), 2))
-                            / mc_sum->GetBinContent(i);
-                    }
-
-                    ratio->SetBinContent(i, value);
-                    ratio->SetBinError(i, error);
-                }
-
-                float ymax =
-                    min(static_cast<float>(ratio->GetBinContent(ratio->GetMaximumBin())),
-                            _pull_plots);
-                float ymin =
-                    max(static_cast<float>(ratio->GetBinContent(ratio->GetMinimumBin())),
-                        -_pull_plots);
-         
-                for (int i = 1, bins = ratio->GetNbinsX(); i <= bins; ++i)
-                {
-                    Float_t value = 1.05 * (ratio->GetBinContent(i) + ratio->GetBinError(i));
-                    if (value > _pull_plots)
-                        value = _pull_plots;
-
-                    ymax = max(ymax, value);
-
-                    value = 1.05 * (ratio->GetBinContent(i) - ratio->GetBinError(i));
-                    if (value < -_pull_plots)
-                        value = -_pull_plots;        
-
-                    ymin = min(ymin, value);
-                }
-
-                ratio->GetXaxis()->SetTitle("");
-                ratio->GetXaxis()->SetLabelSize(0.0);
-                ratio->GetYaxis()->SetTitle("#frac{Data - BKGD}{BKGD}");
-                ratio->GetYaxis()->SetTitleOffset(0.5);
-                ratio->GetYaxis()->SetTitleSize(0.11);
-                ratio->GetYaxis()->SetRangeUser(ymin, ymax);
-                ratio->GetYaxis()->SetLabelSize(0.09);
-                ratio->GetYaxis()->SetNdivisions(8);
-                ratio->SetLineWidth(2);
-         
-                // draw bkg sustracted background
-                //
-                canvas->cd(2);
-
-                ratio->Draw("9 e");
-            }
-
-            canvas->Update();
-
-            if (plot == Template::TTBAR_MASS)
-            {
-                TFile *output = TFile::Open("mttbar.root", "recreate");
-                if (!output->IsZombie())
-                {
-                    output->WriteObject(mc_sum, "mttbar_mc");
-                    output->WriteObject(data, "mttbar_data");
-                }
-            }
-
-            if (Template::CUTFLOW == plot)
-            {
-                saveCutflow(data, scaled_channels, signal_channels);
-
-                TFile *output = TFile::Open("cutflow.root", "recreate");
-                if (!output->IsZombie())
-                {
-                    output->WriteObject(mc_sum, "cutflow_mc");
-                    output->WriteObject(data, "cutflow_data");
-                }
-            }
-        } // end if data
-    } // end if mc_sum
+    canvas->Update();
 
     return canvas;
-}
-
-TH1 *Templates::scaleSignal(const Template &plot,
-        Channels &channels,
-        const Channel &channel)
-{
-    TH1 *h = 0;
-    if (channels.end() != channels.find(channel)
-            && channels[channel])
-    {
-        h = dynamic_cast<TH1 *>(channels[channel]->Clone());
-        _heap.push_back(h);
-
-        h->SetDirectory(0);
-        h->Scale(10);
-        rebin(h, plot);
-    }
-    else
-        cerr << channel.repr() << " is not available" << endl;
-
-    return h;
-}
-
-void Templates::drawSignal(TH1 *h,
-        const Channel &channel,
-        TLegend *legend)
-{
-    if (h)
-    {
-        legend->AddEntry(h, static_cast<string>(channel).c_str(), "fe");
-
-        h->Draw("9 hist same");
-    }
 }
 
 TCanvas *Templates::draw2D(const Template &plot, Channels &channels)
@@ -666,15 +691,7 @@ void Templates::normalize()
 
     channel[Channel::WJETS] = get(input_plots, Input::WJETS);
     channel[Channel::ZJETS] = get(input_plots, Input::ZJETS);
-
-    TH1 *h = get(input_plots, Input::TTJETS);
-    if (h)
-        channel[Channel::TTBAR] = h;
-    else
-    {
-        h = get(input_plots, Input::TTJETS_POWHEG);
-        channel[Channel::TTBAR_POWHEG] = h;
-    }
+    channel[Channel::TTBAR] = get(input_plots, Input::TTJETS);
 
     channel[Channel::QCD] = get(input_plots, Input::QCD_FROM_DATA);
 
@@ -684,15 +701,7 @@ void Templates::normalize()
 
     uwchannel[Channel::WJETS] = get(input_plots_noweight, Input::WJETS);
     uwchannel[Channel::ZJETS] = get(input_plots_noweight, Input::ZJETS);
-
-    h = get(input_plots_noweight, Input::TTJETS);
-    if (h)
-        uwchannel[Channel::TTBAR] = h;
-    else
-    {
-        h = get(input_plots_noweight, Input::TTJETS_POWHEG);
-        uwchannel[Channel::TTBAR_POWHEG] = h;
-    }
+    uwchannel[Channel::TTBAR] = get(input_plots_noweight, Input::TTJETS);
 
     TCanvas *canvas = normalize(plot, channel, uwchannel);
     canvas->SaveAs(("template_" + plot.repr() + (_log_scale ? "_log" : "")
@@ -713,22 +722,22 @@ TCanvas *Templates::normalize(const Template &plot, Channels &channels, Channels
     pad->SetTopMargin(10);
 
     TH1 *data = 0;
-    if (channels.end() != channels.find(Channel::DATA)
-        && channels[Channel::DATA])
-    {
-        data = dynamic_cast<TH1 *>(channels[Channel::DATA]->Clone());
-        _heap.push_back(data);
-    }
+    if (
+        channels.end() != channels.find(Channel::DATA) && 
+        channels[Channel::DATA]
+    )
+        data = channels[Channel::DATA];
 
     TH1 *qcd = 0;
-    if (channels.end() != channels.find(Channel::QCD)
-        && channels[Channel::QCD])
-    {
-        qcd = dynamic_cast<TH1 *>(channels[Channel::QCD]->Clone());
-        _heap.push_back(qcd);
-    }
+    if (
+        channels.end() != channels.find(Channel::QCD) && 
+        channels[Channel::QCD]
+    )
+        qcd = channels[Channel::QCD];
     
     TH1 * mc = 0;
+    bool isclone = false;
+    
     for(Channels::const_iterator channel = channels.begin();
             channels.end() != channel;
             ++channel)
@@ -739,21 +748,28 @@ TCanvas *Templates::normalize(const Template &plot, Channels &channels, Channels
             continue;
         }
 
-        if (Channel::DATA == channel->first
-            || Channel::QCD == channel->first)
-
+        if (
+            Channel::DATA == channel->first || 
+            Channel::QCD == channel->first
+        )
+        {
             continue;
+        }            
  
-        if (mc)
-            mc->Add(channel->second);
-        else
+        if (!isclone)
         {
             mc = dynamic_cast<TH1 *>(channel->second->Clone());
             _heap.push_back(mc);
+            isclone = true;
+            continue;
         }
+        
+        mc->Add(channel->second);
     }
 
     TH1 *uwmc = 0;
+    isclone = false;
+
     for(Channels::const_iterator channel = uwchannels.begin();
             uwchannels.end() != channel;
             ++channel)
@@ -764,13 +780,15 @@ TCanvas *Templates::normalize(const Template &plot, Channels &channels, Channels
             continue;
         }
 
-        if (uwmc)
-            uwmc->Add(channel->second);
-        else
+        if (!isclone)
         {
             uwmc = dynamic_cast<TH1 *>(channel->second->Clone());
             _heap.push_back(uwmc);
+            isclone = true;
+            continue;
         }
+
+        uwmc->Add(channel->second);
     }
 
     rebin(data, plot);
@@ -780,20 +798,17 @@ TCanvas *Templates::normalize(const Template &plot, Channels &channels, Channels
  
     TH1 *wmc = dynamic_cast<TH1 *>(mc->Clone());
     _heap.push_back(wmc);
-
     wmc->Divide(uwmc);
     for(Int_t i=1; i<=wmc->GetNbinsX(); ++i)
         if (wmc->GetBinContent(i) <= 0.0) wmc->SetBinContent(i,1.0);
 
     TObjArray *templates = new TObjArray(2);
     _heap.push_back(templates);
-
     templates->Add(uwmc);
     templates->Add(qcd);
     
     TFractionFitter * fitter = new TFractionFitter(data, templates);
     _heap.push_back(fitter);
-
     fitter->SetWeight(0,wmc);
     Int_t status = fitter->Fit();
 
@@ -851,6 +866,11 @@ TCanvas *Templates::normalize(const Template &plot, Channels &channels, Channels
         
         data->Draw("9 sameEp");
 
+        /*
+        if (_log_scale)
+            pad->SetLogy();
+            */
+
         cmsLegend();
         
         TLegend *legend = createLegend("",true);
@@ -878,8 +898,6 @@ TH1 *Templates::get(const InputPlots &plots,
     {
         if (plots.end() != plots.find(from))
             hist = plots.at(from);
-        else
-            cerr << "Didn't find plot: " << from << endl;
     }
     else
     {
@@ -905,9 +923,9 @@ TLegend *Templates::createLegend(const string &text, bool left)
     TLegend *legend = 0;
 
     if (left)
-        legend = new TLegend( .57, .60, .79, .88);
+        legend = new TLegend( .57, .65, .79, .88);
     else
-        legend = new TLegend( .67, .60, .89, .88);
+        legend = new TLegend( .67, .65, .89, .88);
     _heap.push_back(legend);
 
     if (!text.empty())
@@ -1022,12 +1040,6 @@ int Templates::rebin(const Template &plot) const
         case Template::NPV: return 1;
         case Template::NPV_NO_PU: return 1;
         case Template::NJET: return 1;
-        case Template::NJET_BEFORE_RECONSTRUCTION: return 1;
-        case Template::NJET2_DR_LEPTON_JET1_BEFORE_RECONSTRUCTION: return 2;
-        case Template::NJET2_DR_LEPTON_JET2_BEFORE_RECONSTRUCTION: return 2;
-        case Template::NJET_AFTER_RECONSTRUCTION: return 1;
-        case Template::NJET2_DR_LEPTON_JET1_AFTER_RECONSTRUCTION: return 2;
-        case Template::NJET2_DR_LEPTON_JET2_AFTER_RECONSTRUCTION: return 2;
         case Template::TTBAR_MASS: return 100;
         case Template::TTBAR_PT: return 25;
         case Template::WLEP_MT: return 25;
@@ -1046,18 +1058,6 @@ int Templates::rebin(const Template &plot) const
         case Template::LTOP_ETA: return 50;
         case Template::LTOP_MASS: return 25;
         case Template::LTOP_MT: return 25;
-        case Template::LTOP_JET1_MASS: return 5;
-        case Template::HTOP_JET1_MASS: return 5;
-        case Template::HTOP_JET2_MASS: return 5;
-        case Template::HTOP_JET3_MASS: return 5;
-        case Template::HTOP_JET4_MASS: return 5;
-        case Template::LTOP_JET1_PT: return 25;
-        case Template::HTOP_JET1_PT: return 25;
-        case Template::HTOP_JET2_PT: return 25;
-        case Template::HTOP_JET3_PT: return 25;
-        case Template::HTOP_JET4_PT: return 25;
-        case Template::HTOP_NJETS: return 1;
-        case Template::HTOP_DELTA_R: return 25;
         case Template::HTOP_PT: return 25;
         case Template::HTOP_ETA: return 50;
         case Template::HTOP_MASS: return 25;
@@ -1100,159 +1100,6 @@ void Templates::setYaxisTitle(TH1 *h, const Template &plot)
     h->GetYaxis()->SetTitle(title.str().c_str());
 }
 
-Templates::Scales Templates::getScales(Channels &channels)
-{
-    Scales scales;
-
-    if (channels.end() != channels.find(Channel::DATA)
-        && channels[Channel::DATA]
-        && _qcd_type == QCD_FROM_DATA)
-    {
-        TH1 *data = channels[Channel::DATA];
-
-        // Add all MC samples (no QCD)
-        //
-        TH1 *mc = 0;
-        for(Channels::const_iterator channel = channels.begin();
-                channels.end() != channel;
-                ++channel)
-        {
-            if (!channel->second)
-                continue;
-
-            if (Channel::DATA == channel->first
-                || Channel::QCD == channel->first
-                || Channel::ZPRIME1000 == channel->first
-                || Channel::ZPRIME1500 == channel->first
-                || Channel::ZPRIME2000 == channel->first
-                || Channel::ZPRIME3000 == channel->first)
-
-                continue;
-     
-            if (!mc)
-                mc = dynamic_cast<TH1 *>(channel->second->Clone());
-            else
-                mc->Add(channel->second);
-        }
-
-        if (mc)
-        {
-            // mc and qcd scales computed from the mc fraction
-            //
-            scales.mc = _mc_fraction * data->Integral() / mc->Integral();
-
-            if (channels.end() != channels.find(Channel::QCD)
-                    && channels[Channel::QCD])
-                scales.qcd = _qcd_fraction * data->Integral()
-                    / channels[Channel::QCD]->Integral();
-
-            mc->SetDirectory(0);
-            delete mc;
-        }
-    }
-
-    return scales;
-}
-
-Templates::Scales Templates::getCutflowScales(Channels &channels)
-{
-    Scales scales;
-
-    if (channels.end() != channels.find(Channel::DATA)
-        && channels[Channel::DATA]
-        && _qcd_type == QCD_FROM_DATA)
-    {
-        TH1 *data = channels[Channel::DATA];
-
-        // Add all MC samples (no QCD)
-        //
-        TH1 *mc = 0;
-        for(Channels::const_iterator channel = channels.begin();
-                channels.end() != channel;
-                ++channel)
-        {
-            if (!channel->second)
-                continue;
-
-            if (Channel::DATA == channel->first
-                || Channel::QCD == channel->first
-                || Channel::ZPRIME1000 == channel->first
-                || Channel::ZPRIME1500 == channel->first
-                || Channel::ZPRIME2000 == channel->first
-                || Channel::ZPRIME3000 == channel->first)
-
-                continue;
-     
-            if (!mc)
-                mc = dynamic_cast<TH1 *>(channel->second->Clone());
-            else
-                mc->Add(channel->second);
-        }
-
-        if (mc)
-        {
-            // mc and qcd scales computed from the mc fraction
-            //
-            int bins = data->GetXaxis()->GetNbins();
-            scales.mc = _mc_fraction * data->GetBinContent(bins)
-                / mc->GetBinContent(bins);
-
-            if (channels.end() != channels.find(Channel::QCD)
-                    && channels[Channel::QCD])
-                scales.qcd = _qcd_fraction * data->GetBinContent(bins)
-                    / channels[Channel::QCD]->GetBinContent(bins);
-
-            mc->SetDirectory(0);
-            delete mc;
-        }
-    }
-
-    return scales;
-}
-
-void Templates::saveCutflow(const TH1 *data,
-        const Channels &bg,
-        const Channels &signal) const
-{
-    ofstream cutflow("cutflow.txt");
-    cutflow << "data " << getCutflow(data) << endl;
-
-    for(Channels::const_iterator channel = bg.begin();
-            bg.end() != channel;
-            ++channel)
-    {
-        cutflow << channel->first.repr() << " "
-            << getCutflow(channel->second) << endl;
-    }
-
-    for(Channels::const_iterator channel = signal.begin();
-            signal.end() != channel;
-            ++channel)
-    {
-        channel->second->Scale(0.1);
-        cutflow << channel->first.repr() << " "
-            << getCutflow(channel->second) << endl;
-        channel->second->Scale(10);
-    }
-}
-
-string Templates::getCutflow(const TH1 *h) const
-{
-    ostringstream out;
-
-    if (h)
-        for(int bin = 1, bins = h->GetXaxis()->GetNbins() + 1;
-                bins > bin;
-                ++bin)
-
-            out << " " << fixed << h->GetBinContent(bin)
-                << "+" << h->GetBinError(bin);
-    else
-        cerr << "Cutflow histogram does not exist" << endl;
-
-    return out.str();
-}
-
 ostream &operator <<(ostream &out, const Templates::Scales &scales)
 {
     out << " mc: " << scales.mc << endl;
@@ -1260,3 +1107,4 @@ ostream &operator <<(ostream &out, const Templates::Scales &scales)
 
     return out;
 }
+
