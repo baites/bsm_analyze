@@ -102,3 +102,13 @@ class ChannelTemplateLoader(object):
         loader.load("{0}/{1}".format(loader.type, self.__filename))
 
         return loader.templates
+
+    def __str__(self):
+        result = []
+        for k, v in self.plots.items():
+            result.append("{0:-<80}".format("-- {0} ".format(k)))
+            
+            for c in v:
+                result.append("{0:>20}: {1}".format(c.type, [x.type for x in c.input_templates]))
+
+        return '\n'.join(result)
