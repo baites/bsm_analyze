@@ -173,166 +173,67 @@ class Template(object):
                     ID = id(self))
 
 
+class TemplateLoader(object):
+    use_folders = []
+    ban_folders = []
 
-class Templates(object):
-    '''
-    Manage templates/plots saved in ROOT file
+    use_plots = []
+    ban_plots = []
 
-    managing includes generic tasks:
-
-        load()  find recursively all plots in the ROOT file
-        draw()  draw all the plots separately
-    '''
     def __init__(self):
-        self.plots = []
+        self.templates = []
 
     def load(self, filename):
-        '''
-        Load plots from input file. Skip loading if plots were loaded before.
-        An Exception will be raised if input file does not exist or there
-        were ploblems opening it
-        '''
-
         if not os.path.exists(filename):
-            raise Exception("input file does not exist: " + filename)
+            raise RuntimeError(("templates file does not exist "
+                                "{0!r}").format(filename))
 
         with tfile.topen(filename) as in_file:
             # Scan file recursively for plots
-            self.find_plots(in_file,
-                       "",
-                       callback = {
-                           "plot": self.process_plot,
-                           "folder": self.process_folder
-                           }
-                       )
-
-    def draw(self):
-        '''
-        Draw all found plots and return collection of created canvases. Method
-        will automatically load plots if these are not loaded yet
-        '''
-
-        canvases = []
-        for plot in self.plots:
-            c = self.draw_plot(plot)
-
-            if c:
-                canvases.append(c)
-
-        return canvases
+            self.load_plots(directory = in_file, path = "")
 
     def process_plot(self, template):
         '''
         Callback for every template loaded
         '''
 
-        self.plots.append(template)
+        self.templates.append(template)
 
-    def process_folder(self, folder, path, callback):
+    def process_folder(self, folder, path):
         '''
         Callback for subfolders
         '''
 
-        find_plots(folder, path, callback)
+        self.load_plots(folder, path)
 
-    def draw_plot(self, template):
-        '''
-        Called when new template is about to be plotted
-        '''
-
-        c = ROOT.TCanvas()
-
-        if template.dimension == 2:
-            template.hist.GetZaxis().SetLabelSize(0)
-
-            template.hist.Draw("colz 9")
-       
-        elif template.dimension == 1:
-            template.hist.Draw("hist 9")
-
-        else:
-            template.hist.Draw()
-
-        return c
-
-    @staticmethod
-    def find_plots(directory, path, callback):
+    def load_plots(self, directory, path):
         '''
         Find path in directory and scan it for histogrmas and subfolder.
-        User-defined  callback function(s) are called depending on the object type:
-
-            plot    is called for every 1..3 Dimension(s) plot found
-            folder  is called for every sub-TDirectory
         '''
-
-        plot_callback = callback.get("plot")
-        folder_callback = callback.get("folder")
-
-        # do nothing if none of the callback functions is defined
-        if not plot_callback and not folder_callback:
-            return
 
         # make sure path can be found in the directory
         folder = directory.GetDirectory(path)
         if not folder:
-            print("sub-dir {0!r} is not found in {1!r}".format(
-                    path,
-                    directory.GetPath()),
-                file = sys.stderr)
-
-            return
+            raise RuntimeError(("sub-dir {0!r} is not found "
+                                "in {1!r}").format(path, directory.GetPath()))
 
         # scan through all available objects in current folder
         for name in (x.GetName() for x in folder.GetListOfKeys()):
             obj = folder.Get(name)
             if not obj:
-                print("failed to exract object {0!r} in {1!r}".format(
-                        name,
-                        folder.GetPath()),
-                    file = sys.stderr)
-
-                continue
+                raise RuntimeError(("failed to extract object {0!r} "
+                                    "in {1!r}").format(name, folder.GetPath()))
 
             if isinstance(obj, ROOT.TH1):
-                # process template
-                if not plot_callback:
-                    continue
-
                 plot = Template(clone = True)
                 plot.hist = obj
 
-                plot_callback(plot)
+                self.process_plot(plot)
 
             elif isinstance(obj, ROOT.TDirectory):
-                # process sub-foler
-                if folder_callback:
-                    folder_callback(folder, name, callback)
+                self.process_folder(folder, name)
 
-            else:
-                print("unsupported object {0!r} of type {1}".format(
-                        name,
-                        obj.__class__.__name__),
-                    file = sys.stderr)
 
-    def __nonzero__(self):
-        '''
-        Hook for Python 2.x
-        '''
-
-        return self.__bool__()
-
-    def __bool__(self):
-        return bool(self.plots)
-
-    def __str__(self):
-        '''
-        Nice print of the object: list all loaded plots
-        '''
-
-        return "{0:-<80}\n{1}\n{2:-<80}".format(
-                    "-- found {0} plots ".format(len(self.plots)),
-                    "\n".join(map(str, self.plots)),
-                    "-")
 
 if "__main__" == __name__:
     import unittest
