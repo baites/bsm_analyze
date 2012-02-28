@@ -188,6 +188,9 @@ class TemplateLoader(object):
             raise RuntimeError(("templates file does not exist "
                                 "{0!r}").format(filename))
 
+        if self.templates:
+            self.templates = []
+
         with tfile.topen(filename) as in_file:
             # Scan file recursively for plots
             self.load_plots(directory = in_file, path = "")
