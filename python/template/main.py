@@ -16,32 +16,12 @@ from channel_template import ChannelTemplate, MCChannelTemplate
 import root.style
 import root.label
 
-from root.comparison_canvas import ComparisonCanvas, compare
+from root.comparison_canvas import ComparisonCanvas
+import compare
 
 from loader import ChannelTemplateLoader
 
 import ROOT
-
-@compare
-def ratio(data, background, title = None):
-    ratio = data.Clone()
-    ratio.SetDirectory(0)
-    ratio.Reset()
-
-    ratio.Divide(data, background)
-    ratio.GetYaxis().SetTitle(title if title else "#frac{Data}{BKGD}")
-
-    return ratio
-
-@compare
-def data_mins_bg_over_bg(data, background):
-    h = data.Clone()
-    h.SetDirectory(0)
-    h.Add(background, -1)
-    h.Divide(background)
-    h.GetYaxis().SetTitle("#frac{Data - BKGD}{BKGD}")
-
-    return h
 
 def usage(argv):
     return "usage: {0} templates.cfg".format(argv[0])
@@ -86,12 +66,12 @@ def main(argv = sys.argv):
             for c in v:
                 print("{0:>20}: {1}".format(c.type, [x.type for x in c.input_templates]))
 
-        return 0
-
         for k, c in combo_plots.items():
             print("{0:-<80}".format("-- {0} ".format(k)))
             
             print("{0:>20}: {1}".format(c.type, [x.type for x in c.input_templates]))
+
+        return 0
 
         canvases = []
         for plot, channels in plots.items():
@@ -166,7 +146,7 @@ def main(argv = sys.argv):
 
             comparison.canvas.cd(2)
             if data_channel.hist and combo_channel.hist:
-                ratio_plot = data_mins_bg_over_bg(data_channel.hist, combo_channel.hist)
+                ratio_plot = compare.data_mins_bg_over_bg(data_channel.hist, combo_channel.hist)
                 ratio_plot.GetYaxis().SetRangeUser(-1, 1)
                 ratio_plot.Draw("e 9")
 
