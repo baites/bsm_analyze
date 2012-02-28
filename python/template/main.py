@@ -9,7 +9,7 @@ from __future__ import print_function
 
 import sys
 
-from input_template import InputTemplate,InputTemplatesLoader
+from input_template import InputTemplate
 from channel_type import ChannelType
 from channel_template import ChannelTemplate, MCChannelTemplate
 
@@ -17,6 +17,8 @@ import root.style
 import root.label
 
 from root.comparison_canvas import ComparisonCanvas, compare
+
+from loader import ChannelTemplateLoader
 
 import ROOT
 
@@ -58,73 +60,33 @@ def main(argv = sys.argv):
         folders_to_use = [""]
         plots_to_load = ["mttbar_after_htlep"]
         #folders_to_use = ["", "htop", "ltop"]
-        #plots_to_load = ["mttbar_after_htlep", "mass"]
+        #plots_to_load = ["mttbar_after_htlep", "mass", "pt"]
 
         # key: template.name    value: list of channels
         plots = {}
         combo_plots = {}
 
-        for channel_type, input_types in {
-                k: v for k, v in ChannelType.channel_types.items()
-                     if k in ["ttbar",
-                              "zjets",
-                              "wjets",
-                              "stop",
-                              "data",
-                              "zprime_m1000_w10",
-                              "zprime_m1500_w15",
-                              "zprime_m2000_w20",
-                              "zprime_m3000_w30",
-                              ]}.items():
+        loader = ChannelTemplateLoader("output_signal_p150_hlt.root")
+        loader.use_folders.extend(folders_to_use)
+        loader.use_plots.extend(plots_to_load)
+        loader.load([
+            "qcd", "data",
 
-            loaded_channel_templates = []
+            "ttbar", "zjets", "wjets", "stop",
 
-            channel_plots = {}
+            "zprime_m1000_w10",
+            "zprime_m1500_w15",
+            "zprime_m2000_w20",
+            "zprime_m3000_w30",
+                  ])
 
-            # load each file (input templates)
-            for input_type in input_types:
-                loader = InputTemplatesLoader(input_type)
-
-                loader.use_folders.extend(folders_to_use)
-                loader.use_plots.extend(plots_to_load)
-
-                loader.load("{0}/output_signal_p150_hlt.root".format(input_type))
-
-                for template in loader.input_templates.values():
-                    full_path = template.path + '/' + template.name
-                    channel = channel_plots.get(full_path)
-                    if not channel:
-                        channel = ChannelTemplate(channel_type)
-                        channel_plots[full_path] = channel
-
-                    template.hist.GetXaxis().SetTitle(template.name + "^{" + template.path.replace('/', ' ') + "}")
-                    channel.add(template)
-
-            # Channel plots are loaded
-            for k, v in channel_plots.items():
-                channels = plots.get(k)
-                if not channels:
-                    channels = []
-                    plots[k] = channels
-
-                channels.append(v)
-
-                combo_channel = combo_plots.get(k)
-                if not combo_channel:
-                    combo_channel = MCChannelTemplate("mc")
-                    # make sure channel can be added to combo
-                    combo_plots[k] = combo_channel
-
-                if v.type not in combo_channel.allowed_inputs:
-                    continue
-
-                combo_channel.add(v)
-
-        for k, v in plots.items():
+        for k, v in loader.plots.items():
             print("{0:-<80}".format("-- {0} ".format(k)))
             
             for c in v:
                 print("{0:>20}: {1}".format(c.type, [x.type for x in c.input_templates]))
+
+        return 0
 
         for k, c in combo_plots.items():
             print("{0:-<80}".format("-- {0} ".format(k)))
@@ -234,6 +196,9 @@ def main(argv = sys.argv):
         raw_input("enter")
 
     except Exception as error:
+        import traceback
+
+        traceback.print_tb(sys.exc_info()[2])
         print(error, file = sys.stderr)
 
         return 1

@@ -7,7 +7,49 @@ Copyright 2011, All rights reserved
 
 from channel_template import ChannelTemplate
 from channel_type import ChannelType
-from input_template import InputTemplateLoader
+from input_template import InputTemplate
+from input_type import InputType
+from root.template import TemplateLoader
+
+from util.timer import Timer
+
+class InputTemplateLoader(InputType, TemplateLoader):
+    def __init__(self, input_type):
+        InputType.__init__(self, input_type)
+        TemplateLoader.__init__(self)
+
+        self.templates = {}
+
+        self.use_folders = []
+        self.ban_folders = []
+
+        self.use_plots = []
+        self.ban_plots = []
+
+    @Timer(label = "[InputTemplateLoader]", verbose = True)
+    def load(self, filename):
+        TemplateLoader.load(self, filename)
+
+    def process_plot(self, template):
+        if ((self.use_plots
+                and template.name in self.use_plots
+                and template.name not in self.ban_plots)
+
+            or (not self.use_plots and template.name not in self.ban_plots)):
+
+            self.templates[template.path + '/' +
+                           template.name] = InputTemplate(self.type, template)
+
+    def process_folder(self, folder, path):
+        if ((self.use_folders
+                and path in self.use_folders
+                and path not in self.ban_folders)
+
+            or (not self.use_folders and path not in self.ban_folders)):
+
+            self.load_plots(folder, path)
+
+
 
 class ChannelTemplateLoader(object):
     def __init__(self, filename):
