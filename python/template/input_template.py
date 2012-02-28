@@ -7,7 +7,8 @@ Copyright 2011, All rights reserved
 
 from __future__ import division
 
-from root.template import Template, Templates
+from root.template import Template, TemplateLoader
+from util.timer import Timer
 
 from input_type import InputType
 from input_rebin import InputRebin
@@ -101,10 +102,13 @@ class InputTemplate(InputType, Template, InputRebin):
 
 
 
-class InputTemplatesLoader(InputType, Templates):
+
+class InputTemplateLoader(InputType, TemplateLoader):
     def __init__(self, input_type):
         InputType.__init__(self, input_type)
-        Templates.__init__(self)
+        TemplateLoader.__init__(self)
+
+        self.templates = {}
 
         self.use_folders = []
         self.ban_folders = []
@@ -112,11 +116,9 @@ class InputTemplatesLoader(InputType, Templates):
         self.use_plots = []
         self.ban_plots = []
 
-        self.__input_templates = {}
-
-    @property
-    def input_templates(self):
-        return self.__input_templates
+    @Timer(label = "[InputTemplateLoader]", verbose = True)
+    def load(self, filename):
+        TemplateLoader.load(self, filename)
 
     def process_plot(self, template):
         if ((self.use_plots
@@ -125,18 +127,19 @@ class InputTemplatesLoader(InputType, Templates):
 
             or (not self.use_plots and template.name not in self.ban_plots)):
 
-            self.input_templates[template.path + '/' +
-                                 template.name] = InputTemplate(self.type,
-                                                                template)
+            self.templates[template.path + '/' +
+                           template.name] = InputTemplate(self.type, template)
 
-    def process_folder(self, folder, path, callback):
+    def process_folder(self, folder, path):
         if ((self.use_folders
                 and path in self.use_folders
                 and path not in self.ban_folders)
 
             or (not self.use_folders and path not in self.ban_folders)):
 
-            self.find_plots(folder, path, callback)
+            self.load_plots(folder, path)
+
+
 
 if "__main__" == __name__:
     import unittest
