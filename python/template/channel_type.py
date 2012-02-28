@@ -21,10 +21,15 @@ class ChannelType(BaseType):
             "ttbar": ["ttbar"],
             "zjets": ["zjets"],
             "wjets": ["wjets"],
+
             "stop": [x for x in InputType.input_types.keys()
                         if x.startswith("stop_") or x.startswith("satop_")],
+
             "data": [x for x in InputType.input_types.keys()
                         if x.startswith("rereco_") or x.startswith("prompt_")],
+
+            "qcd": ["qcd_from_data"],
+
             "zprime_m1000_w10": ["zprime_m1000_w10"],
             "zprime_m1500_w15": ["zprime_m1500_w15"],
             "zprime_m2000_w20": ["zprime_m2000_w20"],
@@ -102,6 +107,10 @@ if "__main__" == __name__:
             self.assertEqual(input_type.type, "zprime_m4000_w40")
 
         def test_qcd(self):
-            self.assertRaises(AttributeError, ChannelType, "qcd")
+            input_type = ChannelType("qcd")
+            self.assertEqual(input_type.type, "qcd")
+
+        def test_unknown_channel(self):
+            self.assertRaises(AttributeError, ChannelType, "unknown_channel")
 
     unittest.main()
