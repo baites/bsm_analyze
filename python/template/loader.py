@@ -28,6 +28,8 @@ class InputTemplateLoader(InputType, TemplateLoader):
 
     @Timer(label = "[InputTemplateLoader]", verbose = True)
     def load(self, filename):
+        self.templates = {}
+
         TemplateLoader.load(self, filename)
 
     def process_plot(self, template):
