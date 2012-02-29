@@ -132,11 +132,13 @@ class Timer(object):
 
         return (("{label} " if self.__label else "{wrapped} ") +
                 "calls: {calls:<3} "
-                "elapsed: {elapsed:<6.4f}").format(
+                "elapsed: {elapsed:<6.4f} "
+                "average: {average:<6.4f}").format(
                     label = self.__label,
                     wrapped = self.__wrapped,
                     calls = self.calls,
-                    elapsed = self.elapsed)
+                    elapsed = self.elapsed,
+                    average = self.elapsed / self.calls)
 
 
 
