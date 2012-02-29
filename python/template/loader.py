@@ -5,7 +5,7 @@ Created by Samvel Khalatyan, Feb 28, 2012
 Copyright 2011, All rights reserved
 '''
 
-from channel_template import ChannelTemplate
+from channel_template import ChannelTemplate, MCChannelTemplate
 from channel_type import ChannelType
 from input_template import InputTemplate
 from input_type import InputType
@@ -79,12 +79,22 @@ class ChannelTemplateLoader(object):
 
                 channels.append(channel)
 
+        # all the cahnnels are loaded, combine MC
+        for plot, channels in self.plots.items():
+            mc = MCChannelTemplate("mc")
+            for channel in channels:
+                if channel.type in mc.allowed_inputs:
+                    mc.add(channel)
+
+            channels.append(mc)
+
     def load_channel(self, channel_type):
         channel_plots = {}
 
         for input_type in ChannelType(channel_type).allowed_inputs:
             templates = self.load_input(input_type)
 
+            # merge loaded templates into channels
             for name, template in templates.items():
                 channel = channel_plots.get(name)
                 if not channel:
