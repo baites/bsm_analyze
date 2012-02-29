@@ -30,6 +30,7 @@ def compare(function):
         axis.SetTitleSize(0.08)
         axis.SetTitleOffset(0.9)
         axis.SetNdivisions(4)
+        axis.SetRangeUser(-1, 1)
 
         for axis in ratio.GetYaxis(), ratio.GetXaxis():
             axis.SetLabelSize(0.09)
