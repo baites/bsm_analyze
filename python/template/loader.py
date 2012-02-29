@@ -26,7 +26,7 @@ class InputTemplateLoader(InputType, TemplateLoader):
         self.use_plots = []
         self.ban_plots = []
 
-    @Timer(label = "[InputTemplateLoader]", verbose = True)
+    @Timer(label = "[load templates from file]", verbose = True)
     def load(self, filename):
         self.templates = {}
 
