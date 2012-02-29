@@ -15,7 +15,7 @@ Collection of different histogram comparison methods:
         difference between S and N with respect to N: (S - N) / N
 '''
 
-from root.comparison_canvas import compare
+from root.comparison import compare
 
 @compare
 def ratio(data, background, title = None):
