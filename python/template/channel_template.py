@@ -181,7 +181,7 @@ class ChannelTemplate(ChannelType, ChannelStyle, Template):
 
 class MCChannelTemplate(ChannelTemplate):
     channel_types = {
-            "mc": ["ttbar", "zjets", "wjets", "stop"]
+            "mc": ["stop", "zjets", "wjets", "ttbar"]
             }
 
     channel_styles = {
