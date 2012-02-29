@@ -5,15 +5,18 @@ Created by Samvel Khalatyan, Feb 28, 2012
 Copyright 2011, All rights reserved
 '''
 
-from __future__ import print_function
+from __future__ import division, print_function
 
+import compare
 import channel_type
 import root.style
 import ROOT
 import numpy
 
+from channel_template import MCChannelTemplate
 from loader import ChannelTemplateLoader
 from util.arg import split_use_and_ban
+from root.comparison import ComparisonCanvas
 
 class Templates(object):
     def __init__(self, verbose = False):
@@ -71,10 +74,9 @@ class Templates(object):
         style.cd()
 
         self.load()
-
         self.get_qcd_mc_fractions()
-
-        # Plot histograms
+        self.apply_qcd_mc_fractions()
+        self.plot()
 
     def load(self):
         self.loader = ChannelTemplateLoader("output_signal_p150_hlt.root")
@@ -102,36 +104,26 @@ class Templates(object):
                 met = self.loader.plots["/met"]
                 met_noweight = self.loader.plots["/met_noweight"]
 
-                plots = dict.fromkeys(["data", "qcd", "mc"])
-
-                for channel in met:
-                    if channel.type in plots:
-                        plots[channel.type] = channel
-
-                for channel_type, channel in plots.items():
-                    if not channel:
+                for channel_type in ["data", "qcd", "mc"]:
+                    if channel_type not in met:
                         raise RuntimeError("{0} not loaded".format(channel_type.upper()))
 
-                for channel in met_noweight:
-                    if "mc" == channel.type:
-                        plots["mc_noweight"] = channel
-                        break
-                else:
+                if "mc" not in met_noweight:
                     raise RuntimeError("Monte-Carlo is not loaded")
 
-                mc_weights = plots["mc"].hist.Clone()
+                mc_weights = met["mc"].hist.Clone()
                 mc_weights.SetDirectory(0)
 
-                mc_weights.Divide(plots["mc_noweight"].hist)
+                mc_weights.Divide(met_noweight["mc"].hist)
                 for xbin in range(1, mc_weights.GetNbinsX() + 1):
                     if 0 >= mc_weights.GetBinContent(xbin):
                         mc_weights.SetBinContent(xbin, 1)
 
                 templates = ROOT.TObjArray(2)
-                templates.Add(plots["mc_noweight"].hist)
-                templates.Add(plots["qcd"].hist)
+                templates.Add(met_noweight["mc"].hist)
+                templates.Add(met["qcd"].hist)
 
-                fitter = ROOT.TFractionFitter(plots["data"].hist, templates)
+                fitter = ROOT.TFractionFitter(met["data"].hist, templates)
                 fitter.SetWeight(0, mc_weights)
 
                 fit_status = fitter.Fit()
@@ -159,6 +151,79 @@ class Templates(object):
         except RuntimeError as error:
             print("failed to use TFractionFitter - {0}".format(error),
                   file = sys.stderr)
+
+    def apply_qcd_mc_fractions(self):
+        mc_fraction = self.fractions["mc"][0]
+        qcd_fraction = self.fractions["qcd"][0]
+
+        if not mc_fraction or not qcd_fraction:
+            return
+
+        for channels in self.loader.plots.values():
+            mc_scale = (mc_fraction *
+                        channels["data"].hist.Integral() /
+                        channels["mc"].hist.Integral())
+
+            qcd_scale = (qcd_fraction *
+                         channels["data"].hist.Integral() /
+                         channels["qcd"].hist.Integral())
+
+            channels["qcd"].hist.Scale(qcd_scale)
+
+            for channel_type in channels["mc"].allowed_inputs:
+                channel = channels.get(channel_type)
+                if channel:
+                    channel.hist.Scale(mc_scale)
+
+            channels["mc"].hist.Scale(mc_scale)
+
+    def plot(self):
+        # container where all canvas related objects will be saved
+        class Canvas: pass
+
+        canvases = []
+        for name, channels in self.loader.plots.items():
+            obj = Canvas()
+
+            c = ComparisonCanvas()
+            obj.canvas = c
+
+            c.canvas.cd(1)
+
+            mc_stack = ROOT.THStack()
+            obj.mc_stack = mc_stack
+
+            background_channels = set(channels.keys()) & set(MCChannelTemplate("mc").allowed_inputs + ["qcd"])
+            for channel_type in ["qcd"] + MCChannelTemplate("mc").allowed_inputs:
+                if channel_type in background_channels:
+                    mc_stack.Add(channels[channel_type].hist)
+
+            mc_stack.Draw("9 hist")
+
+            if "data" in channels:
+                channels["data"].hist.Draw("9 same")
+
+            bg_error = channels["mc"].hist.Clone()
+            bg_error.SetDirectory(0)
+
+            obj.bg_error = bg_error
+
+            bg_error.Add(channels["qcd"].hist)
+
+            bg_error.Draw("9 e2 same")
+
+            c.canvas.cd(2)
+
+            ratio = compare.data_mins_bg_over_bg(channels["data"].hist,
+                                                 bg_error)
+            obj.ratio = ratio
+            ratio.Draw("9 e")
+
+            c.canvas.Update()
+
+            canvases.append(obj)
+
+        raw_input('enter')
 
     def __str__(self):
         result = []

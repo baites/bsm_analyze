@@ -74,19 +74,25 @@ class ChannelTemplateLoader(object):
             for name, channel in channel_plots.items():
                 channels = self.plots.get(name)
                 if not channels:
-                    channels = []
+                    channels = {}
                     self.plots[name] = channels
 
-                channels.append(channel)
+                if channel.type in channels:
+                    raise RuntimeError("channel {0} is already loaded")
+
+                channels[channel.type] = channel
 
         # all the cahnnels are loaded, combine MC
         for plot, channels in self.plots.items():
-            mc = MCChannelTemplate("mc")
-            for channel in channels:
-                if channel.type in mc.allowed_inputs:
-                    mc.add(channel)
+            if "mc" in channels:
+                raise RuntimeError(("Monte-Carlo combined is already present "
+                                    "for plot {0}").format(plot))
 
-            channels.append(mc)
+            mc = MCChannelTemplate("mc")
+            for channel_type in set(channels.keys()) & set(mc.allowed_inputs):
+                mc.add(channels[channel_type])
+
+            channels[mc.type] = mc
 
     def load_channel(self, channel_type):
         channel_plots = {}
@@ -115,10 +121,10 @@ class ChannelTemplateLoader(object):
 
     def __str__(self):
         result = []
-        for k, v in self.plots.items():
+        for k, channels in self.plots.items():
             result.append("{0:-<80}".format("-- {0} ".format(k)))
             
-            for c in v:
+            for c in channels.values():
                 result.append("{0:>20}: {1}".format(c.type, [x.type for x in c.input_templates]))
 
         return '\n'.join(result)
