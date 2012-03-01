@@ -213,7 +213,16 @@ class Templates(object):
         # container where all canvas related objects will be saved
         class Canvas: pass
 
+        channel_names = {
+                "qcd": "QCD data-driven",
+                "stop": "Single-Top",
+                "zjets": "Z/#gamma*#rightarrowl^{+}l^{-}",
+                "wjets": "W#rightarrowl#nu",
+                "ttbar": "t#bar{t}"
+        }
+
         canvases = []
+
         '''
         loop over plots and draw them:
 
@@ -237,6 +246,12 @@ class Templates(object):
 
             # extract Data
             data = channels.get("data")
+
+            obj.legend = ROOT.TLegend(.67, .60, .89, .88)
+            obj.legend.SetMargin(0.12);
+            obj.legend.SetTextSize(0.03);
+            obj.legend.SetFillColor(10);
+            obj.legend.SetBorderSize(0);
 
             # background combined
             obj.bg_combo = None
@@ -262,7 +277,14 @@ class Templates(object):
             # Add channels in order: QCD + channel_type["mc"]
             for channel_type in bg_order:
                 if channel_type in bg_channels:
-                    obj.bg_stack.Add(channels[channel_type].hist)
+                    hist = channels[channel_type].hist
+
+                    obj.legend.AddEntry(hist, 
+                            channel_names.get(channel_type,
+                                              "unknown"),
+                            "fe")
+
+                    obj.bg_stack.Add(hist)
 
             # Adjust y-Maximum to be drawn
             data_max_bin = data.hist.GetMaximumBin() if data else 0
@@ -283,6 +305,7 @@ class Templates(object):
                 axis_hist = obj.bg_stack
 
             if obj.bg_combo:
+                obj.legend.AddEntry(obj.bg_combo, "Uncertainty", "fe")
                 if axis_hist:
                     obj.bg_combo.Draw("9 e2 same")
                 else:
@@ -290,6 +313,7 @@ class Templates(object):
                     axis_hist = obj.bg_combo
 
             if data:
+                obj.legend.AddEntry(data.hist, "CMS Data 2011", "lpe")
                 if axis_hist:
                     data.hist.Draw("9 same")
                 else:
@@ -303,8 +327,11 @@ class Templates(object):
                     root.label.LuminosityLabel(InputTemplate.luminosity())
                         if data else root.label.CMSSimulationLabel()]
 
+            # Draw Labels and Legend
             for label in obj.labels:
                 label.draw()
+
+            obj.legend.Draw("9")
 
             # take care of ratio
             if data and obj.bg_combo:
