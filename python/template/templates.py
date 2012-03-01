@@ -10,11 +10,13 @@ from __future__ import division, print_function
 import compare
 import channel_type
 import numpy
+import root.label
 import root.style
 import ROOT
 import sys
 
 from channel_template import MCChannelTemplate
+from input_template import InputTemplate
 from loader import ChannelTemplateLoader
 from util.arg import split_use_and_ban
 from root.comparison import ComparisonCanvas
@@ -295,6 +297,14 @@ class Templates(object):
                     axis_hist = data.hist
 
             axis_hist.SetMaximum(max_y)
+
+            obj.labels = [
+                    root.label.CMSLabel(),
+                    root.label.LuminosityLabel(InputTemplate.luminosity())
+                        if data else root.label.CMSSimulationLabel()]
+
+            for label in obj.labels:
+                label.draw()
 
             # take care of ratio
             if data and obj.bg_combo:
