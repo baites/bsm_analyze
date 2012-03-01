@@ -185,7 +185,7 @@ class MCChannelTemplate(ChannelTemplate):
             }
 
     channel_styles = {
-            "mc": Style(fill_style = 3004)
+            "mc": Style(fill_style = 3004, marker_size = 0)
             }
 
 if "__main__" == __name__:

@@ -23,7 +23,7 @@ class ChannelStyle(BaseStyle):
             "wjets": Style(ROOT.kGreen + 1),
             "stop": Style(ROOT.kMagenta + 1),
 
-            "data": Style(fill_style = 0),
+            "data": Style(fill_style = 0, marker_size = 1, marker_style = 20),
 
             "qcd": Style(ROOT.kYellow + 1),
 
