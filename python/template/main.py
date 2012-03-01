@@ -28,6 +28,7 @@ def main(argv = sys.argv):
         print(error, file = sys.stderr)
 
         return 1
+
     else:
         return 0
 

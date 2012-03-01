@@ -9,9 +9,10 @@ from __future__ import division, print_function
 
 import compare
 import channel_type
+import numpy
 import root.style
 import ROOT
-import numpy
+import sys
 
 from channel_template import MCChannelTemplate
 from loader import ChannelTemplateLoader
@@ -20,24 +21,24 @@ from root.comparison import ComparisonCanvas
 
 class Templates(object):
     def __init__(self, verbose = False):
+        self.__verbose = verbose
+
         self.use_plots = []
         self.ban_plots = []
 
         self.use_folders = []
         self.ban_folders = []
 
-        self.channels = []
-
-        self.__verbose = verbose
+        self.use_channels = []
 
         self.loader = None
         self.fractions = dict.fromkeys(["mc", "qcd"])
 
     def run(self, args):
+        # Create dictionary of arguments with key - arg name, value - arg value
         args = [x.split(':') for x in args if ':' in x]
-        args = {key.strip():
-                    set(x.strip() for x in values.split(','))
-                        for key, values in args}
+        args = {key.strip(): set(x.strip() for x in values.split(','))
+                    for key, values in args}
 
         self.use_plots, self.ban_plots = map(list,
                                              split_use_and_ban(args.get("plots",
@@ -50,35 +51,35 @@ class Templates(object):
         use_channels, ban_channels = split_use_and_ban(args.get("channels",
                                                                 []))
 
+        # use only allowed channels or all if None specified
         channels = set(channel_type.ChannelType.channel_types.keys())
         if use_channels:
             channels &= use_channels
 
+        # remove banned channels
         if ban_channels:
             channels -= ban_channels
 
-        self.channels = list(channels)
+        self.use_channels = list(channels)
 
+        # print run configuration
         if self.__verbose:
             print("{0:-<80}".format("-- Configuration "))
             print(self)
             print()
 
-        self.process()
+        self.__process()
 
-    def process(self):
-        if not self.channels:
-            return
+    def __process(self):
+        if not self.use_channels:
+            raise RuntimeError("all channels are turned off")
 
-        style = root.style.tdr()
-        style.cd()
+        self.__load_channels()
+        self.__fraction_fitter()
+        self.__plot()
 
-        self.load()
-        self.get_qcd_mc_fractions()
-        self.apply_qcd_mc_fractions()
-        self.plot()
-
-    def load(self):
+    def __load_channels(self):
+        # Create and configure new loader
         self.loader = ChannelTemplateLoader("output_signal_p150_hlt.root")
 
         self.loader.use_plots = self.use_plots
@@ -87,139 +88,222 @@ class Templates(object):
         self.loader.use_folders = self.use_folders
         self.loader.ban_folders = self.ban_folders
 
-        self.loader.load(self.channels)
+        # load channels
+        self.loader.load(self.use_channels)
 
+        # print loader summary
         if self.__verbose:
             print(self.loader)
 
-    def get_qcd_mc_fractions(self):
-        if not self.loader:
-            return
-
+    def __fraction_fitter(self):
         try:
-            if ("/met" in self.loader.plots and
-                "/met_noweight" in self.loader.plots):
-
-                # Use TFraction Fitter to get QCD and MC fractions
-                met = self.loader.plots["/met"]
-                met_noweight = self.loader.plots["/met_noweight"]
-
-                for channel_type in ["data", "qcd", "mc"]:
-                    if channel_type not in met:
-                        raise RuntimeError("{0} not loaded".format(channel_type.upper()))
-
-                if "mc" not in met_noweight:
-                    raise RuntimeError("Monte-Carlo is not loaded")
-
-                mc_weights = met["mc"].hist.Clone()
-                mc_weights.SetDirectory(0)
-
-                mc_weights.Divide(met_noweight["mc"].hist)
-                for xbin in range(1, mc_weights.GetNbinsX() + 1):
-                    if 0 >= mc_weights.GetBinContent(xbin):
-                        mc_weights.SetBinContent(xbin, 1)
-
-                templates = ROOT.TObjArray(2)
-                templates.Add(met_noweight["mc"].hist)
-                templates.Add(met["qcd"].hist)
-
-                fitter = ROOT.TFractionFitter(met["data"].hist, templates)
-                fitter.SetWeight(0, mc_weights)
-
-                fit_status = fitter.Fit()
-                if fit_status:
-                    raise RuntimeError("fitter error {0}".format(fit_status))
-
-                fraction = numpy.zeros(1, dtype = float)
-                fraction_error = numpy.zeros(1, dtype = float)
-
-                fitter.GetResult(0, fraction, fraction_error)
-                self.fractions["mc"] = [fraction[0], fraction_error[0]]
-
-                fitter.GetResult(1, fraction, fraction_error)
-                self.fractions["qcd"] = [fraction[0], fraction_error[0]]
-
-                if self.__verbose:
-                    print('\n'.join("{0:>3} Fraction: {1:.3f}".format(
-                            key.upper(),
-                            value[0])
-                        for key, value in self.fractions.items()))
-
-            elif self.__verbose:
-                raise RuntimeError("load plots 'met', 'met_noweight'")
+            self.__run_fraction_fitter()
+            self.__apply_fractions()
 
         except RuntimeError as error:
-            print("failed to use TFractionFitter - {0}".format(error),
-                  file = sys.stderr)
+            if self.__verbose:
+                print("failed to use TFractionFitter - {0}".format(error),
+                      file = sys.stderr)
 
-    def apply_qcd_mc_fractions(self):
+    def __run_fraction_fitter(self):
+        if ("/met" not in self.loader.plots or
+            "/met_noweight" not in self.loader.plots):
+
+            raise RuntimeError("load plots 'met', 'met_noweight'")
+
+        # Use TFraction Fitter to get QCD and MC fractions
+        met = self.loader.plots["/met"]
+        met_noweight = self.loader.plots["/met_noweight"].get("mc")
+
+        # make sure weighted channels are available
+        for channel_type in ["data", "qcd", "mc"]:
+            if channel_type not in met:
+                raise RuntimeError("{0} is not loaded".format(
+                    channel_type.upper()))
+
+        # check if no-weighted MC is available
+        if not met_noweight:
+            raise RuntimeError("Monte-Carlo is not loaded")
+
+        # prepare MC weights for TFraction fitter
+        mc_weights = met["mc"].hist.Clone()
+        mc_weights.SetDirectory(0)
+        mc_weights.Divide(met_noweight.hist)
+
+        # Set any zero bins to at least 1 event
+        for xbin in range(1, mc_weights.GetNbinsX() + 1):
+            if 0 >= mc_weights.GetBinContent(xbin):
+                mc_weights.SetBinContent(xbin, 1)
+
+        # prepare variable tempaltes for TFractionFitter
+        templates = ROOT.TObjArray(2)
+        templates.Add(met_noweight.hist)
+        templates.Add(met["qcd"].hist)
+
+        # Setup TFractionFitter
+        fitter = ROOT.TFractionFitter(met["data"].hist, templates)
+        fitter.SetWeight(0, mc_weights)
+
+        # Run TFRactionFitter
+        fit_status = fitter.Fit()
+        if fit_status:
+            raise RuntimeError("fitter error {0}".format(fit_status))
+
+        # Extract MC and QCD fractions from TFractionFitter
+        fraction = numpy.zeros(1, dtype = float)
+        fraction_error = numpy.zeros(1, dtype = float)
+
+        fitter.GetResult(0, fraction, fraction_error)
+        self.fractions["mc"] = [fraction[0], fraction_error[0]]
+
+        fitter.GetResult(1, fraction, fraction_error)
+        self.fractions["qcd"] = [fraction[0], fraction_error[0]]
+
+        # Print found fractions
+        if self.__verbose:
+            print('\n'.join("{0:>3} Fraction: {1:.3f}".format(
+                    key.upper(),
+                    value[0])
+                for key, value in self.fractions.items()))
+
+    def __apply_fractions(self):
         mc_fraction = self.fractions["mc"][0]
         qcd_fraction = self.fractions["qcd"][0]
 
-        if not mc_fraction or not qcd_fraction:
-            return
+        # For each loaded plot scale MC and QCD
+        for plot, channels in self.loader.plots.items():
+            try:
+                # Make sure all necessary channels were loaded for the histogram
+                for channel_type in ["data", "mc", "qcd"]:
+                    if channel_type not in channels:
+                        raise RuntimeError("{0} channel is not avialable for "
+                                           "{1}".format(channel_type.upper(),
+                                                        plot))
 
-        for channels in self.loader.plots.values():
-            mc_scale = (mc_fraction *
-                        channels["data"].hist.Integral() /
-                        channels["mc"].hist.Integral())
+                # Cache data integral value
+                data_integral = channels["data"].hist.Integral()
+                mc_channel = channels["mc"]
+                qcd_channel = channels["qcd"]
 
-            qcd_scale = (qcd_fraction *
-                         channels["data"].hist.Integral() /
-                         channels["qcd"].hist.Integral())
+                qcd_channel.hist.Scale(qcd_fraction * data_integral /
+                                       qcd_channel.hist.Integral())
 
-            channels["qcd"].hist.Scale(qcd_scale)
+                mc_scale = (mc_fraction * data_integral /
+                            mc_channel.hist.Integral())
 
-            for channel_type in channels["mc"].allowed_inputs:
-                channel = channels.get(channel_type)
-                if channel:
-                    channel.hist.Scale(mc_scale)
+                mc_channel.hist.Scale(mc_scale)
 
-            channels["mc"].hist.Scale(mc_scale)
+                # scale those MC channels that were loaded
+                for channel_type in mc_channel.allowed_inputs:
+                    channel = channels.get(channel_type)
+                    if channel:
+                        channel.hist.Scale(mc_scale)
 
-    def plot(self):
+            except RuntimeError as error:
+                print("failed to apply TFractionFitter scales - {0}".format(error),
+                      file = sys.stderr)
+
+    def __plot(self):
+        # Apply TDR style to all plots
+        style = root.style.tdr()
+        style.cd()
+
         # container where all canvas related objects will be saved
         class Canvas: pass
 
         canvases = []
+        '''
+        loop over plots and draw them:
+
+            1. all background channels stacked (MC channels + QCD)
+            2. background error band (MC + QCD)
+            3. data with errors
+            4. ratio of data over background
+        '''
+
+        # loop over plots
         for name, channels in self.loader.plots.items():
+            # create container for current objects
             obj = Canvas()
 
-            c = ComparisonCanvas()
-            obj.canvas = c
+            # Prepare comparison canvas: top pad plots, bottom - ratio
+            obj.canvas = ComparisonCanvas()
+            obj.canvas.canvas.cd(1)
 
-            c.canvas.cd(1)
+            # extact MC combined
+            mc_combo = channels.get("mc")
 
-            mc_stack = ROOT.THStack()
-            obj.mc_stack = mc_stack
+            # extract Data
+            data = channels.get("data")
 
-            background_channels = set(channels.keys()) & set(MCChannelTemplate("mc").allowed_inputs + ["qcd"])
-            for channel_type in ["qcd"] + MCChannelTemplate("mc").allowed_inputs:
-                if channel_type in background_channels:
-                    mc_stack.Add(channels[channel_type].hist)
+            # background combined
+            obj.bg_combo = None
+            for channel_type in ["mc", "qcd"]:
+                if channel_type in channels:
+                    hist = channels[channel_type].hist
 
-            mc_stack.Draw("9 hist")
+                    if obj.bg_combo:
+                        obj.bg_combo.Add(hist)
+                    else:
+                        obj.bg_combo = hist.Clone()
+                        obj.bg_combo.SetDirectory(0)
 
-            if "data" in channels:
-                channels["data"].hist.Draw("9 same")
+            # stack all backgrounds
+            obj.bg_stack = ROOT.THStack()
 
-            bg_error = channels["mc"].hist.Clone()
-            bg_error.SetDirectory(0)
+            bg_order = ["qcd"] + mc_combo.allowed_inputs
+            if mc_combo:
+                bg_channels = set(channels.keys()) & set(bg_order)
+            else:
+                bg_channels = set()
 
-            obj.bg_error = bg_error
+            # Add channels in order: QCD + channel_type["mc"]
+            for channel_type in bg_order:
+                if channel_type in bg_channels:
+                    obj.bg_stack.Add(channels[channel_type].hist)
 
-            bg_error.Add(channels["qcd"].hist)
+            # Adjust y-Maximum to be drawn
+            data_max_bin = data.hist.GetMaximumBin() if data else 0
+            bg_max_bin = obj.bg_combo.GetMaximumBin() if obj.bg_combo else 0
 
-            bg_error.Draw("9 e2 same")
+            max_y = 1.2 * max([
+                (obj.bg_combo.GetBinContent(bg_max_bin) +
+                 obj.bg_combo.GetBinError(bg_max_bin)) if obj.bg_combo else 0,
 
-            c.canvas.cd(2)
+                (data.hist.GetBinContent(bg_max_bin) +
+                 data.hist.GetBinError(bg_max_bin)) if data else 0,
+                ])
 
-            ratio = compare.data_mins_bg_over_bg(channels["data"].hist,
-                                                 bg_error)
-            obj.ratio = ratio
-            ratio.Draw("9 e")
+            # Draw plots
+            axis_hist = None
+            if obj.bg_stack.GetHists().GetSize():
+                obj.bg_stack.Draw("9 hist")
+                axis_hist = obj.bg_stack
 
-            c.canvas.Update()
+            if obj.bg_combo:
+                if axis_hist:
+                    obj.bg_combo.Draw("9 e2 same")
+                else:
+                    obj.bg_combo.Draw("9 e2")
+                    axis_hist = obj.bg_combo
+
+            if data:
+                if axis_hist:
+                    data.hist.Draw("9 same")
+                else:
+                    data.hist.Draw("9")
+                    axis_hist = data.hist
+
+            axis_hist.SetMaximum(max_y)
+
+            # take care of ratio
+            if data and obj.bg_combo:
+                obj.canvas.canvas.cd(2)
+
+                obj.ratio = compare.data_mins_bg_over_bg(data.hist, obj.bg_combo)
+                obj.ratio.Draw("9 e")
+
+            obj.canvas.canvas.Update()
 
             canvases.append(obj)
 
@@ -234,6 +318,6 @@ class Templates(object):
         result.append("use folders: {0}".format(self.use_folders))
         result.append("ban folders: {0}".format(self.ban_folders))
 
-        result.append("   channels: {0}".format(self.channels))
+        result.append("   channels: {0}".format(self.use_channels))
 
         return '\n'.join(result)
