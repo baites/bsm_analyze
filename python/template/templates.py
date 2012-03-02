@@ -215,7 +215,12 @@ class Templates(object):
                 "stop": "Single-Top",
                 "zjets": "Z/#gamma*#rightarrowl^{+}l^{-}",
                 "wjets": "W#rightarrowl#nu",
-                "ttbar": "t#bar{t}"
+                "ttbar": "t#bar{t}",
+                "zprime_m1000_w10": "Z' 1 TeV/c^{2}",
+                "zprime_m1500_w15": "Z' 1.5 TeV/c^{2}",
+                "zprime_m2000_w20": "Z' 2 TeV/c^{2}",
+                "zprime_m3000_w30": "Z' 3 TeV/c^{2}",
+                "zprime_m4000_w40": "Z' 4 TeV/c^{2}"
         }
 
         canvases = []
@@ -348,6 +353,14 @@ class Templates(object):
                     root.label.CMSLabel(),
                     root.label.LuminosityLabel(InputTemplate.luminosity())
                         if data else root.label.CMSSimulationLabel()]
+
+            # draw signals
+            for channel_type, channel in channels.items():
+                if channel_type.startswith("zprime"):
+                    obj.legend.AddEntry(channel.hist,
+                            channel_names.get(channel_type, "unknown signal"),
+                            "lpe")
+                    channel.hist.Draw("9 hist same")
 
             # Draw Labels and Legend
             for label in obj.labels:
