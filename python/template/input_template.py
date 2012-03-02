@@ -11,8 +11,9 @@ from root.template import Template
 
 from input_type import InputType
 from input_rebin import InputRebin
+from input_units import InputUnits
 
-class InputTemplate(InputType, Template, InputRebin):
+class InputTemplate(InputType, Template, InputRebin, InputUnits):
     '''
     Container for input plot and type. Each input plot is cloned and
     automatically scaled to cross-section, luminosity and Monte-Carlo
@@ -83,6 +84,14 @@ class InputTemplate(InputType, Template, InputRebin):
                 self.hist.RebinX(rebins[0])
             else:
                 self.hist.Rebin(rebins[0])
+
+            units = self.units
+            if units:
+                if 1 == len(units):
+                    self.hist.GetYaxis().SetTitle(
+                            "events yield / {bin_width:.1f} [{units}]".format(
+                                bin_width = self.hist.GetBinWidth(1),
+                                units = units[0]))
             
     def __str__(self):
         '''
