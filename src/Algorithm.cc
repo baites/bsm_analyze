@@ -885,3 +885,28 @@ float SimpleResonanceReconstructorWithMass::getHadronicDiscriminator(
     return SimpleResonanceReconstructor::getHadronicDiscriminator(ltop, htop)
         * pow(2.0 / (173 - mass(htop)), 2);
 }
+
+
+
+// -- Simple Resonance Reconstructor with Htop Mass and Delta Phi (htop, ltop) -
+//
+uint32_t SimpleResonanceReconstructorWithMassAndPhi::id() const
+{
+    return core::ID<SimpleResonanceReconstructorWithMassAndPhi>::get();
+}
+
+SimpleResonanceReconstructorWithMassAndPhi::ObjectPtr
+    SimpleResonanceReconstructorWithMassAndPhi::clone() const
+{
+    return ObjectPtr(new SimpleResonanceReconstructorWithMassAndPhi(*this));
+}
+
+// Private
+//
+float SimpleResonanceReconstructorWithMassAndPhi::getHadronicDiscriminator(
+        const LorentzVector &ltop,
+        const LorentzVector &htop) const
+{
+    return SimpleResonanceReconstructorWithMass::getHadronicDiscriminator(ltop, htop)
+        * pow(.22 / (173 - mass(htop)), 2);
+}

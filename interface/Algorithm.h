@@ -339,6 +339,20 @@ namespace bsm
                     const LorentzVector &ltop,
                     const LorentzVector &htop) const;
     };
+
+    class SimpleResonanceReconstructorWithMassAndPhi: public SimpleResonanceReconstructorWithMass
+    {
+        public:
+            // Object interface
+            //
+            virtual uint32_t id() const;
+            virtual ObjectPtr clone() const;
+
+        protected:
+            virtual float getHadronicDiscriminator(
+                    const LorentzVector &ltop,
+                    const LorentzVector &htop) const;
+    };
 }
 
 #endif
