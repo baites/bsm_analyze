@@ -237,10 +237,6 @@ class Templates(object):
             # create container for current objects
             obj = Canvas()
 
-            # Prepare comparison canvas: top pad plots, bottom - ratio
-            obj.canvas = ComparisonCanvas()
-            obj.canvas.canvas.cd(1)
-
             # extact MC combined
             mc_combo = channels.get("mc")
 
@@ -266,9 +262,9 @@ class Templates(object):
                         obj.bg_combo.SetDirectory(0)
 
             # stack all backgrounds
-            obj.bg_stack = ROOT.THStack()
+            obj.bg_stack = None
 
-            bg_order = ["qcd"] + mc_combo.allowed_inputs
+            bg_order = ["qcd"] + (mc_combo.allowed_inputs if mc_combo else [])
             if mc_combo:
                 bg_channels = set(channels.keys()) & set(bg_order)
             else:
@@ -284,6 +280,9 @@ class Templates(object):
                                               "unknown"),
                             "fe")
 
+                    if not obj.bg_stack:
+                        obj.bg_stack = ROOT.THStack()
+
                     obj.bg_stack.Add(hist)
 
             # Adjust y-Maximum to be drawn
@@ -294,33 +293,58 @@ class Templates(object):
                 (obj.bg_combo.GetBinContent(bg_max_bin) +
                  obj.bg_combo.GetBinError(bg_max_bin)) if obj.bg_combo else 0,
 
-                (data.hist.GetBinContent(bg_max_bin) +
-                 data.hist.GetBinError(bg_max_bin)) if data else 0,
+                (data.hist.GetBinContent(data_max_bin) +
+                 data.hist.GetBinError(data_max_bin)) if data else 0,
                 ])
 
+            # take care of ratio
+            if data and obj.bg_combo:
+                # Prepare comparison canvas: top pad plots, bottom - ratio
+                obj.canvas = ComparisonCanvas()
+                canvas = obj.canvas.canvas
+
+                obj.canvas.canvas.cd(2)
+
+                obj.ratio = compare.data_mins_bg_over_bg(data.hist, obj.bg_combo)
+                obj.ratio.GetXaxis().SetTitle("")
+                obj.ratio.Draw("9 e")
+
+            else:
+                obj.canvas = ROOT.TCanvas()
+                canvas = obj.canvas
+                canvas.SetWindowSize(640, 640)
+                pad = canvas.cd(1)
+                pad.SetRightMargin(5)
+                pad.SetBottomMargin(0.15)
+
+            canvas.cd(1)
+
+            # use data or background to draw axes
+            obj.axis_hist = None
+            if data:
+                obj.axis_hist = data.hist.Clone()
+            else:
+                obj.axis_hist = obj.bg_combo.Clone()
+
+            obj.axis_hist.Reset()
+            for axis in ROOT.TH1.GetXaxis, ROOT.TH1.GetYaxis:
+                axis(obj.axis_hist).SetLabelSize(0.04)
+
+            obj.axis_hist.Draw("9")
+
             # Draw plots
-            axis_hist = None
-            if obj.bg_stack.GetHists().GetSize():
-                obj.bg_stack.Draw("9 hist")
-                axis_hist = obj.bg_stack
+            if obj.bg_stack:
+                obj.bg_stack.Draw("9 hist same")
 
             if obj.bg_combo:
                 obj.legend.AddEntry(obj.bg_combo, "Uncertainty", "fe")
-                if axis_hist:
-                    obj.bg_combo.Draw("9 e2 same")
-                else:
-                    obj.bg_combo.Draw("9 e2")
-                    axis_hist = obj.bg_combo
+                obj.bg_combo.Draw("9 e2 same")
 
             if data:
                 obj.legend.AddEntry(data.hist, "CMS Data 2011", "lpe")
-                if axis_hist:
-                    data.hist.Draw("9 same")
-                else:
-                    data.hist.Draw("9")
-                    axis_hist = data.hist
+                data.hist.Draw("9 same")
 
-            axis_hist.SetMaximum(max_y)
+            obj.axis_hist.SetMaximum(max_y)
 
             obj.labels = [
                     root.label.CMSLabel(),
@@ -333,14 +357,7 @@ class Templates(object):
 
             obj.legend.Draw("9")
 
-            # take care of ratio
-            if data and obj.bg_combo:
-                obj.canvas.canvas.cd(2)
-
-                obj.ratio = compare.data_mins_bg_over_bg(data.hist, obj.bg_combo)
-                obj.ratio.Draw("9 e")
-
-            obj.canvas.canvas.Update()
+            canvas.Update()
 
             canvases.append(obj)
 

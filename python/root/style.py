@@ -72,10 +72,8 @@ def tdr():
     style.SetStatW(0.4)
 
     # Margins:
-    '''
     style.SetPadTopMargin(10)
     style.SetPadBottomMargin(0.15)
-    '''
     style.SetPadLeftMargin(0.2)
     style.SetPadRightMargin(10)
 

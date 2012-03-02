@@ -119,7 +119,7 @@ class ComparisonCanvas(object):
             # prepare bottom pad for comparison/ratio draw
             pad = canvas.cd(2)
             pad.SetPad(0, 0, 1, 0.3)
-            pad.SetBottomMargin(0.3)
+            pad.SetBottomMargin(0.2)
             pad.SetRightMargin(5)
             pad.SetGrid()
 
