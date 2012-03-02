@@ -10,10 +10,9 @@ from __future__ import division
 from root.template import Template
 
 from input_type import InputType
-from input_rebin import InputRebin
-from input_units import InputUnits
+from input_info import InputInfo
 
-class InputTemplate(InputType, Template, InputRebin, InputUnits):
+class InputTemplate(InputType, Template, InputInfo):
     '''
     Container for input plot and type. Each input plot is cloned and
     automatically scaled to cross-section, luminosity and Monte-Carlo
@@ -73,25 +72,27 @@ class InputTemplate(InputType, Template, InputRebin, InputUnits):
 
         # auto-scale plot if it was set
         if self.hist:
-            self.hist.Scale(self.scale)
+            template_scale = self.scale
+            if template_scale:
+                self.hist.Scale(template_scale)
 
-            rebins = self.rebin
-            if 2 < len(rebins):
-                self.hist.RebinZ(rebins[-1])
-            
-            if 1 < len(rebins):
-                self.hist.RebinY(rebins[1])
-                self.hist.RebinX(rebins[0])
-            else:
-                self.hist.Rebin(rebins[0])
+            info = self.info
+            if info.rebin:
+                if 2 < self.dimension:
+                    self.hist.RebinZ(info.rebin[-1])
+                
+                if 1 < self.dimension:
+                    self.hist.RebinY(info.rebin[1])
+                    self.hist.RebinX(info.rebin[0])
+                else:
+                    self.hist.Rebin(info.rebin)
 
-            units = self.units
-            if units:
-                if 1 == len(units):
+            if info.units:
+                if 1 == self.dimension:
                     self.hist.GetYaxis().SetTitle(
                             "events yield / {bin_width:.1f} [{units}]".format(
                                 bin_width = self.hist.GetBinWidth(1),
-                                units = units[0]))
+                                units = info.units))
             
     def __str__(self):
         '''
