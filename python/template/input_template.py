@@ -7,12 +7,12 @@ Copyright 2011, All rights reserved
 
 from __future__ import division
 
-from root.template import Template, Templates
+from root.template import Template
 
 from input_type import InputType
-from input_rebin import InputRebin
+from input_info import InputInfo
 
-class InputTemplate(InputType, Template, InputRebin):
+class InputTemplate(InputType, Template, InputInfo):
     '''
     Container for input plot and type. Each input plot is cloned and
     automatically scaled to cross-section, luminosity and Monte-Carlo
@@ -72,17 +72,32 @@ class InputTemplate(InputType, Template, InputRebin):
 
         # auto-scale plot if it was set
         if self.hist:
-            self.hist.Scale(self.scale)
+            template_scale = self.scale
+            if template_scale:
+                self.hist.Scale(template_scale)
 
-            rebins = self.rebin
-            if 2 < len(rebins):
-                self.hist.RebinZ(rebins[-1])
-            
-            if 1 < len(rebins):
-                self.hist.RebinY(rebins[1])
-                self.hist.RebinX(rebins[0])
-            else:
-                self.hist.Rebin(rebins[0])
+            info = self.info
+            if info.rebin:
+                if 2 < self.dimension:
+                    self.hist.RebinZ(info.rebin[-1])
+                
+                if 1 < self.dimension:
+                    self.hist.RebinY(info.rebin[1])
+                    self.hist.RebinX(info.rebin[0])
+                else:
+                    self.hist.Rebin(info.rebin)
+
+            if info.title:
+                if 1 == self.dimension:
+                    self.hist.GetXaxis().SetTitle(info.title +
+                            ((" [" + info.units + "]") if info.units else ""))
+
+            if info.units:
+                if 1 == self.dimension:
+                    self.hist.GetYaxis().SetTitle(
+                            "events yield / {bin_width:.1f} {units}".format(
+                                bin_width = self.hist.GetBinWidth(1),
+                                units = info.units))
             
     def __str__(self):
         '''
@@ -98,45 +113,6 @@ class InputTemplate(InputType, Template, InputRebin):
                     InputTypeStr = InputType.__str__(self),
                     TemplateStr = Template.__str__(self),
                     ID = id(self))
-
-
-
-class InputTemplatesLoader(InputType, Templates):
-    def __init__(self, input_type):
-        InputType.__init__(self, input_type)
-        Templates.__init__(self)
-
-        self.use_folders = []
-        self.ban_folders = []
-
-        self.use_plots = []
-        self.ban_plots = []
-
-        self.__input_templates = {}
-
-    @property
-    def input_templates(self):
-        return self.__input_templates
-
-    def process_plot(self, template):
-        if ((self.use_plots
-                and template.name in self.use_plots
-                and template.name not in self.ban_plots)
-
-            or (not self.use_plots and template.name not in self.ban_plots)):
-
-            self.input_templates[template.path + '/' +
-                                 template.name] = InputTemplate(self.type,
-                                                                template)
-
-    def process_folder(self, folder, path, callback):
-        if ((self.use_folders
-                and path in self.use_folders
-                and path not in self.ban_folders)
-
-            or (not self.use_folders and path not in self.ban_folders)):
-
-            self.find_plots(folder, path, callback)
 
 if "__main__" == __name__:
     import unittest

@@ -23,7 +23,9 @@ class ChannelStyle(BaseStyle):
             "wjets": Style(ROOT.kGreen + 1),
             "stop": Style(ROOT.kMagenta + 1),
 
-            "data": Style(fill_style = 0),
+            "data": Style(fill_style = 0, marker_size = 1, marker_style = 20),
+
+            "qcd": Style(ROOT.kYellow + 1),
 
             "zprime_m1000_w10": Style(line_style = 1, fill_style = 0),
             "zprime_m1500_w15": Style(line_style = 2, fill_style = 0),

@@ -30,6 +30,7 @@ def compare(function):
         axis.SetTitleSize(0.08)
         axis.SetTitleOffset(0.9)
         axis.SetNdivisions(4)
+        axis.SetRangeUser(-1, 1)
 
         for axis in ratio.GetYaxis(), ratio.GetXaxis():
             axis.SetLabelSize(0.09)
@@ -118,7 +119,7 @@ class ComparisonCanvas(object):
             # prepare bottom pad for comparison/ratio draw
             pad = canvas.cd(2)
             pad.SetPad(0, 0, 1, 0.3)
-            pad.SetBottomMargin(0.3)
+            pad.SetBottomMargin(0.2)
             pad.SetRightMargin(5)
             pad.SetGrid()
 

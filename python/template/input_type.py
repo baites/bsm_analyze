@@ -142,6 +142,9 @@ class InputType(BaseType):
         "prompt_2011a_v4": InputData(1, 0),
         "prompt_2011a_v6": InputData(1, 0),
         "prompt_2011b_v1": InputData(1, 0),
+
+        # QCD From data
+        "qcd_from_data": InputData(1, 0)
     }
 
     def __init__(self, input_type):
