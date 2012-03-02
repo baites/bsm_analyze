@@ -258,14 +258,15 @@ class Templates(object):
                         obj.bg_combo = hist.Clone()
                         obj.bg_combo.SetDirectory(0)
 
+            if obj.bg_combo:
+                # apply uncertainty style
+                MCChannelTemplate.channel_styles["mc"].apply(obj.bg_combo)
+
             # stack all backgrounds
             obj.bg_stack = None
 
             bg_order = ["qcd"] + (mc_combo.allowed_inputs if mc_combo else [])
-            if mc_combo:
-                bg_channels = set(channels.keys()) & set(bg_order)
-            else:
-                bg_channels = set()
+            bg_channels = set(channels.keys()) & set(bg_order)
 
             # Add channels in order: QCD + channel_type["mc"]
             for channel_type in bg_order:
