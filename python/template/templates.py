@@ -43,15 +43,12 @@ class Templates(object):
                     for key, values in args}
 
         self.use_plots, self.ban_plots = map(list,
-                                             split_use_and_ban(args.get("plots",
-                                                                        [])))
+                split_use_and_ban(args.get("plots", [])))
 
-        use_folders, ban_folders = map(list,
-                                       split_use_and_ban(args.get("folders",
-                                                                  [])))
+        self.use_folders, self.ban_folders = map(list,
+                split_use_and_ban(args.get("folders", [])))
 
-        use_channels, ban_channels = split_use_and_ban(args.get("channels",
-                                                                []))
+        use_channels, ban_channels = split_use_and_ban(args.get("channels", []))
 
         # use only allowed channels or all if None specified
         channels = set(channel_type.ChannelType.channel_types.keys())
