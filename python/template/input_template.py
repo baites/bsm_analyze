@@ -87,10 +87,15 @@ class InputTemplate(InputType, Template, InputInfo):
                 else:
                     self.hist.Rebin(info.rebin)
 
+            if info.title:
+                if 1 == self.dimension:
+                    self.hist.GetXaxis().SetTitle(info.title +
+                            ((" [" + info.units + "]") if info.units else ""))
+
             if info.units:
                 if 1 == self.dimension:
                     self.hist.GetYaxis().SetTitle(
-                            "events yield / {bin_width:.1f} [{units}]".format(
+                            "events yield / {bin_width:.1f} {units}".format(
                                 bin_width = self.hist.GetBinWidth(1),
                                 units = info.units))
             

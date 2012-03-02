@@ -6,9 +6,10 @@ Copyright 2011, All rights reserved
 '''
 
 class InputData(object):
-    def __init__(self, rebin = None, units = None):
+    def __init__(self, rebin = None, units = None, title = None):
         self.__rebin = rebin
         self.__units = units
+        self.__title = title
 
     @property
     def rebin(self):
@@ -17,6 +18,10 @@ class InputData(object):
     @property
     def units(self):
         return self.__units
+
+    @property
+    def title(self):
+        return self.__title
 
 
 
@@ -35,24 +40,40 @@ class InputInfo(object):
     # cache strings
     __momentum_units = "GeV/c"
     __mass_units = "GeV/c^{2}"
+    __mass_tev_units =  "TeV/c^{2}"
 
     input_infos = {
-        "/d0": InputData(units = "cm"),
-        "/htlep": InputData(units = __momentum_units),
-        "/htall": InputData(units = __momentum_units),
-        "/htlep_after_htlep": InputData(units = __momentum_units, rebin = 25),
-        "/htlep_before_htlep": InputData(units = __momentum_units, rebin = 25),
-        "/htlep_before_htlep_qcd_noweight": InputData(units = __momentum_units, rebin = 25),
-        "/mttbar_before_htlep": InputData(rebin = 100, units = __mass_units),
-        "/mttbar_after_htlep": InputData(rebin = 100, units = __mass_units),
+        "/d0": InputData(units = "cm", title = "d0"),
+        "/htlep": InputData(units = __momentum_units, title = "H_{T}^{lep}"),
+        "/htall": InputData(units = __momentum_units, title = "H_{T}^{all}"),
+        "/htlep_after_htlep": InputData(units = __momentum_units,
+            rebin = 25,
+            title = "H_{T}^{lep}"),
+
+        "/htlep_before_htlep": InputData(units = __momentum_units,
+            rebin = 25,
+            title = "H_{T}^{lep}"),
+
+        "/htlep_before_htlep_qcd_noweight": InputData(units = __momentum_units,
+            rebin = 25,
+            title = "H_{T}^{lep}"),
+
+        "/mttbar_before_htlep": InputData(rebin = 100,
+            units = __mass_tev_units,
+            title = "M_{t#bart}"),
+
+        "/mttbar_after_htlep": InputData(rebin = 100,
+            units = __mass_tev_units,
+            title = "M_{t#bart}"),
+
         "/dr_vs_ptrel": InputData(units = ["", __momentum_units]),
-        "/ttbar_pt": InputData(units = __momentum_units),
+        "/ttbar_pt": InputData(units = __momentum_units, title = "p_{T}^{t#bart}"),
         "/wlep_mt": InputData(units = __mass_units),
         "/whad_mt": InputData(units = __mass_units),
         "/wlep_mass": InputData(units = __mass_units),
         "/whad_mass": InputData(units = __mass_units),
-        "/met": InputData(units = __mass_units, rebin = 25),
-        "/met_noweight": InputData(units = __mass_units, rebin = 25),
+        "/met": InputData(units = __mass_units, rebin = 25, title = "#slash{E}_{T}"),
+        "/met_noweight": InputData(units = __mass_units, rebin = 25, title = "#slash{E}_{T}"),
         "/ltop/mass": InputData(units = __mass_units, rebin = 25),
         "/htop/mass": InputData(units = __mass_units, rebin = 25),
         "/ltop/pt": InputData(units = __momentum_units, rebin = 25),
