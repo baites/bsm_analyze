@@ -92,7 +92,8 @@ class ChannelTemplateLoader(object):
             for channel_type in set(channels.keys()) & set(mc.allowed_inputs):
                 mc.add(channels[channel_type])
 
-            channels[mc.type] = mc
+            if len(mc.input_templates):
+                channels[mc.type] = mc
 
     def load_channel(self, channel_type):
         channel_plots = {}
