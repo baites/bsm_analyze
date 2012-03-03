@@ -18,6 +18,7 @@
 #include "bsm_stat/interface/bsm_stat_fwd.h"
 #include "bsm_input/interface/bsm_input_fwd.h"
 #include "bsm_input/interface/GenParticle.pb.h"
+#include "interface/Algorithm.h"
 #include "interface/Analyzer.h"
 #include "interface/AppController.h"
 #include "interface/Cut.h"
@@ -118,6 +119,14 @@ namespace bsm
             virtual void setCollimatedSimpleReconstructionWithMass()
             {
             }
+
+            virtual void setCollimatedSimpleReconstructionWithTopMass()
+            {
+            }
+
+            virtual void setReconstructionWithCollimatedTops()
+            {
+            }
     };
 
     class TemplatesOptions : public Options
@@ -143,6 +152,8 @@ namespace bsm
             void setSimpleReconstructionWithMassAndPhi();
             void setSimpleReconstructionWithMass();
             void setCollimatedSimpleReconstructionWithMass();
+            void setCollimatedSimpleReconstructionWithTopMass();
+            void setReconstructionWithCollimatedTops();
 
             TemplatesDelegate *_delegate;
 
@@ -177,6 +188,8 @@ namespace bsm
             virtual void setSimpleReconstructionWithMassAndPhi();
             virtual void setSimpleReconstructionWithMass();
             virtual void setCollimatedSimpleReconstructionWithMass();
+            virtual void setCollimatedSimpleReconstructionWithTopMass();
+            virtual void setReconstructionWithCollimatedTops();
 
             const H1Ptr cutflow() const;
 

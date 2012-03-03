@@ -21,7 +21,6 @@
 #include "bsm_input/interface/Physics.pb.h"
 #include "bsm_stat/interface/H1.h"
 #include "bsm_stat/interface/H2.h"
-#include "interface/Algorithm.h"
 #include "interface/CorrectedJet.h"
 #include "interface/Cut.h"
 #include "interface/Monitor.h"
@@ -92,6 +91,16 @@ TemplatesOptions::TemplatesOptions()
          po::value<bool>()->notifier(
              boost::bind(&TemplatesOptions::setCollimatedSimpleReconstructionWithMass, this)),
          "Use simple dr reconstruction with htop mass constrain and collimated jets")
+
+        ("collimated-simple-reconstruction-with-top-mass",
+         po::value<bool>()->notifier(
+             boost::bind(&TemplatesOptions::setCollimatedSimpleReconstructionWithTopMass, this)),
+         "Use simple dr reconstruction with both top mass constrain and collimated jets")
+
+        ("collimated-tops-reconstruction",
+         po::value<bool>()->notifier(
+             boost::bind(&TemplatesOptions::setReconstructionWithCollimatedTops, this)),
+         "Reconstruct collimated tops with mass constrain")
     ;
 }
 
@@ -194,6 +203,22 @@ void TemplatesOptions::setCollimatedSimpleReconstructionWithMass()
         return;
 
     delegate()->setCollimatedSimpleReconstructionWithMass();
+}
+
+void TemplatesOptions::setCollimatedSimpleReconstructionWithTopMass()
+{
+    if (!delegate())
+        return;
+
+    delegate()->setCollimatedSimpleReconstructionWithTopMass();
+}
+
+void TemplatesOptions::setReconstructionWithCollimatedTops()
+{
+    if (!delegate())
+        return;
+
+    delegate()->setReconstructionWithCollimatedTops();
 }
 
 
@@ -685,6 +710,22 @@ void TemplateAnalyzer::setCollimatedSimpleReconstructionWithMass()
     stopMonitor(_reconstructor);
 
     _reconstructor.reset(new CollimatedSimpleResonanceReconstructorWithMass());
+    monitor(_reconstructor);
+}
+
+void TemplateAnalyzer::setCollimatedSimpleReconstructionWithTopMass()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new CollimatedSimpleResonanceReconstructorWithTopMass());
+    monitor(_reconstructor);
+}
+
+void TemplateAnalyzer::setReconstructionWithCollimatedTops()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new ResonanceReconstructorWithCollimatedTops());
     monitor(_reconstructor);
 }
 

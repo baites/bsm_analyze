@@ -98,6 +98,8 @@ namespace bsm
     class SimpleResonanceReconstructorWithMassAndPhi;
     class SimpleResonanceReconstructorWithMass;
     class CollimatedSimpleResonanceReconstructorWithMass;
+    class CollimatedSimpleResonanceReconstructorWithTopMass;
+    class ResonanceReconstructorWithCollimatedTops;
 
     struct GenResonance;
 }

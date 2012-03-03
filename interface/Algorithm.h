@@ -219,10 +219,16 @@ namespace bsm
 
             virtual LorentzVector getLeptonicJet(const Iterators &) const = 0;
 
+            virtual float getLeptonicDiscriminator(
+                    const LorentzVector &ltop,
+                    const LorentzVector &lepton,
+                    const LorentzVector &neutrino,
+                    const LorentzVector &jet) const = 0;
+
             virtual float getHadronicDiscriminator(
                     const LorentzVector &ltop,
                     const LorentzVector &htop,
-                    const Iterators &htop_jets) const;
+                    const Iterators &htop_jets) const = 0;
     };
 
     class SimpleResonanceReconstructor: public ResonanceReconstructor
@@ -246,6 +252,17 @@ namespace bsm
                                             const Iterators &) const;
 
             virtual LorentzVector getLeptonicJet(const Iterators &) const;
+
+            virtual float getLeptonicDiscriminator(
+                    const LorentzVector &ltop,
+                    const LorentzVector &lepton,
+                    const LorentzVector &neutrino,
+                    const LorentzVector &jet) const;
+
+            virtual float getHadronicDiscriminator(
+                    const LorentzVector &ltop,
+                    const LorentzVector &htop,
+                    const Iterators &htop_jets) const;
     };
 
     class BtagResonanceReconstructor: public SimpleResonanceReconstructor
@@ -440,6 +457,47 @@ namespace bsm
                     const LorentzVector &ltop,
                     const LorentzVector &htop,
                     const Iterators &htop_jets) const;
+    };
+
+    class CollimatedSimpleResonanceReconstructorWithTopMass:
+        public CollimatedSimpleResonanceReconstructorWithMass
+    {
+        public:
+            // Object interface
+            //
+            virtual uint32_t id() const;
+            virtual ObjectPtr clone() const;
+
+            virtual void print(std::ostream &) const;
+
+        protected:
+            virtual bool isValidLeptonicSide(const LorentzVector &,
+                                             const Iterators &jets);
+
+            virtual float getLeptonicDiscriminator(
+                    const LorentzVector &ltop,
+                    const LorentzVector &lepton,
+                    const LorentzVector &neutrino,
+                    const LorentzVector &jet) const;
+    };
+
+    class ResonanceReconstructorWithCollimatedTops:
+        public CollimatedSimpleResonanceReconstructorWithTopMass
+    {
+        public:
+            // Object interface
+            //
+            virtual uint32_t id() const;
+            virtual ObjectPtr clone() const;
+
+            virtual void print(std::ostream &) const;
+
+        protected:
+            virtual float getLeptonicDiscriminator(
+                    const LorentzVector &ltop,
+                    const LorentzVector &lepton,
+                    const LorentzVector &neutrino,
+                    const LorentzVector &jet) const;
     };
 }
 
