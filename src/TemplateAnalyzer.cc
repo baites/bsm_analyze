@@ -65,8 +65,33 @@ TemplatesOptions::TemplatesOptions()
 
         ("reconstruction-with-mass",
          po::value<bool>()->notifier(
+             boost::bind(&TemplatesOptions::setReconstructionWithMass, this)),
+         "Use reconstruction with htop mass constrain")
+
+        ("reconstruction-with-phi",
+         po::value<bool>()->notifier(
+             boost::bind(&TemplatesOptions::setReconstructionWithPhi, this)),
+         "Use reconstruction with htop/ltop delta phi")
+
+        ("reconstruction-with-mass-and-phi",
+         po::value<bool>()->notifier(
+             boost::bind(&TemplatesOptions::setReconstructionWithMassAndPhi, this)),
+         "Use reconstruction with htop mass and htop/ltop delta phi")
+
+        ("simple-reconstruction-with-mass-and-phi",
+         po::value<bool>()->notifier(
+             boost::bind(&TemplatesOptions::setSimpleReconstructionWithMassAndPhi, this)),
+         "Use simple dr reconsturction with htop mass and htop/ltop delta phi")
+
+        ("simple-reconstruction-with-mass",
+         po::value<bool>()->notifier(
              boost::bind(&TemplatesOptions::setSimpleReconstructionWithMass, this)),
-         "Use simple delta-r based reconstruction with htop mass constrain")
+         "Use simple dr reconstruction with htop mass constrain")
+
+        ("collimated-simple-reconstruction-with-mass",
+         po::value<bool>()->notifier(
+             boost::bind(&TemplatesOptions::setCollimatedSimpleReconstructionWithMass, this)),
+         "Use simple dr reconstruction with htop mass constrain and collimated jets")
     ;
 }
 
@@ -123,12 +148,52 @@ void TemplatesOptions::setHemisphereReconstruction()
     delegate()->setHemisphereReconstruction();
 }
 
+void TemplatesOptions::setReconstructionWithMass()
+{
+    if (!delegate())
+        return;
+
+    delegate()->setReconstructionWithMass();
+}
+
+void TemplatesOptions::setReconstructionWithPhi()
+{
+    if (!delegate())
+        return;
+
+    delegate()->setReconstructionWithPhi();
+}
+
+void TemplatesOptions::setReconstructionWithMassAndPhi()
+{
+    if (!delegate())
+        return;
+
+    delegate()->setReconstructionWithMassAndPhi();
+}
+
+void TemplatesOptions::setSimpleReconstructionWithMassAndPhi()
+{
+    if (!delegate())
+        return;
+
+    delegate()->setSimpleReconstructionWithMassAndPhi();
+}
+
 void TemplatesOptions::setSimpleReconstructionWithMass()
 {
     if (!delegate())
         return;
 
     delegate()->setSimpleReconstructionWithMass();
+}
+
+void TemplatesOptions::setCollimatedSimpleReconstructionWithMass()
+{
+    if (!delegate())
+        return;
+
+    delegate()->setCollimatedSimpleReconstructionWithMass();
 }
 
 
@@ -575,11 +640,51 @@ void TemplateAnalyzer::setHemisphereReconstruction()
     monitor(_reconstructor);
 }
 
+void TemplateAnalyzer::setReconstructionWithMass()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new ResonanceReconstructorWithMass());
+    monitor(_reconstructor);
+}
+
+void TemplateAnalyzer::setReconstructionWithPhi()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new ResonanceReconstructorWithPhi());
+    monitor(_reconstructor);
+}
+
+void TemplateAnalyzer::setReconstructionWithMassAndPhi()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new ResonanceReconstructorWithMassAndPhi());
+    monitor(_reconstructor);
+}
+
+void TemplateAnalyzer::setSimpleReconstructionWithMassAndPhi()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new SimpleResonanceReconstructorWithMassAndPhi());
+    monitor(_reconstructor);
+}
+
 void TemplateAnalyzer::setSimpleReconstructionWithMass()
 {
     stopMonitor(_reconstructor);
 
     _reconstructor.reset(new SimpleResonanceReconstructorWithMass());
+    monitor(_reconstructor);
+}
+
+void TemplateAnalyzer::setCollimatedSimpleReconstructionWithMass()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new CollimatedSimpleResonanceReconstructorWithMass());
     monitor(_reconstructor);
 }
 
@@ -1104,6 +1209,9 @@ void TemplateAnalyzer::merge(const ObjectPtr &pointer)
 
 void TemplateAnalyzer::print(std::ostream &out) const
 {
+    out << "Reconstructor: " << *_reconstructor << endl;
+    out << endl;
+
     out << *_synch_selector << endl;
 }
 

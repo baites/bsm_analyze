@@ -95,7 +95,27 @@ namespace bsm
             {
             }
 
+            virtual void setReconstructionWithMass()
+            {
+            }
+
+            virtual void setReconstructionWithPhi()
+            {
+            }
+
+            virtual void setReconstructionWithMassAndPhi()
+            {
+            }
+
+            virtual void setSimpleReconstructionWithMassAndPhi()
+            {
+            }
+
             virtual void setSimpleReconstructionWithMass()
+            {
+            }
+
+            virtual void setCollimatedSimpleReconstructionWithMass()
             {
             }
     };
@@ -117,7 +137,12 @@ namespace bsm
             void setBtagReconstruction();
             void setSimpleDrReconstruction();
             void setHemisphereReconstruction();
+            void setReconstructionWithMass();
+            void setReconstructionWithPhi();
+            void setReconstructionWithMassAndPhi();
+            void setSimpleReconstructionWithMassAndPhi();
             void setSimpleReconstructionWithMass();
+            void setCollimatedSimpleReconstructionWithMass();
 
             TemplatesDelegate *_delegate;
 
@@ -146,7 +171,12 @@ namespace bsm
             virtual void setBtagReconstruction();
             virtual void setSimpleDrReconstruction();
             virtual void setHemisphereReconstruction();
+            virtual void setReconstructionWithMass();
+            virtual void setReconstructionWithPhi();
+            virtual void setReconstructionWithMassAndPhi();
+            virtual void setSimpleReconstructionWithMassAndPhi();
             virtual void setSimpleReconstructionWithMass();
+            virtual void setCollimatedSimpleReconstructionWithMass();
 
             const H1Ptr cutflow() const;
 

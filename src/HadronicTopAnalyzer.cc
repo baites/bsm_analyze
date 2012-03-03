@@ -341,11 +341,51 @@ void HadronicTopAnalyzer::setHemisphereReconstruction()
     monitor(_reconstructor);
 }
 
+void HadronicTopAnalyzer::setReconstructionWithMass()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new ResonanceReconstructorWithMass());
+    monitor(_reconstructor);
+}
+
+void HadronicTopAnalyzer::setReconstructionWithPhi()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new ResonanceReconstructorWithPhi());
+    monitor(_reconstructor);
+}
+
+void HadronicTopAnalyzer::setReconstructionWithMassAndPhi()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new ResonanceReconstructorWithMassAndPhi());
+    monitor(_reconstructor);
+}
+
+void HadronicTopAnalyzer::setSimpleReconstructionWithMassAndPhi()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new SimpleResonanceReconstructorWithMassAndPhi());
+    monitor(_reconstructor);
+}
+
 void HadronicTopAnalyzer::setSimpleReconstructionWithMass()
 {
     stopMonitor(_reconstructor);
 
     _reconstructor.reset(new SimpleResonanceReconstructorWithMass());
+    monitor(_reconstructor);
+}
+
+void HadronicTopAnalyzer::setCollimatedSimpleReconstructionWithMass()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new CollimatedSimpleResonanceReconstructorWithMass());
     monitor(_reconstructor);
 }
 
@@ -729,6 +769,9 @@ void HadronicTopAnalyzer::merge(const ObjectPtr &pointer)
 
 void HadronicTopAnalyzer::print(std::ostream &out) const
 {
+    out << "Reconstructor: " << *_reconstructor << endl;
+    out << endl;
+
     out << *_synch_selector << endl;
 
     clog << _log.str() << endl;
