@@ -440,7 +440,6 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
     struct Solution
     {
         Solution():
-            //deltaRmin(FLT_MAX),
             htop_discriminator(0),
             ltop_discriminator(FLT_MAX),
             htop_njets(0),
@@ -457,7 +456,6 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
 
         LorentzVector ltop_jet; // Used jet in the ltop reconstruction
 
-        //float deltaRmin;
         float htop_discriminator;
         float ltop_discriminator;
         int htop_njets;
@@ -520,26 +518,13 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
                                          neutrino_p4,
                                          ltop_jet);
 
-            const float deltaRmin = dr(ltop_tmp, ltop_jet)
-                + dr(ltop_tmp, lepton)
-                + dr(ltop_tmp, neutrino_p4);
-
-            if (ltop_discriminator != deltaRmin)
-                cout << "deltaRmin: " << deltaRmin
-                    << " ltop discriminator: " << ltop_discriminator << endl;
-
             const float htop_discriminator =
-                getHadronicDiscriminator(ltop, htop, hypothesis.hadronic);
+                getHadronicDiscriminator(ltop_tmp, htop, hypothesis.hadronic);
 
             if (ltop_discriminator < best_solution.ltop_discriminator
                     || (ltop_discriminator == best_solution.ltop_discriminator
-                        /*
-            if (deltaRmin < best_solution.deltaRmin
-                    || (deltaRmin == best_solution.deltaRmin
-                    */
                         && htop_discriminator > best_solution.htop_discriminator))
             {
-                //best_solution.deltaRmin = deltaRmin;
                 best_solution.htop_discriminator = htop_discriminator;
                 best_solution.ltop_discriminator = ltop_discriminator;
                 best_solution.ltop = ltop_tmp;
