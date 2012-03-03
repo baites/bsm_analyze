@@ -985,7 +985,7 @@ float ResonanceReconstructorWithMassAndPhi::getHadronicDiscriminator(
         const Iterators &htop_jets) const
 {
     return ResonanceReconstructorWithMass::getHadronicDiscriminator(ltop, htop, htop_jets)
-        + ResonanceReconstructorWithPhi::getHadronicDiscriminator(ltop, htop, htop_jets);
+        * ResonanceReconstructorWithPhi::getHadronicDiscriminator(ltop, htop, htop_jets);
 }
 
 
@@ -1016,7 +1016,7 @@ float SimpleResonanceReconstructorWithMassAndPhi::getHadronicDiscriminator(
         const Iterators &htop_jets) const
 {
     return SimpleResonanceReconstructor::getHadronicDiscriminator(ltop, htop, htop_jets)
-        + ResonanceReconstructorWithMassAndPhi::getHadronicDiscriminator(ltop, htop, htop_jets);
+        * ResonanceReconstructorWithMassAndPhi::getHadronicDiscriminator(ltop, htop, htop_jets);
 }
 
 
@@ -1047,7 +1047,7 @@ float SimpleResonanceReconstructorWithMass::getHadronicDiscriminator(
         const Iterators &htop_jets) const
 {
     return SimpleResonanceReconstructor::getHadronicDiscriminator(ltop, htop, htop_jets)
-        + ResonanceReconstructorWithMass::getHadronicDiscriminator(ltop, htop, htop_jets);
+        * ResonanceReconstructorWithMass::getHadronicDiscriminator(ltop, htop, htop_jets);
 }
 
 
@@ -1093,7 +1093,7 @@ float CollimatedSimpleResonanceReconstructorWithMass::getHadronicDiscriminator(
             hadronic_dr += dr(htop, *(*jet)->corrected_p4);
         }
 
-        discriminator += 1. / hadronic_dr;
+        discriminator *= 1. / hadronic_dr;
     }
 
     return discriminator;
@@ -1165,6 +1165,7 @@ float ResonanceReconstructorWithCollimatedTops::getLeptonicDiscriminator(
         const LorentzVector &neutrino,
         const LorentzVector &jet) const
 {
-    return SimpleResonanceReconstructor::getLeptonicDiscriminator(ltop, lepton, neutrino, jet) 
-        + CollimatedSimpleResonanceReconstructorWithTopMass::getLeptonicDiscriminator(ltop, lepton, neutrino, jet);
+    return SimpleResonanceReconstructor::getLeptonicDiscriminator(ltop, lepton, neutrino, jet) *
+        CollimatedSimpleResonanceReconstructorWithTopMass::getLeptonicDiscriminator(
+            ltop, lepton, neutrino, jet);
 }
