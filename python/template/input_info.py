@@ -73,11 +73,13 @@ class InputInfo(object):
         "/wlep_mass": InputData(units = __mass_units),
         "/whad_mass": InputData(units = __mass_units),
         "/met": InputData(units = __mass_units, rebin = 25, title = "#slash{E}_{T}"),
-        "/met_noweight": InputData(units = __mass_units, rebin = 25, title = "#slash{E}_{T}"),
+        "/met_noweight": InputData(units = __mass_units, rebin = 25, title = "#slash{E}_{T}^{no weight}"),
         "/ltop/mass": InputData(units = __mass_units, rebin = 25, title = "M^{ltop}"),
         "/htop/mass": InputData(units = __mass_units, rebin = 25, title = "M^{htop}"),
         "/ltop/pt": InputData(units = __momentum_units, rebin = 25, title = "p_{T}^{ltop}"),
         "/htop/pt": InputData(units = __momentum_units, rebin = 25, title = "p_{T}^{htop}"),
+        "/Electron/pt": InputData(units = __momentum_units, rebin = 25, title = "p_{T}^{e}"),
+        "/Electron/mass": InputData(units = __mass_units, title = "M^{e}"),
             }
 
     @property

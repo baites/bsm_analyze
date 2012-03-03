@@ -30,8 +30,8 @@ class ChannelStyle(BaseStyle):
             "zprime_m1000_w10": Style(line_style = 1, fill_style = 0),
             "zprime_m1500_w15": Style(line_style = 2, fill_style = 0),
             "zprime_m2000_w20": Style(line_style = 3, fill_style = 0),
-            "zprime_m3000_w30": Style(line_style = 4, fill_style = 0),
-            "zprime_m4000_w40": Style(line_style = 5, fill_style = 0)
+            "zprime_m3000_w30": Style(line_style = 7, fill_style = 0),
+            "zprime_m4000_w40": Style(line_style = 9, fill_style = 0)
             }
 
     def __init__(self, channel_style):

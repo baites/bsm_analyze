@@ -18,10 +18,25 @@ import sys
 from channel_template import MCChannelTemplate
 from input_template import InputTemplate
 from loader import ChannelTemplateLoader
-from util.arg import split_use_and_ban
 from root.comparison import ComparisonCanvas
+from util.arg import split_use_and_ban
+from util.timer import Timer
 
 class Templates(object):
+    channel_names = {
+            "qcd": "QCD data-driven",
+            "stop": "Single-Top",
+            "zjets": "Z/#gamma*#rightarrowl^{+}l^{-}",
+            "wjets": "W#rightarrowl#nu",
+            "ttbar": "t#bar{t}",
+
+            "zprime_m1000_w10": "Z' 1 TeV/c^{2}",
+            "zprime_m1500_w15": "Z' 1.5 TeV/c^{2}",
+            "zprime_m2000_w20": "Z' 2 TeV/c^{2}",
+            "zprime_m3000_w30": "Z' 3 TeV/c^{2}",
+            "zprime_m4000_w40": "Z' 4 TeV/c^{2}"
+    }
+
     def __init__(self, verbose = False):
         self.__verbose = verbose
 
@@ -75,8 +90,11 @@ class Templates(object):
 
         self.__load_channels()
         self.__fraction_fitter()
-        self.__plot()
+        canvases = self.__plot()
+        if canvases:
+            raw_input('enter')
 
+    @Timer(label = "[load all channels]", verbose = True)
     def __load_channels(self):
         # Create and configure new loader
         self.loader = ChannelTemplateLoader("output_signal_p150_hlt.root")
@@ -94,6 +112,7 @@ class Templates(object):
         if self.__verbose:
             print(self.loader)
 
+    @Timer(label = "[fraction fitter]", verbose = True)
     def __fraction_fitter(self):
         try:
             self.__run_fraction_fitter()
@@ -202,6 +221,7 @@ class Templates(object):
                 print("failed to apply TFractionFitter scales - {0}".format(error),
                       file = sys.stderr)
 
+    @Timer(label = "[plot templates]", verbose = True)
     def __plot(self):
         # Apply TDR style to all plots
         style = root.style.tdr()
@@ -209,14 +229,6 @@ class Templates(object):
 
         # container where all canvas related objects will be saved
         class Canvas: pass
-
-        channel_names = {
-                "qcd": "QCD data-driven",
-                "stop": "Single-Top",
-                "zjets": "Z/#gamma*#rightarrowl^{+}l^{-}",
-                "wjets": "W#rightarrowl#nu",
-                "ttbar": "t#bar{t}"
-        }
 
         canvases = []
 
@@ -274,7 +286,7 @@ class Templates(object):
                     hist = channels[channel_type].hist
 
                     obj.legend.AddEntry(hist, 
-                            channel_names.get(channel_type,
+                            self.channel_names.get(channel_type,
                                               "unknown"),
                             "fe")
 
@@ -284,19 +296,18 @@ class Templates(object):
                     obj.bg_stack.Add(hist)
 
             # Adjust y-Maximum to be drawn
-            data_max_bin = data.hist.GetMaximumBin() if data else 0
-            bg_max_bin = obj.bg_combo.GetMaximumBin() if obj.bg_combo else 0
+            max_y = 1.2 * max(
+                (h.GetBinContent(h.GetMaximumBin()) +
+                 h.GetBinError(h.GetMaximumBin())) if h else 0
 
-            max_y = 1.2 * max([
-                (obj.bg_combo.GetBinContent(bg_max_bin) +
-                 obj.bg_combo.GetBinError(bg_max_bin)) if obj.bg_combo else 0,
-
-                (data.hist.GetBinContent(data_max_bin) +
-                 data.hist.GetBinError(data_max_bin)) if data else 0,
-                ])
+                for h in [obj.bg_combo if obj.bg_combo else None,
+                          data.hist if data else None] +
+                         [ch.hist for name, ch in channels.items()
+                             if name.startswith("zprime")] if h)
 
             # take care of ratio
             if data and obj.bg_combo:
+            #if "zprime_m1000_w10" in channels and obj.bg_combo:
                 # Prepare comparison canvas: top pad plots, bottom - ratio
                 obj.canvas = ComparisonCanvas()
                 canvas = obj.canvas.canvas
@@ -304,6 +315,11 @@ class Templates(object):
                 obj.canvas.canvas.cd(2)
 
                 obj.ratio = compare.data_mins_bg_over_bg(data.hist, obj.bg_combo)
+                '''
+                obj.ratio = compare.ratio(channels["zprime_m1000_w10"].hist,
+                        obj.bg_combo,
+                        title = "#frac{Z' 1 TeV}{BKGD}")
+                '''
                 obj.ratio.GetXaxis().SetTitle("")
                 obj.ratio.Draw("9 e")
 
@@ -321,8 +337,13 @@ class Templates(object):
             obj.axis_hist = None
             if data:
                 obj.axis_hist = data.hist.Clone()
-            else:
+            elif obj.bg_combo:
                 obj.axis_hist = obj.bg_combo.Clone()
+            else:
+                for name, channel in channels.items():
+                    if name.startswith("zprime"):
+                        obj.axis_hist = channel.hist.Clone()
+                        break
 
             obj.axis_hist.Reset()
             for axis in ROOT.TH1.GetXaxis, ROOT.TH1.GetYaxis:
@@ -349,6 +370,14 @@ class Templates(object):
                     root.label.LuminosityLabel(InputTemplate.luminosity())
                         if data else root.label.CMSSimulationLabel()]
 
+            # draw signals
+            for channel_type, channel in channels.items():
+                if channel_type.startswith("zprime"):
+                    obj.legend.AddEntry(channel.hist,
+                            self.channel_names.get(channel_type, "unknown signal"),
+                            "lpe")
+                    channel.hist.Draw("9 hist same")
+
             # Draw Labels and Legend
             for label in obj.labels:
                 label.draw()
@@ -359,7 +388,7 @@ class Templates(object):
 
             canvases.append(obj)
 
-        raw_input('enter')
+        return canvases
 
     def __str__(self):
         result = []
