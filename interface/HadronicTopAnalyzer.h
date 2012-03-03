@@ -69,7 +69,12 @@ namespace bsm
             virtual void setBtagReconstruction();
             virtual void setSimpleDrReconstruction();
             virtual void setHemisphereReconstruction();
+            virtual void setReconstructionWithMass();
+            virtual void setReconstructionWithPhi();
+            virtual void setReconstructionWithMassAndPhi();
+            virtual void setSimpleReconstructionWithMassAndPhi();
             virtual void setSimpleReconstructionWithMass();
+            virtual void setCollimatedSimpleReconstructionWithMass();
 
             // Histograms
             //

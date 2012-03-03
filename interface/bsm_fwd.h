@@ -91,7 +91,15 @@ namespace bsm
     class BtagResonanceReconstructor;
     class SimpleDrResonanceReconstructor;
     class HemisphereResonanceReconstructor;
+
+    class ResonanceReconstructorWithMass;
+    class ResonanceReconstructorWithPhi;
+    class ResonanceReconstructorWithMassAndPhi;
+    class SimpleResonanceReconstructorWithMassAndPhi;
     class SimpleResonanceReconstructorWithMass;
+    class CollimatedSimpleResonanceReconstructorWithMass;
+    class CollimatedSimpleResonanceReconstructorWithTopMass;
+    class ResonanceReconstructorWithCollimatedTops;
 
     struct GenResonance;
 }

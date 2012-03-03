@@ -6,6 +6,7 @@
 // Copyright 2011, All rights reserved
 
 #include <cfloat>
+#include <iostream>
 
 #include <boost/pointer_cast.hpp>
 
@@ -16,6 +17,7 @@
 #include "interface/Algorithm.h"
 #include "interface/Utility.h"
 
+using namespace std;
 using namespace bsm;
 
 // Neutrino Recontstruct: neglect products masses
@@ -438,8 +440,9 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
     struct Solution
     {
         Solution():
-            deltaRmin(FLT_MAX),
+            //deltaRmin(FLT_MAX),
             htop_discriminator(0),
+            ltop_discriminator(FLT_MAX),
             htop_njets(0),
             valid(false)
         {
@@ -454,8 +457,9 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
 
         LorentzVector ltop_jet; // Used jet in the ltop reconstruction
 
-        float deltaRmin;
+        //float deltaRmin;
         float htop_discriminator;
+        float ltop_discriminator;
         int htop_njets;
 
         bool valid;
@@ -510,19 +514,34 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
             LorentzVector ltop_tmp = ltop;
             ltop_tmp += neutrino_p4;
 
+            const float ltop_discriminator =
+                getLeptonicDiscriminator(ltop_tmp,
+                                         lepton,
+                                         neutrino_p4,
+                                         ltop_jet);
+
             const float deltaRmin = dr(ltop_tmp, ltop_jet)
                 + dr(ltop_tmp, lepton)
                 + dr(ltop_tmp, neutrino_p4);
 
-            const float htop_discriminator =
-                getHadronicDiscriminator(ltop, htop);
+            if (ltop_discriminator != deltaRmin)
+                cout << "deltaRmin: " << deltaRmin
+                    << " ltop discriminator: " << ltop_discriminator << endl;
 
+            const float htop_discriminator =
+                getHadronicDiscriminator(ltop, htop, hypothesis.hadronic);
+
+            if (ltop_discriminator < best_solution.ltop_discriminator
+                    || (ltop_discriminator == best_solution.ltop_discriminator
+                        /*
             if (deltaRmin < best_solution.deltaRmin
                     || (deltaRmin == best_solution.deltaRmin
+                    */
                         && htop_discriminator > best_solution.htop_discriminator))
             {
-                best_solution.deltaRmin = deltaRmin;
+                //best_solution.deltaRmin = deltaRmin;
                 best_solution.htop_discriminator = htop_discriminator;
+                best_solution.ltop_discriminator = ltop_discriminator;
                 best_solution.ltop = ltop_tmp;
                 best_solution.ltop_jet = ltop_jet;
                 best_solution.htop = htop;
@@ -592,13 +611,7 @@ ResonanceReconstructor::Mttbar ResonanceReconstructor::run(
 
 void ResonanceReconstructor::print(std::ostream &out) const
 {
-}
-
-float ResonanceReconstructor::getHadronicDiscriminator(
-        const LorentzVector &ltop, 
-        const LorentzVector &htop) const
-{
-    return dr(ltop, htop);
+    out << "ResonanceReconstructor" << endl;
 }
 
 
@@ -613,6 +626,11 @@ uint32_t SimpleResonanceReconstructor::id() const
 SimpleResonanceReconstructor::ObjectPtr SimpleResonanceReconstructor::clone() const
 {
     return ObjectPtr(new SimpleResonanceReconstructor(*this));
+}
+
+void SimpleResonanceReconstructor::print(std::ostream &out) const
+{
+    out << "SimpleResonanceReconstructor" << endl;
 }
 
 // Private
@@ -656,6 +674,23 @@ bsm::LorentzVector SimpleResonanceReconstructor::getLeptonicJet(
     return *hardest_jet->corrected_p4;
 }
 
+float SimpleResonanceReconstructor::getLeptonicDiscriminator(
+        const LorentzVector &ltop,
+        const LorentzVector &lepton,
+        const LorentzVector &neutrino,
+        const LorentzVector &jet) const
+{
+    return dr(ltop, lepton) + dr(ltop, neutrino) + dr(ltop, jet);
+}
+
+float SimpleResonanceReconstructor::getHadronicDiscriminator(
+        const LorentzVector &ltop, 
+        const LorentzVector &htop,
+        const Iterators &htop_jets) const
+{
+    return dr(ltop, htop);
+}
+
 
 
 // -- Btag Resonance Reconstructor -------------------------------------------- 
@@ -668,6 +703,11 @@ uint32_t BtagResonanceReconstructor::id() const
 BtagResonanceReconstructor::ObjectPtr BtagResonanceReconstructor::clone() const
 {
     return ObjectPtr(new BtagResonanceReconstructor(*this));
+}
+
+void BtagResonanceReconstructor::print(std::ostream &out) const
+{
+    out << "BtagResonanceReconstructor" << endl;
 }
 
 // Private
@@ -762,6 +802,11 @@ SimpleDrResonanceReconstructor::ObjectPtr SimpleDrResonanceReconstructor::clone(
     return ObjectPtr(new SimpleDrResonanceReconstructor(*this));
 }
 
+void SimpleDrResonanceReconstructor::print(std::ostream &out) const
+{
+    out << "SimpleDrResonanceReconstructor" << endl;
+}
+
 // Private
 //
 bool SimpleDrResonanceReconstructor::isValidHadronicSide(const LorentzVector &lepton,
@@ -824,6 +869,11 @@ HemisphereResonanceReconstructor::ObjectPtr HemisphereResonanceReconstructor::cl
     return ObjectPtr(new HemisphereResonanceReconstructor(*this));
 }
 
+void HemisphereResonanceReconstructor::print(std::ostream &out) const
+{
+    out << "HemisphereResonanceReconstructor" << endl;
+}
+
 // Private
 //
 bool HemisphereResonanceReconstructor::isValidHadronicSide(const LorentzVector &lepton,
@@ -864,31 +914,98 @@ bool HemisphereResonanceReconstructor::isValidNeutralSide(const LorentzVector &l
 
 
 
-// -- Simple Resonance Reconstructor with Htop Mass ----------------------------
+// --  Resonance Reconstructor with Htop Mass ----------------------------------
 //
-uint32_t SimpleResonanceReconstructorWithMass::id() const
+uint32_t ResonanceReconstructorWithMass::id() const
 {
-    return core::ID<SimpleResonanceReconstructorWithMass>::get();
+    return core::ID<ResonanceReconstructorWithMass>::get();
 }
 
-SimpleResonanceReconstructorWithMass::ObjectPtr SimpleResonanceReconstructorWithMass::clone() const
+ResonanceReconstructorWithMass::ObjectPtr
+    ResonanceReconstructorWithMass::clone() const
 {
-    return ObjectPtr(new SimpleResonanceReconstructorWithMass(*this));
+    return ObjectPtr(new ResonanceReconstructorWithMass(*this));
+}
+
+void ResonanceReconstructorWithMass::print(std::ostream &out) const
+{
+    out << "ResonanceReconstructorWithMass" << endl;
 }
 
 // Private
 //
-float SimpleResonanceReconstructorWithMass::getHadronicDiscriminator(
+float ResonanceReconstructorWithMass::getHadronicDiscriminator(
         const LorentzVector &ltop,
-        const LorentzVector &htop) const
+        const LorentzVector &htop,
+        const Iterators &htop_jets) const
 {
-    return SimpleResonanceReconstructor::getHadronicDiscriminator(ltop, htop)
-        * pow(2.0 / (173 - mass(htop)), 2);
+    return pow(2.0 / (173 - mass(htop)), 2);
 }
 
 
 
-// -- Simple Resonance Reconstructor with Htop Mass and Delta Phi (htop, ltop) -
+// --  Resonance Reconstructor with Delta Phi (htop, ltop) --------------------
+//
+uint32_t ResonanceReconstructorWithPhi::id() const
+{
+    return core::ID<ResonanceReconstructorWithPhi>::get();
+}
+
+ResonanceReconstructorWithPhi::ObjectPtr
+    ResonanceReconstructorWithPhi::clone() const
+{
+    return ObjectPtr(new ResonanceReconstructorWithPhi(*this));
+}
+
+void ResonanceReconstructorWithPhi::print(std::ostream &out) const
+{
+    out << "ResonanceReconstructorWithPhi" << endl;
+}
+
+// Private
+//
+float ResonanceReconstructorWithPhi::getHadronicDiscriminator(
+        const LorentzVector &ltop,
+        const LorentzVector &htop,
+        const Iterators &htop_jets) const
+{
+    return pow(.22 / (fabs(dphi(htop, ltop)) - 3.14159265), 2);
+}
+
+
+
+// --  Resonance Reconstructor with Mass and Delta Phi (htop, ltop) ------------
+//
+uint32_t ResonanceReconstructorWithMassAndPhi::id() const
+{
+    return core::ID<ResonanceReconstructorWithMassAndPhi>::get();
+}
+
+ResonanceReconstructorWithMassAndPhi::ObjectPtr
+    ResonanceReconstructorWithMassAndPhi::clone() const
+{
+    return ObjectPtr(new ResonanceReconstructorWithMassAndPhi(*this));
+}
+
+void ResonanceReconstructorWithMassAndPhi::print(std::ostream &out) const
+{
+    out << "ResonanceReconstructorWithMassAndPhi" << endl;
+}
+
+// Private
+//
+float ResonanceReconstructorWithMassAndPhi::getHadronicDiscriminator(
+        const LorentzVector &ltop,
+        const LorentzVector &htop,
+        const Iterators &htop_jets) const
+{
+    return ResonanceReconstructorWithMass::getHadronicDiscriminator(ltop, htop, htop_jets)
+        * ResonanceReconstructorWithPhi::getHadronicDiscriminator(ltop, htop, htop_jets);
+}
+
+
+
+// -- Simple Resonance Reconstructor with Mass and Delta Phi (htop, ltop) -----
 //
 uint32_t SimpleResonanceReconstructorWithMassAndPhi::id() const
 {
@@ -901,12 +1018,169 @@ SimpleResonanceReconstructorWithMassAndPhi::ObjectPtr
     return ObjectPtr(new SimpleResonanceReconstructorWithMassAndPhi(*this));
 }
 
+void SimpleResonanceReconstructorWithMassAndPhi::print(std::ostream &out) const
+{
+    out << "SimpleResonanceReconstructorWithMassAndPhi" << endl;
+}
+
 // Private
 //
 float SimpleResonanceReconstructorWithMassAndPhi::getHadronicDiscriminator(
         const LorentzVector &ltop,
-        const LorentzVector &htop) const
+        const LorentzVector &htop,
+        const Iterators &htop_jets) const
 {
-    return SimpleResonanceReconstructorWithMass::getHadronicDiscriminator(ltop, htop)
-        * pow(.22 / (173 - mass(htop)), 2);
+    return SimpleResonanceReconstructor::getHadronicDiscriminator(ltop, htop, htop_jets)
+        * ResonanceReconstructorWithMassAndPhi::getHadronicDiscriminator(ltop, htop, htop_jets);
+}
+
+
+
+// -- Simple Resonance Reconstructor with Mass ---------------------------------
+//
+uint32_t SimpleResonanceReconstructorWithMass::id() const
+{
+    return core::ID<SimpleResonanceReconstructorWithMass>::get();
+}
+
+SimpleResonanceReconstructorWithMass::ObjectPtr
+    SimpleResonanceReconstructorWithMass::clone() const
+{
+    return ObjectPtr(new SimpleResonanceReconstructorWithMass(*this));
+}
+
+void SimpleResonanceReconstructorWithMass::print(std::ostream &out) const
+{
+    out << "SimpleResonanceReconstructorWithMass" << endl;
+}
+
+// Private
+//
+float SimpleResonanceReconstructorWithMass::getHadronicDiscriminator(
+        const LorentzVector &ltop,
+        const LorentzVector &htop,
+        const Iterators &htop_jets) const
+{
+    return SimpleResonanceReconstructor::getHadronicDiscriminator(ltop, htop, htop_jets)
+        * ResonanceReconstructorWithMass::getHadronicDiscriminator(ltop, htop, htop_jets);
+}
+
+
+
+// -- Collimated Simple Resonance Reconstructor with Mass ----------------------
+//
+uint32_t CollimatedSimpleResonanceReconstructorWithMass::id() const
+{
+    return core::ID<CollimatedSimpleResonanceReconstructorWithMass>::get();
+}
+
+CollimatedSimpleResonanceReconstructorWithMass::ObjectPtr
+    CollimatedSimpleResonanceReconstructorWithMass::clone() const
+{
+    return ObjectPtr(new CollimatedSimpleResonanceReconstructorWithMass(*this));
+}
+
+void CollimatedSimpleResonanceReconstructorWithMass::print(std::ostream &out) const
+{
+    out << "CollimatedSimpleResonanceReconstructorWithMass" << endl;
+}
+
+// Private
+//
+float CollimatedSimpleResonanceReconstructorWithMass::getHadronicDiscriminator(
+        const LorentzVector &ltop,
+        const LorentzVector &htop,
+        const Iterators &htop_jets) const
+{
+    float discriminator =
+        SimpleResonanceReconstructorWithMass::getHadronicDiscriminator(
+                ltop,
+                htop,
+                htop_jets);
+
+    if (1 < htop_jets.size())
+    {
+        float hadronic_dr = 0;
+        for(Generator::Iterators::const_iterator jet = htop_jets.begin();
+                htop_jets.end() != jet;
+                ++jet)
+        {
+            hadronic_dr += dr(htop, *(*jet)->corrected_p4);
+        }
+
+        discriminator *= 1. / hadronic_dr;
+    }
+
+    return discriminator;
+}
+
+
+
+// -- Collimated Simple Resonance Reconstructor with Top Mass ----------------------
+//
+uint32_t CollimatedSimpleResonanceReconstructorWithTopMass::id() const
+{
+    return core::ID<CollimatedSimpleResonanceReconstructorWithTopMass>::get();
+}
+
+CollimatedSimpleResonanceReconstructorWithTopMass::ObjectPtr
+    CollimatedSimpleResonanceReconstructorWithTopMass::clone() const
+{
+    return ObjectPtr(new CollimatedSimpleResonanceReconstructorWithTopMass(*this));
+}
+
+void CollimatedSimpleResonanceReconstructorWithTopMass::print(std::ostream &out) const
+{
+    out << "CollimatedSimpleResonanceReconstructorWithTopMass" << endl;
+}
+
+// Private
+//
+bool CollimatedSimpleResonanceReconstructorWithTopMass::isValidLeptonicSide(
+        const LorentzVector &,
+        const Iterators &jets)
+{
+    return 1 == jets.size();
+}
+
+float CollimatedSimpleResonanceReconstructorWithTopMass::getLeptonicDiscriminator(
+        const LorentzVector &ltop,
+        const LorentzVector &lepton,
+        const LorentzVector &neutrino,
+        const LorentzVector &jet) const
+{
+    return pow((173.0 - mass(ltop)) / 2.0, 2);
+}
+
+
+
+// -- Collimated Tops with Mass Constrain --------------------------------------
+//
+uint32_t ResonanceReconstructorWithCollimatedTops::id() const
+{
+    return core::ID<ResonanceReconstructorWithCollimatedTops>::get();
+}
+
+ResonanceReconstructorWithCollimatedTops::ObjectPtr
+    ResonanceReconstructorWithCollimatedTops::clone() const
+{
+    return ObjectPtr(new ResonanceReconstructorWithCollimatedTops(*this));
+}
+
+void ResonanceReconstructorWithCollimatedTops::print(std::ostream &out) const
+{
+    out << "ResonanceReconstructorWithCollimatedTops" << endl;
+}
+
+// Private
+//
+float ResonanceReconstructorWithCollimatedTops::getLeptonicDiscriminator(
+        const LorentzVector &ltop,
+        const LorentzVector &lepton,
+        const LorentzVector &neutrino,
+        const LorentzVector &jet) const
+{
+    return SimpleResonanceReconstructor::getLeptonicDiscriminator(ltop, lepton, neutrino, jet) *
+        CollimatedSimpleResonanceReconstructorWithTopMass::getLeptonicDiscriminator(
+            ltop, lepton, neutrino, jet);
 }
