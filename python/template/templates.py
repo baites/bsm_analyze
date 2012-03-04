@@ -91,6 +91,11 @@ class Templates(object):
         self.__load_channels()
         self.__fraction_fitter()
         canvases = self.__plot()
+
+        # Save canvases
+        for obj in canvases:
+            obj.canvas.SaveAs("{0}.pdf".format(obj.canvas.GetName()))
+
         if canvases:
             raw_input('enter')
 
@@ -242,7 +247,7 @@ class Templates(object):
         '''
 
         # loop over plots
-        for name, channels in self.loader.plots.items():
+        for plot_name, channels in self.loader.plots.items():
             # create container for current objects
             obj = Canvas()
 
@@ -309,10 +314,10 @@ class Templates(object):
             if data and obj.bg_combo:
             #if "zprime_m1000_w10" in channels and obj.bg_combo:
                 # Prepare comparison canvas: top pad plots, bottom - ratio
-                obj.canvas = ComparisonCanvas()
-                canvas = obj.canvas.canvas
+                obj.canvas_obj = ComparisonCanvas()
+                obj.canvas = obj.canvas_obj.canvas
 
-                obj.canvas.canvas.cd(2)
+                obj.canvas.cd(2)
 
                 obj.ratio = compare.data_mins_bg_over_bg(data.hist, obj.bg_combo)
                 '''
@@ -325,13 +330,13 @@ class Templates(object):
 
             else:
                 obj.canvas = ROOT.TCanvas()
-                canvas = obj.canvas
-                canvas.SetWindowSize(640, 640)
-                pad = canvas.cd(1)
+                obj.canvas.SetWindowSize(640, 640)
+                pad = obj.canvas.cd(1)
                 pad.SetRightMargin(5)
                 pad.SetBottomMargin(0.15)
 
-            canvas.cd(1)
+            obj.canvas.SetName("canvas_" + plot_name.replace("/", "_"))
+            obj.canvas.cd(1)
 
             # use data or background to draw axes
             obj.axis_hist = None
@@ -384,7 +389,7 @@ class Templates(object):
 
             obj.legend.Draw("9")
 
-            canvas.Update()
+            obj.canvas.Update()
 
             canvases.append(obj)
 
