@@ -20,6 +20,7 @@
 #include "interface/MonitorCanvas.h"
 #include "interface/Pileup.h"
 #include "interface/HadronicTopAnalyzer.h"
+#include "interface/TemplateAnalyzer.h"
 #include "interface/TriggerAnalyzer.h"
 #include "interface/SynchSelector.h"
 
@@ -42,18 +43,21 @@ int main(int argc, char *argv[])
         boost::shared_ptr<TriggerOptions> trigger_options(new TriggerOptions());
         boost::shared_ptr<PileupOptions> pileup_options(new PileupOptions());
         boost::shared_ptr<HadronicTopOptions> htop_options(new HadronicTopOptions());
+        boost::shared_ptr<TemplatesOptions> templates_options(new TemplatesOptions());
 
         jec_options->setDelegate(analyzer->getJetEnergyCorrectionDelegate());
         synch_selector_options->setDelegate(analyzer->getSynchSelectorDelegate());
         trigger_options->setDelegate(analyzer->getTriggerDelegate());
         pileup_options->setDelegate(analyzer->getPileupDelegate());
         htop_options->setDelegate(analyzer.get());
+        templates_options->setDelegate(analyzer.get());
 
         app->addOptions(*jec_options);
         app->addOptions(*synch_selector_options);
         app->addOptions(*trigger_options);
         app->addOptions(*pileup_options);
         app->addOptions(*htop_options);
+        app->addOptions(*templates_options);
 
         app->setAnalyzer(analyzer);
 

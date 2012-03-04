@@ -15,12 +15,14 @@ class Style(object):
     def __init__(self,
                  color = 1, # black by default
                  marker_size = 0.5,
+                 marker_style = 1,
                  line_width = 2,
                  line_style = None,
                  fill_style = 1001):
 
         self.__color = color
         self.__marker_size = marker_size
+        self.__marker_style = marker_style
         self.__line_width = line_width
         self.__line_style = line_style
         self.__fill_style = fill_style
@@ -43,6 +45,14 @@ class Style(object):
         '''
 
         return self.__marker_size
+
+    @property
+    def marker_style(self):
+        '''
+        Marker style
+        '''
+
+        return self.__marker_style
 
     @property
     def line_width(self):
@@ -73,6 +83,7 @@ class Style(object):
         plot.SetFillColor(self.color)
 
         plot.SetFillStyle(self.fill_style)
+        plot.SetMarkerStyle(self.marker_style)
 
         plot.SetMarkerSize(self.marker_size)
         plot.SetLineWidth(self.line_width)

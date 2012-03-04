@@ -21,7 +21,6 @@
 #include "bsm_input/interface/Physics.pb.h"
 #include "bsm_stat/interface/H1.h"
 #include "bsm_stat/interface/H2.h"
-#include "interface/Algorithm.h"
 #include "interface/CorrectedJet.h"
 #include "interface/Cut.h"
 #include "interface/Monitor.h"
@@ -62,6 +61,46 @@ TemplatesOptions::TemplatesOptions()
          po::value<bool>()->notifier(
              boost::bind(&TemplatesOptions::setHemisphereReconstruction, this)),
          "Use hemisphere based reconstruction")
+
+        ("reconstruction-with-mass",
+         po::value<bool>()->notifier(
+             boost::bind(&TemplatesOptions::setReconstructionWithMass, this)),
+         "Use reconstruction with htop mass constrain")
+
+        ("reconstruction-with-phi",
+         po::value<bool>()->notifier(
+             boost::bind(&TemplatesOptions::setReconstructionWithPhi, this)),
+         "Use reconstruction with htop/ltop delta phi")
+
+        ("reconstruction-with-mass-and-phi",
+         po::value<bool>()->notifier(
+             boost::bind(&TemplatesOptions::setReconstructionWithMassAndPhi, this)),
+         "Use reconstruction with htop mass and htop/ltop delta phi")
+
+        ("simple-reconstruction-with-mass-and-phi",
+         po::value<bool>()->notifier(
+             boost::bind(&TemplatesOptions::setSimpleReconstructionWithMassAndPhi, this)),
+         "Use simple dr reconsturction with htop mass and htop/ltop delta phi")
+
+        ("simple-reconstruction-with-mass",
+         po::value<bool>()->notifier(
+             boost::bind(&TemplatesOptions::setSimpleReconstructionWithMass, this)),
+         "Use simple dr reconstruction with htop mass constrain")
+
+        ("collimated-simple-reconstruction-with-mass",
+         po::value<bool>()->notifier(
+             boost::bind(&TemplatesOptions::setCollimatedSimpleReconstructionWithMass, this)),
+         "Use simple dr reconstruction with htop mass constrain and collimated jets")
+
+        ("collimated-simple-reconstruction-with-top-mass",
+         po::value<bool>()->notifier(
+             boost::bind(&TemplatesOptions::setCollimatedSimpleReconstructionWithTopMass, this)),
+         "Use simple dr reconstruction with both top mass constrain and collimated jets")
+
+        ("collimated-tops-reconstruction",
+         po::value<bool>()->notifier(
+             boost::bind(&TemplatesOptions::setReconstructionWithCollimatedTops, this)),
+         "Reconstruct collimated tops with mass constrain")
     ;
 }
 
@@ -116,6 +155,70 @@ void TemplatesOptions::setHemisphereReconstruction()
         return;
 
     delegate()->setHemisphereReconstruction();
+}
+
+void TemplatesOptions::setReconstructionWithMass()
+{
+    if (!delegate())
+        return;
+
+    delegate()->setReconstructionWithMass();
+}
+
+void TemplatesOptions::setReconstructionWithPhi()
+{
+    if (!delegate())
+        return;
+
+    delegate()->setReconstructionWithPhi();
+}
+
+void TemplatesOptions::setReconstructionWithMassAndPhi()
+{
+    if (!delegate())
+        return;
+
+    delegate()->setReconstructionWithMassAndPhi();
+}
+
+void TemplatesOptions::setSimpleReconstructionWithMassAndPhi()
+{
+    if (!delegate())
+        return;
+
+    delegate()->setSimpleReconstructionWithMassAndPhi();
+}
+
+void TemplatesOptions::setSimpleReconstructionWithMass()
+{
+    if (!delegate())
+        return;
+
+    delegate()->setSimpleReconstructionWithMass();
+}
+
+void TemplatesOptions::setCollimatedSimpleReconstructionWithMass()
+{
+    if (!delegate())
+        return;
+
+    delegate()->setCollimatedSimpleReconstructionWithMass();
+}
+
+void TemplatesOptions::setCollimatedSimpleReconstructionWithTopMass()
+{
+    if (!delegate())
+        return;
+
+    delegate()->setCollimatedSimpleReconstructionWithTopMass();
+}
+
+void TemplatesOptions::setReconstructionWithCollimatedTops()
+{
+    if (!delegate())
+        return;
+
+    delegate()->setReconstructionWithCollimatedTops();
 }
 
 
@@ -559,6 +662,70 @@ void TemplateAnalyzer::setHemisphereReconstruction()
     stopMonitor(_reconstructor);
 
     _reconstructor.reset(new HemisphereResonanceReconstructor());
+    monitor(_reconstructor);
+}
+
+void TemplateAnalyzer::setReconstructionWithMass()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new ResonanceReconstructorWithMass());
+    monitor(_reconstructor);
+}
+
+void TemplateAnalyzer::setReconstructionWithPhi()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new ResonanceReconstructorWithPhi());
+    monitor(_reconstructor);
+}
+
+void TemplateAnalyzer::setReconstructionWithMassAndPhi()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new ResonanceReconstructorWithMassAndPhi());
+    monitor(_reconstructor);
+}
+
+void TemplateAnalyzer::setSimpleReconstructionWithMassAndPhi()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new SimpleResonanceReconstructorWithMassAndPhi());
+    monitor(_reconstructor);
+}
+
+void TemplateAnalyzer::setSimpleReconstructionWithMass()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new SimpleResonanceReconstructorWithMass());
+    monitor(_reconstructor);
+}
+
+void TemplateAnalyzer::setCollimatedSimpleReconstructionWithMass()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new CollimatedSimpleResonanceReconstructorWithMass());
+    monitor(_reconstructor);
+}
+
+void TemplateAnalyzer::setCollimatedSimpleReconstructionWithTopMass()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new CollimatedSimpleResonanceReconstructorWithTopMass());
+    monitor(_reconstructor);
+}
+
+void TemplateAnalyzer::setReconstructionWithCollimatedTops()
+{
+    stopMonitor(_reconstructor);
+
+    _reconstructor.reset(new ResonanceReconstructorWithCollimatedTops());
     monitor(_reconstructor);
 }
 
@@ -1092,6 +1259,9 @@ void TemplateAnalyzer::merge(const ObjectPtr &pointer)
 
 void TemplateAnalyzer::print(std::ostream &out) const
 {
+    out << "Reconstructor: " << *_reconstructor << endl;
+    out << endl;
+
     out << *_synch_selector << endl;
 }
 

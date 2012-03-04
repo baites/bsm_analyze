@@ -17,7 +17,6 @@
 #include <TRint.h>
 
 #include "bsm_stat/interface/Utility.h"
-#include "interface/Algorithm.h"
 #include "interface/AppController.h"
 #include "interface/Cut2DSelector.h"
 #include "interface/JetEnergyCorrections.h"
