@@ -299,11 +299,12 @@ namespace bsm
 
             boost::shared_ptr<Pileup> _pileup;
 
-            bool _use_pileup;
+            bool _data_input;
             float _pileup_weight;
 
             bool _wjets_input;
             bool _apply_wjet_correction;
+
             float _wjets_weight;
 
             P4MonitorPtr _first_jet;

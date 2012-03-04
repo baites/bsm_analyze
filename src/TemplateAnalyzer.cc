@@ -123,7 +123,7 @@ void TemplatesOptions::setHemisphereReconstruction()
 // -- Template Analyzer -------------------------------------------------------
 //
 TemplateAnalyzer::TemplateAnalyzer():
-    _use_pileup(false),
+    _data_input(false),
     _wjets_input(false),
     _apply_wjet_correction(false)
 {
@@ -322,7 +322,7 @@ TemplateAnalyzer::TemplateAnalyzer():
 }
 
 TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
-    _use_pileup(false),
+    _data_input(false),
     _wjets_input(false),
     _apply_wjet_correction(object._apply_wjet_correction)
 {
@@ -863,7 +863,7 @@ void TemplateAnalyzer::onFileOpen(const std::string &filename, const Input *inpu
 {
     if (input->has_type())
     {
-        _use_pileup = (Input::DATA != input->type());
+        _data_input = (Input::DATA == input->type());
         _wjets_input = (Input::WJETS == input->type());
     }
     else
@@ -871,9 +871,13 @@ void TemplateAnalyzer::onFileOpen(const std::string &filename, const Input *inpu
         clog << "Input type is not available: pile-up correction is not applied"
             << endl;
 
-        _use_pileup = false;
+        _data_input = false;
         _wjets_input = false;
     }
+
+    // Enable toptagging by weighting
+    if ((_data_input && _synch_selector->qcdTemplate()) || _wjets_input)
+        _synch_selector->useToptagWeight();
 }
 
 void TemplateAnalyzer::process(const Event *event)
@@ -886,14 +890,12 @@ void TemplateAnalyzer::process(const Event *event)
         _synch_selector_with_inverted_htlep->htlep()->invert();
     }
 
-    _pileup_weight = _use_pileup ? 0 : 1;
+    _pileup_weight = _data_input ? 1 : 0;
     _wjets_weight = 1;
     
-    if (_apply_wjet_correction
-            && _wjets_input)
+    if (_apply_wjet_correction && _wjets_input)
     {
         WDecay decay = eventDecay(event);
-
         _wjets_weight *= decay.correction();
     }
 
@@ -901,13 +903,20 @@ void TemplateAnalyzer::process(const Event *event)
         return;
 
     _event = event;
-    if (_use_pileup)
+    if (!_data_input)
         _pileup_weight = _pileup->scale(event);
 
     // Process only events, that pass the synch selector
     //
     if (_synch_selector->apply(event))
     {
+       // Use toptag by weighting the wjets mc
+       if (
+           (_wjets_input && _synch_selector->isToptagUse()) ||
+           (_data_input && _synch_selector->qcdTemplate() && _synch_selector->isToptagUse())
+       )
+           _wjets_weight *= _synch_selector->toptagWeight();
+
         njetsBeforeReconstruction()->fill(_synch_selector->goodJets().size(),
                     _pileup_weight * _wjets_weight);
 
@@ -1297,3 +1306,5 @@ WDecay TemplateAnalyzer::wdecayType(const GenParticle &particle) const
 
     return decay;
 }
+
+

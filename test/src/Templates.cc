@@ -151,8 +151,8 @@ void Templates::load()
 
 void Templates::draw()
 {
-    if (_qcd_type == QCD_FROM_DATA)
-        normalize();
+    // if (_qcd_type == QCD_FROM_DATA)
+       // normalize();
 
     for(Template hist_template(Template::MET), end(Template::HTOP_MT);
     //for(Template hist_template(Template::MET), end(Template::WLEP_MT);
@@ -410,11 +410,11 @@ TCanvas *Templates::draw(const Template &plot, Channels &channels)
     float mc_scale = 1.0;
     float qcd_scale = 1.0;
 
-    if (_qcd_type == QCD_FROM_DATA)
+    /*if (_qcd_type == QCD_FROM_DATA)
     {
         mc_scale = _mc_fraction*data->Integral()/mc_sigma->Integral();
         qcd_scale = _qcd_fraction*data->Integral()/channels[Channel::QCD]->Integral();
-    }
+    }*/
 
     // print the scales for mttbar
     //

@@ -20,6 +20,8 @@
 #include "interface/CorrectedJet.h"
 #include "interface/TriggerAnalyzer.h"
 
+#include "interface/RandomGenerator.h"
+
 namespace bsm
 {
     // Synchronization Exercise Selector
@@ -89,8 +91,8 @@ namespace bsm
         public:
             typedef boost::shared_ptr<Cut> CutPtr;
             typedef boost::shared_ptr<LorentzVector> LorentzVectorPtr;
-
             typedef boost::shared_ptr<MultiplicityCutflow> CutflowPtr;
+            typedef boost::shared_ptr<RandomGenerator<> > RandomGeneratorPtr;
 
             typedef std::vector<const PrimaryVertex *> GoodPrimaryVertices;
             typedef std::vector<const Electron *> GoodElectrons;
@@ -154,8 +156,8 @@ namespace bsm
             const GoodMuons &goodMuons() const;
             const GoodJets &niceJets() const;
             const GoodJets &goodJets() const;
+            const GoodJets &topJets() const;
             const GoodMET &goodMET() const;
-
             GoodJets::const_iterator closestJet() const;
 
             LeptonMode leptonMode() const;
@@ -192,6 +194,14 @@ namespace bsm
             // Trigger Delegater interface
             //
             virtual void setTrigger(const Trigger &trigger);
+
+            // Toptag by weigthing functions
+            // Check if toptag is used
+            bool isToptagUse() const;
+            // Set the use of toptag by weight
+            void useToptagWeight();
+            // Compute toptag weight and update jet mass
+            float toptagWeight();
 
             // Selector interface
             //
@@ -257,6 +267,7 @@ namespace bsm
             GoodMuons _good_muons;
             GoodJets _nice_jets; // pT > 25
             GoodJets _good_jets; // pT > 50
+            GoodJets _top_jets; // to tagged jets
             GoodJets::const_iterator _closest_jet;
             GoodMET _good_met;
 
@@ -278,6 +289,10 @@ namespace bsm
 
             typedef std::vector<uint64_t> Triggers;
             Triggers _triggers; // hashes of triggers to be passed
+            
+            bool _weighted_toptag;
+
+            RandomGeneratorPtr _random_generator; 
     };
 
     // Helpers

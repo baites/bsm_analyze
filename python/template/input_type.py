@@ -130,11 +130,11 @@ class InputType(BaseType):
         "satop_t": InputData(22.65 * 1.0, 1944826),
         "satop_tw": InputData(7.87 * 1.0, 809984),
 
-        "zprime_m1000_w10": InputData(1.0, 207992),
-        "zprime_m1500_w15": InputData(1.0, 168383),
-        "zprime_m2000_w20": InputData(1.0, 179315),
-        "zprime_m3000_w30": InputData(1.0, 195410),
-        "zprime_m4000_w40": InputData(1.0, 180381),
+        "zprime_m1000_w10": InputData(5.0, 207992),
+        "zprime_m1500_w15": InputData(5.0, 168383),
+        "zprime_m2000_w20": InputData(5.0, 179315),
+        "zprime_m3000_w30": InputData(5.0, 195410),
+        "zprime_m4000_w40": InputData(5.0, 180381),
 
         # zero number of events will indicate: do-not scale
         "rereco_2011a_may10": InputData(1, 0),

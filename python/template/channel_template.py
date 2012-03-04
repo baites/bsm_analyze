@@ -5,10 +5,40 @@ Created by Samvel Khalatyan, Feb 22, 2012
 Copyright 2011, All rights reserved
 '''
 
+import random
+
 from root.template import Template
 from channel_type import ChannelType
 from base_style import Style
 from channel_style import ChannelStyle
+from root.error import StatError
+
+class MCChannelStatError(StatError):
+    mc_channels = set(["ttbar", "zjets", "wjets", "stop"])
+
+    def __init__(self, percent):
+        StatError.__init__(self, percent)
+        self.__variable_name = "__{0:x}".format(random.getrandbits(32))
+
+    def __get__(self, instance, owner):
+        hist =  StatError.__get__(self, instance, owner)
+
+        # check if errors should be added to the histogram
+        if (instance.type in self.mc_channels and
+            getattr(instance, self.__variable_name)):
+
+            self.add_error(hist)
+
+            setattr(instance, self.__variable_name, False)
+
+        return hist
+
+    def __set__(self, instance, value):
+        StatError.__set__(self, instance, value)
+
+        # mark MC channel
+        if instance.type in self.mc_channels:
+            setattr(instance, self.__variable_name, True)
 
 class ChannelTemplate(ChannelType, ChannelStyle, Template):
     '''
@@ -30,7 +60,7 @@ class ChannelTemplate(ChannelType, ChannelStyle, Template):
         '''
 
         ChannelType.__init__(self, channel_type)
-        ChannelStyle.__init__(self, self.type)
+        ChannelStyle.__init__(self, channel_type)
         Template.__init__(self)
 
         self.__input_templates = []         # track added input templates
@@ -62,8 +92,9 @@ class ChannelTemplate(ChannelType, ChannelStyle, Template):
             self.input_templates.append(input_template)
             self.__input_template_types.add(input_template.type)
 
-            # Reset histogram
-            Template.hist.__set__(self, None)
+            # Reset histogram only if was previously created
+            if Template.hist.__get__(self, self.__class__):
+                Template.hist.__set__(self, None)
 
     @property
     def input_templates(self):
@@ -74,6 +105,8 @@ class ChannelTemplate(ChannelType, ChannelStyle, Template):
 
         return self.__input_templates
 
+    @MCChannelStatError(4.5)    # add luminosity errors
+    @MCChannelStatError(4)      # Add trigger error
     @property
     def hist(self):
         '''
@@ -106,6 +139,11 @@ class ChannelTemplate(ChannelType, ChannelStyle, Template):
 
             # Store newly created histogram in Template class
             Template.hist.__set__(self, hist)
+
+            # Copy filename and path
+            self._Template__filename = template.filename
+            self._Template__path = template.path
+
             self.channel_style.apply(self.hist)
 
         return hist
@@ -147,7 +185,7 @@ class MCChannelTemplate(ChannelTemplate):
             }
 
     channel_styles = {
-            "mc": Style(fill = False)
+            "mc": Style(fill_style = 3004)
             }
 
 if "__main__" == __name__:
