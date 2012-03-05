@@ -95,7 +95,7 @@ class InputTemplate(InputType, Template, InputInfo):
             if info.units:
                 if 1 == self.dimension:
                     self.hist.GetYaxis().SetTitle(
-                            "events yield / {bin_width:.1f} {units}".format(
+                            "event yield / {bin_width:.1f} {units}".format(
                                 bin_width = self.hist.GetBinWidth(1),
                                 units = info.units))
             
