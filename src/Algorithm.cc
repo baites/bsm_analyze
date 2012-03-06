@@ -18,6 +18,7 @@
 #include "interface/Utility.h"
 
 using namespace std;
+using namespace boost;
 using namespace bsm;
 
 // Neutrino Recontstruct: neglect products masses
@@ -1173,6 +1174,65 @@ float ResonanceReconstructorWithCollimatedTops::getLeptonicDiscriminator(
 
 
 
+float LtopMassDiscriminator::calculate(const Chi2Hypothesis &hypothesis) const
+{
+    // Somehow g++ 4.3.4 can not find function in the base class
+    return Chi2Discriminator::calculate(mass(hypothesis.ltop));
+}
+
+float HtopMassDiscriminator::calculate(const Chi2Hypothesis &hypothesis) const
+{
+    // Somehow g++ 4.3.4 can not find function in the base class
+    return Chi2Discriminator::calculate(mass(hypothesis.htop));
+}
+
+float DeltaPhiDiscriminator::calculate(const Chi2Hypothesis &hypothesis) const
+{
+    // Somehow g++ 4.3.4 can not find function in the base class
+    return Chi2Discriminator::calculate(fabs(dphi(hypothesis.ltop, hypothesis.htop)));
+}
+
+float LtopDeltaRSumDiscriminator::calculate(const Chi2Hypothesis &hypothesis)
+    const
+{
+    const LorentzVector &top = hypothesis.ltop;
+
+    // Somehow g++ 4.3.4 can not find function in the base class
+    return Chi2Discriminator::calculate(dr(top, hypothesis.lepton) +
+                                        dr(top, hypothesis.neutrino) +
+                                        dr(top, hypothesis.ltop_jet));
+}
+
+float HtopDeltaRSumDiscriminator::calculate(const Chi2Hypothesis &hypothesis)
+    const
+{
+    const LorentzVector &top = hypothesis.htop;
+     
+    float discriminator = 0;
+    for(Chi2Hypothesis::DecayHypothesis::Iterators::const_iterator jet =
+                hypothesis.htop_jets.begin();
+            hypothesis.htop_jets.end() != jet;
+            ++jet)
+    {
+        discriminator += dr(top, *(*jet)->corrected_p4);
+    }
+
+    // Somehow g++ 4.3.4 can not find function in the base class
+    return Chi2Discriminator::calculate(discriminator);
+}
+
+Chi2Hypothesis::Chi2Hypothesis(const DecayHypothesis *hypothesis):
+    valid(false),
+    ltop_chi2(FLT_MAX),
+    htop_chi2(FLT_MAX)
+{
+    if (hypothesis)
+    {
+        ltop_jets = hypothesis->leptonic;
+        htop_jets = hypothesis->hadronic;
+    }
+}
+
 // -- Reconstruction with ltop/htop chi2 ---------------------------------------
 //
 uint32_t Chi2ResonanceReconstructor::id() const
@@ -1189,6 +1249,20 @@ Chi2ResonanceReconstructor::ObjectPtr
 void Chi2ResonanceReconstructor::print(std::ostream &out) const
 {
     out << "Chi2ResonanceReconstructor" << endl;
+}
+
+void Chi2ResonanceReconstructor::addLtopDiscriminator(
+        const Chi2DiscriminatorPtr &discriminator)
+{
+    if (discriminator)
+        _ltop_discriminators.push_back(discriminator);
+}
+
+void Chi2ResonanceReconstructor::addHtopDiscriminator(
+        const Chi2DiscriminatorPtr &discriminator)
+{
+    if (discriminator)
+        _htop_discriminators.push_back(discriminator);
 }
 
 Chi2ResonanceReconstructor::Mttbar Chi2ResonanceReconstructor::run(
@@ -1221,40 +1295,7 @@ Chi2ResonanceReconstructor::Mttbar Chi2ResonanceReconstructor::run(
     Generator generator;
     generator.init(jets);
 
-    // Best Solution should have minimun value of the DeltaRmin:
-    //
-    //  DeltaRmin = DeltaR(ltop, b) + DeltaR(ltop, l) + DeltaR(ltop, nu)
-    //
-    // and maximum value of the DeltaR between leptonic and hadronic
-    // tops in case the same DeltaRmin is found:
-    //
-    //  DeltaRlh = DeltaR(ltop, htop)
-    //
-    struct Solution
-    {
-        Solution():
-            htop_discriminator(FLT_MAX),
-            ltop_discriminator(FLT_MAX),
-            htop_njets(0),
-            valid(false)
-        {
-        }
-
-        LorentzVector ltop; // Reconstructed leptonic leg
-        LorentzVector htop; // Reconstructed hadronic leg
-        LorentzVector missing_energy;
-
-        CorrectedJets htop_jets;
-        CorrectedJets ltop_jets;
-
-        LorentzVector ltop_jet; // Used jet in the ltop reconstruction
-
-        float htop_discriminator;
-        float ltop_discriminator;
-        int htop_njets;
-
-        bool valid;
-    } best_solution;
+    Chi2Hypothesis best_chi2_hypothesis;
 
     // Loop over all possible hypotheses and pick the best one
     // Note: take into account all reconstructed neutrino solutions
@@ -1269,27 +1310,30 @@ Chi2ResonanceReconstructor::Mttbar Chi2ResonanceReconstructor::run(
 
                 continue;
 
+        Chi2Hypothesis chi2_hypothesis(&hypothesis);
+
         // Leptonic Top p4 = leptonP4 + nuP4 + bP4
         // where bP4 is:
         //  - b-tagged jet
         //  - otherwise, the hardest jet (highest pT)
         //
-        LorentzVector ltop = lepton;
-        LorentzVector ltop_jet = getLeptonicJet(hypothesis.leptonic);
-        ltop += ltop_jet;
+        chi2_hypothesis.lepton = lepton;
+        chi2_hypothesis.ltop_jet =
+            getLeptonicJet(chi2_hypothesis.ltop_jets);
+
+        chi2_hypothesis.ltop = lepton + chi2_hypothesis.ltop_jet;
 
         // the neutrino will be taken into account later
         //
 
         // htop is a sum of all jet p4s assigned to the hadronic leg
         //
-        LorentzVector htop;
         for(Generator::Iterators::const_iterator jet =
-                    hypothesis.hadronic.begin();
-                hypothesis.hadronic.end() != jet;
+                    chi2_hypothesis.htop_jets.begin();
+                chi2_hypothesis.htop_jets.end() != jet;
                 ++jet)
         {
-            htop += *(*jet)->corrected_p4;
+            chi2_hypothesis.htop += *(*jet)->corrected_p4;
         }
 
         // Take into account all neutrino solutions. Solutions are kept in
@@ -1300,82 +1344,75 @@ Chi2ResonanceReconstructor::Mttbar Chi2ResonanceReconstructor::run(
                 neutrinos.end() != neutrino;
                 ++neutrino)
         {
-            const LorentzVector &neutrino_p4 = *(*neutrino);
+            Chi2Hypothesis chi2_hypothesis_tmp = chi2_hypothesis;
+            chi2_hypothesis_tmp.neutrino = *(*neutrino);
+            chi2_hypothesis_tmp.ltop += chi2_hypothesis_tmp.neutrino;
 
-            LorentzVector ltop_tmp = ltop;
-            ltop_tmp += neutrino_p4;
-
-            const float ltop_discriminator =
-                getLeptonicDiscriminator(ltop_tmp,
-                                         lepton,
-                                         neutrino_p4,
-                                         ltop_jet);
-
-            const float htop_discriminator =
-                getHadronicDiscriminator(ltop_tmp, htop, hypothesis.hadronic);
-
-            if (ltop_discriminator < best_solution.ltop_discriminator
-                    || (ltop_discriminator == best_solution.ltop_discriminator
-                        && htop_discriminator < best_solution.htop_discriminator))
+            // Apply ltop discriminators
+            chi2_hypothesis_tmp.ltop_chi2 = 0;
+            for(Chi2Discriminators::const_iterator discriminator =
+                        _ltop_discriminators.begin();
+                    _ltop_discriminators.end() != discriminator;
+                    ++discriminator)
             {
-                best_solution.htop_discriminator = htop_discriminator;
-                best_solution.ltop_discriminator = ltop_discriminator;
-                best_solution.ltop = ltop_tmp;
-                best_solution.ltop_jet = ltop_jet;
-                best_solution.htop = htop;
-                best_solution.missing_energy = neutrino_p4;
-                best_solution.htop_njets = hypothesis.hadronic.size();
-
-                best_solution.htop_jets.clear();
-                for(Generator::Iterators::const_iterator jet =
-                            hypothesis.hadronic.begin();
-                        hypothesis.hadronic.end() != jet;
-                        ++jet)
-                {
-                    best_solution.htop_jets.push_back(*(*jet));
-                }
-
-                best_solution.ltop_jets.clear();
-                for(Generator::Iterators::const_iterator jet =
-                            hypothesis.leptonic.begin();
-                        hypothesis.leptonic.end() != jet;
-                        ++jet)
-                {
-                    best_solution.ltop_jets.push_back(*(*jet));
-                }
-
-                best_solution.valid = true;
+                chi2_hypothesis_tmp.ltop_chi2 +=
+                    (*discriminator)->calculate(chi2_hypothesis_tmp);
             }
+
+            if (chi2_hypothesis_tmp.ltop_chi2 > best_chi2_hypothesis.ltop_chi2)
+                continue;
+
+            // Apply htop discriminators
+            chi2_hypothesis_tmp.htop_chi2 = 0;
+            for(Chi2Discriminators::const_iterator discriminator =
+                        _htop_discriminators.begin();
+                    _htop_discriminators.end() != discriminator;
+                    ++discriminator)
+            {
+                chi2_hypothesis_tmp.htop_chi2 +=
+                    (*discriminator)->calculate(chi2_hypothesis_tmp);
+            }
+
+            if (chi2_hypothesis_tmp.ltop_chi2 == best_chi2_hypothesis.ltop_chi2
+                    && chi2_hypothesis_tmp.htop_chi2 > best_chi2_hypothesis.htop_chi2)
+                continue;
+
+            best_chi2_hypothesis = chi2_hypothesis_tmp;
         }
     }
     while(generator.next());
 
     // Best Solution is found
     //
-    if (best_solution.valid)
+    if (best_chi2_hypothesis.valid)
     {
-        result.mttbar = best_solution.ltop + best_solution.htop;
-        result.wlep = best_solution.missing_energy + lepton;
-        result.neutrino = best_solution.missing_energy;
-        result.ltop = best_solution.ltop;
-        result.ltop_jet = best_solution.ltop_jet;
-        result.htop = best_solution.htop;
-        result.htop_njets = best_solution.htop_njets;
+        result.mttbar = best_chi2_hypothesis.ltop + best_chi2_hypothesis.htop;
+        result.wlep = best_chi2_hypothesis.neutrino + best_chi2_hypothesis.lepton;
+        result.neutrino = best_chi2_hypothesis.neutrino;
+        result.ltop = best_chi2_hypothesis.ltop;
+        result.ltop_jet = best_chi2_hypothesis.ltop_jet;
+        result.htop = best_chi2_hypothesis.htop;
+        result.htop_njets = best_chi2_hypothesis.htop_jets.size();
+
+        result.ltop_discriminator = best_chi2_hypothesis.ltop_chi2;
+        result.htop_discriminator = best_chi2_hypothesis.htop_chi2;
 
         result.htop_jets.clear();
-        for(CorrectedJets::const_iterator jet = best_solution.htop_jets.begin();
-                best_solution.htop_jets.end() != jet;
+        for(Chi2Hypothesis::Iterators::const_iterator jet =
+                    best_chi2_hypothesis.htop_jets.begin();
+                best_chi2_hypothesis.htop_jets.end() != jet;
                 ++jet)
         {
-            result.htop_jets.push_back(*jet);
+            result.htop_jets.push_back(* *jet);
         }
 
         result.ltop_jets.clear();
-        for(CorrectedJets::const_iterator jet = best_solution.ltop_jets.begin();
-                best_solution.ltop_jets.end() != jet;
+        for(Chi2Hypothesis::Iterators::const_iterator jet =
+                    best_chi2_hypothesis.ltop_jets.begin();
+                best_chi2_hypothesis.ltop_jets.end() != jet;
                 ++jet)
         {
-            result.ltop_jets.push_back(*jet);
+            result.ltop_jets.push_back(* *jet);
         }
 
         sort(result.htop_jets.begin(), result.htop_jets.end(), CorrectedPtGreater()); 

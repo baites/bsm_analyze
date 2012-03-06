@@ -22,6 +22,12 @@ namespace bsm
 
             struct Hypothesis
             {
+                typedef typename DecayGenerator::Iterators Iterators;
+
+                virtual ~Hypothesis()
+                {
+                }
+
                 Iterators leptonic;
                 Iterators hadronic;
                 Iterators neutral;
