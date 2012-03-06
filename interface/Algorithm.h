@@ -199,9 +199,9 @@ namespace bsm
                 bool valid;
             };
 
-            Mttbar run(const LorentzVector &lepton,
-                       const LorentzVector &met,
-                       const SynchSelector::GoodJets &) const;
+            virtual Mttbar run(const LorentzVector &lepton,
+                               const LorentzVector &met,
+                               const SynchSelector::GoodJets &) const;
 
             // Object interface
             //
@@ -498,6 +498,21 @@ namespace bsm
                     const LorentzVector &lepton,
                     const LorentzVector &neutrino,
                     const LorentzVector &jet) const;
+    };
+
+    class Chi2ResonanceReconstructor: public SimpleResonanceReconstructor
+    {
+        public:
+            // Object interface
+            //
+            virtual uint32_t id() const;
+            virtual ObjectPtr clone() const;
+
+            virtual void print(std::ostream &) const;
+
+            virtual Mttbar run(const LorentzVector &lepton,
+                               const LorentzVector &met,
+                               const SynchSelector::GoodJets &) const;
     };
 }
 

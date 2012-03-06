@@ -1169,3 +1169,220 @@ float ResonanceReconstructorWithCollimatedTops::getLeptonicDiscriminator(
         CollimatedSimpleResonanceReconstructorWithTopMass::getLeptonicDiscriminator(
             ltop, lepton, neutrino, jet);
 }
+
+
+
+
+// -- Reconstruction with ltop/htop chi2 ---------------------------------------
+//
+uint32_t Chi2ResonanceReconstructor::id() const
+{
+    return core::ID<Chi2ResonanceReconstructor>::get();
+}
+
+Chi2ResonanceReconstructor::ObjectPtr
+    Chi2ResonanceReconstructor::clone() const
+{
+    return ObjectPtr(new Chi2ResonanceReconstructor(*this));
+}
+
+void Chi2ResonanceReconstructor::print(std::ostream &out) const
+{
+    out << "Chi2ResonanceReconstructor" << endl;
+}
+
+Chi2ResonanceReconstructor::Mttbar Chi2ResonanceReconstructor::run(
+        const LorentzVector &lepton,
+        const LorentzVector &met,
+        const SynchSelector::GoodJets &jets) const
+{
+    Mttbar result;
+
+    // Reconstruct the neutrino pZ and keep solutions in vector for later
+    // use
+    //
+    NeutrinoReconstruct neutrinoReconstruct;
+    NeutrinoReconstruct::Solutions neutrinos =
+        neutrinoReconstruct(lepton, met);
+
+    result.solutions = neutrinoReconstruct.solutions();
+
+    for(NeutrinoReconstruct::Solutions::const_iterator neutrino =
+                neutrinos.begin();
+            neutrinos.end() != neutrino;
+            ++neutrino)
+    {
+        result.neutrinos.push_back(**neutrino);
+    }
+
+    // Prepare generator and loop over all hypotheses of the decay
+    // (different jets assignment to leptonic/hadronic legs)
+    //
+    Generator generator;
+    generator.init(jets);
+
+    // Best Solution should have minimun value of the DeltaRmin:
+    //
+    //  DeltaRmin = DeltaR(ltop, b) + DeltaR(ltop, l) + DeltaR(ltop, nu)
+    //
+    // and maximum value of the DeltaR between leptonic and hadronic
+    // tops in case the same DeltaRmin is found:
+    //
+    //  DeltaRlh = DeltaR(ltop, htop)
+    //
+    struct Solution
+    {
+        Solution():
+            htop_discriminator(FLT_MAX),
+            ltop_discriminator(FLT_MAX),
+            htop_njets(0),
+            valid(false)
+        {
+        }
+
+        LorentzVector ltop; // Reconstructed leptonic leg
+        LorentzVector htop; // Reconstructed hadronic leg
+        LorentzVector missing_energy;
+
+        CorrectedJets htop_jets;
+        CorrectedJets ltop_jets;
+
+        LorentzVector ltop_jet; // Used jet in the ltop reconstruction
+
+        float htop_discriminator;
+        float ltop_discriminator;
+        int htop_njets;
+
+        bool valid;
+    } best_solution;
+
+    // Loop over all possible hypotheses and pick the best one
+    // Note: take into account all reconstructed neutrino solutions
+    //
+    do
+    {
+        Generator::Hypothesis hypothesis = generator.hypothesis();
+
+        if (!isValidHadronicSide(lepton, hypothesis.hadronic)
+                || !isValidLeptonicSide(lepton, hypothesis.leptonic)
+                || !isValidNeutralSide(lepton, hypothesis.neutral))
+
+                continue;
+
+        // Leptonic Top p4 = leptonP4 + nuP4 + bP4
+        // where bP4 is:
+        //  - b-tagged jet
+        //  - otherwise, the hardest jet (highest pT)
+        //
+        LorentzVector ltop = lepton;
+        LorentzVector ltop_jet = getLeptonicJet(hypothesis.leptonic);
+        ltop += ltop_jet;
+
+        // the neutrino will be taken into account later
+        //
+
+        // htop is a sum of all jet p4s assigned to the hadronic leg
+        //
+        LorentzVector htop;
+        for(Generator::Iterators::const_iterator jet =
+                    hypothesis.hadronic.begin();
+                hypothesis.hadronic.end() != jet;
+                ++jet)
+        {
+            htop += *(*jet)->corrected_p4;
+        }
+
+        // Take into account all neutrino solutions. Solutions are kept in
+        // a vector of pointer
+        //
+        for(NeutrinoReconstruct::Solutions::const_iterator neutrino =
+                    neutrinos.begin();
+                neutrinos.end() != neutrino;
+                ++neutrino)
+        {
+            const LorentzVector &neutrino_p4 = *(*neutrino);
+
+            LorentzVector ltop_tmp = ltop;
+            ltop_tmp += neutrino_p4;
+
+            const float ltop_discriminator =
+                getLeptonicDiscriminator(ltop_tmp,
+                                         lepton,
+                                         neutrino_p4,
+                                         ltop_jet);
+
+            const float htop_discriminator =
+                getHadronicDiscriminator(ltop_tmp, htop, hypothesis.hadronic);
+
+            if (ltop_discriminator < best_solution.ltop_discriminator
+                    || (ltop_discriminator == best_solution.ltop_discriminator
+                        && htop_discriminator < best_solution.htop_discriminator))
+            {
+                best_solution.htop_discriminator = htop_discriminator;
+                best_solution.ltop_discriminator = ltop_discriminator;
+                best_solution.ltop = ltop_tmp;
+                best_solution.ltop_jet = ltop_jet;
+                best_solution.htop = htop;
+                best_solution.missing_energy = neutrino_p4;
+                best_solution.htop_njets = hypothesis.hadronic.size();
+
+                best_solution.htop_jets.clear();
+                for(Generator::Iterators::const_iterator jet =
+                            hypothesis.hadronic.begin();
+                        hypothesis.hadronic.end() != jet;
+                        ++jet)
+                {
+                    best_solution.htop_jets.push_back(*(*jet));
+                }
+
+                best_solution.ltop_jets.clear();
+                for(Generator::Iterators::const_iterator jet =
+                            hypothesis.leptonic.begin();
+                        hypothesis.leptonic.end() != jet;
+                        ++jet)
+                {
+                    best_solution.ltop_jets.push_back(*(*jet));
+                }
+
+                best_solution.valid = true;
+            }
+        }
+    }
+    while(generator.next());
+
+    // Best Solution is found
+    //
+    if (best_solution.valid)
+    {
+        result.mttbar = best_solution.ltop + best_solution.htop;
+        result.wlep = best_solution.missing_energy + lepton;
+        result.neutrino = best_solution.missing_energy;
+        result.ltop = best_solution.ltop;
+        result.ltop_jet = best_solution.ltop_jet;
+        result.htop = best_solution.htop;
+        result.htop_njets = best_solution.htop_njets;
+
+        result.htop_jets.clear();
+        for(CorrectedJets::const_iterator jet = best_solution.htop_jets.begin();
+                best_solution.htop_jets.end() != jet;
+                ++jet)
+        {
+            result.htop_jets.push_back(*jet);
+        }
+
+        result.ltop_jets.clear();
+        for(CorrectedJets::const_iterator jet = best_solution.ltop_jets.begin();
+                best_solution.ltop_jets.end() != jet;
+                ++jet)
+        {
+            result.ltop_jets.push_back(*jet);
+        }
+
+        sort(result.htop_jets.begin(), result.htop_jets.end(), CorrectedPtGreater()); 
+        sort(result.ltop_jets.begin(), result.ltop_jets.end(), CorrectedPtGreater()); 
+
+        result.valid = true;
+    }
+
+    return result;
+}
