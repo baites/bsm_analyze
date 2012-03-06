@@ -1483,6 +1483,7 @@ Chi2ResonanceReconstructor::Mttbar Chi2ResonanceReconstructor::run(
                 continue;
 
             best_chi2_hypothesis = chi2_hypothesis_tmp;
+            best_chi2_hypothesis.valid = true;
         }
     }
     while(generator.next());
