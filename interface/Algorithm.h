@@ -526,7 +526,7 @@ namespace bsm
         Iterators htop_jets;
     };
 
-    class Chi2Discriminator
+    class Chi2Discriminator: public core::Object
     {
         public:
             Chi2Discriminator(const float &mean, const float &sigma):
@@ -540,6 +540,12 @@ namespace bsm
             }
 
             virtual float calculate(const Chi2Hypothesis &) const = 0;
+
+            // Object interface
+            //
+            virtual uint32_t id() const;
+
+            virtual void print(std::ostream &) const;
 
         protected:
             virtual float calculate(const float &value) const
@@ -561,6 +567,11 @@ namespace bsm
             }
 
             virtual float calculate(const Chi2Hypothesis &hypothesis) const;
+
+            // Object interface
+            //
+            virtual uint32_t id() const;
+            virtual ObjectPtr clone() const;
     };
 
     class HtopMassDiscriminator: public Chi2Discriminator
@@ -572,6 +583,11 @@ namespace bsm
             }
 
             virtual float calculate(const Chi2Hypothesis &hypothesis) const;
+
+            // Object interface
+            //
+            virtual uint32_t id() const;
+            virtual ObjectPtr clone() const;
     };
 
     class DeltaPhiDiscriminator: public Chi2Discriminator
@@ -583,6 +599,11 @@ namespace bsm
             }
 
             virtual float calculate(const Chi2Hypothesis &hypothesis) const;
+
+            // Object interface
+            //
+            virtual uint32_t id() const;
+            virtual ObjectPtr clone() const;
     };
 
     class LtopDeltaRSumDiscriminator: public Chi2Discriminator
@@ -594,6 +615,11 @@ namespace bsm
             }
 
             virtual float calculate(const Chi2Hypothesis &hypothesis) const;
+
+            // Object interface
+            //
+            virtual uint32_t id() const;
+            virtual ObjectPtr clone() const;
     };
 
     class HtopDeltaRSumDiscriminator: public Chi2Discriminator
@@ -605,12 +631,24 @@ namespace bsm
             }
 
             virtual float calculate(const Chi2Hypothesis &hypothesis) const;
+
+            // Object interface
+            //
+            virtual uint32_t id() const;
+            virtual ObjectPtr clone() const;
     };
 
     class Chi2ResonanceReconstructor: public SimpleResonanceReconstructor
     {
         public:
             typedef boost::shared_ptr<Chi2Discriminator> Chi2DiscriminatorPtr;
+            typedef std::vector<Chi2DiscriminatorPtr> Chi2Discriminators;
+            
+            Chi2ResonanceReconstructor()
+            {
+            }
+
+            Chi2ResonanceReconstructor(const Chi2ResonanceReconstructor &object);
 
             // Object interface
             //
@@ -623,12 +661,10 @@ namespace bsm
                                const LorentzVector &met,
                                const SynchSelector::GoodJets &) const;
 
-            void addLtopDiscriminator(const Chi2DiscriminatorPtr &);
-            void addHtopDiscriminator(const Chi2DiscriminatorPtr &);
+            void setLtopDiscriminators(const Chi2Discriminators &);
+            void setHtopDiscriminators(const Chi2Discriminators &);
 
         private:
-            typedef std::vector<Chi2DiscriminatorPtr> Chi2Discriminators;
-
             Chi2Discriminators _ltop_discriminators;
             Chi2Discriminators _htop_discriminators;
     };

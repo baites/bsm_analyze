@@ -10,6 +10,8 @@
 #include <cfloat>
 #include <iostream>
 
+#include <boost/regex.hpp>
+
 #include "bsm_core/interface/ID.h"
 #include "bsm_input/interface/Algebra.h"
 #include "bsm_input/interface/Electron.pb.h"
@@ -101,6 +103,14 @@ TemplatesOptions::TemplatesOptions()
          po::value<bool>()->notifier(
              boost::bind(&TemplatesOptions::setReconstructionWithCollimatedTops, this)),
          "Reconstruct collimated tops with mass constrain")
+
+        ("chi2-reconstruction",
+         po::value<string>()->notifier(
+             boost::bind(&TemplatesOptions::setChi2Reconstruction, this, _1)),
+         (string("Use chi2 for resonance reconstruction. Use comma separated ") +
+         "discrimiantor values in a form: [ltop discriminators]:[htop " +
+         "discriminators]. Supported ltop discriminators: mass, drsum. Htop " +
+         "discriminators: mass, drsum, dphi. Example: mass:mass,dphi. ").c_str())
     ;
 }
 
@@ -219,6 +229,117 @@ void TemplatesOptions::setReconstructionWithCollimatedTops()
         return;
 
     delegate()->setReconstructionWithCollimatedTops();
+}
+
+void TemplatesOptions::setChi2Reconstruction(const string &value)
+{
+    if (!delegate())
+        return;
+
+    smatch matches;
+    regex pattern("^([^-]+)@([^-]+)$");
+
+    if (!regex_match(value, matches, pattern))
+    {
+        cerr << "Didn't understand Chi2 reconstruction options: "
+            << value << endl;
+
+        return;
+    }
+
+    typedef Chi2ResonanceReconstructor::Chi2DiscriminatorPtr Chi2DiscriminatorPtr;
+
+    Discriminators ltop_split = split(matches[1]);
+
+    Chi2ResonanceReconstructor::Chi2Discriminators ltop;
+    for(Discriminators::const_iterator discriminator = ltop_split.begin();
+            ltop_split.end() != discriminator;
+            ++discriminator)
+    {
+        const Values &values = discriminator->second;
+        if ("mass" == discriminator->first)
+        {
+            ltop.push_back(Chi2DiscriminatorPtr(
+                        new LtopMassDiscriminator(values.first,
+                                                  values.second)));
+        }
+        else if ("drsum" == discriminator->first)
+        {
+            ltop.push_back(Chi2DiscriminatorPtr(
+                        new LtopDeltaRSumDiscriminator(values.first,
+                                                       values.second)));
+        }
+        else
+        {
+            cerr << "Unsupported discriminator is used in ltop: "
+                << discriminator->first << endl;
+        }
+    }
+
+    Discriminators htop_split = split(matches[2]);
+
+    Chi2ResonanceReconstructor::Chi2Discriminators htop;
+    for(Discriminators::const_iterator discriminator = htop_split.begin();
+            htop_split.end() != discriminator;
+            ++discriminator)
+    {
+        const Values &values = discriminator->second;
+        if ("mass" == discriminator->first)
+        {
+            htop.push_back(Chi2DiscriminatorPtr(
+                        new HtopMassDiscriminator(values.first,
+                                                  values.second)));
+        }
+        else if ("drsum" == discriminator->first)
+        {
+            htop.push_back(Chi2DiscriminatorPtr(
+                        new HtopDeltaRSumDiscriminator(values.first,
+                                                       values.second)));
+        }
+        else if ("dphi" == discriminator->first)
+        {
+            htop.push_back(Chi2DiscriminatorPtr(
+                        new DeltaPhiDiscriminator(values.first,
+                                                  values.second)));
+        }
+        else
+        {
+            cerr << "Unsupported discriminator is used in htop: "
+                << discriminator->first << endl;
+        }
+    }
+
+    delegate()->setChi2Reconstruction(ltop, htop);
+}
+
+TemplatesOptions::Discriminators TemplatesOptions::split(const string &line)
+{
+    Discriminators result;
+
+    regex delimeters("#");
+    for(sregex_token_iterator token(line.begin(),
+                                    line.end(),
+                                    delimeters,
+                                    -1), end;
+            token != end;
+            ++token)
+    {
+        smatch discriminators;
+        regex pattern("^([[:word:]]+):([^,]+),(.+)");
+        string token_str(*token);
+        if (!regex_match(token_str, discriminators, pattern))
+        {
+            cerr << "Didn't understand discriminator: " << *token << endl;
+
+            continue;
+        }
+
+        result[discriminators[1]] =
+            make_pair(lexical_cast<float>(discriminators[2]),
+                      lexical_cast<float>(discriminators[3]));
+    }
+
+    return result;
 }
 
 
@@ -726,6 +847,20 @@ void TemplateAnalyzer::setReconstructionWithCollimatedTops()
     stopMonitor(_reconstructor);
 
     _reconstructor.reset(new ResonanceReconstructorWithCollimatedTops());
+    monitor(_reconstructor);
+}
+
+void TemplateAnalyzer::setChi2Reconstruction(const Chi2Discriminators &ltop,
+                                             const Chi2Discriminators &htop)
+{
+    stopMonitor(_reconstructor);
+
+    Chi2ResonanceReconstructor *reco = new Chi2ResonanceReconstructor();
+    reco->setLtopDiscriminators(ltop);
+    reco->setHtopDiscriminators(htop);
+
+    _reconstructor.reset(reco);
+
     monitor(_reconstructor);
 }
 

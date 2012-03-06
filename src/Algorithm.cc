@@ -1173,25 +1173,95 @@ float ResonanceReconstructorWithCollimatedTops::getLeptonicDiscriminator(
 
 
 
+Chi2Hypothesis::Chi2Hypothesis(const DecayHypothesis *hypothesis):
+    valid(false),
+    ltop_chi2(FLT_MAX),
+    htop_chi2(FLT_MAX)
+{
+    if (hypothesis)
+    {
+        ltop_jets = hypothesis->leptonic;
+        htop_jets = hypothesis->hadronic;
+    }
+}
 
+
+
+// -- Chi2 Discriminator -------------------------------------------------------
+//
+uint32_t Chi2Discriminator::id() const
+{
+    return core::ID<Chi2Discriminator>::get();
+}
+
+void Chi2Discriminator::print(std::ostream &out) const
+{
+}
+
+
+
+// -- Ltop mass Discriminator --------------------------------------------------
+//
 float LtopMassDiscriminator::calculate(const Chi2Hypothesis &hypothesis) const
 {
     // Somehow g++ 4.3.4 can not find function in the base class
     return Chi2Discriminator::calculate(mass(hypothesis.ltop));
 }
 
+uint32_t LtopMassDiscriminator::id() const
+{
+    return core::ID<LtopMassDiscriminator>::get();
+}
+
+LtopMassDiscriminator::ObjectPtr LtopMassDiscriminator::clone() const
+{
+    return ObjectPtr(new LtopMassDiscriminator(*this));
+}
+
+
+
+// -- Htop mass Discriminator --------------------------------------------------
+//
 float HtopMassDiscriminator::calculate(const Chi2Hypothesis &hypothesis) const
 {
     // Somehow g++ 4.3.4 can not find function in the base class
     return Chi2Discriminator::calculate(mass(hypothesis.htop));
 }
 
+uint32_t HtopMassDiscriminator::id() const
+{
+    return core::ID<HtopMassDiscriminator>::get();
+}
+
+HtopMassDiscriminator::ObjectPtr HtopMassDiscriminator::clone() const
+{
+    return ObjectPtr(new HtopMassDiscriminator(*this));
+}
+
+
+
+// -- Delta Phi Discriminator --------------------------------------------------
+//
 float DeltaPhiDiscriminator::calculate(const Chi2Hypothesis &hypothesis) const
 {
     // Somehow g++ 4.3.4 can not find function in the base class
     return Chi2Discriminator::calculate(fabs(dphi(hypothesis.ltop, hypothesis.htop)));
 }
 
+uint32_t DeltaPhiDiscriminator::id() const
+{
+    return core::ID<DeltaPhiDiscriminator>::get();
+}
+
+DeltaPhiDiscriminator::ObjectPtr DeltaPhiDiscriminator::clone() const
+{
+    return ObjectPtr(new DeltaPhiDiscriminator(*this));
+}
+
+
+
+// -- Ltop Delta R sum discriminator -------------------------------------------
+//
 float LtopDeltaRSumDiscriminator::calculate(const Chi2Hypothesis &hypothesis)
     const
 {
@@ -1203,6 +1273,21 @@ float LtopDeltaRSumDiscriminator::calculate(const Chi2Hypothesis &hypothesis)
                                         dr(top, hypothesis.ltop_jet));
 }
 
+uint32_t LtopDeltaRSumDiscriminator::id() const
+{
+    return core::ID<LtopDeltaRSumDiscriminator>::get();
+}
+
+LtopDeltaRSumDiscriminator::ObjectPtr LtopDeltaRSumDiscriminator::clone() const
+{
+    return ObjectPtr(new LtopDeltaRSumDiscriminator(*this));
+}
+
+
+
+
+// -- Htop Delta R sum discriminator -------------------------------------------
+//
 float HtopDeltaRSumDiscriminator::calculate(const Chi2Hypothesis &hypothesis)
     const
 {
@@ -1221,20 +1306,42 @@ float HtopDeltaRSumDiscriminator::calculate(const Chi2Hypothesis &hypothesis)
     return Chi2Discriminator::calculate(discriminator);
 }
 
-Chi2Hypothesis::Chi2Hypothesis(const DecayHypothesis *hypothesis):
-    valid(false),
-    ltop_chi2(FLT_MAX),
-    htop_chi2(FLT_MAX)
+uint32_t HtopDeltaRSumDiscriminator::id() const
 {
-    if (hypothesis)
-    {
-        ltop_jets = hypothesis->leptonic;
-        htop_jets = hypothesis->hadronic;
-    }
+    return core::ID<HtopDeltaRSumDiscriminator>::get();
 }
+
+HtopDeltaRSumDiscriminator::ObjectPtr HtopDeltaRSumDiscriminator::clone() const
+{
+    return ObjectPtr(new HtopDeltaRSumDiscriminator(*this));
+}
+
+
 
 // -- Reconstruction with ltop/htop chi2 ---------------------------------------
 //
+Chi2ResonanceReconstructor::Chi2ResonanceReconstructor(
+        const Chi2ResonanceReconstructor &object)
+{
+    for(Chi2Discriminators::const_iterator ltop =
+            object._ltop_discriminators.begin();
+        object._ltop_discriminators.end() != ltop;
+        ++ltop)
+    {
+        _ltop_discriminators.push_back(
+                dynamic_pointer_cast<Chi2Discriminator>((*ltop)->clone()));
+    }
+
+    for(Chi2Discriminators::const_iterator htop =
+            object._htop_discriminators.begin();
+        object._htop_discriminators.end() != htop;
+        ++htop)
+    {
+        _htop_discriminators.push_back(
+                dynamic_pointer_cast<Chi2Discriminator>((*htop)->clone()));
+    }
+}
+
 uint32_t Chi2ResonanceReconstructor::id() const
 {
     return core::ID<Chi2ResonanceReconstructor>::get();
@@ -1251,18 +1358,16 @@ void Chi2ResonanceReconstructor::print(std::ostream &out) const
     out << "Chi2ResonanceReconstructor" << endl;
 }
 
-void Chi2ResonanceReconstructor::addLtopDiscriminator(
-        const Chi2DiscriminatorPtr &discriminator)
+void Chi2ResonanceReconstructor::setLtopDiscriminators(
+        const Chi2Discriminators &discriminators)
 {
-    if (discriminator)
-        _ltop_discriminators.push_back(discriminator);
+    _ltop_discriminators = discriminators;
 }
 
-void Chi2ResonanceReconstructor::addHtopDiscriminator(
-        const Chi2DiscriminatorPtr &discriminator)
+void Chi2ResonanceReconstructor::setHtopDiscriminators(
+        const Chi2Discriminators &discriminators)
 {
-    if (discriminator)
-        _htop_discriminators.push_back(discriminator);
+    _htop_discriminators = discriminators;
 }
 
 Chi2ResonanceReconstructor::Mttbar Chi2ResonanceReconstructor::run(
