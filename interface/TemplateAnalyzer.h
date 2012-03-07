@@ -253,6 +253,10 @@ namespace bsm
             const H2Ptr htopPtvsNjets() const;
             const H2Ptr htopPtvsLtoppt() const;
 
+            const H1Ptr ltop_drsum() const;
+            const H1Ptr htop_drsum() const;
+            const H1Ptr htop_dphi() const;
+
             const P4MonitorPtr firstJet() const;
             const P4MonitorPtr secondJet() const;
             const P4MonitorPtr thirdJet() const;
@@ -356,6 +360,10 @@ namespace bsm
             H2ProxyPtr _htop_pt_vs_m;
             H2ProxyPtr _htop_pt_vs_njets;
             H2ProxyPtr _htop_pt_vs_ltop_pt;
+
+            H1ProxyPtr _ltop_drsum;
+            H1ProxyPtr _htop_drsum;
+            H1ProxyPtr _htop_dphi;
 
             const Event *_event;
 

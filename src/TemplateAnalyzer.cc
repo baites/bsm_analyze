@@ -473,6 +473,15 @@ TemplateAnalyzer::TemplateAnalyzer():
     _htop_pt_vs_ltop_pt.reset(new H2Proxy(1000, 0, 1, 1000, 0, 1));
     monitor(_htop_pt_vs_ltop_pt);
 
+    _ltop_drsum.reset(new H1Proxy(50, 0, 5));
+    monitor(_ltop_drsum);
+
+    _htop_drsum.reset(new H1Proxy(50, 0, 5));
+    monitor(_htop_drsum);
+
+    _htop_dphi.reset(new H1Proxy(80, -4, 4));
+    monitor(_htop_dphi);
+
     _event = 0;
 
     _first_jet.reset(new P4Monitor());
@@ -683,6 +692,18 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
     _htop_pt_vs_ltop_pt = dynamic_pointer_cast<H2Proxy>(
             object._htop_pt_vs_ltop_pt->clone());
     monitor(_htop_pt_vs_ltop_pt);
+
+    _ltop_drsum = dynamic_pointer_cast<H1Proxy>(
+            object._ltop_drsum->clone());
+    monitor(_ltop_drsum);
+
+    _htop_drsum = dynamic_pointer_cast<H1Proxy>(
+            object._htop_drsum->clone());
+    monitor(_htop_drsum);
+
+    _htop_dphi = dynamic_pointer_cast<H1Proxy>(
+            object._htop_dphi->clone());
+    monitor(_htop_dphi);
 
     _event = 0;
 
@@ -1019,6 +1040,21 @@ const TemplateAnalyzer::H2Ptr TemplateAnalyzer::htopPtvsLtoppt() const
     return _htop_pt_vs_ltop_pt->histogram();
 }
 
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::ltop_drsum() const
+{
+    return _ltop_drsum->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::htop_drsum() const
+{
+    return _htop_drsum->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::htop_dphi() const
+{
+    return _htop_dphi->histogram();
+}
+
 const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::firstJet() const
 {
     return _first_jet;
@@ -1228,12 +1264,36 @@ void TemplateAnalyzer::process(const Event *event)
         if (_synch_selector->reconstruction(resonance.valid)
                && _synch_selector->ltop(pt(resonance.ltop)))
         {
+            const LorentzVector &el_p4 = _synch_selector->goodElectrons()[0]->physics_object().p4();
+
+            // fill ltop drsum
+            //
+            ltop_drsum()->fill(dr(resonance.ltop, el_p4) +
+                                   dr(resonance.ltop, resonance.neutrino) +
+                                   dr(resonance.ltop, resonance.ltop_jet),
+                               _pileup_weight * _wjets_weight);
+
+            if (1 < resonance.htop_jets.size())
+            {
+                float drsum = 0;
+                for(ResonanceReconstructor::CorrectedJets::const_iterator jet =
+                            resonance.htop_jets.begin();
+                        resonance.htop_jets.end() != jet;
+                        ++jet)
+                {
+                    drsum += dr(resonance.htop, *jet->corrected_p4);
+                }
+                htop_drsum()->fill(drsum, _pileup_weight * _wjets_weight);
+            }
+
+            htop_dphi()->fill(dphi(resonance.htop, resonance.ltop),
+                    _pileup_weight * _wjets_weight);
+
             mttbarAfterHtlep()->fill(mass(resonance.mttbar) / 1000,
                     _pileup_weight * _wjets_weight);
 
             ttbarPt()->fill(pt(resonance.mttbar), _pileup_weight * _wjets_weight);
 
-            const LorentzVector &el_p4 = _synch_selector->goodElectrons()[0]->physics_object().p4();
             wlepMt()->fill(mt(resonance.neutrino, el_p4),
                     _pileup_weight * _wjets_weight);
 
@@ -1496,7 +1556,6 @@ float TemplateAnalyzer::htlepValue() const
 
     return pt(*_synch_selector->goodMET()) + pt(lepton_p4);
 }
-
 
 float TemplateAnalyzer::htallValue() const
 {
