@@ -251,6 +251,8 @@ void TemplatesOptions::setChi2Reconstruction(const string &value)
 
     Discriminators ltop_split = split(matches[1]);
 
+    cout << "[Chi2 ltop discriminators]" << endl;
+
     Chi2ResonanceReconstructor::Chi2Discriminators ltop;
     for(Discriminators::const_iterator discriminator = ltop_split.begin();
             ltop_split.end() != discriminator;
@@ -273,10 +275,17 @@ void TemplatesOptions::setChi2Reconstruction(const string &value)
         {
             cerr << "Unsupported discriminator is used in ltop: "
                 << discriminator->first << endl;
+
+            continue;
         }
+
+        cout << "  " << discriminator->first << endl;
     }
+    cout << endl;
 
     Discriminators htop_split = split(matches[2]);
+
+    cout << "[Chi2 htop discriminators]" << endl;
 
     Chi2ResonanceReconstructor::Chi2Discriminators htop;
     for(Discriminators::const_iterator discriminator = htop_split.begin();
@@ -306,8 +315,14 @@ void TemplatesOptions::setChi2Reconstruction(const string &value)
         {
             cerr << "Unsupported discriminator is used in htop: "
                 << discriminator->first << endl;
+
+            continue;
         }
+
+        cout << "  " << discriminator->first << endl;
     }
+
+    cout << endl;
 
     delegate()->setChi2Reconstruction(ltop, htop);
 }
@@ -316,7 +331,7 @@ TemplatesOptions::Discriminators TemplatesOptions::split(const string &line)
 {
     Discriminators result;
 
-    regex delimeters("#");
+    regex delimeters("\\+");
     for(sregex_token_iterator token(line.begin(),
                                     line.end(),
                                     delimeters,
@@ -481,6 +496,15 @@ TemplateAnalyzer::TemplateAnalyzer():
 
     _htop_dphi.reset(new H1Proxy(80, -4, 4));
     monitor(_htop_dphi);
+
+    _chi2.reset(new H1Proxy(1000, 0, 100));
+    monitor(_chi2);
+
+    _ltop_chi2.reset(new H1Proxy(600, 0, 60));
+    monitor(_ltop_chi2);
+
+    _htop_chi2.reset(new H1Proxy(400, 0, 40));
+    monitor(_htop_chi2);
 
     _event = 0;
 
@@ -704,6 +728,15 @@ TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
     _htop_dphi = dynamic_pointer_cast<H1Proxy>(
             object._htop_dphi->clone());
     monitor(_htop_dphi);
+
+    _chi2 = dynamic_pointer_cast<H1Proxy>(object._chi2->clone());
+    monitor(_chi2);
+
+    _ltop_chi2 = dynamic_pointer_cast<H1Proxy>(object._ltop_chi2->clone());
+    monitor(_ltop_chi2);
+
+    _htop_chi2 = dynamic_pointer_cast<H1Proxy>(object._htop_chi2->clone());
+    monitor(_htop_chi2);
 
     _event = 0;
 
@@ -1055,6 +1088,21 @@ const TemplateAnalyzer::H1Ptr TemplateAnalyzer::htop_dphi() const
     return _htop_dphi->histogram();
 }
 
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::chi2() const
+{
+    return _chi2->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::ltop_chi2() const
+{
+    return _ltop_chi2->histogram();
+}
+
+const TemplateAnalyzer::H1Ptr TemplateAnalyzer::htop_chi2() const
+{
+    return _htop_chi2->histogram();
+}
+
 const TemplateAnalyzer::P4MonitorPtr TemplateAnalyzer::firstJet() const
 {
     return _first_jet;
@@ -1287,6 +1335,16 @@ void TemplateAnalyzer::process(const Event *event)
             }
 
             htop_dphi()->fill(dphi(resonance.htop, resonance.ltop),
+                    _pileup_weight * _wjets_weight);
+
+            chi2()->fill(resonance.ltop_discriminator +
+                            resonance.htop_discriminator,
+                    _pileup_weight * _wjets_weight);
+
+            ltop_chi2()->fill(resonance.ltop_discriminator,
+                    _pileup_weight * _wjets_weight);
+
+            htop_chi2()->fill(resonance.htop_discriminator,
                     _pileup_weight * _wjets_weight);
 
             mttbarAfterHtlep()->fill(mass(resonance.mttbar) / 1000,

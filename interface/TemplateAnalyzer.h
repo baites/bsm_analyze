@@ -257,6 +257,10 @@ namespace bsm
             const H1Ptr htop_drsum() const;
             const H1Ptr htop_dphi() const;
 
+            const H1Ptr chi2() const;
+            const H1Ptr ltop_chi2() const;
+            const H1Ptr htop_chi2() const;
+
             const P4MonitorPtr firstJet() const;
             const P4MonitorPtr secondJet() const;
             const P4MonitorPtr thirdJet() const;
@@ -364,6 +368,10 @@ namespace bsm
             H1ProxyPtr _ltop_drsum;
             H1ProxyPtr _htop_drsum;
             H1ProxyPtr _htop_dphi;
+
+            H1ProxyPtr _chi2;
+            H1ProxyPtr _htop_chi2;
+            H1ProxyPtr _ltop_chi2;
 
             const Event *_event;
 
