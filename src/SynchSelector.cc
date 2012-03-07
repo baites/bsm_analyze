@@ -848,6 +848,37 @@ bool SynchSelector::jets(const Event *event)
         _top_jets.push_back(correction);
     }
 
+    /* for(Jets::const_iterator jet = event->ca_toptag_jet().begin();
+            event->ca_toptag_jet().end() != jet;
+            ++jet)
+    {
+        CorrectedJet correction = _jec->correctJet(&*jet,
+                event,
+                _good_electrons,
+                _good_muons,
+                met);
+
+        // Skip jet if energy corrections failed
+        //
+        if (!correction.corrected_p4)
+            continue;
+
+        // Store top tagged jets
+        //
+        if (!jet->has_toptag())
+            continue;
+
+        const Jet_TopTag & toptag = jet->toptag();
+        if (!(
+            toptag.n_subjets() > 2 &&
+            toptag.min_mass() > 50 &&
+            toptag.top_mass() > 140 &&
+            toptag.top_mass() < 250
+        )) continue;
+
+        _top_jets.push_back(correction);
+    }*/
+
     // Sort jets by pT
     //
     sort(_nice_jets.begin(), _nice_jets.end(), CorrectedPtGreater());

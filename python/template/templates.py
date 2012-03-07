@@ -54,8 +54,12 @@ class Templates(object):
     def run(self, args):
         # Create dictionary of arguments with key - arg name, value - arg value
         args = [x.split(':') for x in args if ':' in x]
-        args = {key.strip(): set(x.strip() for x in values.split(','))
-                    for key, values in args}
+
+        temp = {}
+        for key, values in args:
+            temp[key] = set(x.strip() for x in values.split(','))
+
+        args = temp
 
         self.use_plots, self.ban_plots = map(list,
                 split_use_and_ban(args.get("plots", [])))
@@ -102,7 +106,7 @@ class Templates(object):
     @Timer(label = "[load all channels]", verbose = True)
     def __load_channels(self):
         # Create and configure new loader
-        self.loader = ChannelTemplateLoader("output_signal_p150_hlt.root")
+        self.loader = ChannelTemplateLoader("output_signal_p150_1toptag.root")
 
         self.loader.use_plots = self.use_plots
         self.loader.ban_plots = self.ban_plots
