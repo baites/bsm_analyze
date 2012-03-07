@@ -176,6 +176,8 @@ namespace bsm
                 Mttbar():
                     htop_njets(0),
                     solutions(0),
+                    ltop_discriminator(0),
+                    htop_discriminator(0),
                     valid(false)
                 {
                 }
@@ -196,12 +198,15 @@ namespace bsm
                 int htop_njets;
                 int solutions;
 
+                float ltop_discriminator;
+                float htop_discriminator;
+
                 bool valid;
             };
 
-            Mttbar run(const LorentzVector &lepton,
-                       const LorentzVector &met,
-                       const SynchSelector::GoodJets &) const;
+            virtual Mttbar run(const LorentzVector &lepton,
+                               const LorentzVector &met,
+                               const SynchSelector::GoodJets &) const;
 
             // Object interface
             //
@@ -498,6 +503,170 @@ namespace bsm
                     const LorentzVector &lepton,
                     const LorentzVector &neutrino,
                     const LorentzVector &jet) const;
+    };
+
+    struct Chi2Hypothesis
+    {
+        typedef DecayGenerator<CorrectedJet>::Hypothesis DecayHypothesis;
+        typedef DecayHypothesis::Iterators Iterators;
+
+        Chi2Hypothesis(const DecayHypothesis *decay_hypothesis = 0);
+
+        bool valid;
+
+        float ltop_chi2;
+        LorentzVector ltop;
+        LorentzVector lepton;
+        LorentzVector neutrino;
+        LorentzVector ltop_jet;
+        Iterators ltop_jets;
+
+        float htop_chi2;
+        LorentzVector htop;
+        Iterators htop_jets;
+    };
+
+    class Chi2Discriminator: public core::Object
+    {
+        public:
+            Chi2Discriminator(const float &mean, const float &sigma):
+                _mean(mean),
+                _sigma(sigma)
+            {
+            }
+
+            virtual ~Chi2Discriminator()
+            {
+            }
+
+            virtual float calculate(const Chi2Hypothesis &) const = 0;
+
+            // Object interface
+            //
+            virtual uint32_t id() const;
+
+            virtual void print(std::ostream &) const;
+
+        protected:
+            virtual float calculate(const float &value) const
+            {
+                return pow((value - _mean) / _sigma, 2);
+            }
+
+        private:
+            const float _mean;
+            const float _sigma;
+    };
+
+    class LtopMassDiscriminator: public Chi2Discriminator
+    {
+        public:
+            LtopMassDiscriminator(const float &mean, const float &sigma):
+                Chi2Discriminator(mean, sigma)
+            {
+            }
+
+            virtual float calculate(const Chi2Hypothesis &hypothesis) const;
+
+            // Object interface
+            //
+            virtual uint32_t id() const;
+            virtual ObjectPtr clone() const;
+    };
+
+    class HtopMassDiscriminator: public Chi2Discriminator
+    {
+        public:
+            HtopMassDiscriminator(const float &mean, const float &sigma):
+                Chi2Discriminator(mean, sigma)
+            {
+            }
+
+            virtual float calculate(const Chi2Hypothesis &hypothesis) const;
+
+            // Object interface
+            //
+            virtual uint32_t id() const;
+            virtual ObjectPtr clone() const;
+    };
+
+    class DeltaPhiDiscriminator: public Chi2Discriminator
+    {
+        public:
+            DeltaPhiDiscriminator(const float &mean, const float &sigma):
+                Chi2Discriminator(mean, sigma)
+            {
+            }
+
+            virtual float calculate(const Chi2Hypothesis &hypothesis) const;
+
+            // Object interface
+            //
+            virtual uint32_t id() const;
+            virtual ObjectPtr clone() const;
+    };
+
+    class LtopDeltaRSumDiscriminator: public Chi2Discriminator
+    {
+        public:
+            LtopDeltaRSumDiscriminator(const float &mean, const float &sigma):
+                Chi2Discriminator(mean, sigma)
+            {
+            }
+
+            virtual float calculate(const Chi2Hypothesis &hypothesis) const;
+
+            // Object interface
+            //
+            virtual uint32_t id() const;
+            virtual ObjectPtr clone() const;
+    };
+
+    class HtopDeltaRSumDiscriminator: public Chi2Discriminator
+    {
+        public:
+            HtopDeltaRSumDiscriminator(const float &mean, const float &sigma):
+                Chi2Discriminator(mean, sigma)
+            {
+            }
+
+            virtual float calculate(const Chi2Hypothesis &hypothesis) const;
+
+            // Object interface
+            //
+            virtual uint32_t id() const;
+            virtual ObjectPtr clone() const;
+    };
+
+    class Chi2ResonanceReconstructor: public SimpleResonanceReconstructor
+    {
+        public:
+            typedef boost::shared_ptr<Chi2Discriminator> Chi2DiscriminatorPtr;
+            typedef std::vector<Chi2DiscriminatorPtr> Chi2Discriminators;
+            
+            Chi2ResonanceReconstructor()
+            {
+            }
+
+            Chi2ResonanceReconstructor(const Chi2ResonanceReconstructor &object);
+
+            // Object interface
+            //
+            virtual uint32_t id() const;
+            virtual ObjectPtr clone() const;
+
+            virtual void print(std::ostream &) const;
+
+            virtual Mttbar run(const LorentzVector &lepton,
+                               const LorentzVector &met,
+                               const SynchSelector::GoodJets &) const;
+
+            void setLtopDiscriminators(const Chi2Discriminators &);
+            void setHtopDiscriminators(const Chi2Discriminators &);
+
+        private:
+            Chi2Discriminators _ltop_discriminators;
+            Chi2Discriminators _htop_discriminators;
     };
 }
 

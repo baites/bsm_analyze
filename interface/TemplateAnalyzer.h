@@ -12,6 +12,7 @@
 
 #include <iosfwd>
 #include <map>
+#include <utility>
 
 #include <boost/shared_ptr.hpp>
 
@@ -127,6 +128,14 @@ namespace bsm
             virtual void setReconstructionWithCollimatedTops()
             {
             }
+
+            typedef Chi2ResonanceReconstructor::Chi2Discriminators
+                Chi2Discriminators;
+
+            virtual void setChi2Reconstruction(const Chi2Discriminators &ltop,
+                                               const Chi2Discriminators &htop)
+            {
+            }
     };
 
     class TemplatesOptions : public Options
@@ -154,10 +163,16 @@ namespace bsm
             void setCollimatedSimpleReconstructionWithMass();
             void setCollimatedSimpleReconstructionWithTopMass();
             void setReconstructionWithCollimatedTops();
+            void setChi2Reconstruction(const std::string &);
 
             TemplatesDelegate *_delegate;
 
             DescriptionPtr _description;
+
+            typedef std::pair<float, float> Values;
+            typedef std::map<std::string, Values> Discriminators;
+
+            Discriminators split(const std::string &line);
     };
 
     class TemplateAnalyzer : public Analyzer,
@@ -190,6 +205,8 @@ namespace bsm
             virtual void setCollimatedSimpleReconstructionWithMass();
             virtual void setCollimatedSimpleReconstructionWithTopMass();
             virtual void setReconstructionWithCollimatedTops();
+            virtual void setChi2Reconstruction(const Chi2Discriminators &ltop,
+                                               const Chi2Discriminators &htop);
 
             const H1Ptr cutflow() const;
 
@@ -235,6 +252,10 @@ namespace bsm
             const H2Ptr htopPtvsM() const;
             const H2Ptr htopPtvsNjets() const;
             const H2Ptr htopPtvsLtoppt() const;
+
+            const H1Ptr ltop_drsum() const;
+            const H1Ptr htop_drsum() const;
+            const H1Ptr htop_dphi() const;
 
             const P4MonitorPtr firstJet() const;
             const P4MonitorPtr secondJet() const;
@@ -339,6 +360,10 @@ namespace bsm
             H2ProxyPtr _htop_pt_vs_m;
             H2ProxyPtr _htop_pt_vs_njets;
             H2ProxyPtr _htop_pt_vs_ltop_pt;
+
+            H1ProxyPtr _ltop_drsum;
+            H1ProxyPtr _htop_drsum;
+            H1ProxyPtr _htop_dphi;
 
             const Event *_event;
 
