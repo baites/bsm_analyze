@@ -83,6 +83,9 @@ class InputInfo(object):
         "/htop/pt": InputData(units = __momentum_units, rebin = 25, title = "p_{T}^{htop}"),
         "/Electron/pt": InputData(units = __momentum_units, rebin = 25, title = "p_{T}^{e}"),
         "/Electron/mass": InputData(units = __mass_units, title = "M^{e}"),
+        "/chi2": InputData(rebin = 10, title = "#Chi^{2}_{t#bar{t}}"),
+        "/ltop_chi2": InputData(rebin = 10, title = "#Chi^{2}_{ltop}"),
+        "/htop_chi2": InputData(rebin = 10, title = "#Chi^{2}_{htop}"),
             }
 
     @property
