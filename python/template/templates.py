@@ -188,6 +188,7 @@ class Templates(object):
                     key.upper(),
                     value[0])
                 for key, value in self.fractions.items()))
+            print()
 
     def __apply_fractions(self):
         mc_fraction = self.fractions["mc"][0]
@@ -208,8 +209,10 @@ class Templates(object):
                 mc_channel = channels["mc"]
                 qcd_channel = channels["qcd"]
 
-                qcd_channel.hist.Scale(qcd_fraction * data_integral /
-                                       qcd_channel.hist.Integral())
+                qcd_scale = (qcd_fraction * data_integral /
+                             qcd_channel.hist.Integral())
+
+                qcd_channel.hist.Scale(qcd_scale)
 
                 mc_scale = (mc_fraction * data_integral /
                             mc_channel.hist.Integral())
@@ -221,6 +224,12 @@ class Templates(object):
                     channel = channels.get(channel_type)
                     if channel:
                         channel.hist.Scale(mc_scale)
+
+                if "/mttbar_after_htlep" == plot:
+                    print("{0:-<80}".format("-- [MTTBAR scales] "),
+                          "MC : {0:.2f}".format(mc_scale),
+                          "QCD: {0:.2f}".format(qcd_scale),
+                          "", sep = "\n")
 
             except RuntimeError as error:
                 print("failed to apply TFractionFitter scales - {0}".format(error),
