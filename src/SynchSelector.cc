@@ -66,6 +66,10 @@ SynchSelectorOptions::SynchSelectorOptions()
              boost::bind(&SynchSelectorOptions::setQCDTemplate, this, _1)),
          "derived a qcd template")   
 
+        ("ltop-pt",
+         po::value<float>()->notifier(
+             boost::bind(&SynchSelectorOptions::setLtopPt, this, _1)),
+         "set min value of ltop pt")
 
         ("ltop-chi2",
          po::value<float>()->notifier(
@@ -162,6 +166,17 @@ void SynchSelectorOptions::setQCDTemplate(const bool &value)
         return;
 
     delegate()->setQCDTemplate(value);
+}
+
+void SynchSelectorOptions::setLtopPt(const float &value)
+{
+    if (!delegate())
+        return;
+
+    if (0 > value)
+        throw runtime_error("negative ltop pt is not allowed");
+
+    delegate()->setLtopPt(value);
 }
 
 void SynchSelectorOptions::setLtopChi2Discriminator(const float &value)
@@ -568,6 +583,11 @@ void SynchSelector::setElectronPt(const float &value)
 void SynchSelector::setQCDTemplate(const bool &value)
 {
     _qcd_template = value;
+}
+
+void SynchSelector::setLtopPt(const float &value)
+{
+    ltop()->setValue(value);
 }
 
 void SynchSelector::setLtopChi2Discriminator(const float &value)

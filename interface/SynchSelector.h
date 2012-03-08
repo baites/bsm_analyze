@@ -50,6 +50,10 @@ namespace bsm
             virtual void setElectronPt(const float &) {}
             virtual void setQCDTemplate(const bool &) {}
 
+            virtual void setLtopPt(const float &)
+            {
+            }
+
             virtual void setLtopChi2Discriminator(const float &)
             {
             }
@@ -78,6 +82,8 @@ namespace bsm
             void setMinBtag(const float &);
             void setElectronPt(const float &);
             void setQCDTemplate(const bool &);
+
+            void setLtopPt(const float &);
 
             void setLtopChi2Discriminator(const float &);
             void setHtopChi2Discriminator(const float &);
@@ -182,6 +188,8 @@ namespace bsm
             virtual void setMinBtag(const float &);
             virtual void setElectronPt(const float &);
             virtual void setQCDTemplate(const bool &);
+
+            virtual void setLtopPt(const float &);
 
             virtual void setLtopChi2Discriminator(const float &);
             virtual void setHtopChi2Discriminator(const float &);
