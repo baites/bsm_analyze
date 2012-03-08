@@ -389,7 +389,7 @@ class Templates(object):
                 if channel_type.startswith("zprime"):
                     obj.legend.AddEntry(channel.hist,
                             self.channel_names.get(channel_type, "unknown signal"),
-                            "lpe")
+                            "l")
                     channel.hist.Draw("9 hist same")
 
             # Draw Labels and Legend
