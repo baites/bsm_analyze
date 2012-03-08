@@ -55,6 +55,10 @@ class Templates(object):
         self.fractions = dict.fromkeys(["mc", "qcd"])
 
     def run(self):
+        # Apply TDR style to all plots
+        style = root.style.tdr()
+        style.cd()
+
         parser = OptionParser(
                 usage = "usage: %prog [options] [plots:A,B,C] [folders:A,B,C] "
                         "[channels:A,B,C]")
@@ -207,6 +211,45 @@ class Templates(object):
         fitter.GetResult(1, fraction, fraction_error)
         self.fractions["qcd"] = [fraction[0], fraction_error[0]]
 
+        fitter_plot = fitter.GetPlot().Clone()
+        qcd = met["qcd"].hist.Clone()
+        mc = met["mc"].hist.Clone()
+        data = met["data"].hist.Clone()
+
+        qcd.Scale(self.fractions["qcd"][0] * data.Integral() / qcd.Integral())
+        mc.Scale(self.fractions["mc"][0] * data.Integral() / mc.Integral())
+
+        fitter_plot.SetLineStyle(2)
+        fitter_plot.SetLineColor(33)
+        fitter_plot.SetLineWidth(5)
+
+        legend = ROOT.TLegend(.67, .60, .89, .88)
+        legend.SetMargin(0.12);
+        legend.SetTextSize(0.03);
+        legend.SetFillColor(10);
+        legend.SetBorderSize(0);
+
+        canvas = ROOT.TCanvas("met_fit", "met_fit", 640, 480)
+        pad = canvas.cd(1)
+
+        pad.SetLeftMargin(0.2)
+        pad.SetBottomMargin(0.15)
+
+        fitter_plot.Draw("hist 9")
+        data.Draw("e 9 same")
+        mc.Draw("hist same 9")
+        qcd.Draw("hist same 9")
+
+        legend.AddEntry(data, "Data 2011", "le")
+        legend.AddEntry(qcd, "QCD data-driven", "fe")
+        legend.AddEntry(mc, "Monte-Carlo", "fe")
+        legend.AddEntry(fitter_plot, "Fit", "l")
+
+        legend.Draw("9 same")
+
+        canvas.SaveAs("met_fit.pdf")
+
+
         # Print found fractions
         if self.__verbose:
             print('\n'.join("{0:>3} Fraction: {1:.3f}".format(
@@ -262,10 +305,6 @@ class Templates(object):
 
     @Timer(label = "[plot templates]", verbose = True)
     def __plot(self):
-        # Apply TDR style to all plots
-        style = root.style.tdr()
-        style.cd()
-
         # container where all canvas related objects will be saved
         class Canvas: pass
 
