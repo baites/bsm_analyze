@@ -1310,7 +1310,10 @@ void TemplateAnalyzer::process(const Event *event)
         Mttbar resonance = mttbar();
 
         if (_synch_selector->reconstruction(resonance.valid)
-               && _synch_selector->ltop(pt(resonance.ltop)))
+                && _synch_selector->ltop(pt(resonance.ltop))
+                && _synch_selector->ltop_chi2(resonance.ltop_discriminator)
+                && _synch_selector->htop_chi2(resonance.htop_discriminator))
+
         {
             const LorentzVector &el_p4 = _synch_selector->goodElectrons()[0]->physics_object().p4();
 
