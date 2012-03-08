@@ -17,7 +17,6 @@ import sys
 from channel_template import MCChannelTemplate
 from input_template import InputTemplate
 from loader import ChannelTemplateLoader
-from optparse import OptionParser
 from root.comparison import ComparisonCanvas
 from scales import Scales
 from util.arg import split_use_and_ban
@@ -56,32 +55,10 @@ class Templates(object):
         self.fractions = dict.fromkeys(["mc", "qcd"])
         self.scales = None
 
-    def run(self):
+    def run(self, options, args):
         # Apply TDR style to all plots
         style = root.style.tdr()
         style.cd()
-
-        parser = OptionParser(
-                usage = "usage: %prog [options] [plots:A,B,C] [folders:A,B,C] "
-                        "[channels:A,B,C]")
-
-        parser.add_option("-b", "--batch",
-            action = "store_true", default = False,
-            help = "Run application in batch mode")
-
-        parser.add_option("-v", "--verbose",
-            action = "store_true", default = False,
-            help = "Print additional info")
-
-        parser.add_option("--filename",
-            action = "store", default = self.__input_filename,
-            help = "input filename")
-
-        parser.add_option("--scales",
-            action = "store", 
-            help = "scales filename")
-
-        options, args = parser.parse_args()
 
         self.__verbose = options.verbose
         self.__batch_mode = options.batch
