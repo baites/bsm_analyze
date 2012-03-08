@@ -10,14 +10,10 @@ from __future__ import print_function
 import sys
 import templates
 
-def usage(argv):
-    return ("usage: {0} [plots:A,B,C] [folders:A,B,C] "
-            "[channels:A,B,C]").format(argv[0])
-
-def main(argv = sys.argv):
+def main():
     try:
-        app = templates.Templates(verbose = True)
-        app.run(argv[1:])
+        app = templates.Templates()
+        app.run()
 
     except Exception as error:
         # print Exception traceback for debug

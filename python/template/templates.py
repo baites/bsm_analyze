@@ -18,6 +18,7 @@ import sys
 from channel_template import MCChannelTemplate
 from input_template import InputTemplate
 from loader import ChannelTemplateLoader
+from optparse import OptionParser
 from root.comparison import ComparisonCanvas
 from util.arg import split_use_and_ban
 from util.timer import Timer
@@ -37,8 +38,9 @@ class Templates(object):
             "zprime_m4000_w40": "Z' 4 TeV/c^{2}"
     }
 
-    def __init__(self, verbose = False):
-        self.__verbose = verbose
+    def __init__(self):
+        self.__verbose = False
+        self.__batch_mode = False
 
         self.use_plots = []
         self.ban_plots = []
@@ -51,7 +53,24 @@ class Templates(object):
         self.loader = None
         self.fractions = dict.fromkeys(["mc", "qcd"])
 
-    def run(self, args):
+    def run(self):
+        parser = OptionParser(
+                usage = "usage: %prog [options] [plots:A,B,C] [folders:A,B,C] "
+                        "[channels:A,B,C]")
+
+        parser.add_option("-b", "--batch",
+            action = "store_true", default = False,
+            help = "Run application in batch mode")
+
+        parser.add_option("-v", "--verbose",
+            action = "store_true", default = False,
+            help = "Print additional info")
+
+        options, args = parser.parse_args()
+
+        self.__verbose = options.verbose
+        self.__batch_mode = options.batch
+
         # Create dictionary of arguments with key - arg name, value - arg value
         args = [x.split(':') for x in args if ':' in x]
         args = {key.strip(): set(x.strip() for x in values.split(','))
@@ -96,7 +115,7 @@ class Templates(object):
         for obj in canvases:
             obj.canvas.SaveAs("{0}.pdf".format(obj.canvas.GetName()))
 
-        if canvases:
+        if canvases and not self.__batch_mode:
             raw_input('enter')
 
     @Timer(label = "[load all channels]", verbose = True)
