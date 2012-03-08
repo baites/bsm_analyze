@@ -9,7 +9,6 @@ from __future__ import division, print_function
 
 import compare
 import channel_type
-import numpy
 import root.label
 import root.style
 import ROOT
@@ -202,14 +201,14 @@ class Templates(object):
             raise RuntimeError("fitter error {0}".format(fit_status))
 
         # Extract MC and QCD fractions from TFractionFitter
-        fraction = numpy.zeros(1, dtype = float)
-        fraction_error = numpy.zeros(1, dtype = float)
+        fraction = ROOT.Double(0)
+        fraction_error = ROOT.Double(0)
 
         fitter.GetResult(0, fraction, fraction_error)
-        self.fractions["mc"] = [fraction[0], fraction_error[0]]
+        self.fractions["mc"] = map(float, [fraction, fraction_error])
 
         fitter.GetResult(1, fraction, fraction_error)
-        self.fractions["qcd"] = [fraction[0], fraction_error[0]]
+        self.fractions["qcd"] = map(float, [fraction, fraction_error])
 
         fitter_plot = fitter.GetPlot().Clone()
         qcd = met["qcd"].hist.Clone()
