@@ -156,6 +156,7 @@ namespace bsm
             const GoodMuons &goodMuons() const;
             const GoodJets &niceJets() const;
             const GoodJets &goodJets() const;
+            const GoodJets &caJets() const;
             const GoodJets &topJets() const;
             const GoodMET &goodMET() const;
             GoodJets::const_iterator closestJet() const;
@@ -267,6 +268,7 @@ namespace bsm
             GoodMuons _good_muons;
             GoodJets _nice_jets; // pT > 25
             GoodJets _good_jets; // pT > 50
+            GoodJets _ca_jets;
             GoodJets _top_jets; // to tagged jets
             GoodJets::const_iterator _closest_jet;
             GoodMET _good_met;

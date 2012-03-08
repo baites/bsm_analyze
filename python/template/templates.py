@@ -106,7 +106,7 @@ class Templates(object):
     @Timer(label = "[load all channels]", verbose = True)
     def __load_channels(self):
         # Create and configure new loader
-        self.loader = ChannelTemplateLoader("output_signal_p150_1toptag.root")
+        self.loader = ChannelTemplateLoader("output_signal_p150.root")
 
         self.loader.use_plots = self.use_plots
         self.loader.ban_plots = self.ban_plots
@@ -177,14 +177,19 @@ class Templates(object):
             raise RuntimeError("fitter error {0}".format(fit_status))
 
         # Extract MC and QCD fractions from TFractionFitter
-        fraction = numpy.zeros(1, dtype = float)
-        fraction_error = numpy.zeros(1, dtype = float)
+        # fraction = numpy.zeros(1, dtype = float)
+        # fraction_error = numpy.zeros(1, dtype = float)
+
+        fraction = ROOT.Double(0.0)
+        fraction_error = ROOT.Double(0.0)
 
         fitter.GetResult(0, fraction, fraction_error)
-        self.fractions["mc"] = [fraction[0], fraction_error[0]]
+        # self.fractions["mc"] = [fraction[0], fraction_error[0]]
+        self.fractions["mc"] = [float(fraction), float(fraction_error)]
 
         fitter.GetResult(1, fraction, fraction_error)
-        self.fractions["qcd"] = [fraction[0], fraction_error[0]]
+        # self.fractions["qcd"] = [fraction[0], fraction_error[0]]
+        self.fractions["qcd"] = [float(fraction), float(fraction_error)]
 
         # Print found fractions
         if self.__verbose:
@@ -384,7 +389,7 @@ class Templates(object):
                 if channel_type.startswith("zprime"):
                     obj.legend.AddEntry(channel.hist,
                             self.channel_names.get(channel_type, "unknown signal"),
-                            "lpe")
+                            "l")
                     channel.hist.Draw("9 hist same")
 
             # Draw Labels and Legend

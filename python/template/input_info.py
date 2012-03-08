@@ -44,8 +44,14 @@ class InputInfo(object):
 
     input_infos = {
         "/d0": InputData(units = "cm", title = "d0"),
-        "/htlep": InputData(units = __momentum_units, title = "H_{T}^{lep}"),
-        "/htall": InputData(units = __momentum_units, title = "H_{T}^{all}"),
+        "/htlep": InputData(units = __momentum_units, 
+            rebin = 25, 
+            title = "H_{T}^{lep}"),
+
+        "/htall": InputData(units = __momentum_units, 
+            rebin = 25,
+            title = "H_{T}^{all}"),
+
         "/htlep_after_htlep": InputData(units = __momentum_units,
             rebin = 25,
             title = "H_{T}^{lep}"),
@@ -79,7 +85,12 @@ class InputInfo(object):
         "/ltop/pt": InputData(units = __momentum_units, rebin = 25, title = "p_{T}^{ltop}"),
         "/htop/pt": InputData(units = __momentum_units, rebin = 25, title = "p_{T}^{htop}"),
         "/Electron/pt": InputData(units = __momentum_units, rebin = 25, title = "p_{T}^{e}"),
+        "/Electron/eta": InputData(units = "", rebin = 50, title = "#eta^{e}"),
         "/Electron/mass": InputData(units = __mass_units, title = "M^{e}"),
+        "/First_jet/pt": InputData(units = __momentum_units, rebin = 25, title = "p_{T}^{jet1}"),
+        "/First_jet/eta": InputData(units = "", rebin = 50, title = "#eta^{jet1}"),
+        "/Second_jet/pt": InputData(units = __momentum_units, rebin = 25, title = "p_{T}^{jet1}"),
+        "/Second_jet/eta": InputData(units = "", rebin = 50, title = "#eta^{jet1}"),
             }
 
     @property

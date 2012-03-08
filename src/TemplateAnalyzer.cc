@@ -1043,7 +1043,7 @@ void TemplateAnalyzer::onFileOpen(const std::string &filename, const Input *inpu
     }
 
     // Enable toptagging by weighting
-    if ((_data_input && _synch_selector->qcdTemplate()) || _wjets_input)
+    if (((_data_input && _synch_selector->qcdTemplate()) || _wjets_input) && _synch_selector->isToptagUse())
         _synch_selector->useToptagWeight();
 }
 
@@ -1082,7 +1082,10 @@ void TemplateAnalyzer::process(const Event *event)
            (_wjets_input && _synch_selector->isToptagUse()) ||
            (_data_input && _synch_selector->qcdTemplate() && _synch_selector->isToptagUse())
        )
+       {
+           cout << "Using weight !" << endl;
            _wjets_weight *= _synch_selector->toptagWeight();
+       }
 
         njetsBeforeReconstruction()->fill(_synch_selector->goodJets().size(),
                     _pileup_weight * _wjets_weight);

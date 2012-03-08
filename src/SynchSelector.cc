@@ -452,6 +452,7 @@ bool SynchSelector::apply(const Event *event)
     _good_muons.clear();
     _nice_jets.clear();
     _good_jets.clear();
+    _ca_jets.clear();
     _top_jets.clear();
     _good_met.reset();
     _closest_jet = _nice_jets.end();
@@ -524,6 +525,11 @@ const SynchSelector::GoodJets &SynchSelector::niceJets() const
 const SynchSelector::GoodJets &SynchSelector::goodJets() const
 {
     return _good_jets;
+}
+
+const SynchSelector::GoodJets &SynchSelector::caJets() const
+{
+    return _ca_jets;
 }
 
 const SynchSelector::GoodJets &SynchSelector::topJets() const
@@ -832,6 +838,39 @@ bool SynchSelector::jets(const Event *event)
 
         _good_jets.push_back(correction);
 
+        /*// Store top tagged jets
+        //
+        if (!jet->has_toptag())
+            continue;
+
+        const Jet_TopTag & toptag = jet->toptag();
+        if (!(
+            toptag.n_subjets() > 2 &&
+            toptag.min_mass() > 50 &&
+            toptag.top_mass() > 140 &&
+            toptag.top_mass() < 250
+        )) continue;
+
+        _top_jets.push_back(correction);*/
+    }
+
+    for(Jets::const_iterator jet = event->ca_toptag_jet().begin();
+            event->ca_toptag_jet().end() != jet;
+            ++jet)
+    {
+        CorrectedJet correction = _jec->correctJet(&*jet,
+                event,
+                _good_electrons,
+                _good_muons,
+                met);
+
+        // Skip jet if energy corrections failed
+        //
+        if (!correction.corrected_p4)
+            continue;
+
+        _ca_jets.push_back(correction);
+
         // Store top tagged jets
         //
         if (!jet->has_toptag())
@@ -848,41 +887,11 @@ bool SynchSelector::jets(const Event *event)
         _top_jets.push_back(correction);
     }
 
-    /* for(Jets::const_iterator jet = event->ca_toptag_jet().begin();
-            event->ca_toptag_jet().end() != jet;
-            ++jet)
-    {
-        CorrectedJet correction = _jec->correctJet(&*jet,
-                event,
-                _good_electrons,
-                _good_muons,
-                met);
-
-        // Skip jet if energy corrections failed
-        //
-        if (!correction.corrected_p4)
-            continue;
-
-        // Store top tagged jets
-        //
-        if (!jet->has_toptag())
-            continue;
-
-        const Jet_TopTag & toptag = jet->toptag();
-        if (!(
-            toptag.n_subjets() > 2 &&
-            toptag.min_mass() > 50 &&
-            toptag.top_mass() > 140 &&
-            toptag.top_mass() < 250
-        )) continue;
-
-        _top_jets.push_back(correction);
-    }*/
-
     // Sort jets by pT
     //
     sort(_nice_jets.begin(), _nice_jets.end(), CorrectedPtGreater());
     sort(_good_jets.begin(), _good_jets.end(), CorrectedPtGreater());
+    sort(_ca_jets.begin(), _ca_jets.end(), CorrectedPtGreater());
     sort(_top_jets.begin(), _top_jets.end(), CorrectedPtGreater());
 
     return 1 < _good_jets.size()
@@ -1238,10 +1247,10 @@ void SynchSelector::useToptagWeight()
 
 static float toptagWeight(float x)
 {
-    if (x < 250.)
+    if (x < 275.)
         return 0;
-    if (x >= 250. && x < 550.)
-        return 0.00015*(x - 250.);
+    if (x >= 275. && x < 550.)
+        return 0.000016*(x - 275.);
     return 0.0045;
 }
 
@@ -1252,8 +1261,8 @@ float SynchSelector::toptagWeight()
     uint32_t index = 0;
     float weight = 1.0;
 
-    for(SynchSelector::GoodJets::iterator jet = _good_jets.begin();
-            _good_jets.end() != jet;
+    for(SynchSelector::GoodJets::iterator jet = _ca_jets.begin();
+            _ca_jets.end() != jet;
             ++jet, ++index)
     {
         if (index >= mtoptags)
@@ -1261,7 +1270,7 @@ float SynchSelector::toptagWeight()
         else
         {
             weight *= ::toptagWeight(pt(*jet->corrected_p4));
-            float mass = _random_generator->value();
+            /*float mass = _random_generator->value();
             jet->corrected_p4->set_e(
                 sqrt( 
                     jet->corrected_p4->px() * jet->corrected_p4->px() +
@@ -1269,11 +1278,11 @@ float SynchSelector::toptagWeight()
                     jet->corrected_p4->pz() * jet->corrected_p4->pz() +
                     mass * mass
                 )
-            );
+            );*/
         }
     }
 
-    if (_good_jets.empty()) weight = 0.0;
+    if (_ca_jets.empty()) weight = 0.0;
 
     // cout << "leading jet pt: " << pt(*_good_jets[0].corrected_p4);
     // cout << " weight: " << weight << endl;
