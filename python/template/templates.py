@@ -19,6 +19,7 @@ from input_template import InputTemplate
 from loader import ChannelTemplateLoader
 from optparse import OptionParser
 from root.comparison import ComparisonCanvas
+from scales import Scales
 from util.arg import split_use_and_ban
 from util.timer import Timer
 
@@ -41,6 +42,7 @@ class Templates(object):
         self.__verbose = False
         self.__batch_mode = False
         self.__input_filename = "output_signal_p150_hlt.root"
+        self.__scales = None
 
         self.use_plots = []
         self.ban_plots = []
@@ -52,6 +54,7 @@ class Templates(object):
 
         self.loader = None
         self.fractions = dict.fromkeys(["mc", "qcd"])
+        self.scales = None
 
     def run(self):
         # Apply TDR style to all plots
@@ -74,11 +77,18 @@ class Templates(object):
             action = "store", default = self.__input_filename,
             help = "input filename")
 
+        parser.add_option("--scales",
+            action = "store", 
+            help = "scales filename")
+
         options, args = parser.parse_args()
 
         self.__verbose = options.verbose
         self.__batch_mode = options.batch
         self.__input_filename = options.filename
+        if options.scales:
+            self.__scales = Scales()
+            self.__scales.load(options.scales)
 
         # Create dictionary of arguments with key - arg name, value - arg value
         args = [x.split(':') for x in args if ':' in x]
@@ -118,6 +128,8 @@ class Templates(object):
 
         self.__load_channels()
         self.__fraction_fitter()
+        self.__apply_scales()
+
         canvases = self.__plot()
 
         # Save canvases
@@ -301,6 +313,18 @@ class Templates(object):
             except RuntimeError as error:
                 print("failed to apply TFractionFitter scales - {0}".format(error),
                       file = sys.stderr)
+
+    def __apply_scales(self):
+        if not self.__scales:
+            return
+
+        # For each loaded plot/channel apply loaded scale if channel type
+        # matches scale type
+        for plot, channels in self.loader.plots.items():
+            for channel_type, channel in channels.items():
+                scale = self.__scales.scales.get(channel_type)
+                if scale:
+                    channel.hist.Scale(scale)
 
     @Timer(label = "[plot templates]", verbose = True)
     def __plot(self):
