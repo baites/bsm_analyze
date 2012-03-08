@@ -41,6 +41,7 @@ class Templates(object):
     def __init__(self):
         self.__verbose = False
         self.__batch_mode = False
+        self.__input_filename = "output_signal_p150_hlt.root"
 
         self.use_plots = []
         self.ban_plots = []
@@ -66,10 +67,15 @@ class Templates(object):
             action = "store_true", default = False,
             help = "Print additional info")
 
+        parser.add_option("--filename",
+            action = "store", default = self.__input_filename,
+            help = "input filename")
+
         options, args = parser.parse_args()
 
         self.__verbose = options.verbose
         self.__batch_mode = options.batch
+        self.__input_filename = options.filename
 
         # Create dictionary of arguments with key - arg name, value - arg value
         args = [x.split(':') for x in args if ':' in x]
@@ -121,7 +127,7 @@ class Templates(object):
     @Timer(label = "[load all channels]", verbose = True)
     def __load_channels(self):
         # Create and configure new loader
-        self.loader = ChannelTemplateLoader("output_signal_p150_hlt.root")
+        self.loader = ChannelTemplateLoader(self.__input_filename)
 
         self.loader.use_plots = self.use_plots
         self.loader.ban_plots = self.ban_plots
