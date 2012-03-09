@@ -36,6 +36,14 @@ def main():
             action = "store", 
             help = "scales filename")
 
+        parser.add_option("--ratio",
+            action = "store", default = "default",
+            help = "Use channels ratio in comparison")
+
+        parser.add_option("--notff",
+            action = "store_true",
+            help = "Do NOT use TFraction Fitter")
+
         options, args = parser.parse_args()
 
         # import templates only here otherwise PyROOT inhercepts --help option

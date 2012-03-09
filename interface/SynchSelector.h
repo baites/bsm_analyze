@@ -47,6 +47,7 @@ namespace bsm
             virtual void setLeptonMode(const LeptonMode &) {}
             virtual void setCutMode(const CutMode &) {}
             virtual void setLeadingJetPt(const float &) {}
+            virtual void setJetPt(const float &) {}
             virtual void setMaxBtag(const float &) {}
             virtual void setMinBtag(const float &) {}
             virtual void setMaxToptag(const float &) {}
@@ -54,17 +55,9 @@ namespace bsm
             virtual void setElectronPt(const float &) {}
             virtual void setQCDTemplate(const bool &) {}
 
-            virtual void setLtopPt(const float &)
-            {
-            }
-
-            virtual void setLtopChi2Discriminator(const float &)
-            {
-            }
-
-            virtual void setHtopChi2Discriminator(const float &)
-            {
-            }
+            virtual void setLtopPt(const float &) {}
+            virtual void setLtopChi2Discriminator(const float &) {}
+            virtual void setHtopChi2Discriminator(const float &) {}
     };
 
     class SynchSelectorOptions:
@@ -82,6 +75,7 @@ namespace bsm
             void setLeptonMode(std::string);
             void setCutMode(std::string);
             void setLeadingJetPt(const float &);
+            void setJetPt(const float &);
             void setMaxBtag(const float &);
             void setMinBtag(const float &);
             void setMaxToptag(const float &);
@@ -195,6 +189,7 @@ namespace bsm
             virtual void setLeptonMode(const LeptonMode &);
             virtual void setCutMode(const CutMode &);
             virtual void setLeadingJetPt(const float &);
+            virtual void setJetPt(const float &);
             virtual void setMaxBtag(const float &);
             virtual void setMinBtag(const float &);
             virtual void setMaxToptag(const float &);

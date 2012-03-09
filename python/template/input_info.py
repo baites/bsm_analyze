@@ -44,11 +44,11 @@ class InputInfo(object):
 
     input_infos = {
         "/d0": InputData(units = "cm", title = "d0"),
-        "/htlep": InputData(units = __momentum_units, 
-            rebin = 25, 
+        "/htlep": InputData(units = __momentum_units,
+            rebin = 25,
             title = "H_{T}^{lep}"),
 
-        "/htall": InputData(units = __momentum_units, 
+        "/htall": InputData(units = __momentum_units,
             rebin = 25,
             title = "H_{T}^{all}"),
 
@@ -83,17 +83,54 @@ class InputInfo(object):
         "/ltop_drsum": InputData(title = "#DeltaR_{sum}^{ltop}"),
         "/htop_drsum": InputData(title = "#DeltaR_{sum}^{htop}"),
         "/htop_dphi": InputData(title = "#Delta#phi(ltop,htop)"),
-        "/ltop/mass": InputData(units = __mass_units, rebin = 25, title = "M^{ltop}"),
-        "/htop/mass": InputData(units = __mass_units, rebin = 25, title = "M^{htop}"),
-        "/ltop/pt": InputData(units = __momentum_units, rebin = 25, title = "p_{T}^{ltop}"),
-        "/htop/pt": InputData(units = __momentum_units, rebin = 25, title = "p_{T}^{htop}"),
-        "/Electron/pt": InputData(units = __momentum_units, rebin = 25, title = "p_{T}^{e}"),
-        "/Electron/eta": InputData(units = "", rebin = 50, title = "#eta^{e}"),
+
+        "/ltop/mass": InputData(units = __mass_units,
+            rebin = 25,
+            title = "M^{ltop}"),
+
+        "/ltop/eta": InputData(rebin = 50, title = "#eta^{ltop}"),
+
+        "/htop/mass": InputData(units = __mass_units,
+            rebin = 25,
+            title = "M^{htop}"),
+
+        "/htop/eta": InputData(rebin = 50, title = "#eta^{htop}"),
+
+        "/ltop/pt": InputData(units = __momentum_units,
+            rebin = 25,
+            title = "p_{T}^{ltop}"),
+
+        "/htop/pt": InputData(units = __momentum_units,
+            rebin = 25,
+            title = "p_{T}^{htop}"),
+
+        "/Electron/pt": InputData(units = __momentum_units,
+            rebin = 25,
+            title = "p_{T}^{e}"),
+
         "/Electron/mass": InputData(units = __mass_units, title = "M^{e}"),
-        "/First_jet/pt": InputData(units = __momentum_units, rebin = 25, title = "p_{T}^{jet1}"),
-        "/First_jet/eta": InputData(units = "", rebin = 50, title = "#eta^{jet1}"),
-        "/Second_jet/pt": InputData(units = __momentum_units, rebin = 25, title = "p_{T}^{jet1}"),
-        "/Second_jet/eta": InputData(units = "", rebin = 50, title = "#eta^{jet1}"),
+        "/Electron/eta": InputData(rebin = 50, title = "#eta^{e}"),
+
+        "/First_jet/pt": InputData(units = __momentum_units,
+            rebin = 25,
+            title = "p_{T}^{jet1}"),
+
+        "/First_jet/mass": InputData(rebin = 25,
+            units = __mass_units,
+            title = "M^{jet1}"),
+
+        "/First_jet/eta": InputData(rebin = 50, title = "#eta^{jet1}"),
+
+        "/Second_jet/pt": InputData(units = __momentum_units,
+            rebin = 25,
+            title = "p_{T}^{jet2}"),
+
+        "/Second_jet/mass": InputData(rebin = 25,
+            units = __mass_units,
+            title = "M^{jet2}"),
+
+        "/Second_jet/eta": InputData(rebin = 50, title = "#eta^{jet2}"),
+
         "/chi2": InputData(rebin = 10, title = "#Chi^{2}_{t#bar{t}}"),
         "/ltop_chi2": InputData(rebin = 10, title = "#Chi^{2}_{ltop}"),
         "/htop_chi2": InputData(rebin = 10, title = "#Chi^{2}_{htop}"),

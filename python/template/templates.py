@@ -42,6 +42,8 @@ class Templates(object):
         self.__batch_mode = False
         self.__input_filename = "output_signal_p150_hlt.root"
         self.__scales = None
+        self.__ratio = None
+        self.__use_tfraction_fitter = True
 
         self.use_plots = []
         self.ban_plots = []
@@ -67,6 +69,16 @@ class Templates(object):
         if options.scales:
             self.__scales = Scales()
             self.__scales.load(options.scales)
+
+        ratio = options.ratio.lower()
+        if "/" in ratio:
+            self.__ratio = ratio.split('/')
+        else:
+            print("only simple ratios are supported: channel/channel",
+                    file = sys.stderr)
+
+        if options.notff:
+            self.__use_tfraction_fitter = False
 
         # Create dictionary of arguments with key - arg name, value - arg value
         args = [x.split(':') for x in args if ':' in x]
@@ -145,6 +157,9 @@ class Templates(object):
     @Timer(label = "[fraction fitter]", verbose = True)
     def __fraction_fitter(self):
         try:
+            if not self.__use_tfraction_fitter:
+                raise RuntimeError("fitter is turned OFF")
+
             self.__run_fraction_fitter()
             self.__apply_fractions()
 
@@ -391,8 +406,52 @@ class Templates(object):
                              if name.startswith("zprime")] if h)
 
             # take care of ratio
-            if data and obj.bg_combo:
-            #if "zprime_m1000_w10" in channels and obj.bg_combo:
+            if self.__ratio:
+                try:
+                    # make sure specified channels are available
+                    ratio = []
+                    for term in self.__ratio:
+                        if "bg" == term:
+                            if not obj.bg_combo:
+                                raise KeyError("background is not loaded")
+
+                            ratio.append({
+                                "title": "BKGD",
+                                "hist": obj.bg_combo
+                                    })
+
+                        elif term in channels:
+                            ratio.append({
+                                "title": self.channel_names.get(term, "unknown"),
+                                "hist": channels[term].hist
+                                })
+                        else:
+                            raise KeyError("unsupported channel {0!r}".format(
+                                term))
+
+                    obj.canvas_obj = ComparisonCanvas()
+                    obj.canvas = obj.canvas_obj.canvas
+
+                    obj.canvas.cd(2)
+
+                    obj.ratio = compare.ratio(ratio[0]["hist"],
+                            ratio[1]["hist"],
+                            title = "#frac{" + ratio[0]["title"] + "}{"
+                                    + ratio[1]["title"] + "}")
+
+                    obj.ratio.GetXaxis().SetTitle("")
+                    obj.ratio.Draw("9 e")
+
+                except KeyError as error:
+                    print("ratio error: {0}".format(error))
+
+                    obj.canvas = ROOT.TCanvas()
+                    obj.canvas.SetWindowSize(640, 640)
+                    pad = obj.canvas.cd(1)
+                    pad.SetRightMargin(5)
+                    pad.SetBottomMargin(0.15)
+                
+            elif data and obj.bg_combo:
                 # Prepare comparison canvas: top pad plots, bottom - ratio
                 obj.canvas_obj = ComparisonCanvas()
                 obj.canvas = obj.canvas_obj.canvas

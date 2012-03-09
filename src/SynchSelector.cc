@@ -46,6 +46,11 @@ SynchSelectorOptions::SynchSelectorOptions()
              boost::bind(&SynchSelectorOptions::setLeadingJetPt, this, _1)),
          "leading jet pT cut")
 
+        ("jet-pt",
+         po::value<float>()->notifier(
+             boost::bind(&SynchSelectorOptions::setJetPt, this, _1)),
+         "cut all jet pT")
+
         ("max-btags",
          po::value<float>()->notifier(
              boost::bind(&SynchSelectorOptions::setMaxBtag, this, _1)),
@@ -145,6 +150,21 @@ void SynchSelectorOptions::setLeadingJetPt(const float &value)
     }
 
     delegate()->setLeadingJetPt(value);
+}
+
+void SynchSelectorOptions::setJetPt(const float &value)
+{
+    if (!delegate())
+        return;
+
+    if (0 > value)
+    {
+        cerr << "only positive values of jet pT are accepted" << endl;
+
+        return;
+    }
+
+    delegate()->setJetPt(value);
 }
 
 void SynchSelectorOptions::setMaxBtag(const float &value)
@@ -639,6 +659,11 @@ void SynchSelector::setCutMode(const CutMode &cut_mode)
 void SynchSelector::setLeadingJetPt(const float &value)
 {
     _leading_jet->setValue(value);
+}
+
+void SynchSelector::setJetPt(const float &value)
+{
+    _good_jet_selector->cut(JetSelector::PT)->setValue(value);
 }
 
 void SynchSelector::setMaxBtag(const float &value)
