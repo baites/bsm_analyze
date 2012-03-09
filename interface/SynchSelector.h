@@ -16,6 +16,7 @@
 #include "interface/bsm_fwd.h"
 #include "interface/JetEnergyCorrections.h"
 #include "interface/AppController.h"
+#include "interface/DelegateManager.h"
 #include "interface/Selector.h"
 #include "interface/CorrectedJet.h"
 #include "interface/TriggerAnalyzer.h"
@@ -52,16 +53,26 @@ namespace bsm
             virtual void setMinToptag(const float &) {}
             virtual void setElectronPt(const float &) {}
             virtual void setQCDTemplate(const bool &) {}
+
+            virtual void setLtopPt(const float &)
+            {
+            }
+
+            virtual void setLtopChi2Discriminator(const float &)
+            {
+            }
+
+            virtual void setHtopChi2Discriminator(const float &)
+            {
+            }
     };
 
-    class SynchSelectorOptions : public Options
+    class SynchSelectorOptions:
+        public Options,
+        public DelegateManager<SynchSelectorDelegate>
     {
         public:
             SynchSelectorOptions();
-            virtual ~SynchSelectorOptions();
-
-            void setDelegate(SynchSelectorDelegate *);
-            SynchSelectorDelegate *delegate() const;
 
             // Options interface
             //
@@ -78,7 +89,10 @@ namespace bsm
             void setElectronPt(const float &);
             void setQCDTemplate(const bool &);
 
-            SynchSelectorDelegate *_delegate;
+            void setLtopPt(const float &);
+
+            void setLtopChi2Discriminator(const float &);
+            void setHtopChi2Discriminator(const float &);
 
             DescriptionPtr _description;
     };
@@ -122,6 +136,8 @@ namespace bsm
                 MET,
                 RECONSTRUCTION,
                 LTOP,
+                LTOP_CHI2,
+                HTOP_CHI2,
 
                 SELECTIONS // this item should always be the last one
             };
@@ -144,6 +160,8 @@ namespace bsm
             CutPtr met() const;
             CutPtr reconstruction() const;
             CutPtr ltop() const;
+            CutPtr ltop_chi2() const;
+            CutPtr htop_chi2() const;
 
             // Test if muon passes the selector
             //
@@ -169,6 +187,8 @@ namespace bsm
 
             bool reconstruction(const bool &value); // apply reconstruction cut
             bool ltop(const float &value); // apply ltop cut
+            bool ltop_chi2(const float &value);
+            bool htop_chi2(const float &value);
 
             // SynchSelectorDelegate interface
             //
@@ -181,6 +201,11 @@ namespace bsm
             virtual void setMinToptag(const float &);
             virtual void setElectronPt(const float &);
             virtual void setQCDTemplate(const bool &);
+
+            virtual void setLtopPt(const float &);
+
+            virtual void setLtopChi2Discriminator(const float &);
+            virtual void setHtopChi2Discriminator(const float &);
 
             // Jet Energy Correction Delegate interface
             //
@@ -286,6 +311,8 @@ namespace bsm
             CutPtr _met;
             CutPtr _reconstruction;
             CutPtr _ltop;
+            CutPtr _ltop_chi2;
+            CutPtr _htop_chi2;
 
             bool _qcd_template;
 

@@ -80,6 +80,9 @@ class InputInfo(object):
         "/whad_mass": InputData(units = __mass_units),
         "/met": InputData(units = __mass_units, rebin = 25, title = "#slash{E}_{T}"),
         "/met_noweight": InputData(units = __mass_units, rebin = 25, title = "#slash{E}_{T}^{no weight}"),
+        "/ltop_drsum": InputData(title = "#DeltaR_{sum}^{ltop}"),
+        "/htop_drsum": InputData(title = "#DeltaR_{sum}^{htop}"),
+        "/htop_dphi": InputData(title = "#Delta#phi(ltop,htop)"),
         "/ltop/mass": InputData(units = __mass_units, rebin = 25, title = "M^{ltop}"),
         "/htop/mass": InputData(units = __mass_units, rebin = 25, title = "M^{htop}"),
         "/ltop/pt": InputData(units = __momentum_units, rebin = 25, title = "p_{T}^{ltop}"),
@@ -91,6 +94,9 @@ class InputInfo(object):
         "/First_jet/eta": InputData(units = "", rebin = 50, title = "#eta^{jet1}"),
         "/Second_jet/pt": InputData(units = __momentum_units, rebin = 25, title = "p_{T}^{jet1}"),
         "/Second_jet/eta": InputData(units = "", rebin = 50, title = "#eta^{jet1}"),
+        "/chi2": InputData(rebin = 10, title = "#Chi^{2}_{t#bar{t}}"),
+        "/ltop_chi2": InputData(rebin = 10, title = "#Chi^{2}_{ltop}"),
+        "/htop_chi2": InputData(rebin = 10, title = "#Chi^{2}_{htop}"),
             }
 
     @property

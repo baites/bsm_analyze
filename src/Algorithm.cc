@@ -18,6 +18,7 @@
 #include "interface/Utility.h"
 
 using namespace std;
+using namespace boost;
 using namespace bsm;
 
 // Neutrino Recontstruct: neglect products masses
@@ -985,7 +986,7 @@ float ResonanceReconstructorWithMassAndPhi::getHadronicDiscriminator(
         const Iterators &htop_jets) const
 {
     return ResonanceReconstructorWithMass::getHadronicDiscriminator(ltop, htop, htop_jets)
-        + ResonanceReconstructorWithPhi::getHadronicDiscriminator(ltop, htop, htop_jets);
+        * ResonanceReconstructorWithPhi::getHadronicDiscriminator(ltop, htop, htop_jets);
 }
 
 
@@ -1016,7 +1017,7 @@ float SimpleResonanceReconstructorWithMassAndPhi::getHadronicDiscriminator(
         const Iterators &htop_jets) const
 {
     return SimpleResonanceReconstructor::getHadronicDiscriminator(ltop, htop, htop_jets)
-        + ResonanceReconstructorWithMassAndPhi::getHadronicDiscriminator(ltop, htop, htop_jets);
+        * ResonanceReconstructorWithMassAndPhi::getHadronicDiscriminator(ltop, htop, htop_jets);
 }
 
 
@@ -1047,7 +1048,7 @@ float SimpleResonanceReconstructorWithMass::getHadronicDiscriminator(
         const Iterators &htop_jets) const
 {
     return SimpleResonanceReconstructor::getHadronicDiscriminator(ltop, htop, htop_jets)
-        + ResonanceReconstructorWithMass::getHadronicDiscriminator(ltop, htop, htop_jets);
+        * ResonanceReconstructorWithMass::getHadronicDiscriminator(ltop, htop, htop_jets);
 }
 
 
@@ -1093,7 +1094,7 @@ float CollimatedSimpleResonanceReconstructorWithMass::getHadronicDiscriminator(
             hadronic_dr += dr(htop, *(*jet)->corrected_p4);
         }
 
-        discriminator += 1. / hadronic_dr;
+        discriminator *= 1. / hadronic_dr;
     }
 
     return discriminator;
@@ -1165,6 +1166,366 @@ float ResonanceReconstructorWithCollimatedTops::getLeptonicDiscriminator(
         const LorentzVector &neutrino,
         const LorentzVector &jet) const
 {
-    return SimpleResonanceReconstructor::getLeptonicDiscriminator(ltop, lepton, neutrino, jet) 
-        + CollimatedSimpleResonanceReconstructorWithTopMass::getLeptonicDiscriminator(ltop, lepton, neutrino, jet);
+    return SimpleResonanceReconstructor::getLeptonicDiscriminator(ltop, lepton, neutrino, jet) *
+        CollimatedSimpleResonanceReconstructorWithTopMass::getLeptonicDiscriminator(
+            ltop, lepton, neutrino, jet);
+}
+
+
+
+Chi2Hypothesis::Chi2Hypothesis(const DecayHypothesis *hypothesis):
+    valid(false),
+    ltop_chi2(FLT_MAX),
+    htop_chi2(FLT_MAX)
+{
+    if (hypothesis)
+    {
+        ltop_jets = hypothesis->leptonic;
+        htop_jets = hypothesis->hadronic;
+    }
+}
+
+
+
+// -- Chi2 Discriminator -------------------------------------------------------
+//
+uint32_t Chi2Discriminator::id() const
+{
+    return core::ID<Chi2Discriminator>::get();
+}
+
+void Chi2Discriminator::print(std::ostream &out) const
+{
+}
+
+
+
+// -- Ltop mass Discriminator --------------------------------------------------
+//
+float LtopMassDiscriminator::calculate(const Chi2Hypothesis &hypothesis) const
+{
+    // Somehow g++ 4.3.4 can not find function in the base class
+    return Chi2Discriminator::calculate(mass(hypothesis.ltop));
+}
+
+uint32_t LtopMassDiscriminator::id() const
+{
+    return core::ID<LtopMassDiscriminator>::get();
+}
+
+LtopMassDiscriminator::ObjectPtr LtopMassDiscriminator::clone() const
+{
+    return ObjectPtr(new LtopMassDiscriminator(*this));
+}
+
+
+
+// -- Htop mass Discriminator --------------------------------------------------
+//
+float HtopMassDiscriminator::calculate(const Chi2Hypothesis &hypothesis) const
+{
+    // Somehow g++ 4.3.4 can not find function in the base class
+    return Chi2Discriminator::calculate(mass(hypothesis.htop));
+}
+
+uint32_t HtopMassDiscriminator::id() const
+{
+    return core::ID<HtopMassDiscriminator>::get();
+}
+
+HtopMassDiscriminator::ObjectPtr HtopMassDiscriminator::clone() const
+{
+    return ObjectPtr(new HtopMassDiscriminator(*this));
+}
+
+
+
+// -- Delta Phi Discriminator --------------------------------------------------
+//
+float DeltaPhiDiscriminator::calculate(const Chi2Hypothesis &hypothesis) const
+{
+    // Somehow g++ 4.3.4 can not find function in the base class
+    return Chi2Discriminator::calculate(fabs(dphi(hypothesis.ltop, hypothesis.htop)));
+}
+
+uint32_t DeltaPhiDiscriminator::id() const
+{
+    return core::ID<DeltaPhiDiscriminator>::get();
+}
+
+DeltaPhiDiscriminator::ObjectPtr DeltaPhiDiscriminator::clone() const
+{
+    return ObjectPtr(new DeltaPhiDiscriminator(*this));
+}
+
+
+
+// -- Ltop Delta R sum discriminator -------------------------------------------
+//
+float LtopDeltaRSumDiscriminator::calculate(const Chi2Hypothesis &hypothesis)
+    const
+{
+    const LorentzVector &top = hypothesis.ltop;
+
+    // Somehow g++ 4.3.4 can not find function in the base class
+    return Chi2Discriminator::calculate(dr(top, hypothesis.lepton) +
+                                        dr(top, hypothesis.neutrino) +
+                                        dr(top, hypothesis.ltop_jet));
+}
+
+uint32_t LtopDeltaRSumDiscriminator::id() const
+{
+    return core::ID<LtopDeltaRSumDiscriminator>::get();
+}
+
+LtopDeltaRSumDiscriminator::ObjectPtr LtopDeltaRSumDiscriminator::clone() const
+{
+    return ObjectPtr(new LtopDeltaRSumDiscriminator(*this));
+}
+
+
+
+
+// -- Htop Delta R sum discriminator -------------------------------------------
+//
+float HtopDeltaRSumDiscriminator::calculate(const Chi2Hypothesis &hypothesis)
+    const
+{
+    const LorentzVector &top = hypothesis.htop;
+     
+    float discriminator = 0;
+    for(Chi2Hypothesis::DecayHypothesis::Iterators::const_iterator jet =
+                hypothesis.htop_jets.begin();
+            hypothesis.htop_jets.end() != jet;
+            ++jet)
+    {
+        discriminator += dr(top, *(*jet)->corrected_p4);
+    }
+
+    // Somehow g++ 4.3.4 can not find function in the base class
+    return Chi2Discriminator::calculate(discriminator);
+}
+
+uint32_t HtopDeltaRSumDiscriminator::id() const
+{
+    return core::ID<HtopDeltaRSumDiscriminator>::get();
+}
+
+HtopDeltaRSumDiscriminator::ObjectPtr HtopDeltaRSumDiscriminator::clone() const
+{
+    return ObjectPtr(new HtopDeltaRSumDiscriminator(*this));
+}
+
+
+
+// -- Reconstruction with ltop/htop chi2 ---------------------------------------
+//
+Chi2ResonanceReconstructor::Chi2ResonanceReconstructor(
+        const Chi2ResonanceReconstructor &object)
+{
+    for(Chi2Discriminators::const_iterator ltop =
+            object._ltop_discriminators.begin();
+        object._ltop_discriminators.end() != ltop;
+        ++ltop)
+    {
+        _ltop_discriminators.push_back(
+                dynamic_pointer_cast<Chi2Discriminator>((*ltop)->clone()));
+    }
+
+    for(Chi2Discriminators::const_iterator htop =
+            object._htop_discriminators.begin();
+        object._htop_discriminators.end() != htop;
+        ++htop)
+    {
+        _htop_discriminators.push_back(
+                dynamic_pointer_cast<Chi2Discriminator>((*htop)->clone()));
+    }
+}
+
+uint32_t Chi2ResonanceReconstructor::id() const
+{
+    return core::ID<Chi2ResonanceReconstructor>::get();
+}
+
+Chi2ResonanceReconstructor::ObjectPtr
+    Chi2ResonanceReconstructor::clone() const
+{
+    return ObjectPtr(new Chi2ResonanceReconstructor(*this));
+}
+
+void Chi2ResonanceReconstructor::print(std::ostream &out) const
+{
+    out << "Chi2ResonanceReconstructor" << endl;
+}
+
+void Chi2ResonanceReconstructor::setLtopDiscriminators(
+        const Chi2Discriminators &discriminators)
+{
+    _ltop_discriminators = discriminators;
+}
+
+void Chi2ResonanceReconstructor::setHtopDiscriminators(
+        const Chi2Discriminators &discriminators)
+{
+    _htop_discriminators = discriminators;
+}
+
+Chi2ResonanceReconstructor::Mttbar Chi2ResonanceReconstructor::run(
+        const LorentzVector &lepton,
+        const LorentzVector &met,
+        const SynchSelector::GoodJets &jets) const
+{
+    Mttbar result;
+
+    // Reconstruct the neutrino pZ and keep solutions in vector for later
+    // use
+    //
+    NeutrinoReconstruct neutrinoReconstruct;
+    NeutrinoReconstruct::Solutions neutrinos =
+        neutrinoReconstruct(lepton, met);
+
+    result.solutions = neutrinoReconstruct.solutions();
+
+    for(NeutrinoReconstruct::Solutions::const_iterator neutrino =
+                neutrinos.begin();
+            neutrinos.end() != neutrino;
+            ++neutrino)
+    {
+        result.neutrinos.push_back(**neutrino);
+    }
+
+    // Prepare generator and loop over all hypotheses of the decay
+    // (different jets assignment to leptonic/hadronic legs)
+    //
+    Generator generator;
+    generator.init(jets);
+
+    Chi2Hypothesis best_chi2_hypothesis;
+
+    // Loop over all possible hypotheses and pick the best one
+    // Note: take into account all reconstructed neutrino solutions
+    //
+    do
+    {
+        Generator::Hypothesis hypothesis = generator.hypothesis();
+
+        if (!isValidHadronicSide(lepton, hypothesis.hadronic)
+                || !isValidLeptonicSide(lepton, hypothesis.leptonic)
+                || !isValidNeutralSide(lepton, hypothesis.neutral))
+
+                continue;
+
+        Chi2Hypothesis chi2_hypothesis(&hypothesis);
+
+        // Leptonic Top p4 = leptonP4 + nuP4 + bP4
+        // where bP4 is:
+        //  - b-tagged jet
+        //  - otherwise, the hardest jet (highest pT)
+        //
+        chi2_hypothesis.lepton = lepton;
+        chi2_hypothesis.ltop_jet =
+            getLeptonicJet(chi2_hypothesis.ltop_jets);
+
+        chi2_hypothesis.ltop = lepton + chi2_hypothesis.ltop_jet;
+
+        // the neutrino will be taken into account later
+        //
+
+        // htop is a sum of all jet p4s assigned to the hadronic leg
+        //
+        for(Generator::Iterators::const_iterator jet =
+                    chi2_hypothesis.htop_jets.begin();
+                chi2_hypothesis.htop_jets.end() != jet;
+                ++jet)
+        {
+            chi2_hypothesis.htop += *(*jet)->corrected_p4;
+        }
+
+        // Take into account all neutrino solutions. Solutions are kept in
+        // a vector of pointer
+        //
+        for(NeutrinoReconstruct::Solutions::const_iterator neutrino =
+                    neutrinos.begin();
+                neutrinos.end() != neutrino;
+                ++neutrino)
+        {
+            Chi2Hypothesis chi2_hypothesis_tmp = chi2_hypothesis;
+            chi2_hypothesis_tmp.neutrino = *(*neutrino);
+            chi2_hypothesis_tmp.ltop += chi2_hypothesis_tmp.neutrino;
+
+            // Apply ltop discriminators
+            chi2_hypothesis_tmp.ltop_chi2 = 0;
+            for(Chi2Discriminators::const_iterator discriminator =
+                        _ltop_discriminators.begin();
+                    _ltop_discriminators.end() != discriminator;
+                    ++discriminator)
+            {
+                chi2_hypothesis_tmp.ltop_chi2 +=
+                    (*discriminator)->calculate(chi2_hypothesis_tmp);
+            }
+
+            if (chi2_hypothesis_tmp.ltop_chi2 > best_chi2_hypothesis.ltop_chi2)
+                continue;
+
+            // Apply htop discriminators
+            chi2_hypothesis_tmp.htop_chi2 = 0;
+            for(Chi2Discriminators::const_iterator discriminator =
+                        _htop_discriminators.begin();
+                    _htop_discriminators.end() != discriminator;
+                    ++discriminator)
+            {
+                chi2_hypothesis_tmp.htop_chi2 +=
+                    (*discriminator)->calculate(chi2_hypothesis_tmp);
+            }
+
+            if (chi2_hypothesis_tmp.ltop_chi2 == best_chi2_hypothesis.ltop_chi2
+                    && chi2_hypothesis_tmp.htop_chi2 > best_chi2_hypothesis.htop_chi2)
+                continue;
+
+            best_chi2_hypothesis = chi2_hypothesis_tmp;
+            best_chi2_hypothesis.valid = true;
+        }
+    }
+    while(generator.next());
+
+    // Best Solution is found
+    //
+    if (best_chi2_hypothesis.valid)
+    {
+        result.mttbar = best_chi2_hypothesis.ltop + best_chi2_hypothesis.htop;
+        result.wlep = best_chi2_hypothesis.neutrino + best_chi2_hypothesis.lepton;
+        result.neutrino = best_chi2_hypothesis.neutrino;
+        result.ltop = best_chi2_hypothesis.ltop;
+        result.ltop_jet = best_chi2_hypothesis.ltop_jet;
+        result.htop = best_chi2_hypothesis.htop;
+        result.htop_njets = best_chi2_hypothesis.htop_jets.size();
+
+        result.ltop_discriminator = best_chi2_hypothesis.ltop_chi2;
+        result.htop_discriminator = best_chi2_hypothesis.htop_chi2;
+
+        result.htop_jets.clear();
+        for(Chi2Hypothesis::Iterators::const_iterator jet =
+                    best_chi2_hypothesis.htop_jets.begin();
+                best_chi2_hypothesis.htop_jets.end() != jet;
+                ++jet)
+        {
+            result.htop_jets.push_back(* *jet);
+        }
+
+        result.ltop_jets.clear();
+        for(Chi2Hypothesis::Iterators::const_iterator jet =
+                    best_chi2_hypothesis.ltop_jets.begin();
+                best_chi2_hypothesis.ltop_jets.end() != jet;
+                ++jet)
+        {
+            result.ltop_jets.push_back(* *jet);
+        }
+
+        sort(result.htop_jets.begin(), result.htop_jets.end(), CorrectedPtGreater()); 
+        sort(result.ltop_jets.begin(), result.ltop_jets.end(), CorrectedPtGreater()); 
+
+        result.valid = true;
+    }
+
+    return result;
 }

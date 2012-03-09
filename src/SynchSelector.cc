@@ -29,8 +29,6 @@ using namespace bsm;
 //
 SynchSelectorOptions::SynchSelectorOptions()
 {
-    _delegate = 0;
-
     _description.reset(new po::options_description("Synchronization Selector Options"));
     _description->add_options()
         ("lepton-mode",
@@ -77,22 +75,22 @@ SynchSelectorOptions::SynchSelectorOptions()
           po::value<bool>()->implicit_value(false)->notifier(
              boost::bind(&SynchSelectorOptions::setQCDTemplate, this, _1)),
          "derived a qcd template")   
+
+        ("ltop-pt",
+         po::value<float>()->notifier(
+             boost::bind(&SynchSelectorOptions::setLtopPt, this, _1)),
+         "set min value of ltop pt")
+
+        ("ltop-chi2",
+         po::value<float>()->notifier(
+             boost::bind(&SynchSelectorOptions::setLtopChi2Discriminator, this, _1)),
+         "set max ltop-chi2 disriminator")
+
+        ("htop-chi2",
+         po::value<float>()->notifier(
+             boost::bind(&SynchSelectorOptions::setHtopChi2Discriminator, this, _1)),
+         "set max htop-chi2 disriminator")
     ;
-}
-
-SynchSelectorOptions::~SynchSelectorOptions()
-{
-}
-
-void SynchSelectorOptions::setDelegate(SynchSelectorDelegate *delegate)
-{
-    if (_delegate != delegate)
-        _delegate = delegate;
-}
-
-SynchSelectorDelegate *SynchSelectorOptions::delegate() const
-{
-    return _delegate;
 }
 
 // Options interface
@@ -196,6 +194,43 @@ void SynchSelectorOptions::setQCDTemplate(const bool &value)
     delegate()->setQCDTemplate(value);
 }
 
+void SynchSelectorOptions::setLtopPt(const float &value)
+{
+    if (!delegate())
+        return;
+
+    if (0 > value)
+        throw runtime_error("negative ltop pt is not allowed");
+
+    delegate()->setLtopPt(value);
+}
+
+void SynchSelectorOptions::setLtopChi2Discriminator(const float &value)
+{
+    if (!delegate())
+        return;
+
+    if (0 > value)
+        throw runtime_error("negative ltop chi2 cut is not allowed");
+
+    delegate()->setLtopChi2Discriminator(value);
+}
+
+void SynchSelectorOptions::setHtopChi2Discriminator(const float &value)
+{
+    if (!delegate())
+        return;
+
+    if (0 > value)
+        throw runtime_error("negative htop chi2 cut is not allowed");
+
+    delegate()->setHtopChi2Discriminator(value);
+}
+
+
+
+
+
 // Synchronization Exercise Selector
 //
 SynchSelector::SynchSelector():
@@ -296,6 +331,12 @@ SynchSelector::SynchSelector():
 
     _random_generator.reset(new RandomGenerator<>(140.,250.));
     monitor(_random_generator);
+
+    _ltop_chi2.reset(new Comparator<less<float> >(5));
+    monitor(_ltop_chi2);
+
+    _htop_chi2.reset(new Comparator<less<float> >(10));
+    monitor(_htop_chi2);
 }
 
 SynchSelector::SynchSelector(const SynchSelector &object):
@@ -382,6 +423,12 @@ SynchSelector::SynchSelector(const SynchSelector &object):
  
     _random_generator = object._random_generator;
     monitor(_random_generator);
+
+    _ltop_chi2 = dynamic_pointer_cast<Cut>(object.ltop_chi2()->clone());
+    monitor(_ltop_chi2);
+
+    _htop_chi2 = dynamic_pointer_cast<Cut>(object.htop_chi2()->clone());
+    monitor(_htop_chi2);
 }
 
 SynchSelector::~SynchSelector()
@@ -441,6 +488,16 @@ SynchSelector::CutPtr SynchSelector::reconstruction() const
 SynchSelector::CutPtr SynchSelector::ltop() const
 {
     return _ltop;
+}
+
+SynchSelector::CutPtr SynchSelector::ltop_chi2() const
+{
+    return _ltop_chi2;
+}
+
+SynchSelector::CutPtr SynchSelector::htop_chi2() const
+{
+    return _htop_chi2;
 }
 
 bool SynchSelector::apply(const Event *event)
@@ -618,6 +675,21 @@ void SynchSelector::setQCDTemplate(const bool &value)
     _qcd_template = value;
 }
 
+void SynchSelector::setLtopPt(const float &value)
+{
+    ltop()->setValue(value);
+}
+
+void SynchSelector::setLtopChi2Discriminator(const float &value)
+{
+    ltop_chi2()->setValue(value);
+}
+
+void SynchSelector::setHtopChi2Discriminator(const float &value)
+{
+    htop_chi2()->setValue(value);
+}
+
 // Jet Energy Correction Delegate interface
 //
 void SynchSelector::setCorrection(const Level &level,
@@ -719,6 +791,8 @@ void SynchSelector::print(std::ostream &out) const
     _cutflow->cut(MET)->setName("MET");
     _cutflow->cut(RECONSTRUCTION)->setName("reconstruction");
     _cutflow->cut(LTOP)->setName("pt(ltop)");
+    _cutflow->cut(LTOP_CHI2)->setName("Chi2(ltop)");
+    _cutflow->cut(HTOP_CHI2)->setName("Chi2(htop)");
 
     out << "Cutflow [" << _lepton_mode << ": " << _cut_mode << "]" << endl;
     out << *_cutflow << endl;
@@ -741,6 +815,24 @@ bool SynchSelector::ltop(const float &value)
 
     return ltop()->apply(value)
         && (_cutflow->apply(LTOP), true);
+}
+
+bool SynchSelector::ltop_chi2(const float &value)
+{
+    if (ltop_chi2()->isDisabled())
+        return true;
+
+    return ltop_chi2()->apply(value)
+        && (_cutflow->apply(LTOP_CHI2), true);
+}
+
+bool SynchSelector::htop_chi2(const float &value)
+{
+    if (htop_chi2()->isDisabled())
+        return true;
+
+    return htop_chi2()->apply(value)
+        && (_cutflow->apply(HTOP_CHI2), true);
 }
 
 // Private

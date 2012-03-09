@@ -134,6 +134,24 @@ int main(int argc, char *argv[])
             dr_vs_ptrel->GetXaxis()->SetTitle("p_{T}^{rel}(jet,e) [GeV/c]");
             dr_vs_ptrel->GetYaxis()->SetTitle("#Delta R");
 
+            TH1Ptr ltop_drsum = convert(*analyzer->ltop_drsum());
+            ltop_drsum->SetName("ltop_drsum");
+
+            TH1Ptr htop_drsum = convert(*analyzer->htop_drsum());
+            htop_drsum->SetName("htop_drsum");
+
+            TH1Ptr htop_dphi = convert(*analyzer->htop_dphi());
+            htop_dphi->SetName("htop_dphi");
+
+            TH1Ptr chi2 = convert(*analyzer->chi2());
+            chi2->SetName("chi2");
+
+            TH1Ptr ltop_chi2 = convert(*analyzer->ltop_chi2());
+            ltop_chi2->SetName("ltop_chi2");
+
+            TH1Ptr htop_chi2 = convert(*analyzer->htop_chi2());
+            htop_chi2->SetName("htop_chi2");
+
             TH1Ptr ttbar_pt = convert(*analyzer->ttbarPt());
             ttbar_pt->SetName("ttbar_pt");
             ttbar_pt->GetXaxis()->SetTitle("p_{T}^{t#bar{t}} [GeV/c]");
@@ -281,6 +299,14 @@ int main(int argc, char *argv[])
                 whad_mass->Write();
                 met->Write();
                 met_noweight->Write();
+
+                ltop_drsum->Write();
+                htop_drsum->Write();
+                htop_dphi->Write();
+
+                chi2->Write();
+                ltop_chi2->Write();
+                htop_chi2->Write();
 
                 ljet_met_dphi_vs_met_before_tricut->Write();
                 lepton_met_dphi_vs_met_before_tricut->Write();

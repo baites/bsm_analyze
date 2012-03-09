@@ -18,6 +18,7 @@ import sys
 from channel_template import MCChannelTemplate
 from input_template import InputTemplate
 from loader import ChannelTemplateLoader
+from optparse import OptionParser
 from root.comparison import ComparisonCanvas
 from util.arg import split_use_and_ban
 from util.timer import Timer
@@ -37,8 +38,10 @@ class Templates(object):
             "zprime_m4000_w40": "Z' 4 TeV/c^{2}"
     }
 
-    def __init__(self, verbose = False):
-        self.__verbose = verbose
+    def __init__(self):
+        self.__verbose = False
+        self.__batch_mode = False
+        self.__input_filename = "output_signal_p150_hlt.root"
 
         self.use_plots = []
         self.ban_plots = []
@@ -51,7 +54,34 @@ class Templates(object):
         self.loader = None
         self.fractions = dict.fromkeys(["mc", "qcd"])
 
-    def run(self, args):
+    def run(self):
+        parser = OptionParser(
+                usage = "usage: %prog [options] [plots:A,B,C] [folders:A,B,C] "
+                        "[channels:A,B,C]")
+
+        parser.add_option("-b", "--batch",
+            action = "store_true", default = False,
+            help = "Run application in batch mode")
+
+        parser.add_option("-n", "--notff",
+            action = "store_true", default = False,
+            help = "Disable the normalization based of TFractionFitter")
+
+        parser.add_option("-v", "--verbose",
+            action = "store_true", default = False,
+            help = "Print additional info")
+
+        parser.add_option("--filename",
+            action = "store", default = self.__input_filename,
+            help = "input filename")
+
+        options, args = parser.parse_args()
+
+        self.__verbose = options.verbose
+        self.__batch_mode = options.batch
+        self.__no_tfraction_fitter = options.notff
+        self.__input_filename = options.filename
+
         # Create dictionary of arguments with key - arg name, value - arg value
         args = [x.split(':') for x in args if ':' in x]
 
@@ -93,20 +123,21 @@ class Templates(object):
             raise RuntimeError("all channels are turned off")
 
         self.__load_channels()
-        self.__fraction_fitter()
+        if not self.__no_tfraction_fitter:
+            self.__fraction_fitter()
         canvases = self.__plot()
 
         # Save canvases
         for obj in canvases:
             obj.canvas.SaveAs("{0}.pdf".format(obj.canvas.GetName()))
 
-        if canvases:
+        if canvases and not self.__batch_mode:
             raw_input('enter')
 
     @Timer(label = "[load all channels]", verbose = True)
     def __load_channels(self):
         # Create and configure new loader
-        self.loader = ChannelTemplateLoader("output_signal_p150.root")
+        self.loader = ChannelTemplateLoader(self.__input_filename)
 
         self.loader.use_plots = self.use_plots
         self.loader.ban_plots = self.ban_plots
@@ -197,6 +228,7 @@ class Templates(object):
                     key.upper(),
                     value[0])
                 for key, value in self.fractions.items()))
+            print()
 
     def __apply_fractions(self):
         mc_fraction = self.fractions["mc"][0]
@@ -217,8 +249,10 @@ class Templates(object):
                 mc_channel = channels["mc"]
                 qcd_channel = channels["qcd"]
 
-                qcd_channel.hist.Scale(qcd_fraction * data_integral /
-                                       qcd_channel.hist.Integral())
+                qcd_scale = (qcd_fraction * data_integral /
+                             qcd_channel.hist.Integral())
+
+                qcd_channel.hist.Scale(qcd_scale)
 
                 mc_scale = (mc_fraction * data_integral /
                             mc_channel.hist.Integral())
@@ -230,6 +264,12 @@ class Templates(object):
                     channel = channels.get(channel_type)
                     if channel:
                         channel.hist.Scale(mc_scale)
+
+                if "/mttbar_after_htlep" == plot:
+                    print("{0:-<80}".format("-- [MTTBAR scales] "),
+                          "MC : {0:.2f}".format(mc_scale),
+                          "QCD: {0:.2f}".format(qcd_scale),
+                          "", sep = "\n")
 
             except RuntimeError as error:
                 print("failed to apply TFractionFitter scales - {0}".format(error),
