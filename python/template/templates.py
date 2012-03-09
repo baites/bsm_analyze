@@ -54,7 +54,7 @@ class Templates(object):
         self.use_channels = []
 
         self.loader = None
-        self.fractions = dict.fromkeys(["mc", "qcd"])
+        self.fractions = {}
         self.scales = None
 
     def run(self, options, args):
@@ -68,6 +68,22 @@ class Templates(object):
         if options.scales:
             self.__scales = Scales()
             self.__scales.load(options.scales)
+
+        if options.fractions:
+            fractions = Scales()
+            fractions.load(options.fractions)
+
+            tmp_fractions = {}
+            for fraction_type in ["mc", "qcd"]:
+                fraction = fractions.scales.get(fraction_type)
+                if not fraction:
+                    raise RuntimeError(("fractions file doe not contain {0} "
+                                        "fraction").format(
+                                            fraction_type.upper()))
+
+                tmp_fractions[fraction_type] = fraction
+
+            self.fractions = tmp_fractions
 
         ratio = options.ratio.lower()
         if "/" in ratio:
@@ -152,8 +168,11 @@ class Templates(object):
             if not self.__use_tfraction_fitter:
                 raise RuntimeError("fitter is turned OFF")
 
-            self.__run_fraction_fitter()
-            self.__apply_fractions()
+            if not self.fractions:
+                self.__run_fraction_fitter()
+
+            if self.fractions:
+                self.__apply_fractions()
 
         except RuntimeError as error:
             if self.__verbose:
@@ -209,18 +228,18 @@ class Templates(object):
         fraction_error = ROOT.Double(0)
 
         fitter.GetResult(0, fraction, fraction_error)
-        self.fractions["mc"] = map(float, [fraction, fraction_error])
+        self.fractions["mc"] = float(fraction)
 
         fitter.GetResult(1, fraction, fraction_error)
-        self.fractions["qcd"] = map(float, [fraction, fraction_error])
+        self.fractions["qcd"] = float(fraction)
 
         fitter_plot = fitter.GetPlot().Clone()
         qcd = met["qcd"].hist.Clone()
         mc = met["mc"].hist.Clone()
         data = met["data"].hist.Clone()
 
-        qcd.Scale(self.fractions["qcd"][0] * data.Integral() / qcd.Integral())
-        mc.Scale(self.fractions["mc"][0] * data.Integral() / mc.Integral())
+        qcd.Scale(self.fractions["qcd"] * data.Integral() / qcd.Integral())
+        mc.Scale(self.fractions["mc"] * data.Integral() / mc.Integral())
 
         fitter_plot.SetLineStyle(2)
         fitter_plot.SetLineColor(33)
@@ -257,13 +276,13 @@ class Templates(object):
         if self.__verbose:
             print('\n'.join("{0:>3} Fraction: {1:.3f}".format(
                     key.upper(),
-                    value[0])
+                    value)
                 for key, value in self.fractions.items()))
             print()
 
     def __apply_fractions(self):
-        mc_fraction = self.fractions["mc"][0]
-        qcd_fraction = self.fractions["qcd"][0]
+        mc_fraction = self.fractions["mc"]
+        qcd_fraction = self.fractions["qcd"]
 
         # For each loaded plot scale MC and QCD
         for plot, channels in self.loader.plots.items():

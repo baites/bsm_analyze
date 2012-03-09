@@ -32,6 +32,10 @@ def main():
             action = "store", 
             help = "scales filename")
 
+        parser.add_option("--fractions",
+            action = "store",
+            help = "Use specified fractions insted of dynamic TFractionFitter results")
+
         parser.add_option("--ratio",
             action = "store", default = "default",
             help = "Use channels ratio in comparison")
