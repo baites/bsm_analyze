@@ -43,6 +43,7 @@ class Templates(object):
         self.__input_filename = "output_signal_p150_hlt.root"
         self.__scales = None
         self.__ratio = None
+        self.__use_tfraction_fitter = True
 
         self.use_plots = []
         self.ban_plots = []
@@ -74,6 +75,9 @@ class Templates(object):
         else:
             print("only simple ratios are supported: channel/channel",
                     file = sys.stderr)
+
+        if options.notff:
+            self.__use_tfraction_fitter = False
 
         # Create dictionary of arguments with key - arg name, value - arg value
         args = [x.split(':') for x in args if ':' in x]
@@ -145,6 +149,9 @@ class Templates(object):
     @Timer(label = "[fraction fitter]", verbose = True)
     def __fraction_fitter(self):
         try:
+            if not self.__use_tfraction_fitter:
+                raise RuntimeError("fitter is turned OFF")
+
             self.__run_fraction_fitter()
             self.__apply_fractions()
 
