@@ -1320,6 +1320,11 @@ bool SynchSelector::isToptagUse() const
         !_min_toptag->isDisabled()
     ) 
         direct_toptag &= (_min_toptag->value() > 0);
+    if (
+        !_max_toptag->isDisabled() &&
+         _min_toptag->isDisabled()
+    )
+        direct_toptag &= (_max_toptag->value() > 0);
     else if (
         !_max_toptag->isDisabled() &&
         !_min_toptag->isDisabled()
@@ -1339,11 +1344,12 @@ void SynchSelector::useToptagWeight()
 
 static float toptagWeight(float x)
 {
-    if (x < 275.)
-        return 0;
-    if (x >= 275. && x < 550.)
-        return 0.000016*(x - 275.);
-    return 0.0045;
+    float p0 = 5.40683e-02;
+    float p1 = 4.48390e+02;
+    float p2 = 2.76646e-02;
+    float p3 = 1.85887e-06;
+
+    return p0/(1+exp(-p2*(x-p1)-p3*pow(x-p1,3)));   
 }
 
 float SynchSelector::toptagWeight()

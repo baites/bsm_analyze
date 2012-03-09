@@ -364,6 +364,7 @@ TemplatesOptions::Discriminators TemplatesOptions::split(const string &line)
 TemplateAnalyzer::TemplateAnalyzer():
     _data_input(false),
     _wjets_input(false),
+    _zjets_input(false),
     _apply_wjet_correction(false)
 {
     _synch_selector.reset(new SynchSelector());
@@ -581,6 +582,7 @@ TemplateAnalyzer::TemplateAnalyzer():
 TemplateAnalyzer::TemplateAnalyzer(const TemplateAnalyzer &object):
     _data_input(false),
     _wjets_input(false),
+    _zjets_input(false),
     _apply_wjet_correction(object._apply_wjet_correction)
 {
     _synch_selector = 
@@ -1222,7 +1224,7 @@ bsm::TriggerDelegate *TemplateAnalyzer::getTriggerDelegate() const
 void TemplateAnalyzer::didCounterAdd(const Counter *counter)
 {
     if (_counters.end() != _counters.find(counter))
-        cutflow()->fill(_counters[counter], _pileup_weight * _wjets_weight);
+        cutflow()->fill(_counters[counter], _pileup_weight * _extra_weight);
 
     if (counter == _secondary_lepton_counter)
         fillDrVsPtrel();
@@ -1231,17 +1233,17 @@ void TemplateAnalyzer::didCounterAdd(const Counter *counter)
         const LorentzVector &el_p4 =
             (*_synch_selector->goodElectrons().begin())->physics_object().p4();
 
-        _electron_before_tricut->fill(el_p4, _pileup_weight * _wjets_weight);
+        _electron_before_tricut->fill(el_p4, _pileup_weight * _extra_weight);
 
         const LorentzVector &missing_energy = *_synch_selector->goodMET();
 
         ljetMetDphivsMetBeforeTricut()->fill(pt(missing_energy),
                 fabs(dphi(*_synch_selector->goodJets()[0].corrected_p4, missing_energy)),
-                _pileup_weight * _wjets_weight);
+                _pileup_weight * _extra_weight);
 
         leptonMetDphivsMetBeforeTricut()->fill(pt(missing_energy),
                 fabs(dphi(el_p4, missing_energy)),
-                _pileup_weight * _wjets_weight);
+                _pileup_weight * _extra_weight);
     }
 }
 
@@ -1251,6 +1253,7 @@ void TemplateAnalyzer::onFileOpen(const std::string &filename, const Input *inpu
     {
         _data_input = (Input::DATA == input->type());
         _wjets_input = (Input::WJETS == input->type());
+        _zjets_input = (Input::ZJETS == input->type());
     }
     else
     {
@@ -1262,7 +1265,11 @@ void TemplateAnalyzer::onFileOpen(const std::string &filename, const Input *inpu
     }
 
     // Enable toptagging by weighting
-    if (((_data_input && _synch_selector->qcdTemplate()) || _wjets_input) && _synch_selector->isToptagUse())
+    if ((
+        (_data_input && _synch_selector->qcdTemplate()) || 
+        _wjets_input || 
+        _zjets_input
+    ) && _synch_selector->isToptagUse())
         _synch_selector->useToptagWeight();
 }
 
@@ -1276,13 +1283,13 @@ void TemplateAnalyzer::process(const Event *event)
         _synch_selector_with_inverted_htlep->htlep()->invert();
     }
 
-    _pileup_weight = _data_input ? 1 : 0;
-    _wjets_weight = 1;
+    _pileup_weight = _data_input ? 1. : 0.;
+    _extra_weight = 1.;
     
     if (_apply_wjet_correction && _wjets_input)
     {
         WDecay decay = eventDecay(event);
-        _wjets_weight *= decay.correction();
+        _extra_weight *= decay.correction();
     }
 
     if (!event->has_missing_energy())
@@ -1297,26 +1304,27 @@ void TemplateAnalyzer::process(const Event *event)
     if (_synch_selector->apply(event))
     {
        // Use toptag by weighting the wjets mc
-       if (
-           (_wjets_input && _synch_selector->isToptagUse()) ||
-           (_data_input && _synch_selector->qcdTemplate() && _synch_selector->isToptagUse())
+       if ((
+           (_data_input && _synch_selector->qcdTemplate()) ||
+           _wjets_input || _zjets_input) && 
+           _synch_selector->isToptagUse()
        )
        {
            cout << "Using weight !" << endl;
-           _wjets_weight *= _synch_selector->toptagWeight();
+           _extra_weight *= _synch_selector->toptagWeight();
        }
 
         njetsBeforeReconstruction()->fill(_synch_selector->goodJets().size(),
-                    _pileup_weight * _wjets_weight);
+                    _pileup_weight * _extra_weight);
 
         if (2 == _synch_selector->goodJets().size())
         {
             const LorentzVector &el_p4 = _synch_selector->goodElectrons()[0]->physics_object().p4();
             njet2DrLeptonJet1BeforeReconstruction()->fill(dr(el_p4, *_synch_selector->goodJets()[0].corrected_p4),
-                    _pileup_weight * _wjets_weight);
+                    _pileup_weight * _extra_weight);
 
             njet2DrLeptonJet2BeforeReconstruction()->fill(dr(el_p4, *_synch_selector->goodJets()[1].corrected_p4),
-                    _pileup_weight * _wjets_weight);
+                    _pileup_weight * _extra_weight);
         }
 
         Mttbar resonance = mttbar();
@@ -1334,7 +1342,7 @@ void TemplateAnalyzer::process(const Event *event)
             ltop_drsum()->fill(dr(resonance.ltop, el_p4) +
                                    dr(resonance.ltop, resonance.neutrino) +
                                    dr(resonance.ltop, resonance.ltop_jet),
-                               _pileup_weight * _wjets_weight);
+                               _pileup_weight * _extra_weight);
 
             if (1 < resonance.htop_jets.size())
             {
@@ -1346,53 +1354,53 @@ void TemplateAnalyzer::process(const Event *event)
                 {
                     drsum += dr(resonance.htop, *jet->corrected_p4);
                 }
-                htop_drsum()->fill(drsum, _pileup_weight * _wjets_weight);
+                htop_drsum()->fill(drsum, _pileup_weight * _extra_weight);
             }
 
             htop_dphi()->fill(dphi(resonance.htop, resonance.ltop),
-                    _pileup_weight * _wjets_weight);
+                    _pileup_weight * _extra_weight);
 
             chi2()->fill(resonance.ltop_discriminator +
                             resonance.htop_discriminator,
-                    _pileup_weight * _wjets_weight);
+                    _pileup_weight * _extra_weight);
 
             ltop_chi2()->fill(resonance.ltop_discriminator,
-                    _pileup_weight * _wjets_weight);
+                    _pileup_weight * _extra_weight);
 
             htop_chi2()->fill(resonance.htop_discriminator,
-                    _pileup_weight * _wjets_weight);
+                    _pileup_weight * _extra_weight);
 
             mttbarAfterHtlep()->fill(mass(resonance.mttbar) / 1000,
-                    _pileup_weight * _wjets_weight);
+                    _pileup_weight * _extra_weight);
 
-            ttbarPt()->fill(pt(resonance.mttbar), _pileup_weight * _wjets_weight);
+            ttbarPt()->fill(pt(resonance.mttbar), _pileup_weight * _extra_weight);
 
             wlepMt()->fill(mt(resonance.neutrino, el_p4),
-                    _pileup_weight * _wjets_weight);
+                    _pileup_weight * _extra_weight);
 
             wlepMass()->fill(mass(resonance.wlep),
-                    _pileup_weight * _wjets_weight);
+                    _pileup_weight * _extra_weight);
             whadMass()->fill(mass(resonance.whad),
-                    _pileup_weight * _wjets_weight);
+                    _pileup_weight * _extra_weight);
 
             monitorJets();
-            _electron->fill(el_p4, _pileup_weight * _wjets_weight);
+            _electron->fill(el_p4, _pileup_weight * _extra_weight);
 
-            _ltop->fill(resonance.ltop, _pileup_weight * _wjets_weight);
-            _htop->fill(resonance.htop, _pileup_weight * _wjets_weight);
+            _ltop->fill(resonance.ltop, _pileup_weight * _extra_weight);
+            _htop->fill(resonance.htop, _pileup_weight * _extra_weight);
             
             npv()->fill(event->primary_vertex().size());
             npvWithPileup()->fill(event->primary_vertex().size(),
-                    _pileup_weight * _wjets_weight);
+                    _pileup_weight * _extra_weight);
             njets()->fill(_synch_selector->goodJets().size(),
-                    _pileup_weight * _wjets_weight);
+                    _pileup_weight * _extra_weight);
 
             const LorentzVector &missing_energy = *_synch_selector->goodMET();
             ljetMetDphivsMet()->fill(pt(missing_energy),
                     fabs(dphi(*_synch_selector->goodJets()[0].corrected_p4, missing_energy)),
-                    _pileup_weight * _wjets_weight);
+                    _pileup_weight * _extra_weight);
 
-            met()->fill(pt(missing_energy), _pileup_weight * _wjets_weight);
+            met()->fill(pt(missing_energy), _pileup_weight * _extra_weight);
             metNoWeight()->fill(pt(missing_energy));
 
             if (resonance.htop_njets != int(resonance.htop_jets.size()))
@@ -1401,65 +1409,65 @@ void TemplateAnalyzer::process(const Event *event)
                     << resonance.htop_jets.size() << endl;
 
             htopNjets()->fill(resonance.htop_jets.size(),
-                    _pileup_weight * _wjets_weight);
+                    _pileup_weight * _extra_weight);
 
             const ResonanceReconstructor::CorrectedJets &htop_jets =
                 resonance.htop_jets;
             if (1 < htop_jets.size())
             {
                 htopDeltaR()->fill(dr(*htop_jets[0].corrected_p4, *htop_jets[1].corrected_p4),
-                        _pileup_weight * _wjets_weight);
+                        _pileup_weight * _extra_weight);
             }
 
             htopNjetvsM()->fill(mass(resonance.htop), resonance.htop_njets,
-                    _pileup_weight * _wjets_weight);
+                    _pileup_weight * _extra_weight);
             htopPtvsM()->fill(mass(resonance.htop), pt(resonance.htop),
-                    _pileup_weight * _wjets_weight);
+                    _pileup_weight * _extra_weight);
 
             htopPtvsNjets()->fill(resonance.htop_njets, pt(resonance.htop),
-                    _pileup_weight * _wjets_weight);
+                    _pileup_weight * _extra_weight);
 
             htopPtvsLtoppt()->fill(pt(resonance.ltop), pt(resonance.htop),
-                    _pileup_weight * _wjets_weight);
+                    _pileup_weight * _extra_weight);
 
             leptonMetDphivsMet()->fill(pt(missing_energy), fabs(dphi(el_p4, missing_energy)),
-                    _pileup_weight * _wjets_weight);
+                    _pileup_weight * _extra_weight);
 
-            htlep()->fill(htlepValue(), _pileup_weight * _wjets_weight);
-            htall()->fill(htallValue(), _pileup_weight * _wjets_weight);
-            htlepAfterHtlep()->fill(htlepValue(), _pileup_weight * _wjets_weight);
+            htlep()->fill(htlepValue(), _pileup_weight * _extra_weight);
+            htall()->fill(htallValue(), _pileup_weight * _extra_weight);
+            htlepAfterHtlep()->fill(htlepValue(), _pileup_weight * _extra_weight);
 
             solutions()->fill(resonance.solutions);
 
             if (0 < htop_jets.size())
                 htopJet1()->fill(*htop_jets[0].corrected_p4,
-                        _pileup_weight * _wjets_weight);
+                        _pileup_weight * _extra_weight);
             
             if (1 < htop_jets.size())
                 htopJet2()->fill(*htop_jets[1].corrected_p4,
-                        _pileup_weight * _wjets_weight);
+                        _pileup_weight * _extra_weight);
 
             if (2 < htop_jets.size())
                 htopJet3()->fill(*htop_jets[2].corrected_p4,
-                        _pileup_weight * _wjets_weight);
+                        _pileup_weight * _extra_weight);
 
             if (3 < htop_jets.size())
                 htopJet4()->fill(*htop_jets[3].corrected_p4,
-                        _pileup_weight * _wjets_weight);
+                        _pileup_weight * _extra_weight);
 
-            ltopJet1()->fill(resonance.ltop_jet, _pileup_weight * _wjets_weight);
+            ltopJet1()->fill(resonance.ltop_jet, _pileup_weight * _extra_weight);
 
             njetsAfterReconstruction()->fill(_synch_selector->goodJets().size(),
-                        _pileup_weight * _wjets_weight);
+                        _pileup_weight * _extra_weight);
 
             if (2 == _synch_selector->goodJets().size())
             {
                 const LorentzVector &el_p4 = _synch_selector->goodElectrons()[0]->physics_object().p4();
                 njet2DrLeptonJet1AfterReconstruction()->fill(dr(el_p4, *_synch_selector->goodJets()[0].corrected_p4),
-                        _pileup_weight * _wjets_weight);
+                        _pileup_weight * _extra_weight);
 
                 njet2DrLeptonJet2AfterReconstruction()->fill(dr(el_p4, *_synch_selector->goodJets()[1].corrected_p4),
-                        _pileup_weight * _wjets_weight);
+                        _pileup_weight * _extra_weight);
             }
         }
     }
@@ -1473,10 +1481,10 @@ void TemplateAnalyzer::process(const Event *event)
         if (_synch_selector_with_inverted_htlep->reconstruction(resonance.valid)
                 && _synch_selector_with_inverted_htlep->ltop(pt(resonance.ltop)))
         {
-            htlep()->fill(htlepValue(), _pileup_weight * _wjets_weight);
-            htlepBeforeHtlep()->fill(htlepValue(), _pileup_weight * _wjets_weight);
+            htlep()->fill(htlepValue(), _pileup_weight * _extra_weight);
+            htlepBeforeHtlep()->fill(htlepValue(), _pileup_weight * _extra_weight);
             htlepBeforeHtlepNoWeight()->fill(htlepValue());
-            mttbarBeforeHtlep()->fill(mass(mttbar().mttbar) / 1000, _pileup_weight * _wjets_weight);
+            mttbarBeforeHtlep()->fill(mass(mttbar().mttbar) / 1000, _pileup_weight * _extra_weight);
         }
     } 
 
@@ -1557,19 +1565,19 @@ void TemplateAnalyzer::fillDrVsPtrel()
         return;
 
     const float ptrel_value = ptrel(lepton_p4, *closest_jet->corrected_p4);
-    drVsPtrel()->fill(ptrel_value, deltar_min,  _pileup_weight * _wjets_weight);
+    drVsPtrel()->fill(ptrel_value, deltar_min,  _pileup_weight * _extra_weight);
 
     if (5 > ptrel_value)
     {
         if (SynchSelector::ELECTRON == _synch_selector->leptonMode())
         {
             d0()->fill((*_synch_selector->goodElectrons().begin())->extra().d0(),
-                    _pileup_weight * _wjets_weight);
+                    _pileup_weight * _extra_weight);
         }
         else
         {
             d0()->fill((*_synch_selector->goodMuons().begin())->extra().d0(),
-                    _pileup_weight * _wjets_weight);
+                    _pileup_weight * _extra_weight);
         }
     }
 }
@@ -1607,15 +1615,15 @@ void TemplateAnalyzer::monitorJets()
 {
     if (_synch_selector->goodJets().size())
         _first_jet->fill(*_synch_selector->goodJets()[0].corrected_p4,
-                _pileup_weight * _wjets_weight);
+                _pileup_weight * _extra_weight);
 
     if (1 < _synch_selector->goodJets().size())
         _second_jet->fill(*_synch_selector->goodJets()[1].corrected_p4,
-                _pileup_weight * _wjets_weight);
+                _pileup_weight * _extra_weight);
 
     if (2 < _synch_selector->goodJets().size())
         _third_jet->fill(*_synch_selector->goodJets()[2].corrected_p4,
-                _pileup_weight * _wjets_weight);
+                _pileup_weight * _extra_weight);
 }
 
 

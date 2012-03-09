@@ -9,7 +9,6 @@ from __future__ import division, print_function
 
 import compare
 import channel_type
-import numpy
 import root.label
 import root.style
 import ROOT
@@ -18,8 +17,8 @@ import sys
 from channel_template import MCChannelTemplate
 from input_template import InputTemplate
 from loader import ChannelTemplateLoader
-from optparse import OptionParser
 from root.comparison import ComparisonCanvas
+from scales import Scales
 from util.arg import split_use_and_ban
 from util.timer import Timer
 
@@ -42,6 +41,7 @@ class Templates(object):
         self.__verbose = False
         self.__batch_mode = False
         self.__input_filename = "output_signal_p150_hlt.root"
+        self.__scales = None
 
         self.use_plots = []
         self.ban_plots = []
@@ -53,34 +53,20 @@ class Templates(object):
 
         self.loader = None
         self.fractions = dict.fromkeys(["mc", "qcd"])
+        self.scales = None
 
-    def run(self):
-        parser = OptionParser(
-                usage = "usage: %prog [options] [plots:A,B,C] [folders:A,B,C] "
-                        "[channels:A,B,C]")
-
-        parser.add_option("-b", "--batch",
-            action = "store_true", default = False,
-            help = "Run application in batch mode")
-
-        parser.add_option("-n", "--notff",
-            action = "store_true", default = False,
-            help = "Disable the normalization based of TFractionFitter")
-
-        parser.add_option("-v", "--verbose",
-            action = "store_true", default = False,
-            help = "Print additional info")
-
-        parser.add_option("--filename",
-            action = "store", default = self.__input_filename,
-            help = "input filename")
-
-        options, args = parser.parse_args()
+    def run(self, options, args):
+        # Apply TDR style to all plots
+        style = root.style.tdr()
+        style.cd()
 
         self.__verbose = options.verbose
         self.__batch_mode = options.batch
         self.__no_tfraction_fitter = options.notff
         self.__input_filename = options.filename
+        if options.scales:
+            self.__scales = Scales()
+            self.__scales.load(options.scales)
 
         # Create dictionary of arguments with key - arg name, value - arg value
         args = [x.split(':') for x in args if ':' in x]
@@ -123,8 +109,12 @@ class Templates(object):
             raise RuntimeError("all channels are turned off")
 
         self.__load_channels()
+
         if not self.__no_tfraction_fitter:
             self.__fraction_fitter()
+
+        self.__apply_scales()
+
         canvases = self.__plot()
 
         # Save canvases
@@ -208,19 +198,52 @@ class Templates(object):
             raise RuntimeError("fitter error {0}".format(fit_status))
 
         # Extract MC and QCD fractions from TFractionFitter
-        # fraction = numpy.zeros(1, dtype = float)
-        # fraction_error = numpy.zeros(1, dtype = float)
-
-        fraction = ROOT.Double(0.0)
-        fraction_error = ROOT.Double(0.0)
+        fraction = ROOT.Double(0)
+        fraction_error = ROOT.Double(0)
 
         fitter.GetResult(0, fraction, fraction_error)
-        # self.fractions["mc"] = [fraction[0], fraction_error[0]]
-        self.fractions["mc"] = [float(fraction), float(fraction_error)]
+        self.fractions["mc"] = map(float, [fraction, fraction_error])
 
         fitter.GetResult(1, fraction, fraction_error)
-        # self.fractions["qcd"] = [fraction[0], fraction_error[0]]
-        self.fractions["qcd"] = [float(fraction), float(fraction_error)]
+        self.fractions["qcd"] = map(float, [fraction, fraction_error])
+
+        fitter_plot = fitter.GetPlot().Clone()
+        qcd = met["qcd"].hist.Clone()
+        mc = met["mc"].hist.Clone()
+        data = met["data"].hist.Clone()
+
+        qcd.Scale(self.fractions["qcd"][0] * data.Integral() / qcd.Integral())
+        mc.Scale(self.fractions["mc"][0] * data.Integral() / mc.Integral())
+
+        fitter_plot.SetLineStyle(2)
+        fitter_plot.SetLineColor(33)
+        fitter_plot.SetLineWidth(5)
+
+        legend = ROOT.TLegend(.67, .60, .89, .88)
+        legend.SetMargin(0.12);
+        legend.SetTextSize(0.03);
+        legend.SetFillColor(10);
+        legend.SetBorderSize(0);
+
+        canvas = ROOT.TCanvas("met_fit", "met_fit", 640, 480)
+        pad = canvas.cd(1)
+
+        pad.SetLeftMargin(0.2)
+        pad.SetBottomMargin(0.15)
+
+        fitter_plot.Draw("hist 9")
+        data.Draw("e 9 same")
+        mc.Draw("hist same 9")
+        qcd.Draw("hist same 9")
+
+        legend.AddEntry(data, "Data 2011", "le")
+        legend.AddEntry(qcd, "QCD data-driven", "fe")
+        legend.AddEntry(mc, "Monte-Carlo", "fe")
+        legend.AddEntry(fitter_plot, "Fit", "l")
+
+        legend.Draw("9 same")
+
+        canvas.SaveAs("met_fit.pdf")
 
         # Print found fractions
         if self.__verbose:
@@ -275,12 +298,20 @@ class Templates(object):
                 print("failed to apply TFractionFitter scales - {0}".format(error),
                       file = sys.stderr)
 
+    def __apply_scales(self):
+        if not self.__scales:
+            return
+
+        # For each loaded plot/channel apply loaded scale if channel type
+        # matches scale type
+        for plot, channels in self.loader.plots.items():
+            for channel_type, channel in channels.items():
+                scale = self.__scales.scales.get(channel_type)
+                if scale:
+                    channel.hist.Scale(scale)
+
     @Timer(label = "[plot templates]", verbose = True)
     def __plot(self):
-        # Apply TDR style to all plots
-        style = root.style.tdr()
-        style.cd()
-
         # container where all canvas related objects will be saved
         class Canvas: pass
 

@@ -385,9 +385,10 @@ namespace bsm
             float _pileup_weight;
 
             bool _wjets_input;
+            bool _zjets_input;
             bool _apply_wjet_correction;
 
-            float _wjets_weight;
+            float _extra_weight;
 
             P4MonitorPtr _first_jet;
             P4MonitorPtr _second_jet;
