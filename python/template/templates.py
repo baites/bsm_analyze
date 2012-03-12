@@ -37,37 +37,16 @@ class Templates(object):
             "zprime_m4000_w40": "Z' 4 TeV/c^{2}"
     }
 
-    def __init__(self):
-        self.__verbose = False
-        self.__batch_mode = False
-        self.__input_filename = "output_signal_p150_hlt.root"
-        self.__scales = None
-        self.__ratio = None
-        self.__use_tfraction_fitter = True
-
-        self.use_plots = []
-        self.ban_plots = []
-
-        self.use_folders = []
-        self.ban_folders = []
-
-        self.use_channels = []
-
-        self.loader = None
-        self.fractions = {}
-        self.scales = None
-
-    def run(self, options, args):
-        # Apply TDR style to all plots
-        style = root.style.tdr()
-        style.cd()
-
+    def __init__(self, options, args):
         self.__verbose = options.verbose
         self.__batch_mode = options.batch
         self.__input_filename = options.filename
+
         if options.scales:
             self.__scales = Scales()
             self.__scales.load(options.scales)
+        else:
+            self.__scales = None
 
         if options.fractions:
             fractions = Scales()
@@ -84,40 +63,60 @@ class Templates(object):
                 tmp_fractions[fraction_type] = fraction
 
             self.fractions = tmp_fractions
+        else:
+            self.fractions = {}
+
+        self.__use_tfraction_fitter = not options.notff
 
         ratio = options.ratio.lower()
         if "/" in ratio:
             self.__ratio = ratio.split('/')
         else:
+            self.__ratio = None
+
             print("only simple ratios are supported: channel/channel",
                     file = sys.stderr)
 
-        if options.notff:
-            self.__use_tfraction_fitter = False
+        self.use_plots = []
+        self.ban_plots = []
 
-        # Create dictionary of arguments with key - arg name, value - arg value
-        args = [x.split(':') for x in args if ':' in x]
-        args = {key.strip(): set(x.strip() for x in values.split(','))
-                    for key, values in args}
+        self.use_folders = []
+        self.ban_folders = []
 
-        self.use_plots, self.ban_plots = map(list,
-                split_use_and_ban(args.get("plots", [])))
+        self.use_channels = []
 
-        self.use_folders, self.ban_folders = map(list,
-                split_use_and_ban(args.get("folders", [])))
+        self.loader = None
+        self.scales = None
 
-        use_channels, ban_channels = split_use_and_ban(args.get("channels", []))
+        if options.plots:
+            self.use_plots, self.ban_plots = map(list,
+                                                     split_use_and_ban(set(
+                    plot.strip() for plot in options.plots.split(','))))
 
-        # use only allowed channels or all if None specified
-        channels = set(channel_type.ChannelType.channel_types.keys())
-        if use_channels:
-            channels &= use_channels
+        if options.folders:
+            self.use_folders, self.ban_folders = map(list,
+                                                     split_use_and_ban(set(
+                    folder.strip() for folder in options.folders.split(','))))
 
-        # remove banned channels
-        if ban_channels:
-            channels -= ban_channels
+        if options.channels:
+            use_channels, ban_channels = split_use_and_ban(set(
+                channel.strip() for channel in options.channels.split(',')))
 
-        self.use_channels = list(channels)
+            # use only allowed channels or all if None specified
+            channels = set(channel_type.ChannelType.channel_types.keys())
+            if use_channels:
+                channels &= use_channels
+
+            # remove banned channels
+            if ban_channels:
+                channels -= ban_channels
+
+            self.use_channels = list(channels)
+
+    def run(self):
+        # Apply TDR style to all plots
+        style = root.style.tdr()
+        style.cd()
 
         # print run configuration
         if self.__verbose:
