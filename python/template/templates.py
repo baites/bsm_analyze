@@ -64,7 +64,6 @@ class Templates(object):
 
         self.__verbose = options.verbose
         self.__batch_mode = options.batch
-        self.__no_tfraction_fitter = options.notff
         self.__input_filename = options.filename
         if options.scales:
             self.__scales = Scales()
@@ -121,10 +120,7 @@ class Templates(object):
             raise RuntimeError("all channels are turned off")
 
         self.__load_channels()
-
-        if not self.__no_tfraction_fitter:
-            self.__fraction_fitter()
-
+        self.__fraction_fitter()
         self.__apply_scales()
 
         canvases = self.__plot()

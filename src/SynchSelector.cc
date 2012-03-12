@@ -81,6 +81,11 @@ SynchSelectorOptions::SynchSelectorOptions()
              boost::bind(&SynchSelectorOptions::setQCDTemplate, this, _1)),
          "derived a qcd template")   
 
+         ("wjets-template",
+          po::value<bool>()->implicit_value(false)->notifier(
+             boost::bind(&SynchSelectorOptions::setWjetsTemplate, this, _1)),
+         "derived a wjets template for toptagging mistag rate")
+
         ("ltop-pt",
          po::value<float>()->notifier(
              boost::bind(&SynchSelectorOptions::setLtopPt, this, _1)),
@@ -214,6 +219,14 @@ void SynchSelectorOptions::setQCDTemplate(const bool &value)
     delegate()->setQCDTemplate(value);
 }
 
+void SynchSelectorOptions::setWjetsTemplate(const bool &value)
+{
+    if (!delegate())
+        return;
+
+    delegate()->setWjetsTemplate(value);
+}
+
 void SynchSelectorOptions::setLtopPt(const float &value)
 {
     if (!delegate())
@@ -257,6 +270,7 @@ SynchSelector::SynchSelector():
     _lepton_mode(ELECTRON),
     _cut_mode(CUT_2D),
     _qcd_template(false),
+    _wjets_template(false),
     _weighted_toptag(false)
 {
     // Cutflow table
@@ -363,6 +377,7 @@ SynchSelector::SynchSelector(const SynchSelector &object):
     _lepton_mode(object._lepton_mode),
     _cut_mode(object._cut_mode),
     _qcd_template(object._qcd_template),
+    _wjets_template(object._wjets_template),
     _triggers(object._triggers.begin(), object._triggers.end()),
     _weighted_toptag(false)
 {
@@ -639,6 +654,11 @@ bool SynchSelector::qcdTemplate() const
     return _qcd_template;
 }
 
+bool SynchSelector::wjetsTemplate() const
+{
+    return _wjets_template;
+}
+
 bsm::Cut2DSelectorDelegate *SynchSelector::getCut2DSelectorDelegate() const
 {
     return _cut2d_selector.get();
@@ -698,6 +718,11 @@ void SynchSelector::setElectronPt(const float &value)
 void SynchSelector::setQCDTemplate(const bool &value)
 {
     _qcd_template = value;
+}
+
+void SynchSelector::setWjetsTemplate(const bool &value)
+{
+    _wjets_template = value;
 }
 
 void SynchSelector::setLtopPt(const float &value)
@@ -1010,6 +1035,10 @@ bool SynchSelector::jets(const Event *event)
     sort(_good_jets.begin(), _good_jets.end(), CorrectedPtGreater());
     sort(_ca_jets.begin(), _ca_jets.end(), CorrectedPtGreater());
     sort(_top_jets.begin(), _top_jets.end(), CorrectedPtGreater());
+
+    if (_wjets_template)
+        return 1 == _good_jets.size()
+        && (_cutflow->apply(JET), true);
 
     return 1 < _good_jets.size()
         && (_cutflow->apply(JET), true);

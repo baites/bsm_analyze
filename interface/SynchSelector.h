@@ -54,6 +54,7 @@ namespace bsm
             virtual void setMinToptag(const float &) {}
             virtual void setElectronPt(const float &) {}
             virtual void setQCDTemplate(const bool &) {}
+            virtual void setWjetsTemplate(const bool &) {}
 
             virtual void setLtopPt(const float &) {}
             virtual void setLtopChi2Discriminator(const float &) {}
@@ -82,6 +83,7 @@ namespace bsm
             void setMinToptag(const float &);
             void setElectronPt(const float &);
             void setQCDTemplate(const bool &);
+            void setWjetsTemplate(const bool &);
 
             void setLtopPt(const float &);
 
@@ -176,6 +178,7 @@ namespace bsm
             LeptonMode leptonMode() const;
             CutMode cutMode() const;
             bool qcdTemplate() const;
+            bool wjetsTemplate() const;
 
             Cut2DSelectorDelegate *getCut2DSelectorDelegate() const;
 
@@ -196,6 +199,7 @@ namespace bsm
             virtual void setMinToptag(const float &);
             virtual void setElectronPt(const float &);
             virtual void setQCDTemplate(const bool &);
+            virtual void setWjetsTemplate(const bool &);
 
             virtual void setLtopPt(const float &);
 
@@ -310,6 +314,7 @@ namespace bsm
             CutPtr _htop_chi2;
 
             bool _qcd_template;
+            bool _wjets_template;
 
             typedef std::vector<uint64_t> Triggers;
             Triggers _triggers; // hashes of triggers to be passed

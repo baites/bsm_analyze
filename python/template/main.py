@@ -20,10 +20,6 @@ def main():
             action = "store_true", default = False,
             help = "Run application in batch mode")
 
-        parser.add_option("-n", "--notff",
-            action = "store_true", default = False,
-            help = "Not use TFractionFitter for normalization.")
-
         parser.add_option("-v", "--verbose",
             action = "store_true", default = False,
             help = "Print additional info")
