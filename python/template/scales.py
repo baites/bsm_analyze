@@ -27,3 +27,6 @@ class Scales(object):
     @property
     def scales(self):
         return self.__scales
+
+    def __str__(self):
+        return str(self.scales)
