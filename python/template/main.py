@@ -43,7 +43,7 @@ def parser():
 
     parser.add_option(
             "--ratio",
-            action = "store", default = "default",
+            action = "store", default = "",
             help = "Use channels ratio in comparison")
 
     parser.add_option(
