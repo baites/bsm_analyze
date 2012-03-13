@@ -17,9 +17,12 @@ class Scales(object):
                 if line.startswith("#"):
                     continue
 
-                channel, scale = line.split()
+                if ":" in line:
+                    channel, scale = line.split(':')
+                else:
+                    channel, scale = line.split()
 
-                self.__scales[channel] = float(scale)
+                self.__scales[channel.strip().lower()] = float(scale.strip())
 
     @property
     def scales(self):
