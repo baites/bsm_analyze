@@ -364,6 +364,7 @@ SynchSelector::SynchSelector():
     monitor(_ltop);
 
     _random_generator.reset(new RandomGenerator<>(140.,250.));
+    //_random_generator.reset(new RandomGenerator<>(143.,203.)); 
     monitor(_random_generator);
 
     _ltop_chi2.reset(new Comparator<less<float> >(5));
@@ -1406,6 +1407,27 @@ static float toptagWeight(float x)
     return p0/(1+exp(-p2*(x-p1)-p3*pow(x-p1,3)));   
 }
 
+// Overlapping area of two interceting circles
+static float overlapArea(
+    float d,
+    float r = 0.5,
+    float R = 0.8
+)
+{
+    if (d > r+R) return 0.0;
+    if (d < R-r) return r*r*M_PI;
+
+    float d2 = d*d;
+    float r2 = r*r;
+    float R2 = R*R;
+
+    float A = r2*acos((d2+r2-R2)/(2*d*r));
+    float B = R2*acos((d2+R2-r2)/(2*d*R));
+    float C = 0.5*sqrt((-d+r+R)*(d+r-R)*(d-r+R)*(d+r+R));
+
+    return A + B - C; 
+}
+
 float SynchSelector::toptagWeight()
 {
     uint32_t mtoptags = _min_toptag->value();
@@ -1413,24 +1435,61 @@ float SynchSelector::toptagWeight()
     uint32_t index = 0;
     float weight = 1.0;
 
-    for(SynchSelector::GoodJets::iterator jet = _ca_jets.begin();
-            _ca_jets.end() != jet;
-            ++jet, ++index)
+    for(SynchSelector::GoodJets::const_iterator cajet = _ca_jets.begin();
+            _ca_jets.end() != cajet;
+            ++cajet, ++index)
     {
         if (index >= mtoptags)
-            weight *= 1.0 - ::toptagWeight(pt(*jet->corrected_p4));
+            weight *= 1.0 - ::toptagWeight(pt(*cajet->corrected_p4));
         else
         {
-            weight *= ::toptagWeight(pt(*jet->corrected_p4));
-            /*float mass = _random_generator->value();
-            jet->corrected_p4->set_e(
-                sqrt( 
-                    jet->corrected_p4->px() * jet->corrected_p4->px() +
-                    jet->corrected_p4->py() * jet->corrected_p4->py() +
-                    jet->corrected_p4->pz() * jet->corrected_p4->pz() +
-                    mass * mass
-                )
-            );*/
+            weight *= ::toptagWeight(pt(*cajet->corrected_p4));
+            
+            // Loop over the good jets to find 
+            // those close to leading ca jet
+            typedef vector<float> Areas;
+            typedef vector<SynchSelector::GoodJets::iterator> ConeJets;
+
+            float totalArea = 0.0;
+            Areas areas;
+            ConeJets coneJets;
+            LorentzVector p4;
+
+            for(SynchSelector::GoodJets::iterator jet = _good_jets.begin();
+                _good_jets.end() != jet;
+                ++jet)
+            {
+                float x = dr(*jet->corrected_p4, *cajet->corrected_p4);
+
+                if (x < 1.3)
+                {
+                    float area = overlapArea(x); 
+                    // cout << "Area: " << x << " : " << area << endl;
+                    totalArea += area;
+                    areas.push_back(area);
+                    coneJets.push_back(jet);
+                    LorentzVector p4jet = *(jet->corrected_p4);
+                    p4jet *= area;
+                    p4 += p4jet;
+                }
+            }
+ 
+            p4 *= (1.0/totalArea);
+
+            float mass = _random_generator->value();
+            float e = sqrt(
+                p4.px() * p4.px() +
+                p4.py() * p4.py() +
+                p4.pz() * p4.pz() +
+                mass * mass
+            );
+
+            for(size_t i = 0; i < coneJets.size(); ++i)
+            {
+                coneJets[i]->corrected_p4->set_e(
+                    e * areas[i] * coneJets[i]->corrected_p4->e() / (p4.e()*totalArea)
+                );
+            }
         }
     }
 

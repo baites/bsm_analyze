@@ -368,6 +368,8 @@ TemplateAnalyzer::TemplateAnalyzer():
     _apply_wjet_correction(false)
 {
     _synch_selector.reset(new SynchSelector());
+    _synch_selector->ltop_chi2()->disable();
+    _synch_selector->htop_chi2()->disable();
     monitor(_synch_selector);
 
     // Assign cutflow delegate
