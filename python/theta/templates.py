@@ -65,7 +65,8 @@ class Templates(template.templates.Templates):
             raise RuntimeError("all channels are turned off")
 
         self._load_channels()
-        self._fraction_fitter()
+        self._run_fraction_fitter()
+        self._apply_fractions()
         self._apply_scales()
 
         self._save_templates()
