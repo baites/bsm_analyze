@@ -15,6 +15,8 @@ from util.arg import split_use_and_ban
 
 class Templates(template.templates.Templates):
     channel_names = {
+            # Map channel type to channel name to be used in plot name
+
             "ttbar": "ttbar",
             "zjets": "zjets",
             "wjets": "wjets",
@@ -70,19 +72,41 @@ class Templates(template.templates.Templates):
 
     @Timer(label="[save templates]", verbose=True)
     def _save_templates(self):
+        '''
+        Save loaded channels in output ROOT file
+        
+        Output file will be updated. All channels will be saved or only those,
+        that are specified with --savechannels option.
+
+        The histogram naming convention is as follows:
+
+            [analysis]_[plot]__[channel][__[systematics]]
+
+        where
+        
+            analysis    analysis channel: mu, el
+            plot        plot name, e.g. mttbar
+            channel     channel name: ttbar, zjets, wjets, singletop, etc.
+            systematics source of the systematic error, e.g. jes__plus
+
+        '''
+
+        # Make sure required plot is loaded
         channels = self.loader.plots.get("/mttbar_after_htlep")
         if not channels:
             raise RuntimeError("mttbar_after_htlep is not loaded")
 
+        # format string has different format with(-out) systematics
         format_string = "el_mttbar__{channel}"
         if self.suffix:
-            format_string += "{suffix}"
+            format_string += self.suffix
 
         with topen(self.output_filename, "update"):
+            # save only those channels that are supported or specified by user
             for channel_type, channel in channels.items():
                 if (channel_type not in self.channel_names or
-                    (   self.save_channels and
-                        channel_type not in self.save_channels)):
+                        (self.save_channels and
+                         channel_type not in self.save_channels)):
 
                     continue
 
@@ -91,5 +115,20 @@ class Templates(template.templates.Templates):
                     channel.hist.Scale(1. / 5)
 
                 channel.hist.Write(format_string.format(
-                            channel=self.channel_names[channel_type],
-                            suffix=self.suffix))
+                            channel=self.channel_names[channel_type]))
+
+    def __str__(self):
+        '''
+        Print Templates object configuraiton
+        '''
+
+        result = []
+
+        result.append(["systematic", self.suffix if self.suffix else ""])
+        result.append(["output filename", self.output_filename])
+        result.append(["save channels", self.save_channels])
+
+        return "{0}\n{1}".format(
+                template.templates.Templates.__str__(self),
+                '\n'.join(self._str_format.format(name, value)
+                          for name, value in result))
