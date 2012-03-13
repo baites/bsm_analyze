@@ -38,15 +38,15 @@ class Templates(object):
     }
 
     def __init__(self, options, args):
-        self.__verbose = options.verbose
-        self.__batch_mode = options.batch
-        self.__input_filename = options.filename
+        self._verbose = options.verbose
+        self._batch_mode = options.batch
+        self._input_filename = options.filename
 
         if options.scales:
-            self.__scales = Scales()
-            self.__scales.load(options.scales)
+            self._scales = Scales()
+            self._scales.load(options.scales)
         else:
-            self.__scales = None
+            self._scales = None
 
         if options.fractions:
             fractions = Scales()
@@ -66,13 +66,13 @@ class Templates(object):
         else:
             self.fractions = {}
 
-        self.__use_tfraction_fitter = not options.notff
+        self._use_tfraction_fitter = not options.notff
 
         ratio = options.ratio.lower()
         if "/" in ratio:
-            self.__ratio = ratio.split('/')
+            self._ratio = ratio.split('/')
         else:
-            self.__ratio = None
+            self._ratio = None
 
             print("only simple ratios are supported: channel/channel",
                     file = sys.stderr)
@@ -119,34 +119,34 @@ class Templates(object):
         style.cd()
 
         # print run configuration
-        if self.__verbose:
+        if self._verbose:
             print("{0:-<80}".format("-- Configuration "))
             print(self)
             print()
 
-        self.__process()
+        self._process()
 
-    def __process(self):
+    def _process(self):
         if not self.use_channels:
             raise RuntimeError("all channels are turned off")
 
-        self.__load_channels()
-        self.__fraction_fitter()
-        self.__apply_scales()
+        self._load_channels()
+        self._fraction_fitter()
+        self._apply_scales()
 
-        canvases = self.__plot()
+        canvases = self._plot()
 
         # Save canvases
         for obj in canvases:
             obj.canvas.SaveAs("{0}.pdf".format(obj.canvas.GetName()))
 
-        if canvases and not self.__batch_mode:
+        if canvases and not self._batch_mode:
             raw_input('enter')
 
     @Timer(label = "[load all channels]", verbose = True)
-    def __load_channels(self):
+    def _load_channels(self):
         # Create and configure new loader
-        self.loader = ChannelTemplateLoader(self.__input_filename)
+        self.loader = ChannelTemplateLoader(self._input_filename)
 
         self.loader.use_plots = self.use_plots
         self.loader.ban_plots = self.ban_plots
@@ -158,27 +158,32 @@ class Templates(object):
         self.loader.load(self.use_channels)
 
         # print loader summary
-        if self.__verbose:
+        if self._verbose:
             print(self.loader)
 
     @Timer(label = "[fraction fitter]", verbose = True)
-    def __fraction_fitter(self):
+    def _fraction_fitter(self):
         try:
-            if not self.__use_tfraction_fitter:
+            if not self._use_tfraction_fitter:
                 raise RuntimeError("fitter is turned OFF")
 
             if not self.fractions:
-                self.__run_fraction_fitter()
-
-            if self.fractions:
-                self.__apply_fractions()
+                self._run_fraction_fitter()
 
         except RuntimeError as error:
-            if self.__verbose:
+            if self._verbose:
                 print("failed to use TFractionFitter - {0}".format(error),
                       file = sys.stderr)
 
-    def __run_fraction_fitter(self):
+        try:
+            if self.fractions:
+                self._apply_fractions()
+        except RuntimeError as error:
+            if self._verbose:
+                print("failed to apply fractions - {0}".format(error),
+                      file = sys.stderr)
+
+    def _run_fraction_fitter(self):
         if ("/met" not in self.loader.plots or
             "/met_noweight" not in self.loader.plots):
 
@@ -272,14 +277,14 @@ class Templates(object):
 
 
         # Print found fractions
-        if self.__verbose:
+        if self._verbose:
             print('\n'.join("{0:>3} Fraction: {1:.3f}".format(
                     key.upper(),
                     value)
                 for key, value in self.fractions.items()))
             print()
 
-    def __apply_fractions(self):
+    def _apply_fractions(self):
         mc_fraction = self.fractions["mc"]
         qcd_fraction = self.fractions["qcd"]
 
@@ -324,20 +329,20 @@ class Templates(object):
                 print("failed to apply TFractionFitter scales - {0}".format(error),
                       file = sys.stderr)
 
-    def __apply_scales(self):
-        if not self.__scales:
+    def _apply_scales(self):
+        if not self._scales:
             return
 
         # For each loaded plot/channel apply loaded scale if channel type
         # matches scale type
         for plot, channels in self.loader.plots.items():
             for channel_type, channel in channels.items():
-                scale = self.__scales.scales.get(channel_type)
+                scale = self._scales.scales.get(channel_type)
                 if scale:
                     channel.hist.Scale(scale)
 
     @Timer(label = "[plot templates]", verbose = True)
-    def __plot(self):
+    def _plot(self):
         # container where all canvas related objects will be saved
         class Canvas: pass
 
@@ -417,11 +422,11 @@ class Templates(object):
                              if name.startswith("zprime")] if h)
 
             # take care of ratio
-            if self.__ratio:
+            if self._ratio:
                 try:
                     # make sure specified channels are available
                     ratio = []
-                    for term in self.__ratio:
+                    for term in self._ratio:
                         if "bg" == term:
                             if not obj.bg_combo:
                                 raise KeyError("background is not loaded")
