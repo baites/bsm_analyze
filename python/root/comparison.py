@@ -39,6 +39,7 @@ def compare(function):
         ratio.SetMarkerStyle(20)
         ratio.SetLineWidth(2)
         ratio.SetLineColor(ROOT.kGray + 2)
+        ratio.SetLineStyle(1)
         ratio.SetMarkerColor(ROOT.kBlack)
 
         return ratio
@@ -89,12 +90,14 @@ class ComparisonCanvas(object):
     Canvas is automatically created on acesss
     '''
 
-    def __init__(self, lazy_init = False):
+    def __init__(self, pads=2, lazy_init=False):
         '''
         Initialize with empty canvas
         '''
 
         self.__canvas = None
+        self.__pads = pads
+
         if not lazy_init:
             self.canvas
 
@@ -108,22 +111,26 @@ class ComparisonCanvas(object):
         if not self.__canvas:
             # create canvas
             canvas = ROOT.TCanvas()
-            canvas.SetWindowSize(640, 800)
-            canvas.Divide(1, 2)
+            canvas.SetWindowSize(640, 640 if 1 == self.__pads else 800)
 
-            # prepare top pad for original plots to be drawn overlayed
-            pad = canvas.cd(1)
-            pad.SetPad(0, 0.3, 1, 1)
-            pad.SetRightMargin(5)
+            if self.__pads:
+                canvas.Divide(1, self.__pads)
 
-            # prepare bottom pad for comparison/ratio draw
-            pad = canvas.cd(2)
-            pad.SetPad(0, 0, 1, 0.3)
-            pad.SetBottomMargin(0.2)
-            pad.SetRightMargin(5)
-            pad.SetGrid()
+                # prepare top pad for original plots to be drawn overlayed
+                pad = canvas.cd(1)
+                pad.SetPad(0, 0.3, 1, 1)
+                pad.SetRightMargin(5)
 
-            canvas.cd(1)
+                # prepare bottom pad for comparison/ratio draw
+                pad_height = 0.3 / (self.__pads - 1) if 1 != self.__pads else 0.3
+                for pad_number in range(1, self.__pads):
+                    pad = canvas.cd(pad_number + 1)
+                    pad.SetPad(0, 0.3 - pad_number * pad_height, 1, 0.3 - (pad_number - 1) * pad_height)
+                    pad.SetBottomMargin(0.2)
+                    pad.SetRightMargin(5)
+                    pad.SetGrid()
+
+                canvas.cd(1)
 
             self.__canvas = canvas
 
