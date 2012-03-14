@@ -105,8 +105,8 @@ class InputType(BaseType):
         "ttbar": InputData(163 * 1.0, 3701947),
         "ttbar_powheg": InputData(163 * 1.0, 16330372),
 
-        "ttbar_scale_up": InputData(163 * 1.0, 930483),
-        "ttbar_scale_down": InputData(163 * 1.0, 967055),
+        "ttbar_scaling_up": InputData(163 * 1.0, 930483),
+        "ttbar_scaling_down": InputData(163 * 1.0, 967055),
 
         "ttbar_matching_up": InputData(163 * 1.0, 1057479),
         "ttbar_matching_down": InputData(163 * 1.0, 1065323),
@@ -117,8 +117,8 @@ class InputType(BaseType):
         # Use NLO x-section: 31314 instead of LO: 27770
         "wjets": InputData(31314 * 1.0, 77105816),
 
-        "wjets_scale_up": InputData(31314 * 1.0, 9784907),
-        "wjets_scale_down": InputData(31314 * 1.0, 10022324),
+        "wjets_scaling_up": InputData(31314 * 1.0, 9784907),
+        "wjets_scaling_down": InputData(31314 * 1.0, 10022324),
 
         "wjets_matching_up": InputData(31314 * 1.0, 10461655),
         "wjets_matching_down": InputData(31314 * 1.0, 9956679),
