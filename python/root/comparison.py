@@ -113,7 +113,7 @@ class ComparisonCanvas(object):
             canvas = ROOT.TCanvas()
             canvas.SetWindowSize(640, 640 if 1 == self.__pads else 800)
 
-            if self.__pads:
+            if 1 != self.__pads:
                 canvas.Divide(1, self.__pads)
 
                 # prepare top pad for original plots to be drawn overlayed
