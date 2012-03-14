@@ -30,6 +30,7 @@ class Templates(object):
             "zjets": "Z/#gamma*#rightarrowl^{+}l^{-}",
             "wjets": "W#rightarrowl#nu",
             "ttbar": "t#bar{t}",
+            "mc": "Total MC",
 
             "zprime_m1000_w10": "Z' 1 TeV/c^{2}",
             "zprime_m1500_w15": "Z' 1.5 TeV/c^{2}",
