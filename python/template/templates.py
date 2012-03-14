@@ -38,7 +38,7 @@ class Templates(object):
             "zprime_m3000_w30": "Z' 3 TeV/c^{2}",
             "zprime_m4000_w40": "Z' 4 TeV/c^{2}"}
 
-    def __init__(self, options, args):
+    def __init__(self, options, args, disable_systematics=True):
         '''
         Configure Templates object with parsed command-line arguments
 
@@ -176,10 +176,13 @@ class Templates(object):
                 channel.strip() for channel in options.channels.split(',')))
 
             # use only allowed channels or all if None specified
-            channels = set(channel
-                    for channel in channel_type.ChannelType.channel_types.keys()
-                        if "matching" not in channel and
-                           "scaling" not in channel)
+            if disable_systematics:
+                channels = set(channel
+                        for channel in channel_type.ChannelType.channel_types.keys()
+                            if "matching" not in channel and
+                               "scaling" not in channel)
+            else:
+                channels = set(channel_type.ChannelType.channel_types.keys())
 
             if use_channels:
                 channels &= use_channels
@@ -468,6 +471,9 @@ class Templates(object):
         if not self._scales:
             return
 
+        if self._verbose:
+            print("{0:-<80}".format("-- Scales "))
+
         # For each loaded plot/channel apply loaded scale if channel type
         # matches scale type
         for plot, channels in self.loader.plots.items():
@@ -488,7 +494,13 @@ class Templates(object):
                 else:
                     continue
 
+                if "/mttbar_after_htlep" == plot:
+                    print("scale {0} by {1:.2f}".format(channel_type, scale))
+
                 channel.hist.Scale(scale)
+
+        if self._verbose:
+            print()
 
     @Timer(label = "[plot templates]", verbose = True)
     def _plot(self):

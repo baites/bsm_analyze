@@ -29,10 +29,27 @@ class Templates(template.templates.Templates):
             "zprime_m2000_w20": "zp2000",
             "zprime_m3000_w30": "zp3000",
             "zprime_m4000_w40": "zp4000",
+
+            "ttbar_matching_plus": "ttbar",
+            "ttbar_matching_minus": "ttbar",
+
+            "ttbar_scaling_plus": "ttbar",
+            "ttbar_scaling_minus": "ttbar",
+
+            "wjets_matching_plus": "wjets",
+            "wjets_matching_minus": "wjets",
+
+            "wjets_scaling_plus": "wjets",
+            "wjets_scaling_minus": "wjets",
     }
 
     def __init__(self, options, args):
-        template.templates.Templates.__init__(self, options, args)
+        template.templates.Templates.__init__(
+                self,
+                options, args,
+                disable_systematics=False if "scaling" in options.systematic or
+                                             "matching" in options.systematic
+                                          else True)
 
         if options.systematic:
             self.suffix = "__{0}__{1}".format(
