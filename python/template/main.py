@@ -11,9 +11,7 @@ import sys
 from optparse import OptionParser
 
 def parser():
-    parser = OptionParser(
-            usage = "usage: %prog [options] [plots:A,B,C] [folders:A,B,C] "
-                    "[channels:A,B,C]")
+    parser = OptionParser(usage = "usage: %prog [options]")
 
     parser.add_option(
             "-b", "--batch",
