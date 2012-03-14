@@ -115,8 +115,13 @@ class Templates(template.templates.Templates):
                 if channel_type.startswith("zprime"):
                     channel.hist.Scale(1. / 5)
 
-                channel.hist.Write(format_string.format(
-                            channel=self.channel_names[channel_type]))
+                name = format_string.format(
+                        channel=self.channel_names[channel_type])
+
+                hist = channel.hist.Clone(name)
+                hist.SetTitle(channel.hist.GetTitle())
+
+                hist.Write(name)
 
     def __str__(self):
         '''
