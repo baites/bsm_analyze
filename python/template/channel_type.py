@@ -34,8 +34,18 @@ class ChannelType(BaseType):
             "zprime_m1500_w15": ["zprime_m1500_w15"],
             "zprime_m2000_w20": ["zprime_m2000_w20"],
             "zprime_m3000_w30": ["zprime_m3000_w30"],
-            "zprime_m4000_w40": ["zprime_m4000_w40"]
-            }
+            "zprime_m4000_w40": ["zprime_m4000_w40"],
+
+            # Systematic channels
+            "ttbar_matching_plus": ["ttbar_matching_plus"],
+            "ttbar_matching_minus": ["ttbar_matching_minus"],
+            "ttbar_scaling_plus": ["ttbar_scaling_plus"],
+            "ttbar_scaling_minus": ["ttbar_scaling_minus"],
+
+            "wjets_matching_plus": ["wjets_matching_plus"],
+            "wjets_matching_minus": ["wjets_matching_minus"],
+            "wjets_scaling_plus": ["wjets_scaling_plus"],
+            "wjets_scaling_minus": ["wjets_scaling_minus"] }
 
     def __init__(self, channel_type):
         '''

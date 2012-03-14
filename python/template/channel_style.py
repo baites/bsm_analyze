@@ -31,8 +31,20 @@ class ChannelStyle(BaseStyle):
             "zprime_m1500_w15": Style(line_style = 2, fill_style = 0),
             "zprime_m2000_w20": Style(line_style = 3, fill_style = 0),
             "zprime_m3000_w30": Style(line_style = 7, fill_style = 0),
-            "zprime_m4000_w40": Style(line_style = 9, fill_style = 0)
-            }
+            "zprime_m4000_w40": Style(line_style = 9, fill_style = 0),
+
+            # Systematic channels
+            "ttbar_scaling_plus": Style(ROOT.kRed + 1),
+            "ttbar_scaling_minus": Style(ROOT.kRed + 1),
+
+            "ttbar_matching_plus": Style(ROOT.kRed + 1),
+            "ttbar_matching_minus": Style(ROOT.kRed + 1),
+
+            "wjets_scaling_plus": Style(ROOT.kRed + 1),
+            "wjets_scaling_minus": Style(ROOT.kRed + 1),
+
+            "wjets_matching_plus": Style(ROOT.kRed + 1),
+            "wjets_matching_minus": Style(ROOT.kRed + 1) }
 
     def __init__(self, channel_style):
         '''

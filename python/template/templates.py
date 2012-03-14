@@ -176,7 +176,11 @@ class Templates(object):
                 channel.strip() for channel in options.channels.split(',')))
 
             # use only allowed channels or all if None specified
-            channels = set(channel_type.ChannelType.channel_types.keys())
+            channels = set(channel
+                    for channel in channel_type.ChannelType.channel_types.keys()
+                        if "matching" not in channel and
+                           "scaling" not in channel)
+
             if use_channels:
                 channels &= use_channels
 
