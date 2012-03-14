@@ -12,7 +12,7 @@ import template.compare as compare
 from template.templates import Templates
 from root.comparison import ComparisonCanvas
 import root.label
-from systematics.loader import SystematicLoader
+from systematics.loader import SystematicLoader,ScalingSystematicLoader,MatchingSystematicLoader
 from util.arg import split_use_and_ban
 import ROOT
 
@@ -24,6 +24,8 @@ class Comparator(object):
         "zprime_m2000_w20",
         "zprime_m3000_w30"
     ])
+
+    channel_names = Templates.channel_names
 
     def __init__(self, options, args):
         self._batch_mode = options.batch
@@ -46,6 +48,9 @@ class Comparator(object):
 
             self._systematic = self._systematic.rstrip("+-")
 
+        if not self._systematic:
+            raise RuntimeError("systematic is not specified")
+
         if options.channels:
             use_channels, ban_channels = split_use_and_ban(set(
                 channel.strip() for channel in options.channels.split(',')))
@@ -66,9 +71,6 @@ class Comparator(object):
         self.loader = None
 
     def run(self):
-        if not self._systematic:
-            raise RuntimeError("systematic is not specified")
-
         # Apply TDR style to all plots
         style = root.style.tdr()
         style.cd()
@@ -88,7 +90,9 @@ class Comparator(object):
 
         loader = {
                 "jes": SystematicLoader,
-                "pileup": SystematicLoader
+                "pileup": SystematicLoader,
+                "scaling": ScalingSystematicLoader,
+                "matching": MatchingSystematicLoader
                 }.get(self._systematic)
 
         if not loader:
@@ -126,8 +130,7 @@ class Comparator(object):
                 obj.legend.SetBorderSize(0);
                 obj.legend.SetHeader("{0}: {1}".format(
                     self._systematic.capitalize(),
-                    Templates.channel_names.get(
-                        channel, "Unknown Channel")))
+                    self.channel_names.get(channel, "Unknown Channel")))
 
                 self.style(systematics)
 
