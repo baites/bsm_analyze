@@ -59,6 +59,7 @@ class Templates(template.templates.Templates):
         else:
             self.suffix = None
 
+        self.theta_prefix = options.thetaprefix
         self.output_filename = options.output
 
         if options.savechannels:
@@ -116,7 +117,7 @@ class Templates(template.templates.Templates):
             raise RuntimeError("mttbar_after_htlep is not loaded")
 
         # format string has different format with(-out) systematics
-        format_string = "el_mttbar__{channel}"
+        format_string = "{prefix}_mttbar__{channel}".format(self.theta_prefix)
         if self.suffix:
             format_string += self.suffix
 
