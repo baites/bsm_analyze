@@ -221,11 +221,11 @@ class TemplateLoader(object):
                                 "in {1!r}").format(path, directory.GetPath()))
 
         # scan through all available objects in current folder
-        for name in (x.GetName() for x in folder.GetListOfKeys()):
-            obj = folder.Get(name)
+        for key in (x.GetName() for x in folder.GetListOfKeys()):
+            obj = folder.Get(key)
             if not obj:
                 raise RuntimeError(("failed to extract object {0!r} "
-                                    "in {1!r}").format(name, folder.GetPath()))
+                                    "in {1!r}").format(key, folder.GetPath()))
 
             if isinstance(obj, ROOT.TH1):
                 plot = Template(clone = True)
@@ -234,7 +234,7 @@ class TemplateLoader(object):
                 self.process_plot(plot)
 
             elif isinstance(obj, ROOT.TDirectory):
-                self.process_folder(folder, name)
+                self.process_folder(folder, key)
 
 
 
