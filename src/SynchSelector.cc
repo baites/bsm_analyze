@@ -368,9 +368,11 @@ SynchSelector::SynchSelector():
     monitor(_random_generator);
 
     _ltop_chi2.reset(new Comparator<less<float> >(5));
+    _ltop_chi2->disable();
     monitor(_ltop_chi2);
 
     _htop_chi2.reset(new Comparator<less<float> >(10));
+    _htop_chi2->disable();
     monitor(_htop_chi2);
 }
 
@@ -734,11 +736,13 @@ void SynchSelector::setLtopPt(const float &value)
 void SynchSelector::setLtopChi2Discriminator(const float &value)
 {
     ltop_chi2()->setValue(value);
+    ltop_chi2()->enable();
 }
 
 void SynchSelector::setHtopChi2Discriminator(const float &value)
 {
     htop_chi2()->setValue(value);
+    htop_chi2()->enable();
 }
 
 // Jet Energy Correction Delegate interface
