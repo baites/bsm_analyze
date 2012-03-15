@@ -1447,7 +1447,7 @@ float SynchSelector::toptagWeight()
             
             // Loop over the good jets to find 
             // those close to leading ca jet
-            typedef vector<float> Areas;
+            /*typedef vector<float> Areas;
             typedef vector<SynchSelector::GoodJets::iterator> ConeJets;
 
             float totalArea = 0.0;
@@ -1489,7 +1489,7 @@ float SynchSelector::toptagWeight()
                 coneJets[i]->corrected_p4->set_e(
                     e * areas[i] * coneJets[i]->corrected_p4->e() / (p4.e()*totalArea)
                 );
-            }
+            }*/
         }
     }
 
