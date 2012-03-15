@@ -28,6 +28,11 @@ def parser():
             action = "store",
             help = "comma separated channels to be saved")
 
+    parser.add_option(
+            "--thetaprefix",
+            action = "store", default = "el",
+            help = "specify prefix for Theta plots")
+
     return parser
 
 def main():
