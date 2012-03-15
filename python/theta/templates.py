@@ -117,7 +117,7 @@ class Templates(template.templates.Templates):
             raise RuntimeError("mttbar_after_htlep is not loaded")
 
         # format string has different format with(-out) systematics
-        format_string = "{prefix}_mttbar__{channel}".format(self.theta_prefix)
+        format_string = str(self.theta_prefix) + "_mttbar__{channel}"
         if self.suffix:
             format_string += self.suffix
 
@@ -152,6 +152,7 @@ class Templates(template.templates.Templates):
         result.append(["systematic", self.suffix if self.suffix else ""])
         result.append(["output filename", self.output_filename])
         result.append(["save channels", self.save_channels])
+        result.append(["theta prefix", self.theta_prefix])
 
         return "{0}\n{1}".format(
                 template.templates.Templates.__str__(self),
