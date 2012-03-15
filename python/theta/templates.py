@@ -47,8 +47,9 @@ class Templates(template.templates.Templates):
         template.templates.Templates.__init__(
                 self,
                 options, args,
-                disable_systematics=False if "scaling" in options.systematic or
-                                             "matching" in options.systematic
+                disable_systematics=False if (options.systematic and
+                                              ("scaling" in options.systematic or
+                                               "matching" in options.systematic))
                                           else True)
 
         if options.systematic:
