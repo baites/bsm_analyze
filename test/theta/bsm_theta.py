@@ -86,7 +86,7 @@ def submit(mass_points = set(),
             
             try:
                 for f in links.keys() - {"run.sh"}:
-                    os.symlink("../" + f, f)
+                    os.symlink("../" + f, f)                
 
                 createHistogramFilter(mass, ban)
             finally:

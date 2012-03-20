@@ -56,3 +56,5 @@ then
         fi
     fi
 fi
+
+export PATH=/uscms/home/baites/nobackup/Utils/python/3.2.2/bin:$PATH

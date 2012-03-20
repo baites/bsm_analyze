@@ -371,15 +371,6 @@ class Templates(object):
 
             legend.Draw("9 same")
 
-<<<<<<< HEAD
-        # Print found fractions
-        if self.__verbose:
-            print('\n'.join("{0:>3} Fraction: {1:.3f}".format(
-                    key.upper(),
-                    value)
-                for key, value in self.fractions.items()))
-            print()
-=======
             canvas.SaveAs("met_fit.pdf")
 
             # Print found fractions
@@ -387,7 +378,6 @@ class Templates(object):
                 print('\n'.join("{0:>3} fraction: {1:.3f}".format(key.upper(),
                                                                   value)
                                 for key, value in self.fractions.items()))
->>>>>>> 128bff96f950537429f70f60fa52428751e80b81
 
         except RuntimeError as error:
             if self._verbose:

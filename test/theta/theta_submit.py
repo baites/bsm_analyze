@@ -7,6 +7,7 @@ import sys
 
 import bsm_theta
 
+
 def usage(argv):
     return ("usage: {0} mass [mass] [hist:theta_input.root] "
             "[analysis:analysis.py] [xsec:theory-xsecs.py] "
@@ -18,6 +19,7 @@ def main(argv = sys.argv):
             raise Exception(usage(argv))
 
         args = dict(x.split(":") for x in argv[1:] if ":" in x)
+
         args = {k: args.get(k) for k in args.keys() & {"hist", "analysis", "xsec", "run", "ban"}}
 
         mass_points = set(int(x) for x in argv[1:] if ':' not in x)

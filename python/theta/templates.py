@@ -132,7 +132,8 @@ class Templates(template.templates.Templates):
 
                 # All Zprimes are originally normalized to 5pb. Scale to 1pb
                 if channel_type.startswith("zprime"):
-                    channel.hist.Scale(1. / 5)
+                    #channel.hist.Scale(1. / 5)
+                    channel.hist.Scale(2.0)
 
                 name = format_string.format(
                         channel=self.channel_names[channel_type])
@@ -156,5 +157,4 @@ class Templates(template.templates.Templates):
 
         return "{0}\n{1}".format(
                 template.templates.Templates.__str__(self),
-                '\n'.join(self._str_format.format(name, value)
-                          for name, value in result))
+                '\n'.join(self._str_format.format(name, value) for name, value in result))
