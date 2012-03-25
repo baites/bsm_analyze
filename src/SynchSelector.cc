@@ -1088,9 +1088,9 @@ bool SynchSelector::isBtagJet(const Jet *jet) const
             jet->btag().end() != btag;
             ++btag)
     {
-        if (Jet::BTag::SSVHE == btag->type())
+        if (Jet::BTag::CSV == btag->type())
         {
-            return 1.74 < btag->discriminator();
+            return 0.898 < btag->discriminator();
         }
     }
 
