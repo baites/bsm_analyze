@@ -20,6 +20,7 @@
 #include "interface/Selector.h"
 #include "interface/CorrectedJet.h"
 #include "interface/TriggerAnalyzer.h"
+#include "interface/Cache.h"
 
 namespace bsm
 {
@@ -173,6 +174,8 @@ namespace bsm
             bool ltop_chi2(const float &value);
             bool htop_chi2(const float &value);
 
+            uint32_t countBtaggedJets();
+
             // SynchSelectorDelegate interface
             //
             virtual void setLeptonMode(const LeptonMode &);
@@ -246,6 +249,8 @@ namespace bsm
 
             bool isBtagJet(const Jet *) const;
 
+            void invalidate_cache();
+
             LeptonMode _lepton_mode;
             CutMode _cut_mode;
 
@@ -286,6 +291,10 @@ namespace bsm
 
             typedef std::vector<uint64_t> Triggers;
             Triggers _triggers; // hashes of triggers to be passed
+
+            // cache
+            //
+            Cache<uint32_t> _btagged_jets;
     };
 
     // Helpers
