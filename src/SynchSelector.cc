@@ -714,7 +714,7 @@ void SynchSelector::print(std::ostream &out) const
     _cutflow->cut(MAX_BTAG)->setName(max_btag.str());
 
     ostringstream min_btag;
-    min_btag << "btagged jets > " << minBtag()->value();
+    min_btag << "btagged jets >= " << minBtag()->value();
     _cutflow->cut(MIN_BTAG)->setName(min_btag.str());
 
     _cutflow->cut(HTLEP)->setName("hTlep");
