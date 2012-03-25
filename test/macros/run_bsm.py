@@ -8,6 +8,7 @@ from __future__ import print_function
 import os
 import re
 import shlex
+import sys
 import subprocess
 
 import run_bsm_config
