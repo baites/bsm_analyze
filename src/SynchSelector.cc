@@ -460,8 +460,29 @@ SynchSelector::CutPtr SynchSelector::htop_chi2() const
     return _htop_chi2;
 }
 
+uint32_t SynchSelector::countBtaggedJets()
+{
+    if (!_btagged_jets.is_valid())
+    {
+        uint32_t btags = 0;
+        for(GoodJets::const_iterator jet = _good_jets.begin();
+                _good_jets.end() != jet;
+                ++jet)
+        {
+            if (isBtagJet(jet->jet))
+                ++btags;
+        }
+
+        _btagged_jets.set(btags);
+    }
+
+    return _btagged_jets.get();
+}
+
 bool SynchSelector::apply(const Event *event)
 {
+    invalidate_cache();
+
     _cutflow->apply(PRESELECTION);
 
     _good_primary_vertices.clear();
@@ -714,7 +735,7 @@ void SynchSelector::print(std::ostream &out) const
     _cutflow->cut(MAX_BTAG)->setName(max_btag.str());
 
     ostringstream min_btag;
-    min_btag << "btagged jets > " << minBtag()->value();
+    min_btag << "btagged jets >= " << minBtag()->value();
     _cutflow->cut(MIN_BTAG)->setName(min_btag.str());
 
     _cutflow->cut(HTLEP)->setName("hTlep");
@@ -960,16 +981,7 @@ bool SynchSelector::maxBtags()
     if (maxBtag()->isDisabled())
         return true;
 
-    uint32_t btags = 0;
-    for(GoodJets::const_iterator jet = _good_jets.begin();
-            _good_jets.end() != jet;
-            ++jet)
-    {
-        if (isBtagJet(jet->jet))
-            ++btags;
-    }
-
-    return maxBtag()->apply(btags)
+    return maxBtag()->apply(countBtaggedJets())
         && (_cutflow->apply(MAX_BTAG), true);
 }
 
@@ -978,16 +990,7 @@ bool SynchSelector::minBtags()
     if (minBtag()->isDisabled())
         return true;
 
-    uint32_t btags = 0;
-    for(GoodJets::const_iterator jet = _good_jets.begin();
-            _good_jets.end() != jet;
-            ++jet)
-    {
-        if (isBtagJet(jet->jet))
-            ++btags;
-    }
-
-    return minBtag()->apply(btags)
+    return minBtag()->apply(countBtaggedJets())
         && (_cutflow->apply(MIN_BTAG), true);
 }
 
@@ -1088,13 +1091,18 @@ bool SynchSelector::isBtagJet(const Jet *jet) const
             jet->btag().end() != btag;
             ++btag)
     {
-        if (Jet::BTag::SSVHE == btag->type())
+        if (Jet::BTag::CSV == btag->type())
         {
-            return 1.74 < btag->discriminator();
+            return 0.898 < btag->discriminator();
         }
     }
 
     return false;
+}
+
+void SynchSelector::invalidate_cache()
+{
+    _btagged_jets.invalidate();
 }
 
 void SynchSelector::selectGoodPrimaryVertices(const Event *event)
