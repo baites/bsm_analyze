@@ -18,6 +18,7 @@
 
 #include "bsm_stat/interface/Utility.h"
 #include "interface/AppController.h"
+#include "interface/Btag.h"
 #include "interface/Cut2DSelector.h"
 #include "interface/JetEnergyCorrections.h"
 #include "interface/MonitorCanvas.h"
@@ -46,6 +47,7 @@ int main(int argc, char *argv[])
         boost::shared_ptr<TriggerOptions> trigger_options(new TriggerOptions());
         boost::shared_ptr<PileupOptions> pileup_options(new PileupOptions());
         boost::shared_ptr<TemplatesOptions> templates_options(new TemplatesOptions());
+        boost::shared_ptr<BtagOptions> btag_options(new BtagOptions());
 
         jec_options->setDelegate(analyzer->getJetEnergyCorrectionDelegate());
         synch_selector_options->setDelegate(analyzer->getSynchSelectorDelegate());
@@ -53,6 +55,7 @@ int main(int argc, char *argv[])
         trigger_options->setDelegate(analyzer->getTriggerDelegate());
         pileup_options->setDelegate(analyzer->getPileupDelegate());
         templates_options->setDelegate(analyzer.get());
+        btag_options->setDelegate(analyzer->getBtagDelegate());
 
         app->addOptions(*jec_options);
         app->addOptions(*synch_selector_options);
@@ -60,6 +63,7 @@ int main(int argc, char *argv[])
         app->addOptions(*trigger_options);
         app->addOptions(*pileup_options);
         app->addOptions(*templates_options);
+        app->addOptions(*btag_options);
 
         app->setAnalyzer(analyzer);
 

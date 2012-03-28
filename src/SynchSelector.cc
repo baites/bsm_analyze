@@ -16,6 +16,7 @@
 #include "bsm_input/interface/Muon.pb.h"
 #include "bsm_input/interface/PrimaryVertex.pb.h"
 #include "bsm_input/interface/Physics.pb.h"
+#include "interface/Btag.h"
 #include "interface/Cut.h"
 #include "interface/SynchSelector.h"
 #include "interface/Cut2DSelector.h"
@@ -295,6 +296,9 @@ SynchSelector::SynchSelector():
     _chi2.reset(new Comparator<less<float> >(15));
     _chi2->disable();
     monitor(_chi2);
+
+    _btag.reset(new Btag());
+    monitor(_btag);
 }
 
 SynchSelector::SynchSelector(const SynchSelector &object):
@@ -374,6 +378,9 @@ SynchSelector::SynchSelector(const SynchSelector &object):
 
     _chi2 = dynamic_pointer_cast<Cut>(object.chi2()->clone());
     monitor(_chi2);
+
+    _btag = dynamic_pointer_cast<Btag>(object._btag->clone());
+    monitor(_btag);
 }
 
 SynchSelector::~SynchSelector()
@@ -439,7 +446,7 @@ uint32_t SynchSelector::countBtaggedJets()
                 _good_jets.end() != jet;
                 ++jet)
         {
-            if (isBtagJet(jet->jet))
+            if (_btag->is_tagged(*jet))
                 ++btags;
         }
 
@@ -557,6 +564,11 @@ bool SynchSelector::qcdTemplate() const
 bsm::Cut2DSelectorDelegate *SynchSelector::getCut2DSelectorDelegate() const
 {
     return _cut2d_selector.get();
+}
+
+bsm::BtagDelegate *SynchSelector::getBtagDelegate() const
+{
+    return _btag.get();
 }
 
 // Synch Selector Delegate interface
@@ -1035,23 +1047,6 @@ bool SynchSelector::isolation(const LorentzVector *p4, const PFIsolation *isolat
             + isolation->neutral_hadron()
             + isolation->photon())
         / pt(*p4);
-}
-
-bool SynchSelector::isBtagJet(const Jet *jet) const
-{
-    typedef ::google::protobuf::RepeatedPtrField<Jet::BTag> BTags;
-
-    for(BTags::const_iterator btag = jet->btag().begin();
-            jet->btag().end() != btag;
-            ++btag)
-    {
-        if (Jet::BTag::CSV == btag->type())
-        {
-            return 0.898 < btag->discriminator();
-        }
-    }
-
-    return false;
 }
 
 void SynchSelector::invalidate_cache()

@@ -1219,6 +1219,11 @@ bsm::TriggerDelegate *TemplateAnalyzer::getTriggerDelegate() const
     return _synch_selector.get();
 }
 
+bsm::BtagDelegate *TemplateAnalyzer::getBtagDelegate() const
+{
+    return _synch_selector->getBtagDelegate();
+}
+
 void TemplateAnalyzer::didCounterAdd(const Counter *counter)
 {
     if (_counters.end() != _counters.find(counter))
