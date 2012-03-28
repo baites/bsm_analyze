@@ -76,15 +76,10 @@ SynchSelectorOptions::SynchSelectorOptions()
              boost::bind(&SynchSelectorOptions::setLtopPt, this, _1)),
          "set min value of ltop pt")
 
-        ("ltop-chi2",
+        ("chi2",
          po::value<float>()->notifier(
-             boost::bind(&SynchSelectorOptions::setLtopChi2Discriminator, this, _1)),
-         "set max ltop-chi2 disriminator")
-
-        ("htop-chi2",
-         po::value<float>()->notifier(
-             boost::bind(&SynchSelectorOptions::setHtopChi2Discriminator, this, _1)),
-         "set max htop-chi2 disriminator")
+             boost::bind(&SynchSelectorOptions::setChi2Discriminator, this, _1)),
+         "set max chi2 disriminator")
     ;
 }
 
@@ -199,29 +194,16 @@ void SynchSelectorOptions::setLtopPt(const float &value)
     delegate()->setLtopPt(value);
 }
 
-void SynchSelectorOptions::setLtopChi2Discriminator(const float &value)
+void SynchSelectorOptions::setChi2Discriminator(const float &value)
 {
     if (!delegate())
         return;
 
     if (0 > value)
-        throw runtime_error("negative ltop chi2 cut is not allowed");
+        throw runtime_error("negative chi2 cut is not allowed");
 
-    delegate()->setLtopChi2Discriminator(value);
+    delegate()->setChi2Discriminator(value);
 }
-
-void SynchSelectorOptions::setHtopChi2Discriminator(const float &value)
-{
-    if (!delegate())
-        return;
-
-    if (0 > value)
-        throw runtime_error("negative htop chi2 cut is not allowed");
-
-    delegate()->setHtopChi2Discriminator(value);
-}
-
-
 
 
 
@@ -310,13 +292,9 @@ SynchSelector::SynchSelector():
     _ltop.reset(new Comparator<>(100));
     monitor(_ltop);
 
-    _ltop_chi2.reset(new Comparator<less<float> >(5));
-    _ltop_chi2->disable();
-    monitor(_ltop_chi2);
-
-    _htop_chi2.reset(new Comparator<less<float> >(10));
-    _htop_chi2->disable();
-    monitor(_htop_chi2);
+    _chi2.reset(new Comparator<less<float> >(15));
+    _chi2->disable();
+    monitor(_chi2);
 }
 
 SynchSelector::SynchSelector(const SynchSelector &object):
@@ -394,11 +372,8 @@ SynchSelector::SynchSelector(const SynchSelector &object):
     _ltop = dynamic_pointer_cast<Cut>(object.ltop()->clone());
     monitor(_ltop);
 
-    _ltop_chi2 = dynamic_pointer_cast<Cut>(object.ltop_chi2()->clone());
-    monitor(_ltop_chi2);
-
-    _htop_chi2 = dynamic_pointer_cast<Cut>(object.htop_chi2()->clone());
-    monitor(_htop_chi2);
+    _chi2 = dynamic_pointer_cast<Cut>(object.chi2()->clone());
+    monitor(_chi2);
 }
 
 SynchSelector::~SynchSelector()
@@ -450,14 +425,9 @@ SynchSelector::CutPtr SynchSelector::ltop() const
     return _ltop;
 }
 
-SynchSelector::CutPtr SynchSelector::ltop_chi2() const
+SynchSelector::CutPtr SynchSelector::chi2() const
 {
-    return _ltop_chi2;
-}
-
-SynchSelector::CutPtr SynchSelector::htop_chi2() const
-{
-    return _htop_chi2;
+    return _chi2;
 }
 
 uint32_t SynchSelector::countBtaggedJets()
@@ -638,16 +608,10 @@ void SynchSelector::setLtopPt(const float &value)
     ltop()->setValue(value);
 }
 
-void SynchSelector::setLtopChi2Discriminator(const float &value)
+void SynchSelector::setChi2Discriminator(const float &value)
 {
-    ltop_chi2()->setValue(value);
-    ltop_chi2()->enable();
-}
-
-void SynchSelector::setHtopChi2Discriminator(const float &value)
-{
-    htop_chi2()->setValue(value);
-    htop_chi2()->enable();
+    chi2()->setValue(value);
+    chi2()->enable();
 }
 
 // Jet Energy Correction Delegate interface
@@ -743,8 +707,7 @@ void SynchSelector::print(std::ostream &out) const
     _cutflow->cut(MET)->setName("MET");
     _cutflow->cut(RECONSTRUCTION)->setName("reconstruction");
     _cutflow->cut(LTOP)->setName("pt(ltop)");
-    _cutflow->cut(LTOP_CHI2)->setName("Chi2(ltop)");
-    _cutflow->cut(HTOP_CHI2)->setName("Chi2(htop)");
+    _cutflow->cut(CHI2)->setName("Chi2");
 
     out << "Cutflow [" << _lepton_mode << ": " << _cut_mode << "]" << endl;
     out << *_cutflow << endl;
@@ -769,22 +732,13 @@ bool SynchSelector::ltop(const float &value)
         && (_cutflow->apply(LTOP), true);
 }
 
-bool SynchSelector::ltop_chi2(const float &value)
+bool SynchSelector::chi2(const float &value)
 {
-    if (ltop_chi2()->isDisabled())
+    if (chi2()->isDisabled())
         return true;
 
-    return ltop_chi2()->apply(value)
-        && (_cutflow->apply(LTOP_CHI2), true);
-}
-
-bool SynchSelector::htop_chi2(const float &value)
-{
-    if (htop_chi2()->isDisabled())
-        return true;
-
-    return htop_chi2()->apply(value)
-        && (_cutflow->apply(HTOP_CHI2), true);
+    return chi2()->apply(value)
+        && (_cutflow->apply(CHI2), true);
 }
 
 // Private

@@ -53,8 +53,7 @@ namespace bsm
             virtual void setQCDTemplate(const bool &) {}
 
             virtual void setLtopPt(const float &) {}
-            virtual void setLtopChi2Discriminator(const float &) {}
-            virtual void setHtopChi2Discriminator(const float &) {}
+            virtual void setChi2Discriminator(const float &) {}
     };
 
     class SynchSelectorOptions:
@@ -80,8 +79,7 @@ namespace bsm
 
             void setLtopPt(const float &);
 
-            void setLtopChi2Discriminator(const float &);
-            void setHtopChi2Discriminator(const float &);
+            void setChi2Discriminator(const float &);
 
             DescriptionPtr _description;
     };
@@ -123,8 +121,7 @@ namespace bsm
                 MET,
                 RECONSTRUCTION,
                 LTOP,
-                LTOP_CHI2,
-                HTOP_CHI2,
+                CHI2,
 
                 SELECTIONS // this item should always be the last one
             };
@@ -145,8 +142,7 @@ namespace bsm
             CutPtr met() const;
             CutPtr reconstruction() const;
             CutPtr ltop() const;
-            CutPtr ltop_chi2() const;
-            CutPtr htop_chi2() const;
+            CutPtr chi2() const;
 
             // Test if muon passes the selector
             //
@@ -171,8 +167,7 @@ namespace bsm
 
             bool reconstruction(const bool &value); // apply reconstruction cut
             bool ltop(const float &value); // apply ltop cut
-            bool ltop_chi2(const float &value);
-            bool htop_chi2(const float &value);
+            bool chi2(const float &value);
 
             uint32_t countBtaggedJets();
 
@@ -189,8 +184,7 @@ namespace bsm
 
             virtual void setLtopPt(const float &);
 
-            virtual void setLtopChi2Discriminator(const float &);
-            virtual void setHtopChi2Discriminator(const float &);
+            virtual void setChi2Discriminator(const float &);
 
             // Jet Energy Correction Delegate interface
             //
@@ -284,8 +278,7 @@ namespace bsm
             CutPtr _met;
             CutPtr _reconstruction;
             CutPtr _ltop;
-            CutPtr _ltop_chi2;
-            CutPtr _htop_chi2;
+            CutPtr _chi2;
 
             bool _qcd_template;
 
