@@ -138,12 +138,12 @@ float Btag::mistag_scale_with_systematic(const float &jet_pt)
     }
 }
 
-bool Btag::is_tagged(const CorrectedJet *jet)
+bool Btag::is_tagged(const CorrectedJet &jet)
 {
     typedef ::google::protobuf::RepeatedPtrField<Jet::BTag> BTags;
 
-    for(BTags::const_iterator btag = jet->jet->btag().begin();
-            jet->jet->btag().end() != btag;
+    for(BTags::const_iterator btag = jet.jet->btag().begin();
+            jet.jet->btag().end() != btag;
             ++btag)
     {
         if (Jet::BTag::CSV == btag->type())
@@ -151,12 +151,12 @@ bool Btag::is_tagged(const CorrectedJet *jet)
             const float discriminator = btag->discriminator();
             bool result = Btag::discriminator() < discriminator;
 
-            if (jet->jet->has_gen_parton())
+            if (jet.jet->has_gen_parton())
             {
                 float scale = 0;
                 float efficiency = 0;
 
-                switch(abs(jet->jet->gen_parton().id()))
+                switch(abs(jet.jet->gen_parton().id()))
                 {
                     case 5:
                         scale = btag_scale_with_systematic(discriminator, 0.04);
@@ -173,7 +173,7 @@ bool Btag::is_tagged(const CorrectedJet *jet)
                     case 3: // fall through
                     case 2: // fall through
                     case 1:
-                        const float jet_pt = pt(*jet->corrected_p4);
+                        const float jet_pt = pt(*jet.corrected_p4);
 
                         scale = mistag_scale_with_systematic(jet_pt);
                         efficiency = Btag::mistag_efficiency(jet_pt);
@@ -184,7 +184,7 @@ bool Btag::is_tagged(const CorrectedJet *jet)
                 if (scale && efficiency)
                 {
                     _generator->seed(static_cast<unsigned int>(
-                                        sin(phi(*jet->corrected_p4) * 1000000)));
+                                        sin(phi(*jet.corrected_p4) * 1000000)));
 
                     result = correct(result, scale, efficiency);
                 }

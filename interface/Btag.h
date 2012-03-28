@@ -72,7 +72,7 @@ namespace bsm
                                              const float &uncertainty);
             float mistag_scale_with_systematic(const float &jet_pt);
 
-            bool is_tagged(const CorrectedJet *jet);
+            bool is_tagged(const CorrectedJet &jet);
 
             // BtagDelegate interface
             //
