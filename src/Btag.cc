@@ -20,12 +20,12 @@ BtagOptions::BtagOptions()
     _description.reset(new po::options_description("Btag Options"));
     _description->add_options()
         ("btag-up",
-         po::value<bool>()->notifier(
+         po::value<bool>()->implicit_value(true)->notifier(
              boost::bind(&BtagOptions::setSystematic, this, BtagDelegate::UP)),
          "Change btag SF one sigma up")
 
         ("btag-down",
-         po::value<bool>()->notifier(
+         po::value<bool>()->implicit_value(true)->notifier(
              boost::bind(&BtagOptions::setSystematic, this, BtagDelegate::DOWN)),
          "Change btag SF one sigma down")
     ;
