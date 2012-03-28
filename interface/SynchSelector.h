@@ -168,6 +168,7 @@ namespace bsm
             bool qcdTemplate() const;
 
             Cut2DSelectorDelegate *getCut2DSelectorDelegate() const;
+            BtagDelegate *getBtagDelegate() const;
 
             bool reconstruction(const bool &value); // apply reconstruction cut
             bool ltop(const float &value); // apply ltop cut
@@ -247,8 +248,6 @@ namespace bsm
             bool cut2D(const LorentzVector *);
             bool isolation(const LorentzVector *, const PFIsolation *);
 
-            bool isBtagJet(const Jet *) const;
-
             void invalidate_cache();
 
             LeptonMode _lepton_mode;
@@ -291,6 +290,8 @@ namespace bsm
 
             typedef std::vector<uint64_t> Triggers;
             Triggers _triggers; // hashes of triggers to be passed
+
+            boost::shared_ptr<Btag> _btag;
 
             // cache
             //
