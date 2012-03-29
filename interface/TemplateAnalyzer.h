@@ -282,6 +282,7 @@ namespace bsm
             Cut2DSelectorDelegate *getCut2DSelectorDelegate() const;
             PileupDelegate *getPileupDelegate() const;
             TriggerDelegate *getTriggerDelegate() const;
+            BtagDelegate *getBtagDelegate() const;
 
             // Counter Delegate interface
             //
