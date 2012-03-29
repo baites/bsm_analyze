@@ -38,6 +38,8 @@ GenMatchingAnalyzer::GenMatchingAnalyzer()
 {
     _synch_selector.reset(new SynchSelector());
     _synch_selector->htlep()->disable();
+    _synch_selector->tricut()->disable();
+    _synch_selector->met()->disable();
     monitor(_synch_selector);
 
     // Assign cutflow delegate
@@ -210,8 +212,6 @@ void GenMatchingAnalyzer::process(const Event *event)
                     gen::Wboson::HADRONIC == resonance.htop.wboson.decay &&
                     resonance.match(corrected_jets)))
         {
-            return;
-
             const LorentzVector &el_p4 =
                 _synch_selector->goodElectrons()[0]->physics_object().p4();
 
@@ -431,6 +431,9 @@ void gen::Top::fill(const GenParticle &particle)
 
 bool gen::Top::match(CorrectedJets &corrected_jets)
 {
+    if (!wboson.match(corrected_jets))
+        return false;
+
     // Skip leptonic decays
     //
     if (jets.empty())
@@ -444,7 +447,7 @@ bool gen::Top::match(CorrectedJets &corrected_jets)
             return false;
     }
 
-    return wboson.match(corrected_jets);
+    return true;
 }
 
 
@@ -513,18 +516,24 @@ void gen::Wboson::fill(const GenParticle &particle)
         case ELECTRON: // fall through
         case MUON: // fall through
         case TAU:
+            // There should be lepton, neutrino and no jets
+            //
             if (!lepton || !neutrino || !jets.empty())
                 throw runtime_error("wrong w-boson leptonic decay");
 
             break;
 
         case HADRONIC:
+            // Only jets should be present
+            //
             if (lepton || neutrino || jets.empty())
                 throw runtime_error("wrong w-boson hadronic decay");
 
             break;
 
         default:
+            // Nothing should be present in the unknown decay
+            //
             if (lepton || neutrino || !jets.empty())
                 throw runtime_error("wrong w-boson unknown decay");
 
@@ -554,11 +563,8 @@ bool gen::Wboson::match(CorrectedJets &corrected_jets)
 
 bool gen::MatchedJet::match(CorrectedJets &corrected_jets)
 {
-    if (!parton)
+    if (!parton || jet)
         return false;
-
-    if (jet)
-        return true;
 
     for(CorrectedJets::iterator corrected_jet = corrected_jets.begin();
             corrected_jets.end() != corrected_jet;
