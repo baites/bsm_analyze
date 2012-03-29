@@ -81,7 +81,7 @@ namespace bsm
 
         struct TTbar
         {
-            void fill(const GenParticle &gen_top);
+            void fill(const Event *event);
             bool match(CorrectedJets &corrected_jets);
 
             Top ltop;
@@ -134,8 +134,6 @@ namespace bsm
 
         private:
             typedef boost::shared_ptr<H1Proxy> H1ProxyPtr;
-
-            gen::TTbar gen_decay(const Event *) const;
 
             boost::shared_ptr<SynchSelector> _synch_selector;
 

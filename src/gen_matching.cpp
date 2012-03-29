@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
                 htop_dphi->Write();
 
                 ltop->write(*analyzer->ltop(), app->output().get());
-                ltop->write(*analyzer->ltop(), app->output().get());
+                htop->write(*analyzer->htop(), app->output().get());
 
                 ttbar->write(*analyzer->ttbar(), app->output().get());
             }

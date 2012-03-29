@@ -52,10 +52,6 @@ GenMatchingAnalyzer::GenMatchingAnalyzer()
                 SynchSelector::SELECTIONS));
     monitor(_cutflow);
 
-    _ttbar.reset(new P4Monitor());
-    _ttbar->mass()->mutable_axis()->init(4000, 0, 4);
-    monitor(_ttbar);
-
     _ltop_drsum.reset(new H1Proxy(50, 0, 5));
     monitor(_ltop_drsum);
 
@@ -74,6 +70,10 @@ GenMatchingAnalyzer::GenMatchingAnalyzer()
     _htop->mt()->mutable_axis()->init(1000, 0, 1000);
     _htop->pt()->mutable_axis()->init(1000, 0, 1000);
     monitor(_htop);
+
+    _ttbar.reset(new P4Monitor());
+    _ttbar->mass()->mutable_axis()->init(4000, 0, 4000);
+    monitor(_ttbar);
 }
 
 GenMatchingAnalyzer::GenMatchingAnalyzer(const GenMatchingAnalyzer &object)
@@ -98,24 +98,20 @@ GenMatchingAnalyzer::GenMatchingAnalyzer(const GenMatchingAnalyzer &object)
     _ttbar = dynamic_pointer_cast<P4Monitor>(object._ttbar->clone());
     monitor(_ttbar);
 
-    _ltop_drsum = dynamic_pointer_cast<H1Proxy>(
-            object._ltop_drsum->clone());
+    _ltop_drsum = dynamic_pointer_cast<H1Proxy>(object._ltop_drsum->clone());
     monitor(_ltop_drsum);
 
-    _htop_drsum = dynamic_pointer_cast<H1Proxy>(
-            object._htop_drsum->clone());
+    _htop_drsum = dynamic_pointer_cast<H1Proxy>(object._htop_drsum->clone());
     monitor(_htop_drsum);
 
     _htop_dphi = dynamic_pointer_cast<H1Proxy>(
             object._htop_dphi->clone());
     monitor(_htop_dphi);
 
-    _ltop =
-        dynamic_pointer_cast<P4Monitor>(object._ltop->clone());
+    _ltop = dynamic_pointer_cast<P4Monitor>(object._ltop->clone());
     monitor(_ltop);
 
-    _htop =
-        dynamic_pointer_cast<P4Monitor>(object._htop->clone());
+    _htop = dynamic_pointer_cast<P4Monitor>(object._htop->clone());
     monitor(_htop);
 }
 
@@ -194,7 +190,8 @@ void GenMatchingAnalyzer::process(const Event *event)
     //
     if (_synch_selector->apply(event))
     {
-        gen::TTbar resonance = gen_decay(event);
+        gen::TTbar resonance;
+        resonance.fill(event);
 
         // Prepare collection of corrected jets
         //
@@ -208,28 +205,32 @@ void GenMatchingAnalyzer::process(const Event *event)
         }
 
         if (_synch_selector->reconstruction(
-                    resonance.match(corrected_jets) &&
-                    gen::Wboson::ELECTRON == resonance.ltop.wboson.decay))
+                    gen::Wboson::ELECTRON == resonance.ltop.wboson.decay &&
+                    gen::Wboson::HADRONIC == resonance.htop.wboson.decay &&
+                    resonance.match(corrected_jets)))
         {
-            const LorentzVector &el_p4 = _synch_selector->goodElectrons()[0]->physics_object().p4();
+            const LorentzVector &el_p4 =
+                _synch_selector->goodElectrons()[0]->physics_object().p4();
+
             const LorentzVector &nu_p4 = *_synch_selector->goodMET();
 
             LorentzVector ltop_p4 = el_p4;
             ltop_p4 += nu_p4;
-            for(vector<gen::MatchedJet>::const_iterator matched_jet =
-                        resonance.ltop.jets.begin();
-                    resonance.ltop.jets.end() != matched_jet;
-                    ++matched_jet)
-            {
-                ltop_p4 += *matched_jet->jet->corrected_p4;
-            }
+            ltop_p4 += *resonance.ltop.jets.begin()->jet->corrected_p4;
 
-            LorentzVector htop_p4;
+            LorentzVector htop_p4 = *resonance.htop.jets.begin()->jet->corrected_p4;
             for(vector<gen::MatchedJet>::const_iterator matched_jet =
-                        resonance.htop.jets.begin();
-                    resonance.htop.jets.end() != matched_jet;
+                        resonance.htop.wboson.jets.begin();
+                    resonance.htop.wboson.jets.end() != matched_jet;
                     ++matched_jet)
             {
+                if (!matched_jet->jet)
+                {
+                    cout << "matched jet is missing" << endl;
+
+                    continue;
+                }
+
                 htop_p4 += *matched_jet->jet->corrected_p4;
             }
 
@@ -247,6 +248,7 @@ void GenMatchingAnalyzer::process(const Event *event)
             }
 
             htop_drsum()->fill(drsum);
+
             htop_dphi()->fill(dphi(htop_p4, ltop_p4));
 
             ltop()->fill(ltop_p4);
@@ -295,10 +297,8 @@ void GenMatchingAnalyzer::print(std::ostream &out) const
 
 // Private
 //
-gen::TTbar GenMatchingAnalyzer::gen_decay(const Event *event) const
+void gen::TTbar::fill(const Event *event)
 {
-    gen::TTbar ttbar;
-
     typedef ::google::protobuf::RepeatedPtrField<GenParticle> GenParticles;
 
     const GenParticles &particles = event->gen_particle();
@@ -309,49 +309,30 @@ gen::TTbar GenMatchingAnalyzer::gen_decay(const Event *event) const
         if (3 != particle->status())
             continue;
 
-        // Skip everything but t-quark
-        //
-        if (5 == abs(particle->id()))
-            ttbar.fill(*particle);
-    }
+        if (6 == abs(particle->id()))
+        {
+            Top top;
+            top.fill(*particle);
 
-    return ttbar;
-}
+            switch(top.wboson.decay)
+            {
+                case Wboson::ELECTRON: // fall through
+                case Wboson::MUON: // fall through
+                case Wboson::TAU:
+                    ltop = top;
+                    break;
 
-void gen::TTbar::fill(const GenParticle &particle)
-{
-    Top top;
+                case Wboson::HADRONIC:
+                    htop = top;
+                    break;
 
-    typedef ::google::protobuf::RepeatedPtrField<GenParticle> GenParticles;
-
-    const GenParticles &particles = particle.child();
-    for(GenParticles::const_iterator child = particles.begin();
-            particles.end() != child;
-            ++child)
-    {
-        if (3 != child->status())
-            continue;
-
-        top.fill(*child);
-    }
-
-    switch(top.wboson.decay)
-    {
-        case Wboson::ELECTRON: // fall through
-        case Wboson::MUON: // fall through
-        case Wboson::TAU:
-            ltop = top;
-            break;
-
-        case Wboson::HADRONIC:
-            htop = top;
-            break;
-
-        default:
-            // something went wrong
-            //
-            throw runtime_error("unknown W-boson decay");
-            break;
+                default:
+                    // something went wrong
+                    //
+                    throw runtime_error("unknown W-boson decay");
+                    break;
+            }
+        }
     }
 }
 
@@ -373,7 +354,9 @@ void gen::Top::fill(const GenParticle &particle)
             continue;
 
         if (24 == abs(child->id()))
+        {
             wboson.fill(*child);
+        }
         else
         {
             MatchedJet jet;
@@ -402,6 +385,9 @@ void gen::Top::fill(const GenParticle &particle)
             if (jets.empty())
                 throw runtime_error("missing b-quark in htop");
 
+            if (1 < jets.size())
+                throw runtime_error("too many partons are found in htop");
+
             break;
 
         default:
@@ -426,7 +412,7 @@ bool gen::Top::match(CorrectedJets &corrected_jets)
             return false;
     }
 
-    return true;
+    return wboson.match(corrected_jets);
 }
 
 void gen::Wboson::fill(const GenParticle &particle)
