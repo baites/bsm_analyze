@@ -24,12 +24,8 @@ def createHistogramFilter(mass_point, ban_plots=set()):
 def histogram_filter(name):
     ban_plots = [{ban}]
 
-    return ((name.startswith("ele0t_mttbar") or
-             name.startswith("ele1t_mttbar") or
-             name.startswith("el_mttbar")) and
-            ("zp{signal}" in name if name.startswith("ele0t_mttbar__zp") or
-             name.startswith("ele1t_mttbar__zp") or
-             name.startswith("el_mttbar__zp") else True) and
+    return (re.match("^el\w*_mttbar.*$", name) and
+            ("zp{signal}" in name if re.match("^el\w*_mttbar__zp.*$", name) else True) and
             not any(x in name for x in ban_plots))'''.format(
                 signal=mass_point,
                 ban=','.join('"{0}"'.format(x) for x in ban_plots)
