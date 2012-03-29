@@ -14,7 +14,7 @@ class Scales(object):
             for line in in_file:
                 line = line.strip()
 
-                if line.startswith("#"):
+                if not line or line.startswith("#"):
                     continue
 
                 if ":" in line:
