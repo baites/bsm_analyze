@@ -170,6 +170,11 @@ bsm::TriggerDelegate *GenMatchingAnalyzer::getTriggerDelegate() const
     return _synch_selector.get();
 }
 
+bsm::BtagDelegate *GenMatchingAnalyzer::getBtagDelegate() const
+{
+    return _synch_selector->getBtagDelegate();
+}
+
 void GenMatchingAnalyzer::didCounterAdd(const Counter *counter)
 {
     if (_counters.end() != _counters.find(counter))

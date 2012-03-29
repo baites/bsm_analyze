@@ -101,7 +101,6 @@ namespace bsm
 
             const H1Ptr cutflow() const;
 
-
             const H1Ptr ltop_drsum() const;
             const H1Ptr htop_drsum() const;
 
@@ -109,11 +108,13 @@ namespace bsm
 
             const P4MonitorPtr ltop() const;
             const P4MonitorPtr htop() const;
+
             const P4MonitorPtr ttbar() const;
 
             JetEnergyCorrectionDelegate *getJetEnergyCorrectionDelegate() const;
             SynchSelectorDelegate *getSynchSelectorDelegate() const;
             TriggerDelegate *getTriggerDelegate() const;
+            BtagDelegate *getBtagDelegate() const;
 
             // Counter Delegate interface
             //
