@@ -78,6 +78,9 @@ GenMatchingAnalyzer::GenMatchingAnalyzer()
     _ttbar.reset(new P4Monitor());
     _ttbar->mass()->mutable_axis()->init(4000, 0, 4000);
     monitor(_ttbar);
+
+    _ejets_channel.reset(new Comparator<logical_and<bool> >(true));
+    monitor(_ejets_channel);
 }
 
 GenMatchingAnalyzer::GenMatchingAnalyzer(const GenMatchingAnalyzer &object)
@@ -116,6 +119,9 @@ GenMatchingAnalyzer::GenMatchingAnalyzer(const GenMatchingAnalyzer &object)
 
     _ttbar = dynamic_pointer_cast<P4Monitor>(object._ttbar->clone());
     monitor(_ttbar);
+
+    _ejets_channel = dynamic_pointer_cast<Cut>(object._ejets_channel->clone());
+    monitor(_ejets_channel);
 }
 
 const GenMatchingAnalyzer::H1Ptr GenMatchingAnalyzer::cutflow() const
@@ -207,18 +213,40 @@ void GenMatchingAnalyzer::process(const Event *event)
             corrected_jets.push_back(&*good_jet);
         }
 
-        if (_synch_selector->reconstruction(
+        if (_ejets_channel->apply(
                     gen::Wboson::ELECTRON == resonance.ltop.wboson.decay &&
-                    gen::Wboson::HADRONIC == resonance.htop.wboson.decay &&
-                    resonance.match(corrected_jets)))
+                    gen::Wboson::HADRONIC == resonance.htop.wboson.decay) &&
+            _synch_selector->reconstruction(resonance.match(corrected_jets)))
         {
             const LorentzVector &el_p4 =
                 _synch_selector->goodElectrons()[0]->physics_object().p4();
 
-            const LorentzVector &nu_p4 = *_synch_selector->goodMET();
+            // Pick the best neutrino
+            //
+            NeutrinoReconstruct neutrinoReconstruct;
+            NeutrinoReconstruct::Solutions neutrinos =
+                neutrinoReconstruct(el_p4, *_synch_selector->goodMET());
+
+            const LorentzVector *nu_p4 = 0;
+            float best_dr = FLT_MAX;
+            for(NeutrinoReconstruct::Solutions::const_iterator neutrino =
+                        neutrinos.begin();
+                    neutrinos.end() != neutrino;
+                    ++neutrino)
+            {
+                float deltar = dr(
+                        **neutrino,
+                        resonance.ltop.wboson.neutrino->physics_object().p4());
+
+                if (deltar < best_dr)
+                {
+                    best_dr = deltar;
+                    nu_p4 = &**neutrino;
+                }
+            }
 
             LorentzVector ltop_p4 = el_p4;
-            ltop_p4 += nu_p4;
+            ltop_p4 += *nu_p4;
             ltop_p4 += *resonance.ltop.jets.begin()->jet->corrected_p4;
 
             gen::CorrectedJets used_jets;
@@ -249,7 +277,7 @@ void GenMatchingAnalyzer::process(const Event *event)
             }
 
             ltop_drsum()->fill(dr(ltop_p4, el_p4) +
-                               dr(ltop_p4, nu_p4) +
+                               dr(ltop_p4, *nu_p4) +
                                dr(ltop_p4, *resonance.ltop.jets.begin()->jet->corrected_p4));
 
             float drsum = 0;
@@ -317,6 +345,9 @@ void GenMatchingAnalyzer::merge(const ObjectPtr &pointer)
 void GenMatchingAnalyzer::print(std::ostream &out) const
 {
     out << *_synch_selector << endl;
+
+    _ejets_channel->setName("e+jets gen channel");
+    out << *_ejets_channel << endl;
 }
 
 

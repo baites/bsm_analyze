@@ -152,6 +152,8 @@ namespace bsm
             P4MonitorPtr _ltop;
             P4MonitorPtr _htop;
             P4MonitorPtr _ttbar;
+
+            SynchSelector::CutPtr _ejets_channel;
     };
 }
 
