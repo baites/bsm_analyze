@@ -4,6 +4,7 @@
 // Created by Samvel Khalatyan, Mar 28, 2012
 // Copyright 2011, All rights reserved
 
+#include <algorithm>
 #include <cfloat>
 #include <iostream>
 
@@ -36,6 +37,7 @@ using namespace bsm;
 GenMatchingAnalyzer::GenMatchingAnalyzer()
 {
     _synch_selector.reset(new SynchSelector());
+    _synch_selector->htlep()->disable();
     monitor(_synch_selector);
 
     // Assign cutflow delegate
@@ -95,17 +97,13 @@ GenMatchingAnalyzer::GenMatchingAnalyzer(const GenMatchingAnalyzer &object)
     _cutflow = dynamic_pointer_cast<H1Proxy>(object._cutflow->clone());
     monitor(_cutflow);
 
-    _ttbar = dynamic_pointer_cast<P4Monitor>(object._ttbar->clone());
-    monitor(_ttbar);
-
     _ltop_drsum = dynamic_pointer_cast<H1Proxy>(object._ltop_drsum->clone());
     monitor(_ltop_drsum);
 
     _htop_drsum = dynamic_pointer_cast<H1Proxy>(object._htop_drsum->clone());
     monitor(_htop_drsum);
 
-    _htop_dphi = dynamic_pointer_cast<H1Proxy>(
-            object._htop_dphi->clone());
+    _htop_dphi = dynamic_pointer_cast<H1Proxy>(object._htop_dphi->clone());
     monitor(_htop_dphi);
 
     _ltop = dynamic_pointer_cast<P4Monitor>(object._ltop->clone());
@@ -113,16 +111,14 @@ GenMatchingAnalyzer::GenMatchingAnalyzer(const GenMatchingAnalyzer &object)
 
     _htop = dynamic_pointer_cast<P4Monitor>(object._htop->clone());
     monitor(_htop);
+
+    _ttbar = dynamic_pointer_cast<P4Monitor>(object._ttbar->clone());
+    monitor(_ttbar);
 }
 
 const GenMatchingAnalyzer::H1Ptr GenMatchingAnalyzer::cutflow() const
 {
     return _cutflow->histogram();
-}
-
-const GenMatchingAnalyzer::P4MonitorPtr GenMatchingAnalyzer::ttbar() const
-{
-    return _ttbar;
 }
 
 const GenMatchingAnalyzer::H1Ptr GenMatchingAnalyzer::ltop_drsum() const
@@ -148,6 +144,11 @@ const GenMatchingAnalyzer::P4MonitorPtr GenMatchingAnalyzer::ltop() const
 const GenMatchingAnalyzer::P4MonitorPtr GenMatchingAnalyzer::htop() const
 {
     return _htop;
+}
+
+const GenMatchingAnalyzer::P4MonitorPtr GenMatchingAnalyzer::ttbar() const
+{
+    return _ttbar;
 }
 
 bsm::JetEnergyCorrectionDelegate
@@ -209,6 +210,8 @@ void GenMatchingAnalyzer::process(const Event *event)
                     gen::Wboson::HADRONIC == resonance.htop.wboson.decay &&
                     resonance.match(corrected_jets)))
         {
+            return;
+
             const LorentzVector &el_p4 =
                 _synch_selector->goodElectrons()[0]->physics_object().p4();
 
@@ -218,7 +221,10 @@ void GenMatchingAnalyzer::process(const Event *event)
             ltop_p4 += nu_p4;
             ltop_p4 += *resonance.ltop.jets.begin()->jet->corrected_p4;
 
+            gen::CorrectedJets used_jets;
             LorentzVector htop_p4 = *resonance.htop.jets.begin()->jet->corrected_p4;
+            used_jets.push_back(resonance.htop.jets.begin()->jet);
+
             for(vector<gen::MatchedJet>::const_iterator matched_jet =
                         resonance.htop.wboson.jets.begin();
                     resonance.htop.wboson.jets.end() != matched_jet;
@@ -231,7 +237,15 @@ void GenMatchingAnalyzer::process(const Event *event)
                     continue;
                 }
 
+                // skip the jet if it was already used
+                //
+                if (used_jets.end() != find(used_jets.begin(),
+                                            used_jets.end(),
+                                            matched_jet->jet))
+                    continue;
+
                 htop_p4 += *matched_jet->jet->corrected_p4;
+                used_jets.push_back(matched_jet->jet);
             }
 
             ltop_drsum()->fill(dr(ltop_p4, el_p4) +
@@ -239,12 +253,22 @@ void GenMatchingAnalyzer::process(const Event *event)
                                dr(ltop_p4, *resonance.ltop.jets.begin()->jet->corrected_p4));
 
             float drsum = 0;
+
+            used_jets.clear();
             for(vector<gen::MatchedJet>::const_iterator matched_jet =
                         resonance.htop.jets.begin();
                     resonance.htop.jets.end() != matched_jet;
                     ++matched_jet)
             {
+                // skip the jet if it was already used
+                //
+                if (used_jets.end() != find(used_jets.begin(),
+                                            used_jets.end(),
+                                            matched_jet->jet))
+                    continue;
+
                 drsum += dr(htop_p4, *matched_jet->jet->corrected_p4);
+                used_jets.push_back(matched_jet->jet);
             }
 
             htop_drsum()->fill(drsum);
@@ -295,8 +319,8 @@ void GenMatchingAnalyzer::print(std::ostream &out) const
     out << *_synch_selector << endl;
 }
 
-// Private
-//
+
+
 void gen::TTbar::fill(const Event *event)
 {
     typedef ::google::protobuf::RepeatedPtrField<GenParticle> GenParticles;
@@ -306,9 +330,13 @@ void gen::TTbar::fill(const Event *event)
             particles.end() != particle;
             ++particle)
     {
+        // Skip all unstable products
+        //
         if (3 != particle->status())
             continue;
 
+        // Process t-quarks only
+        //
         if (6 == abs(particle->id()))
         {
             Top top;
@@ -341,6 +369,8 @@ bool gen::TTbar::match(CorrectedJets &corrected_jets)
     return ltop.match(corrected_jets) && htop.match(corrected_jets);
 }
 
+
+
 void gen::Top::fill(const GenParticle &particle)
 {
     typedef ::google::protobuf::RepeatedPtrField<GenParticle> GenParticles;
@@ -350,6 +380,8 @@ void gen::Top::fill(const GenParticle &particle)
             particles.end() != child;
             ++child)
     {
+        // Skip all unstable particles
+        //
         if (3 != child->status())
             continue;
 
@@ -366,7 +398,7 @@ void gen::Top::fill(const GenParticle &particle)
         }
     }
 
-    // perform t-quark validity
+    // validate t-quark
     //
     switch(wboson.decay)
     {
@@ -414,6 +446,8 @@ bool gen::Top::match(CorrectedJets &corrected_jets)
 
     return wboson.match(corrected_jets);
 }
+
+
 
 void gen::Wboson::fill(const GenParticle &particle)
 {
@@ -516,6 +550,8 @@ bool gen::Wboson::match(CorrectedJets &corrected_jets)
     return true;
 }
 
+
+
 bool gen::MatchedJet::match(CorrectedJets &corrected_jets)
 {
     if (!parton)
@@ -532,8 +568,6 @@ bool gen::MatchedJet::match(CorrectedJets &corrected_jets)
         {
             jet = *corrected_jet;
 
-            corrected_jets.erase(corrected_jet);
-            
             return true;
         }
     }

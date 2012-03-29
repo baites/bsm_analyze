@@ -45,7 +45,8 @@ namespace bsm
 
         struct Wboson
         {
-            Wboson()
+            Wboson():
+                decay(UNKNOWN)
             {
                 lepton = 0;
                 neutrino = 0;
@@ -67,6 +68,7 @@ namespace bsm
 
             const GenParticle *lepton;
             const GenParticle *neutrino;
+
             std::vector<MatchedJet> jets;
         };
 
