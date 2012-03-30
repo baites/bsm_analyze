@@ -29,6 +29,10 @@ namespace bsm
             {
             }
 
+            virtual void setUseBtagSF()
+            {
+            }
+
             virtual void setSystematic(const Systematic &)
             {
             }
@@ -46,6 +50,7 @@ namespace bsm
             virtual DescriptionPtr description() const;
 
         private:
+            void setUseBtagSF();
             void setSystematic(const BtagDelegate::Systematic &);
 
             DescriptionPtr _description;
@@ -76,6 +81,7 @@ namespace bsm
 
             // BtagDelegate interface
             //
+            virtual void setUseBtagSF();
             virtual void setSystematic(const Systematic &);
 
             // Object interface
@@ -96,6 +102,8 @@ namespace bsm
             boost::shared_ptr<boost::mt19937> _generator;
 
             Systematic _systematic;
+
+            bool _use_sf;
     };
 }
 

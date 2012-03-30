@@ -19,6 +19,11 @@ BtagOptions::BtagOptions()
 {
     _description.reset(new po::options_description("Btag Options"));
     _description->add_options()
+        ("use-btag-sf",
+         po::value<bool>()->implicit_value(true)->notifier(
+             boost::bind(&BtagOptions::setUseBtagSF, this)),
+         "Use b-tagging Scale Factors")
+
         ("btag-up",
          po::value<bool>()->implicit_value(true)->notifier(
              boost::bind(&BtagOptions::setSystematic, this, BtagDelegate::UP)),
@@ -40,6 +45,12 @@ BtagOptions::DescriptionPtr BtagOptions::description() const
 
 // Private
 //
+void BtagOptions::setUseBtagSF()
+{
+    if (delegate())
+        delegate()->setUseBtagSF();
+}
+
 void BtagOptions::setSystematic(const BtagDelegate::Systematic &systematic)
 {
     if (!delegate())
@@ -53,13 +64,15 @@ void BtagOptions::setSystematic(const BtagDelegate::Systematic &systematic)
 // Btag
 //
 Btag::Btag():
-    _systematic(NONE)
+    _systematic(NONE),
+    _use_sf(false)
 {
     _generator.reset(new boost::mt19937());
 }
 
 Btag::Btag(const Btag &object):
-    _systematic(object._systematic)
+    _systematic(object._systematic),
+    _use_sf(object._use_sf)
 {
     _generator.reset(new boost::mt19937());
 }
@@ -151,7 +164,7 @@ bool Btag::is_tagged(const CorrectedJet &jet)
             const float discriminator = btag->discriminator();
             bool result = Btag::discriminator() < discriminator;
 
-            if (jet.jet->has_gen_parton())
+            if (_use_sf && jet.jet->has_gen_parton())
             {
                 float scale = 0;
                 float efficiency = 0;
@@ -199,6 +212,11 @@ bool Btag::is_tagged(const CorrectedJet &jet)
 
 // BtagDelegate interface
 //
+void Btag::setUseBtagSF()
+{
+    _use_sf = true;
+}
+
 void Btag::setSystematic(const Systematic &systematic)
 {
     _systematic = systematic;
