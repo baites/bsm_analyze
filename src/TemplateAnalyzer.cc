@@ -1268,8 +1268,7 @@ void TemplateAnalyzer::onFileOpen(const std::string &filename, const Input *inpu
     if ((
         (_data_input && _synch_selector->qcdTemplate()) || 
         _wjets_input || 
-        _zjets_input
-    ) && _synch_selector->isToptagUse())
+        _zjets_input ) && _synch_selector->toptag()->value() == 1)
         _synch_selector->useToptagWeight();
 }
 
@@ -1302,13 +1301,9 @@ void TemplateAnalyzer::process(const Event *event)
     // Process only events, that pass the synch selector
     //
     if (_synch_selector->apply(event))
-    {
+    { 
        // Use toptag by weighting the wjets mc
-       if ((
-           (_data_input && _synch_selector->qcdTemplate()) ||
-           _wjets_input || _zjets_input) && 
-           _synch_selector->isToptagUse()
-       )
+       if (_synch_selector->isToptagWeight())
        {
            cout << "Using weight !" << endl;
            _extra_weight *= _synch_selector->toptagWeight();
@@ -1469,6 +1464,26 @@ void TemplateAnalyzer::process(const Event *event)
                 njet2DrLeptonJet2AfterReconstruction()->fill(dr(el_p4, *_synch_selector->goodJets()[1].corrected_p4),
                         _pileup_weight * _extra_weight);
             }
+        }
+        else if (_synch_selector->wjetsTemplate())
+        {
+            const LorentzVector &el_p4 = _synch_selector->goodElectrons()[0]->physics_object().p4();
+
+            monitorJets();
+            _electron->fill(el_p4, _pileup_weight * _extra_weight);
+
+            npv()->fill(event->primary_vertex().size());
+            npvWithPileup()->fill(event->primary_vertex().size(),
+                    _pileup_weight * _extra_weight);
+            njets()->fill(_synch_selector->goodJets().size(),
+                    _pileup_weight * _extra_weight);
+
+            const LorentzVector &missing_energy = *_synch_selector->goodMET();
+            met()->fill(pt(missing_energy), _pileup_weight * _extra_weight);
+            metNoWeight()->fill(pt(missing_energy));
+
+            htlep()->fill(htlepValue(), _pileup_weight * _extra_weight);
+            htall()->fill(htallValue(), _pileup_weight * _extra_weight);
         }
     }
 

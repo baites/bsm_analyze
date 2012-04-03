@@ -31,75 +31,70 @@ SynchSelectorOptions::SynchSelectorOptions()
 {
     _description.reset(new po::options_description("Synchronization Selector Options"));
     _description->add_options()
-        ("lepton-mode",
-         po::value<string>()->notifier(
-             boost::bind(&SynchSelectorOptions::setLeptonMode, this, _1)),
-         "synchronization selector lepton mode: muon, electron")
+    ("lepton-mode",
+     po::value<string>()->notifier(
+         boost::bind(&SynchSelectorOptions::setLeptonMode, this, _1)),
+     "synchronization selector lepton mode: muon, electron")
 
-        ("cut-mode",
-         po::value<string>()->notifier(
-             boost::bind(&SynchSelectorOptions::setCutMode, this, _1)),
-         "synchroniation selector cut mode: 2dcut, isolation")
+    ("cut-mode",
+     po::value<string>()->notifier(
+         boost::bind(&SynchSelectorOptions::setCutMode, this, _1)),
+     "synchroniation selector cut mode: 2dcut, isolation")
 
-        ("leading-jet",
-         po::value<float>()->notifier(
-             boost::bind(&SynchSelectorOptions::setLeadingJetPt, this, _1)),
-         "leading jet pT cut")
+    ("leading-jet",
+     po::value<float>()->notifier(
+         boost::bind(&SynchSelectorOptions::setLeadingJetPt, this, _1)),
+     "leading jet pT cut")
 
-        ("jet-pt",
-         po::value<float>()->notifier(
-             boost::bind(&SynchSelectorOptions::setJetPt, this, _1)),
-         "cut all jet pT")
+    ("jet-pt",
+     po::value<float>()->notifier(
+         boost::bind(&SynchSelectorOptions::setJetPt, this, _1)),
+     "cut all jet pT")
 
-        ("max-btags",
-         po::value<float>()->notifier(
-             boost::bind(&SynchSelectorOptions::setMaxBtag, this, _1)),
-         "maximum number of b-tagged jets in event")
+    ("max-btags",
+     po::value<float>()->notifier(
+         boost::bind(&SynchSelectorOptions::setMaxBtag, this, _1)),
+     "maximum number of b-tagged jets in event")
 
-        ("min-btags",
-         po::value<float>()->notifier(
-             boost::bind(&SynchSelectorOptions::setMinBtag, this, _1)),
-         "minimum number of b-tagged jets in event")
+    ("min-btags",
+     po::value<float>()->notifier(
+         boost::bind(&SynchSelectorOptions::setMinBtag, this, _1)),
+     "minimum number of b-tagged jets in event")
 
-        ("max-toptags",
-         po::value<float>()->notifier(
-             boost::bind(&SynchSelectorOptions::setMaxToptag, this, _1)),
-         "maximum number of top-tagged jets in event")
+    ("toptag-cut",
+     po::value<float>()->notifier(
+         boost::bind(&SynchSelectorOptions::setToptag, this, _1)),
+     "set top-tagged selection where the options are 0, 1")
 
-        ("min-toptags",
-         po::value<float>()->notifier(
-             boost::bind(&SynchSelectorOptions::setMinToptag, this, _1)),
-         "minimum number of top-tagged jets in event")
+    ("electron-pt",
+     po::value<float>()->notifier(
+         boost::bind(&SynchSelectorOptions::setElectronPt, this, _1)),
+     "electron pT cut")
 
-        ("electron-pt",
-         po::value<float>()->notifier(
-             boost::bind(&SynchSelectorOptions::setElectronPt, this, _1)),
-         "electron pT cut")
+    ("qcd-template",
+     po::value<bool>()->implicit_value(false)->notifier(
+         boost::bind(&SynchSelectorOptions::setQCDTemplate, this, _1)),
+     "derived a qcd template")
 
-         ("qcd-template",
-          po::value<bool>()->implicit_value(false)->notifier(
-             boost::bind(&SynchSelectorOptions::setQCDTemplate, this, _1)),
-         "derived a qcd template")   
+    ("wjets-template",
+     po::value<bool>()->implicit_value(false)->notifier(
+         boost::bind(&SynchSelectorOptions::setWjetsTemplate, this, _1)),
+     "derived a wjets template based on event with one godd jet")
 
-         ("wjets-template",
-          po::value<bool>()->implicit_value(false)->notifier(
-             boost::bind(&SynchSelectorOptions::setWjetsTemplate, this, _1)),
-         "derived a wjets template for toptagging mistag rate")
+    ("ltop-pt",
+     po::value<float>()->notifier(
+         boost::bind(&SynchSelectorOptions::setLtopPt, this, _1)),
+     "set min value of ltop pt")
 
-        ("ltop-pt",
-         po::value<float>()->notifier(
-             boost::bind(&SynchSelectorOptions::setLtopPt, this, _1)),
-         "set min value of ltop pt")
+    ("ltop-chi2",
+     po::value<float>()->notifier(
+         boost::bind(&SynchSelectorOptions::setLtopChi2Discriminator, this, _1)),
+     "set max ltop-chi2 disriminator")
 
-        ("ltop-chi2",
-         po::value<float>()->notifier(
-             boost::bind(&SynchSelectorOptions::setLtopChi2Discriminator, this, _1)),
-         "set max ltop-chi2 disriminator")
-
-        ("htop-chi2",
-         po::value<float>()->notifier(
-             boost::bind(&SynchSelectorOptions::setHtopChi2Discriminator, this, _1)),
-         "set max htop-chi2 disriminator")
+    ("htop-chi2",
+     po::value<float>()->notifier(
+         boost::bind(&SynchSelectorOptions::setHtopChi2Discriminator, this, _1)),
+     "set max htop-chi2 disriminator")
     ;
 }
 
@@ -188,25 +183,17 @@ void SynchSelectorOptions::setMinBtag(const float &value)
     delegate()->setMinBtag(value);
 }
 
-void SynchSelectorOptions::setMaxToptag(const float &value)
+void SynchSelectorOptions::setToptag(const float &value)
 {
     if (!delegate())
         return;
 
-    delegate()->setMaxToptag(value);
-}
-
-void SynchSelectorOptions::setMinToptag(const float &value)
-{
-    if (!delegate())
-        return;
-
-    delegate()->setMinToptag(value);
+    delegate()->setToptag(value);
 }
 
 void SynchSelectorOptions::setElectronPt(const float & value)
 {
-    if (!delegate()) return;    
+    if (!delegate()) return;
 
     delegate()->setElectronPt(value);
 }
@@ -334,17 +321,11 @@ SynchSelector::SynchSelector():
     _min_btag->disable();
     monitor(_min_btag);
 
-    // Do not cut on max number of top-tagged jets by default
+    // Do not apply top tagging selection by default
     //
-    _max_toptag.reset(new Comparator<less_equal<float> >(3));
-    _max_toptag->disable();
-    monitor(_max_toptag);
-
-    // Do not cut on min number of top-tagged jets by default
-    //
-    _min_toptag.reset(new Comparator<greater_equal<float> >(1));
-    _min_toptag->disable();
-    monitor(_min_toptag);
+    _toptag.reset(new Comparator<>(0));
+    _toptag->disable();
+    monitor(_toptag);
 
     _htlep.reset(new Comparator<>(150));
     monitor(_htlep);
@@ -364,7 +345,7 @@ SynchSelector::SynchSelector():
     monitor(_ltop);
 
     _random_generator.reset(new RandomGenerator<>(140.,250.));
-    //_random_generator.reset(new RandomGenerator<>(143.,203.)); 
+    //_random_generator.reset(new RandomGenerator<>(143.,203.));
     monitor(_random_generator);
 
     _ltop_chi2.reset(new Comparator<less<float> >(5));
@@ -386,35 +367,35 @@ SynchSelector::SynchSelector(const SynchSelector &object):
 {
     // Cutflow Table
     //
-    _cutflow = 
+    _cutflow =
         dynamic_pointer_cast<MultiplicityCutflow>(object._cutflow->clone());
     monitor(_cutflow);
 
     // Selectors
     //
-    _primary_vertex_selector = 
+    _primary_vertex_selector =
         dynamic_pointer_cast<PrimaryVertexSelector>(object._primary_vertex_selector->clone());
     monitor(_primary_vertex_selector);
 
-    _electron_selector = 
+    _electron_selector =
         dynamic_pointer_cast<ElectronSelector>(object._electron_selector->clone());
     monitor(_electron_selector);
 
-    _muon_selector = 
+    _muon_selector =
         dynamic_pointer_cast<MuonSelector>(object._muon_selector->clone());
     monitor(_muon_selector);
 
-    _nice_jet_selector = 
+    _nice_jet_selector =
         dynamic_pointer_cast<JetSelector>(object._nice_jet_selector->clone());
     monitor(_nice_jet_selector);
 
-    _good_jet_selector = 
+    _good_jet_selector =
         dynamic_pointer_cast<JetSelector>(object._good_jet_selector->clone());
     monitor(_good_jet_selector);
 
     // 2D-Cut
     //
-    _cut2d_selector = 
+    _cut2d_selector =
         dynamic_pointer_cast<Cut2DSelector>(object._cut2d_selector->clone());
     monitor(_cut2d_selector);
 
@@ -437,11 +418,8 @@ SynchSelector::SynchSelector(const SynchSelector &object):
     _min_btag = dynamic_pointer_cast<Cut>(object.minBtag()->clone());
     monitor(_min_btag);
 
-    _max_toptag = dynamic_pointer_cast<Cut>(object.maxToptag()->clone());
-    monitor(_max_btag);
-
-    _min_toptag = dynamic_pointer_cast<Cut>(object.minToptag()->clone());
-    monitor(_min_toptag);
+    _toptag = dynamic_pointer_cast<Cut>(object.toptag()->clone());
+    monitor(_toptag);
 
     _htlep = dynamic_pointer_cast<Cut>(object.htlep()->clone());
     monitor(_htlep);
@@ -458,7 +436,7 @@ SynchSelector::SynchSelector(const SynchSelector &object):
 
     _ltop = dynamic_pointer_cast<Cut>(object.ltop()->clone());
     monitor(_ltop);
- 
+
     _random_generator = object._random_generator;
     monitor(_random_generator);
 
@@ -493,14 +471,9 @@ SynchSelector::CutPtr SynchSelector::minBtag() const
     return _min_btag;
 }
 
-SynchSelector::CutPtr SynchSelector::maxToptag() const
+SynchSelector::CutPtr SynchSelector::toptag() const
 {
-    return _max_toptag;
-}
-
-SynchSelector::CutPtr SynchSelector::minToptag() const
-{
-    return _min_toptag;
+    return _toptag;
 }
 
 SynchSelector::CutPtr SynchSelector::htlep() const
@@ -557,38 +530,36 @@ bool SynchSelector::apply(const Event *event)
     {
         tricut()->invert();
         return triggers(event)
-            && primaryVertices(event)
-            && jets(event)
-            && lepton()
-            && secondElectronVeto()
-            && secondMuonVeto()
-            && isolationAnd2DCut()
-            && leadingJetCut()
-            && maxBtags()
-            && minBtags()
-            && maxToptags()
-            && minToptags()
-            && htlepCut(event)
-            && missingEnergy(event)
-            && triangularCut(event);
+               && primaryVertices(event)
+               && jets(event)
+               && lepton()
+               && secondElectronVeto()
+               && secondMuonVeto()
+               && isolationAnd2DCut()
+               && leadingJetCut()
+               && maxBtags()
+               && minBtags()
+               && toptagCut()
+               && htlepCut(event)
+               && missingEnergy(event)
+               && triangularCut(event);
     }
 
     // Nominal
     return triggers(event)
-        && primaryVertices(event)
-        && jets(event)
-        && lepton()
-        && secondElectronVeto()
-        && secondMuonVeto()
-        && isolationAnd2DCut()
-        && leadingJetCut()
-        && maxBtags()
-        && minBtags()
-        && maxToptags()
-        && minToptags()
-        && htlepCut(event)
-        && triangularCut(event)
-        && missingEnergy(event);
+           && primaryVertices(event)
+           && jets(event)
+           && lepton()
+           && secondElectronVeto()
+           && secondMuonVeto()
+           && isolationAnd2DCut()
+           && leadingJetCut()
+           && maxBtags()
+           && minBtags()
+           && toptagCut()
+           && htlepCut(event)
+           && triangularCut(event)
+           && missingEnergy(event);
 }
 
 SynchSelector::CutflowPtr SynchSelector::cutflow() const
@@ -597,7 +568,7 @@ SynchSelector::CutflowPtr SynchSelector::cutflow() const
 }
 
 const SynchSelector::GoodPrimaryVertices
-    &SynchSelector::goodPrimaryVertices() const
+&SynchSelector::goodPrimaryVertices() const
 {
     return _good_primary_vertices;
 }
@@ -701,16 +672,10 @@ void SynchSelector::setMinBtag(const float &value)
     _min_btag->enable();
 }
 
-void SynchSelector::setMaxToptag(const float &value)
+void SynchSelector::setToptag(const float &value)
 {
-    _max_toptag->setValue(value);
-    _max_toptag->enable();
-}
-
-void SynchSelector::setMinToptag(const float &value)
-{
-    _min_toptag->setValue(value);
-    _min_toptag->enable();
+    _toptag->setValue(value);
+    _toptag->enable();
 }
 
 void SynchSelector::setElectronPt(const float &value)
@@ -748,13 +713,13 @@ void SynchSelector::setHtopChi2Discriminator(const float &value)
 // Jet Energy Correction Delegate interface
 //
 void SynchSelector::setCorrection(const Level &level,
-        const string &file_name)
+                                  const string &file_name)
 {
     _jec->setCorrection(level, file_name);
 }
 
 void SynchSelector::setSystematic(const Systematic &systematic,
-        const std::string &filename)
+                                  const std::string &filename)
 {
     _jec->setSystematic(systematic, filename);
 }
@@ -833,14 +798,7 @@ void SynchSelector::print(std::ostream &out) const
     min_btag << "btagged jets >= " << minBtag()->value();
     _cutflow->cut(MIN_BTAG)->setName(min_btag.str());
 
-    ostringstream max_toptag;
-    max_toptag << "btagged jets <= " << maxToptag()->value();
-    _cutflow->cut(MAX_TOPTAG)->setName(max_toptag.str());
-
-    ostringstream min_toptag;
-    min_toptag << "btagged jets >= " << minToptag()->value();
-    _cutflow->cut(MIN_TOPTAG)->setName(min_toptag.str());
-
+    _cutflow->cut(TOPTAG)->setName("toptag");
     _cutflow->cut(HTLEP)->setName("hTlep");
     _cutflow->cut(TRICUT)->setName("tri-cut");
     _cutflow->cut(MET)->setName("MET");
@@ -860,7 +818,7 @@ bool SynchSelector::reconstruction(const bool &value)
         return true;
 
     return reconstruction()->apply(value)
-        && (_cutflow->apply(RECONSTRUCTION), true);
+           && (_cutflow->apply(RECONSTRUCTION), true);
 }
 
 bool SynchSelector::ltop(const float &value)
@@ -869,7 +827,7 @@ bool SynchSelector::ltop(const float &value)
         return true;
 
     return ltop()->apply(value)
-        && (_cutflow->apply(LTOP), true);
+           && (_cutflow->apply(LTOP), true);
 }
 
 bool SynchSelector::ltop_chi2(const float &value)
@@ -878,7 +836,7 @@ bool SynchSelector::ltop_chi2(const float &value)
         return true;
 
     return ltop_chi2()->apply(value)
-        && (_cutflow->apply(LTOP_CHI2), true);
+           && (_cutflow->apply(LTOP_CHI2), true);
 }
 
 bool SynchSelector::htop_chi2(const float &value)
@@ -887,7 +845,7 @@ bool SynchSelector::htop_chi2(const float &value)
         return true;
 
     return htop_chi2()->apply(value)
-        && (_cutflow->apply(HTOP_CHI2), true);
+           && (_cutflow->apply(HTOP_CHI2), true);
 }
 
 // Private
@@ -904,7 +862,7 @@ bool SynchSelector::triggers(const Event *event)
         typedef ::google::protobuf::RepeatedPtrField<Trigger> PBTriggers;
         for(Triggers::const_iterator trigger = _triggers.begin();
                 _triggers.end() != trigger
-                    && !result;
+                && !result;
                 ++trigger)
         {
             for(PBTriggers::const_iterator hlt = event->hlt().trigger().begin();
@@ -923,7 +881,7 @@ bool SynchSelector::triggers(const Event *event)
     }
 
     return result
-        && (_cutflow->apply(TRIGGER), true);
+           && (_cutflow->apply(TRIGGER), true);
 }
 
 bool SynchSelector::primaryVertices(const Event *event)
@@ -931,7 +889,7 @@ bool SynchSelector::primaryVertices(const Event *event)
     selectGoodPrimaryVertices(event);
 
     return !goodPrimaryVertices().empty()
-        && (_cutflow->apply(PRIMARY_VERTEX), true);
+           && (_cutflow->apply(PRIMARY_VERTEX), true);
 }
 
 bool SynchSelector::jets(const Event *event)
@@ -951,10 +909,10 @@ bool SynchSelector::jets(const Event *event)
             ++jet)
     {
         CorrectedJet correction = _jec->correctJet(&*jet,
-                event,
-                _good_electrons,
-                _good_muons,
-                met);
+                                  event,
+                                  _good_electrons,
+                                  _good_muons,
+                                  met);
 
         // Skip jet if energy corrections failed
         //
@@ -971,7 +929,7 @@ bool SynchSelector::jets(const Event *event)
         Jet corrected_jet;
         corrected_jet.CopyFrom(*jet);
         corrected_jet.mutable_physics_object()->mutable_p4()->CopyFrom(
-                *correction.corrected_p4);
+            *correction.corrected_p4);
 
         if (!_nice_jet_selector->apply(corrected_jet))
             continue;
@@ -984,32 +942,18 @@ bool SynchSelector::jets(const Event *event)
             continue;
 
         _good_jets.push_back(correction);
-
-        /*// Store top tagged jets
-        //
-        if (!jet->has_toptag())
-            continue;
-
-        const Jet_TopTag & toptag = jet->toptag();
-        if (!(
-            toptag.n_subjets() > 2 &&
-            toptag.min_mass() > 50 &&
-            toptag.top_mass() > 140 &&
-            toptag.top_mass() < 250
-        )) continue;
-
-        _top_jets.push_back(correction);*/
     }
 
+    // This part of the code is use if 2 jet collection is used
     for(Jets::const_iterator jet = event->ca_toptag_jet().begin();
             event->ca_toptag_jet().end() != jet;
             ++jet)
     {
         CorrectedJet correction = _jec->correctJet(&*jet,
-                event,
-                _good_electrons,
-                _good_muons,
-                met);
+                                  event,
+                                  _good_electrons,
+                                  _good_muons,
+                                  met);
 
         // Skip jet if energy corrections failed
         //
@@ -1025,11 +969,11 @@ bool SynchSelector::jets(const Event *event)
 
         const Jet_TopTag & toptag = jet->toptag();
         if (!(
-            toptag.n_subjets() > 2 &&
-            toptag.min_mass() > 50 &&
-            toptag.top_mass() > 140 &&
-            toptag.top_mass() < 250
-        )) continue;
+                    toptag.n_subjets() > 2 &&
+                    toptag.min_mass() > 50 &&
+                    toptag.top_mass() > 140 &&
+                    toptag.top_mass() < 250
+                )) continue;
 
         _top_jets.push_back(correction);
     }
@@ -1043,19 +987,19 @@ bool SynchSelector::jets(const Event *event)
 
     if (_wjets_template)
         return 1 == _good_jets.size()
-        && (_cutflow->apply(JET), true);
+               && (_cutflow->apply(JET), true);
 
     return 1 < _good_jets.size()
-        && (_cutflow->apply(JET), true);
+           && (_cutflow->apply(JET), true);
 }
 
 bool SynchSelector::lepton()
 {
     return (ELECTRON == _lepton_mode
-        ? !_good_electrons.empty()
-        : !_good_muons.empty())
+            ? !_good_electrons.empty()
+            : !_good_muons.empty())
 
-        && (_cutflow->apply(LEPTON), true);
+           && (_cutflow->apply(LEPTON), true);
 }
 
 bool SynchSelector::secondElectronVeto()
@@ -1063,7 +1007,7 @@ bool SynchSelector::secondElectronVeto()
     return (ELECTRON == _lepton_mode
             ? 1 == _good_electrons.size()
             : _good_electrons.empty())
-        && (_cutflow->apply(VETO_SECOND_ELECTRON), true);
+           && (_cutflow->apply(VETO_SECOND_ELECTRON), true);
 }
 
 bool SynchSelector::secondMuonVeto()
@@ -1071,7 +1015,7 @@ bool SynchSelector::secondMuonVeto()
     return (ELECTRON == _lepton_mode
             ? _good_muons.empty()
             : 1 == _good_muons.size())
-        && (_cutflow->apply(VETO_SECOND_MUON), true);
+           && (_cutflow->apply(VETO_SECOND_MUON), true);
 }
 
 bool SynchSelector::isolationAnd2DCut()
@@ -1111,7 +1055,7 @@ bool SynchSelector::isolationAnd2DCut()
     }
 
     return _cut->apply(result)
-        && (_cutflow->apply(CUT_LEPTON), true);
+           && (_cutflow->apply(CUT_LEPTON), true);
 }
 
 bool SynchSelector::leadingJetCut()
@@ -1130,7 +1074,7 @@ bool SynchSelector::leadingJetCut()
     }
 
     return leadingJet()->apply(max_pt)
-        && (_cutflow->apply(LEADING_JET), true);
+           && (_cutflow->apply(LEADING_JET), true);
 }
 
 bool SynchSelector::maxBtags()
@@ -1148,7 +1092,7 @@ bool SynchSelector::maxBtags()
     }
 
     return maxBtag()->apply(btags)
-        && (_cutflow->apply(MAX_BTAG), true);
+           && (_cutflow->apply(MAX_BTAG), true);
 }
 
 bool SynchSelector::minBtags()
@@ -1166,25 +1110,22 @@ bool SynchSelector::minBtags()
     }
 
     return minBtag()->apply(btags)
-        && (_cutflow->apply(MIN_BTAG), true);
+           && (_cutflow->apply(MIN_BTAG), true);
 }
 
-bool SynchSelector::maxToptags()
+bool SynchSelector::toptagCut()
 {
-    if (maxToptag()->isDisabled())
+    if (toptag()->isDisabled())
         return true;
 
-    return maxToptag()->apply(_top_jets.size()) 
-        && (_cutflow->apply(MAX_TOPTAG), true);
-}
+    bool result = false;
 
-bool SynchSelector::minToptags()
-{
-    if (minToptag()->isDisabled())
-        return true;
+    if (toptag()->value() == 0)
+        result = (_top_jets.size() == 0);
+    else if (toptag()->value() == 1)
+        result = (_top_jets.size() > 0);
 
-    return minToptag()->apply(_top_jets.size())
-        && (_cutflow->apply(MIN_TOPTAG), true);
+    return result && (_cutflow->apply(TOPTAG), true);
 }
 
 bool SynchSelector::htlepCut(const Event *event)
@@ -1192,13 +1133,13 @@ bool SynchSelector::htlepCut(const Event *event)
     if (htlep()->isDisabled())
         return true;
 
-    const LorentzVector &lepton_p4 = (ELECTRON == _lepton_mode 
-        ? (*_good_electrons.begin())->physics_object().p4()
-        : (*_good_muons.begin())->physics_object().p4());
+    const LorentzVector &lepton_p4 = (ELECTRON == _lepton_mode
+                                      ? (*_good_electrons.begin())->physics_object().p4()
+                                      : (*_good_muons.begin())->physics_object().p4());
 
     return goodMET()
-        && htlep()->apply(pt(*goodMET()) + pt(lepton_p4))
-        && (_cutflow->apply(HTLEP), true);
+           && htlep()->apply(pt(*goodMET()) + pt(lepton_p4))
+           && (_cutflow->apply(HTLEP), true);
 }
 
 bool SynchSelector::triangularCut(const Event *event)
@@ -1222,11 +1163,11 @@ bool SynchSelector::triangularCut(const Event *event)
     const float slope = 1.5 / 75;
 
     bool pass = dphi_el_met < (slope * met_pt + 1.5)
-        && dphi_el_met > (-slope * met_pt + 1.5)
-        && dphi_ljet_met < (slope * met_pt + 1.5)
-        && dphi_ljet_met > (-slope * met_pt + 1.5)
-        && (_cutflow->apply(TRICUT), true);
-   
+                && dphi_el_met > (-slope * met_pt + 1.5)
+                && dphi_ljet_met < (slope * met_pt + 1.5)
+                && dphi_ljet_met > (-slope * met_pt + 1.5)
+                && (_cutflow->apply(TRICUT), true);
+
     return tricut()->isInverted() ? !pass : pass;
 }
 
@@ -1236,8 +1177,8 @@ bool SynchSelector::missingEnergy(const Event *event)
         return true;
 
     return goodMET()
-        && met()->apply(pt(*goodMET()))
-        && (_cutflow->apply(MET), true);
+           && met()->apply(pt(*goodMET()))
+           && (_cutflow->apply(MET), true);
 }
 
 bool SynchSelector::cut2D(const LorentzVector *lepton_p4)
@@ -1271,9 +1212,9 @@ bool SynchSelector::cut2D(const LorentzVector *lepton_p4)
 bool SynchSelector::isolation(const LorentzVector *p4, const PFIsolation *isolation)
 {
     return 0.5 < (isolation->charged_hadron()
-            + isolation->neutral_hadron()
-            + isolation->photon())
-        / pt(*p4);
+                  + isolation->neutral_hadron()
+                  + isolation->photon())
+           / pt(*p4);
 }
 
 bool SynchSelector::isBtagJet(const Jet *jet) const
@@ -1322,7 +1263,7 @@ void SynchSelector::selectGoodElectrons(const Event *event)
             continue;
 
         typedef ::google::protobuf::RepeatedPtrField<Electron::ElectronID>
-            ElectronIDs;
+        ElectronIDs;
 
         bool is_good_lepton = false;
         for(ElectronIDs::const_iterator id = electron->id().begin();
@@ -1336,7 +1277,7 @@ void SynchSelector::selectGoodElectrons(const Event *event)
             {
                 if (!id->identification() || !id->conversion_rejection())
                     is_good_lepton = true;
-            } 
+            }
             else
             {
                 if (id->identification() && id->conversion_rejection())
@@ -1367,38 +1308,15 @@ void SynchSelector::selectGoodMuons(const Event *event)
     }
 }
 
-bool SynchSelector::isToptagUse() const
-{
-    bool direct_toptag = (
-        !_max_toptag->isDisabled() ||
-        !_min_toptag->isDisabled()
-    );
-
-    if (
-         _max_toptag->isDisabled() && 
-        !_min_toptag->isDisabled()
-    ) 
-        direct_toptag &= (_min_toptag->value() > 0);
-    if (
-        !_max_toptag->isDisabled() &&
-         _min_toptag->isDisabled()
-    )
-        direct_toptag &= (_max_toptag->value() > 0);
-    else if (
-        !_max_toptag->isDisabled() &&
-        !_min_toptag->isDisabled()
-    )  
-        direct_toptag &= (
-            (_max_toptag->value() - _min_toptag->value())>= 0
-        );
-    return direct_toptag || _weighted_toptag;
-}
-
 void SynchSelector::useToptagWeight()
 {
-    _max_toptag->disable();
-    _min_toptag->disable();
+    toptag()->disable();
     _weighted_toptag = true;
+}
+
+bool SynchSelector::isToptagWeight() const
+{
+    return _weighted_toptag;
 }
 
 static float toptagWeight(float x)
@@ -1408,7 +1326,7 @@ static float toptagWeight(float x)
     float p2 = 2.76646e-02;
     float p3 = 1.85887e-06;
 
-    return p0/(1+exp(-p2*(x-p1)-p3*pow(x-p1,3)));   
+    return p0/(1+exp(-p2*(x-p1)-p3*pow(x-p1,3)));
 }
 
 // Overlapping area of two interceting circles
@@ -1429,45 +1347,50 @@ static float overlapArea(
     float B = R2*acos((d2+R2-r2)/(2*d*R));
     float C = 0.5*sqrt((-d+r+R)*(d+r-R)*(d-r+R)*(d+r+R));
 
-    return A + B - C; 
+    return A + B - C;
 }
 
 float SynchSelector::toptagWeight()
 {
-    uint32_t mtoptags = _min_toptag->value();
+    float total_weight = 0.0;
+    uint32_t nperm = pow(2,_ca_jets.size());
 
-    uint32_t index = 0;
-    float weight = 1.0;
-
-    for(SynchSelector::GoodJets::const_iterator cajet = _ca_jets.begin();
-            _ca_jets.end() != cajet;
-            ++cajet, ++index)
+    for(uint32_t perm = 1; perm < nperm; ++perm)
     {
-        if (index >= mtoptags)
-            weight *= 1.0 - ::toptagWeight(pt(*cajet->corrected_p4));
-        else
+        uint32_t index = 0;
+        float weight = 1.0;    
+
+        for(SynchSelector::GoodJets::const_iterator cajet = _ca_jets.begin();
+                _ca_jets.end() != cajet;
+                ++cajet, ++index)
         {
-            weight *= ::toptagWeight(pt(*cajet->corrected_p4));
-            
-            // Loop over the good jets to find 
-            // those close to leading ca jet
-            /*typedef vector<float> Areas;
-            typedef vector<SynchSelector::GoodJets::iterator> ConeJets;
+            bool tag = (perm >> index) & 1;
 
-            float totalArea = 0.0;
-            Areas areas;
-            ConeJets coneJets;
-            LorentzVector p4;
-
-            for(SynchSelector::GoodJets::iterator jet = _good_jets.begin();
-                _good_jets.end() != jet;
-                ++jet)
+            if (!tag)
+                weight *= 1.0 - ::toptagWeight(pt(*cajet->corrected_p4));
+            else
             {
+                weight *= ::toptagWeight(pt(*cajet->corrected_p4));
+
+                // Loop over the good jets to find
+                // those close to leading ca jet
+                /*typedef vector<float> Areas;
+                typedef vector<SynchSelector::GoodJets::iterator> ConeJets;
+
+                float totalArea = 0.0;
+                Areas areas;
+                ConeJets coneJets;
+                LorentzVector p4;
+
+                for(SynchSelector::GoodJets::iterator jet = _good_jets.begin();
+                    _good_jets.end() != jet;
+                ++jet)
+                {
                 float x = dr(*jet->corrected_p4, *cajet->corrected_p4);
 
                 if (x < 1.3)
                 {
-                    float area = overlapArea(x); 
+                    float area = overlapArea(x);
                     // cout << "Area: " << x << " : " << area << endl;
                     totalArea += area;
                     areas.push_back(area);
@@ -1476,68 +1399,74 @@ float SynchSelector::toptagWeight()
                     p4jet *= area;
                     p4 += p4jet;
                 }
-            }
- 
-            p4 *= (1.0/totalArea);
+                }
 
-            float mass = _random_generator->value();
-            float e = sqrt(
+                p4 *= (1.0/totalArea);
+
+                float mass = _random_generator->value();
+                float e = sqrt(
                 p4.px() * p4.px() +
                 p4.py() * p4.py() +
                 p4.pz() * p4.pz() +
                 mass * mass
-            );
+                );
 
-            for(size_t i = 0; i < coneJets.size(); ++i)
-            {
+                for(size_t i = 0; i < coneJets.size(); ++i)
+                {
                 coneJets[i]->corrected_p4->set_e(
                     e * areas[i] * coneJets[i]->corrected_p4->e() / (p4.e()*totalArea)
                 );
-            }*/
+                }*/
+            }
         }
+        total_weight += weight;
     }
 
-    if (_ca_jets.empty()) weight = 0.0;
-
     // cout << "leading jet pt: " << pt(*_good_jets[0].corrected_p4);
-    // cout << " weight: " << weight << endl;
- 
-    return weight;
+    // cout << " weight: " << total_weight << endl;
+
+    return total_weight;
 }
 
 // Helpers
 //
 std::ostream &bsm::operator <<(std::ostream &out,
-        const SynchSelectorDelegate::LeptonMode &lepton_mode)
+                               const SynchSelectorDelegate::LeptonMode &lepton_mode)
 {
     switch(lepton_mode)
     {
-        case SynchSelector::ELECTRON:   out << "Electron";
-                                        break;
+    case SynchSelector::ELECTRON:
+        out << "Electron";
+        break;
 
-        case SynchSelector::MUON:       out << "Muon";
-                                        break;
+    case SynchSelector::MUON:
+        out << "Muon";
+        break;
 
-        default:                        out << "unknown";
-                                        break;
+    default:
+        out << "unknown";
+        break;
     }
 
     return out;
 }
 
 std::ostream &bsm::operator <<(std::ostream &out,
-        const SynchSelectorDelegate::CutMode &cut_mode)
+                               const SynchSelectorDelegate::CutMode &cut_mode)
 {
     switch(cut_mode)
     {
-        case SynchSelector::CUT_2D:     out << "2D Cut";
-                                        break;
+    case SynchSelector::CUT_2D:
+        out << "2D Cut";
+        break;
 
-        case SynchSelector::ISOLATION:  out << "Isolation";
-                                        break;
+    case SynchSelector::ISOLATION:
+        out << "Isolation";
+        break;
 
-        default:                        out << "unknown";
-                                        break;
+    default:
+        out << "unknown";
+        break;
     }
 
     return out;

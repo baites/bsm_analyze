@@ -430,11 +430,15 @@ class Templates(object):
                     mc_hist = channels["mc"].hist
                     qcd_hist = channels["qcd"].hist
 
+                    if qcd_hist.Integral() == 0: continue
+
                     qcd_scale = (qcd_fraction *
                                  data_integral /
                                  qcd_hist.Integral())
 
                     qcd_hist.Scale(qcd_scale)
+
+                    if mc_hist.Integral() == 0: continue
 
                     mc_scale = (mc_fraction *
                                 data_integral /
@@ -448,7 +452,7 @@ class Templates(object):
                     for channel_type in loaded_mc_channels:
                         channels[channel_type].hist.Scale(mc_scale)
 
-                    if self._verbose and "/mttbar_after_htlep" == plot:
+                    if self._verbose and ("/mttbar_after_htlep" == plot or "/njets" == plot):
                         print(" mttbar scales",
                               " MC: {0:.2f}".format(mc_scale),
                               "QCD: {0:.2f}".format(qcd_scale),
