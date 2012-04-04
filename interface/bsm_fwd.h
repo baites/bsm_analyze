@@ -102,6 +102,10 @@ namespace bsm
     class ResonanceReconstructorWithCollimatedTops;
 
     struct GenResonance;
+
+    class BtagDelegate;
+    class BtagOptions;
+    class Btag;
 }
 
 #endif

@@ -1,7 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Created by Samvel Khalatyan, Jan 13, 2012
 # Copyright 2011, All rights reserved
+
+from __future__ import print_function
 
 import sys
 
@@ -13,14 +15,16 @@ def usage(argv):
             "[analysis:analysis.py] [xsec:theory-xsecs.py] "
             "[run:run.sh] [ban:jes,pileup]").format(argv[0])
 
-def main(argv = sys.argv):
+def main(argv=sys.argv):
     try:
         if 2 > len(argv):
             raise Exception(usage(argv))
 
         args = dict(x.split(":") for x in argv[1:] if ":" in x)
 
-        args = {k: args.get(k) for k in args.keys() & {"hist", "analysis", "xsec", "run", "ban"}}
+        args = dict((k, args.get(k))
+                    for k in (set(args.keys()) &
+                              set(["hist", "analysis", "xsec", "run", "ban"])))
 
         mass_points = set(int(x) for x in argv[1:] if ':' not in x)
 

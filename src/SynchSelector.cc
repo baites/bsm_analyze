@@ -16,6 +16,7 @@
 #include "bsm_input/interface/Muon.pb.h"
 #include "bsm_input/interface/PrimaryVertex.pb.h"
 #include "bsm_input/interface/Physics.pb.h"
+#include "interface/Btag.h"
 #include "interface/Cut.h"
 #include "interface/SynchSelector.h"
 #include "interface/Cut2DSelector.h"
@@ -85,16 +86,11 @@ SynchSelectorOptions::SynchSelectorOptions()
      po::value<float>()->notifier(
          boost::bind(&SynchSelectorOptions::setLtopPt, this, _1)),
      "set min value of ltop pt")
-
-    ("ltop-chi2",
+    
+    ("chi2",
      po::value<float>()->notifier(
-         boost::bind(&SynchSelectorOptions::setLtopChi2Discriminator, this, _1)),
-     "set max ltop-chi2 disriminator")
-
-    ("htop-chi2",
-     po::value<float>()->notifier(
-         boost::bind(&SynchSelectorOptions::setHtopChi2Discriminator, this, _1)),
-     "set max htop-chi2 disriminator")
+         boost::bind(&SynchSelectorOptions::setChi2Discriminator, this, _1)),
+     "set max chi2 disriminator")
     ;
 }
 
@@ -225,29 +221,16 @@ void SynchSelectorOptions::setLtopPt(const float &value)
     delegate()->setLtopPt(value);
 }
 
-void SynchSelectorOptions::setLtopChi2Discriminator(const float &value)
+void SynchSelectorOptions::setChi2Discriminator(const float &value)
 {
     if (!delegate())
         return;
 
     if (0 > value)
-        throw runtime_error("negative ltop chi2 cut is not allowed");
+        throw runtime_error("negative chi2 cut is not allowed");
 
-    delegate()->setLtopChi2Discriminator(value);
+    delegate()->setChi2Discriminator(value);
 }
-
-void SynchSelectorOptions::setHtopChi2Discriminator(const float &value)
-{
-    if (!delegate())
-        return;
-
-    if (0 > value)
-        throw runtime_error("negative htop chi2 cut is not allowed");
-
-    delegate()->setHtopChi2Discriminator(value);
-}
-
-
 
 
 
@@ -348,13 +331,12 @@ SynchSelector::SynchSelector():
     //_random_generator.reset(new RandomGenerator<>(143.,203.));
     monitor(_random_generator);
 
-    _ltop_chi2.reset(new Comparator<less<float> >(5));
-    _ltop_chi2->disable();
-    monitor(_ltop_chi2);
+    _chi2.reset(new Comparator<less<float> >(15));
+    _chi2->disable();
+    monitor(_chi2);
 
-    _htop_chi2.reset(new Comparator<less<float> >(10));
-    _htop_chi2->disable();
-    monitor(_htop_chi2);
+    _btag.reset(new Btag());
+    monitor(_btag);
 }
 
 SynchSelector::SynchSelector(const SynchSelector &object):
@@ -440,11 +422,11 @@ SynchSelector::SynchSelector(const SynchSelector &object):
     _random_generator = object._random_generator;
     monitor(_random_generator);
 
-    _ltop_chi2 = dynamic_pointer_cast<Cut>(object.ltop_chi2()->clone());
-    monitor(_ltop_chi2);
+    _chi2 = dynamic_pointer_cast<Cut>(object.chi2()->clone());
+    monitor(_chi2);
 
-    _htop_chi2 = dynamic_pointer_cast<Cut>(object.htop_chi2()->clone());
-    monitor(_htop_chi2);
+    _btag = dynamic_pointer_cast<Btag>(object._btag->clone());
+    monitor(_btag);
 }
 
 SynchSelector::~SynchSelector()
@@ -501,18 +483,34 @@ SynchSelector::CutPtr SynchSelector::ltop() const
     return _ltop;
 }
 
-SynchSelector::CutPtr SynchSelector::ltop_chi2() const
+SynchSelector::CutPtr SynchSelector::chi2() const
 {
-    return _ltop_chi2;
+    return _chi2;
 }
 
-SynchSelector::CutPtr SynchSelector::htop_chi2() const
+uint32_t SynchSelector::countBtaggedJets()
 {
-    return _htop_chi2;
+    if (!_btagged_jets.is_valid())
+    {
+        uint32_t btags = 0;
+        for(GoodJets::const_iterator jet = _good_jets.begin();
+                _good_jets.end() != jet;
+                ++jet)
+        {
+            if (_btag->is_tagged(*jet))
+                ++btags;
+        }
+
+        _btagged_jets.set(btags);
+    }
+
+    return _btagged_jets.get();
 }
 
 bool SynchSelector::apply(const Event *event)
 {
+    invalidate_cache();
+
     _cutflow->apply(PRESELECTION);
 
     _good_primary_vertices.clear();
@@ -638,6 +636,11 @@ bsm::Cut2DSelectorDelegate *SynchSelector::getCut2DSelectorDelegate() const
     return _cut2d_selector.get();
 }
 
+bsm::BtagDelegate *SynchSelector::getBtagDelegate() const
+{
+    return _btag.get();
+}
+
 // Synch Selector Delegate interface
 //
 void SynchSelector::setLeptonMode(const LeptonMode &lepton_mode)
@@ -698,16 +701,10 @@ void SynchSelector::setLtopPt(const float &value)
     ltop()->setValue(value);
 }
 
-void SynchSelector::setLtopChi2Discriminator(const float &value)
+void SynchSelector::setChi2Discriminator(const float &value)
 {
-    ltop_chi2()->setValue(value);
-    ltop_chi2()->enable();
-}
-
-void SynchSelector::setHtopChi2Discriminator(const float &value)
-{
-    htop_chi2()->setValue(value);
-    htop_chi2()->enable();
+    chi2()->setValue(value);
+    chi2()->enable();
 }
 
 // Jet Energy Correction Delegate interface
@@ -804,8 +801,7 @@ void SynchSelector::print(std::ostream &out) const
     _cutflow->cut(MET)->setName("MET");
     _cutflow->cut(RECONSTRUCTION)->setName("reconstruction");
     _cutflow->cut(LTOP)->setName("pt(ltop)");
-    _cutflow->cut(LTOP_CHI2)->setName("Chi2(ltop)");
-    _cutflow->cut(HTOP_CHI2)->setName("Chi2(htop)");
+    _cutflow->cut(CHI2)->setName("Chi2");
 
     out << "Cutflow [" << _lepton_mode << ": " << _cut_mode << "]" << endl;
     out << *_cutflow << endl;
@@ -830,22 +826,13 @@ bool SynchSelector::ltop(const float &value)
            && (_cutflow->apply(LTOP), true);
 }
 
-bool SynchSelector::ltop_chi2(const float &value)
+bool SynchSelector::chi2(const float &value)
 {
-    if (ltop_chi2()->isDisabled())
+    if (chi2()->isDisabled())
         return true;
 
-    return ltop_chi2()->apply(value)
-           && (_cutflow->apply(LTOP_CHI2), true);
-}
-
-bool SynchSelector::htop_chi2(const float &value)
-{
-    if (htop_chi2()->isDisabled())
-        return true;
-
-    return htop_chi2()->apply(value)
-           && (_cutflow->apply(HTOP_CHI2), true);
+    return chi2()->apply(value)
+        && (_cutflow->apply(CHI2), true);
 }
 
 // Private
@@ -1082,17 +1069,8 @@ bool SynchSelector::maxBtags()
     if (maxBtag()->isDisabled())
         return true;
 
-    uint32_t btags = 0;
-    for(GoodJets::const_iterator jet = _good_jets.begin();
-            _good_jets.end() != jet;
-            ++jet)
-    {
-        if (isBtagJet(jet->jet))
-            ++btags;
-    }
-
-    return maxBtag()->apply(btags)
-           && (_cutflow->apply(MAX_BTAG), true);
+    return maxBtag()->apply(countBtaggedJets())
+        && (_cutflow->apply(MAX_BTAG), true);
 }
 
 bool SynchSelector::minBtags()
@@ -1100,17 +1078,8 @@ bool SynchSelector::minBtags()
     if (minBtag()->isDisabled())
         return true;
 
-    uint32_t btags = 0;
-    for(GoodJets::const_iterator jet = _good_jets.begin();
-            _good_jets.end() != jet;
-            ++jet)
-    {
-        if (isBtagJet(jet->jet))
-            ++btags;
-    }
-
-    return minBtag()->apply(btags)
-           && (_cutflow->apply(MIN_BTAG), true);
+    return minBtag()->apply(countBtaggedJets())
+                && (_cutflow->apply(MIN_BTAG), true);
 }
 
 bool SynchSelector::toptagCut()
@@ -1217,21 +1186,9 @@ bool SynchSelector::isolation(const LorentzVector *p4, const PFIsolation *isolat
            / pt(*p4);
 }
 
-bool SynchSelector::isBtagJet(const Jet *jet) const
+void SynchSelector::invalidate_cache()
 {
-    typedef ::google::protobuf::RepeatedPtrField<Jet::BTag> BTags;
-
-    for(BTags::const_iterator btag = jet->btag().begin();
-            jet->btag().end() != btag;
-            ++btag)
-    {
-        if (Jet::BTag::SSVHE == btag->type())
-        {
-            return 1.74 < btag->discriminator();
-        }
-    }
-
-    return false;
+    _btagged_jets.invalidate();
 }
 
 void SynchSelector::selectGoodPrimaryVertices(const Event *event)

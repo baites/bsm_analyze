@@ -1221,6 +1221,11 @@ bsm::TriggerDelegate *TemplateAnalyzer::getTriggerDelegate() const
     return _synch_selector.get();
 }
 
+bsm::BtagDelegate *TemplateAnalyzer::getBtagDelegate() const
+{
+    return _synch_selector->getBtagDelegate();
+}
+
 void TemplateAnalyzer::didCounterAdd(const Counter *counter)
 {
     if (_counters.end() != _counters.find(counter))
@@ -1326,8 +1331,8 @@ void TemplateAnalyzer::process(const Event *event)
 
         if (_synch_selector->reconstruction(resonance.valid)
                 && _synch_selector->ltop(pt(resonance.ltop))
-                && _synch_selector->ltop_chi2(resonance.ltop_discriminator)
-                && _synch_selector->htop_chi2(resonance.htop_discriminator))
+                && _synch_selector->chi2(resonance.ltop_discriminator +
+                                         resonance.htop_discriminator))
 
         {
             const LorentzVector &el_p4 = _synch_selector->goodElectrons()[0]->physics_object().p4();

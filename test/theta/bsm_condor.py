@@ -1,7 +1,9 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 #
 # Created by Samvel Khalatyan, Jan 30, 2012
 # Copyright 2011, All rights reserved
+
+from __future__ import print_function
 
 '''
 Set of condor related tools for Beyond the Standard Model searches
@@ -46,6 +48,3 @@ if "__main__" == __name__:
     config.jobs = 1
 
     print(config)
-
-    import sys
-    sys.exit(1)
